@@ -22,9 +22,6 @@ struct STnode {
 
 extern Item NULLitem;
 
-//spaghetti
-extern char **ptstr;
-
 void STinit();          // Initialize tree with just a sentinel
 
 void STterminate();     // frees all resources, STinit() must be called to use tree again.

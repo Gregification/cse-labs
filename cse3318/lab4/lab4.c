@@ -3,18 +3,24 @@
  * george boone
  * 1002055713
  * 
- * compile on OMEGA, runs using the file redirect thing "<"
- * executable is "lab4.out"
-    $ gcc -c lab4.c -o l4.o; gcc -c lab4driver.c -o l4d.o; gcc -o lab4.out l4.o l4d.o;
+ * compile on OMEGA
+    $   gcc -std=c99 -c lab4.c -o l4.o;
+        gcc -std=c99 -c lab4driver.c -o l4d.o;
+        gcc -std=c99 -o lab4.out l4.o l4d.o;
+    $ ./lab4.out < a.dat
 */
 
 #include "lab4.h"
 
 #define DEBUG_PARSER 0
 #define isSentinal(node_ptr) (node_ptr->N < 0)
+#define MAX_NODE_STR_LEN 21 //max of 21 digits in 64bit base 10
 
 int NULLitem = INT_MIN;
 link sentinel;
+
+//global pointer to input string
+char *ptstr = 0;
 
 void STinit(){          // Initialize tree with just a sentinel
     sentinel = createSTnode();
@@ -36,11 +42,12 @@ void STterminate(){
     //lazy
     //find a leaf -> delete that leaf -> repeat
 
-    while(!isSentinal(sentinel->l)){
+    while(!isSentinal(sentinel->l)){//if tree has nodes
         link 
             former = sentinel,
             node = sentinel->l;
 
+        //go to child
         while(!isSentinal(node)){
             int 
                 leftValid = !isSentinal(node->l),
@@ -64,7 +71,8 @@ void STterminate(){
     }
 
     free(sentinel);
-    free((*ptstr));
+    if(ptstr) free(ptstr);
+
     exit(0);
 }
 
@@ -106,7 +114,19 @@ Item STselect(int k){   // Treat tree as flattened into an ordered array
 }
 
 int STinvSelect(Key v){ // Inverse of STselect
-    //??? whar
+    link node = sentinel->l;
+
+    while(!isSentinal(node)){
+        if(eq(node->item, v))
+            return (isSentinal(node->l) ? 0 : node->l->N) + 1;;
+
+        if(less(v, node->item))
+            node = node->l;
+        else 
+            node = node->r;
+    }
+    
+    return -1;
 }
 
 void STinsert(Item item){     // Insert an item.  No uniqueness check
@@ -144,7 +164,7 @@ int STverifyPropertiesHelper(link node, Key min, Key max){
     if(isSentinal(node))
         return 0;
 
-    if(node->item < min || node->item > max)
+    if(less(node->item, min) || less(max, node->item))
         return 1;
 
     int size = 1;
@@ -171,7 +191,6 @@ int STcalcSTsize(link root){
 void STprintTree(){           // Dumps out tree
     STprintSubTree(sentinel->l, 0);
 }
-
 void STprintSubTree(link root, int indent){
     for(int i = 0; i < indent; i++)
         printf("%12s", "|");
@@ -190,7 +209,12 @@ char* STserialize(){    // Flattens current tree into a pre-order string
     if(isSentinal(sentinel->l))
         return "";
     
-    char* ret = calloc(sentinel->l->N * 6, sizeof(char));//eyeballed the number, seems to work
+    //size of node (assuming 64bit int) is at most 20 chars, "+1" for the sign. (MAX_NODE_STR_LEN = 21)
+    //at worst each node gets 1 period tagged on so "+N"  on top of that
+    //+1 for null terminating
+    //ends up as N * MAX_NODE_STR_LEN + N, simpilified
+    //complete overkill it semes, ~15kb(reserved) vs ~8kb(used) - valgrind
+    char* ret = calloc(sentinel->l->N * (MAX_NODE_STR_LEN + 1) + 1, sizeof(char));
 
     STserializeHelper(sentinel->l, ret);
 
@@ -201,7 +225,7 @@ void STserializeHelper(link node, char* str){
         strcat(str, ".");
         return;
     }
-    char arr[20];
+    char arr[MAX_NODE_STR_LEN];
     int l = sprintf(arr, "%d",node->item);
     strcat(str, node->item > 0 ? "+" : "");
     strcat(str, arr);
@@ -210,20 +234,24 @@ void STserializeHelper(link node, char* str){
 }
 
 void STdeserialize(char *str){     // Parses string to current tree
-    ptstr = &str;
+    ptstr = str; //save it to a global so it can be freed internaly later
+
+    //prime tree with root element
     link root = createSTnode();
         root->item = getValFromStr(&str);
         root->N = 1;
-
     sentinel->l = root;
+
+    //populate tree
     STdeserializeHelper(&str, root);
     
-    STcalcSTsize(root); //correct the subtree counts
+    //correct the subtree sizes. (populating the tree dosent set it)
+    STcalcSTsize(root);
 
-    //testing
-    if(strlen(str) != 0) 
+    //tests
+    if(strlen(str) != 0)        //was entire string used?
         puts("\x1B[33m[WARNING] extra characters in input! \x1B[39m ");
-    if(STverifyProperties())
+    if(STverifyProperties())    //checks subtree sizes and if children are within expected ranges
         puts("\x1B[33m[WARNING] invalid tree (either node order or subtree size)\x1B[39m ");
 }
 void STdeserializeHelper(char **pts, link root){
@@ -232,37 +260,42 @@ void STdeserializeHelper(char **pts, link root){
     //for each possible child
     for(int i = 0; i < 2; i++){
         switch((*pts)[0]){
-            case '.'    : 
-                (*pts) += 1;
-                if(DEBUG_PARSER) puts("next");
-                continue;
-            case '+'    :
-            case '-'    :
-            case '\0'   :
-                break;
             default: {
                 printf("bad input \"%c\" in %s\n", (*pts)[0], *pts);
                 STterminate();
             }
+
+            //skip assigning current child
+            case '.'    :
+                (*pts) += 1;
+                if(DEBUG_PARSER) puts("next");
+                continue;
+            
+            //valid cases
+            case '+'    :
+            case '-'    :
+            case '\0'   :
+                break;
         }
 
-        link new = createSTnode();
-            new->N = 1;
-            new->item = getValFromStr(pts);
 
+        //inserting node
         link* too;
-        switch(i){
+        switch(i){ //get the current child being assigned
             case 0: too = &(root->l);  break;
             case 1: too = &(root->r);  break;
 
             default:{//uh oh
-                if(DEBUG_PARSER) puts("deseralization explosion");
+                if(DEBUG_PARSER) printf("[ERROR] undefined child index: %d\n quitting...", i);
                 STterminate();
-                exit(1);//may mem leak the string
             }
         }
 
-        *too = new;
+        *too = createSTnode();
+        (*too)->N = 1;
+        (*too)->item = getValFromStr(pts);
+
+        //recurse to child
         STdeserializeHelper(pts, *too);
     }
 }
@@ -280,13 +313,13 @@ Item getValFromStr(char **pts){ //gets first value & incriments
             break;
         default: {
             printf("bad input \"%c\" in %s\n", str[off], str);
-            exit(1);
+            STterminate();
         }
     }
 
     char og = str[off];
     str[off] = '\0';
-    int ret = atoi(str);
+    Item ret = atoi(str);
     str[off] = og;
 
     if(DEBUG_PARSER) printf("%d\n\t%s\n\t%s\n", ret, str, str+off);
