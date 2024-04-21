@@ -17,16 +17,16 @@
 
 #define BAD -1
 
-typedef char cnt; //count units to be extra fancy
+typedef char unt; //count units to be extra fancy
 
 void checkAlloc(void*);
-void printMat(cnt, cnt**);
+void printMat(unt, unt**);
+void findCycles(unt*, unt, int);
+
+unt v;      //number of verticies
+unt **mat;  //adjacency matrix
 
 int main(){
-    cnt v;      //number of verticies
-
-    cnt **mat;  //adjacency matrix
-
     //get input
     {   
         //get v
@@ -35,16 +35,16 @@ int main(){
             scanf("%d", &d);
             if(d > 50){
                 puts("more than 50 verticies! In the HW section \"Requirements 1.a\" specifies that \"V will not exceed 50\"");
-                puts("the program will work with more but you have to change the typedef of \"cnt\"(line 16) form char to something larger (e.g:int)");
+                puts("the program will work with more but you have to change the typedef of \"unt\"(line 16) form char to something larger (e.g:int)");
                 exit(EXIT_FAILURE);
             }
             v = d;
         }
 
-        mat = malloc(sizeof(cnt*) * v);
+        mat = malloc(sizeof(unt*) * v);
         checkAlloc(mat);
         for(int i = 0; i < v; i++){
-            mat[i] = malloc(v * sizeof(cnt));
+            mat[i] = malloc(v * sizeof(unt));
             checkAlloc(mat[i]);
         }
 
@@ -88,13 +88,36 @@ int main(){
         printf("\n\t\x1B[1;33m*%s", "a medium path.     ");
         printf("\n\t\x1B[1;31m*%s", "a long path.       ");
         printf("\n\t\x1B[35m*%s",   "no path exists.    ");
-        puts("");
+        puts("\n\x1B[37m");
     }
+
+    //find cycle leaders
+    unt* cycl = calloc(v, sizeof(unt));
+    
+    for(int x = 0, c = 1; x < v; x++){
+        if(cycl[x]) continue;
+        findCycles(cycl, x, c++);
+    }
+
+    printf("\n%5s"," ");
+    for(int x = 0; x < v; x++)
+        printf("%3d", cycl[x]);
+    puts("");
 
     return EXIT_SUCCESS;
 }
 
-void printMat(cnt v, cnt** mat){
+void findCycles(unt* cycl, unt start, int c){
+    if(cycl[start]) return;
+
+    cycl[start] = c;
+
+    for(int x = 0; x < v; x++){
+        findCycles(cycl,mat[start][x], c);
+    }
+}
+
+void printMat(unt v, unt** mat){
     int mx, my;
     mx = my = v;
 
@@ -109,7 +132,7 @@ void printMat(cnt v, cnt** mat){
     for(int y = 0; y < my; y++){
         printf("%2d | ", y);
         for(int x = 0; x < mx; x++){
-            cnt c = mat[y][x];
+            unt c = mat[y][x];
 
             if(!FANCY_PRINT){
                 if(c == BAD) printf("%3s", "-");
@@ -125,7 +148,7 @@ void printMat(cnt v, cnt** mat){
                 if(c == x)
                     printf("\x1B[32m");
                 else {
-                    cnt i = 0;
+                    unt i = 0;
                     for(int ny = y; mat[ny][x] != x; i++)
                         ny = mat[ny][x];
                     
