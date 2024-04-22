@@ -21,10 +21,11 @@ typedef char unt; //count units to be extra fancy
 
 void checkAlloc(void*);
 void printMat(unt, unt**);
-void findCycles(unt*, unt, int);
+void findCycles(unt*, unt, unt, int);
 
 unt v;      //number of verticies
 unt **mat;  //adjacency matrix
+unt* cycl;  //cycle tracker
 
 int main(){
     //get input
@@ -62,7 +63,7 @@ int main(){
     puts("initial table");
     printMat(v, mat);
     
-    //warshalls algo. implimentation
+    //warshalls algo O(v^3)
     for(int x = 0; x < v; x++){
         for(int y = 0; y < v; y++){
             if(mat[y][x] == BAD) continue;
@@ -72,6 +73,7 @@ int main(){
                 if(mat[x][fx] == BAD) continue;
                 mat[y][fx] = mat[y][x];
             }
+            
         }
         if(x+1 < v) {
             printf("\nafter processing column %d\n", x);
@@ -91,15 +93,34 @@ int main(){
         puts("\n\x1B[37m");
     }
 
-    //find cycle leaders
-    unt* cycl = calloc(v, sizeof(unt));
-    
-    for(int x = 0, c = 1; x < v; x++){
-        if(cycl[x]) continue;
-        findCycles(cycl, x, c++);
+    //find cycles, O(v^2)
+    cycl = malloc(v * sizeof(unt));
+    checkAlloc(cycl);
+    for(int i = 0; i < v; i++) cycl[i] = i;
+
+    for(int y = 0; y < v; y++){
+        for(int x = 0; x < v; x++){
+            if(cycl[x] == BAD) cycl[y] = y;
+
+            if(mat[y][x] == BAD) continue;  //if A no connect to B
+            if(mat[mat[y][x]][y] == BAD) continue; //if B no connect to A
+
+            unt cb = cycl[mat[y][x]];//cycle of B
+
+            //if cycles are already joined
+            if(cb == cycl[y]) continue;
+
+            //join the 2 cycles, use smallest id
+            unt from = cycl[y], to = cb; 
+            if(from < to){ unt tmp = to; to = from; from = tmp; }
+
+            for(int i = 0; i < v; i++)
+                if(cycl[i] == from)
+                    cycl[i] = to;
+        }
     }
 
-    printf("\n%5s"," ");
+    printf("\x1B[37m%5s", "cycl");
     for(int x = 0; x < v; x++)
         printf("%3d", cycl[x]);
     puts("");
@@ -107,13 +128,14 @@ int main(){
     return EXIT_SUCCESS;
 }
 
-void findCycles(unt* cycl, unt start, int c){
-    if(cycl[start]) return;
+void findCycles(unt* cycl, unt start, unt target, int c){
+    if(start == BAD || cycl[start]) return;
+    if(mat[start][target] == BAD) return;
 
     cycl[start] = c;
 
     for(int x = 0; x < v; x++){
-        findCycles(cycl,mat[start][x], c);
+        findCycles(cycl,mat[start][x],  target, c);
     }
 }
 
@@ -121,7 +143,8 @@ void printMat(unt v, unt** mat){
     int mx, my;
     mx = my = v;
 
-    printf("\x1B[37m%5s", "");
+    printf("\x1B[37m");
+    printf("\n%5s", "idx");
     for(int x = 0; x < mx; x++)
         printf(" %2d", x);
     printf("\n______");
