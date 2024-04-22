@@ -4,7 +4,12 @@
  * 1002055713
  * 
  * - must use GCC or Clang to compile. (switch statement depends on a feature)
- * - if the table is hard to read compile with "FANCY_PRINT" to 0
+ * - if the table is hard to read compile with "FANCY_PRINT" set to 0
+ * 
+ * runs in O(v^3 + 2  * v^2)
+ *      > v^3 : Warshall's algorithm
+ *      > v^2 : finding cycles
+ *      > v^2 : print path to leader
  * 
  * compile on OMEGA
     $   gcc -std=c99 -c lab5.c -o lab5.out;
@@ -22,6 +27,7 @@ typedef char unt; //count units to be extra fancy
 void checkAlloc(void*);
 void printMat(unt, unt**);
 void findCycles(unt*, unt, unt, int);
+void printPath(unt, unt);
 
 unt v;      //number of verticies
 unt **mat;  //adjacency matrix
@@ -96,11 +102,10 @@ int main(){
     //find cycles, O(v^2)
     cycl = malloc(v * sizeof(unt));
     checkAlloc(cycl);
-    for(int i = 0; i < v; i++) cycl[i] = i;
+    for(int i = 0; i < v; i++) cycl[i] = i; //assume everything is a criticle node
 
     for(int y = 0; y < v; y++){
         for(int x = 0; x < v; x++){
-            if(cycl[x] == BAD) cycl[y] = y;
 
             if(mat[y][x] == BAD) continue;  //if A no connect to B
             if(mat[mat[y][x]][y] == BAD) continue; //if B no connect to A
@@ -111,6 +116,7 @@ int main(){
             if(cb == cycl[y]) continue;
 
             //join the 2 cycles, use smallest id
+
             unt from = cycl[y], to = cb; 
             if(from < to){ unt tmp = to; to = from; from = tmp; }
 
@@ -120,10 +126,31 @@ int main(){
         }
     }
 
-    printf("\x1B[37m%5s", "cycl");
+    printf("cycles\n%5s", "");
     for(int x = 0; x < v; x++)
         printf("%3d", cycl[x]);
     puts("");
+
+    for(int i = 0; i < v; i++){
+        if(cycl[i] == BAD) continue;
+
+        if(cycl[i] == i){
+            printf("%2d is a leader\n", i);
+
+            for(int oi = 0; oi < v; oi++) {
+                if(oi == i || cycl[oi] != cycl[i]) continue;
+
+                printf("\t#%2d under leader(%2d)", oi,  cycl[i]);
+                printf("\n\t\tpath to   : ");
+                printPath(cycl[oi], cycl[i]);
+                printf("\n\t\tpath from : ");
+                printPath(cycl[i], cycl[oi]);
+                printf("\n");
+                cycl[oi] = BAD;
+            }
+        }
+        cycl[i] = BAD;
+    }
 
     return EXIT_SUCCESS;
 }
@@ -137,6 +164,14 @@ void findCycles(unt* cycl, unt start, unt target, int c){
     for(int x = 0; x < v; x++){
         findCycles(cycl,mat[start][x],  target, c);
     }
+}
+
+void printPath(unt from, unt to){
+    while(mat[from][to] != to){
+        printf("%3d", from);
+        from = mat[from][to];
+    }
+    printf("%3d", from);
 }
 
 void printMat(unt v, unt** mat){
