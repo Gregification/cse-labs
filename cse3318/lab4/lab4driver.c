@@ -23,20 +23,6 @@ int main()
     STinit();
     STdeserialize(inputString);
 
-    /*
-    table print format
-    parent nodes on left, child nodes on right
-
-    [item, subtree-size]    
-                |_[left node]
-                |       |_[left of left node]
-                |       |_[end]             <--- sentinal node
-                |_[right node]
-                |       |_[end]
-                |       |_[right of right node]
-
-    */
-
     STprintTree();
 
     scanf("%d",&insertKeys);
