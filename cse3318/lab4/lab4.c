@@ -3,11 +3,29 @@
  * george boone
  * 1002055713
  * 
+<<<<<<< HEAD
+ * compile on OMEGA, runs using the file redirect thing "<"
+ * executable is "lab4.out"
+    $ gcc -c lab4.c -o l4.o; gcc -c lab4driver.c -o l4d.o; gcc -o lab4.out l4.o l4d.o;
+    $ ./lab4.out < a.dat
+
+    table print format
+    parent nodes on left, child nodes on right
+
+    [item, subtree-size]    
+                |_[left node]
+                |       |_[left of left node]
+                |       |_[end]             <--- sentinal node
+                |_[right node]
+                |       |_[end]
+                |       |_[right of right node]
+=======
  * compile on OMEGA
     $   gcc -std=c99 -c lab4.c -o l4.o;
         gcc -std=c99 -c lab4driver.c -o l4d.o;
         gcc -std=c99 -o lab4.out l4.o l4d.o;
     $ ./lab4.out < a.dat
+>>>>>>> 95cfc9e78f026f747951f2fcf6e9e31a49943a95
 */
 
 #include "lab4.h"
@@ -19,8 +37,13 @@
 int NULLitem = INT_MIN;
 link sentinel;
 
+<<<<<<< HEAD
+//spaghetti code
+char **ptstr;
+=======
 //global pointer to input string
 char *ptstr = 0;
+>>>>>>> 95cfc9e78f026f747951f2fcf6e9e31a49943a95
 
 void STinit(){          // Initialize tree with just a sentinel
     sentinel = createSTnode();
