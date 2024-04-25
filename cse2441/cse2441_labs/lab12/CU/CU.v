@@ -34,7 +34,7 @@ module CU(
 	
 	always o_state = state;
 	
-	always @ (posedge CLK, negedge i_CLEAR_ALL, negedge i_CLEAR_ENTRY, negedge i_TRIG) begin
+	always @ (posedge CLK or negedge i_CLEAR_ALL or negedge i_CLEAR_ENTRY or negedge i_TRIG) begin
 		if(i_CLEAR_ALL == 0)begin
 			state <= S0;
 			nextState <= S0;

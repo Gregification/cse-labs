@@ -3,16 +3,26 @@ module Calculator(
 		
 		input [3:0] i_iu_row,
 		
-		input i_fancyCycle,
+		input i_game,
 		
 		output [0:6] o_HEX0,o_HEX1,o_HEX2,o_HEX3,o_HEX4,o_HEX5,
 		output [9:0] o_RLEDS,
 		output [3:0] o_iu_col
 	);
 	
-	wire [7:0] iu_twosCompNum;
-	wire [3:0] iu_lastDigit;
-	wire iu_trig, iu_isValid;
+	wire  [6:0] _HEX_calculator [0:6];//5 elments of 7 bits each
+	reg  [6:0] _HEX_game [0:6];
+	
+	assign o_HEX0 = i_game ? _HEX_game[0] : _HEX_calculator[0];
+	assign o_HEX1 = i_game ? _HEX_game[1] : _HEX_calculator[1];
+	assign o_HEX2 = i_game ? _HEX_game[2] : _HEX_calculator[2];
+	assign o_HEX3 = i_game ? _HEX_game[3] : _HEX_calculator[3];
+	assign o_HEX4 = i_game ? _HEX_game[4] : _HEX_calculator[4];
+	assign o_HEX5 = i_game ? _HEX_game[5] : _HEX_calculator[5];
+	
+	wire 	[7:0] iu_twosCompNum;
+	wire 	[3:0] iu_lastDigit;
+	wire 	iu_trig, iu_isValid;
 	
 	wire 	cu_reset,
 			cu_loadA,
@@ -22,9 +32,8 @@ module Calculator(
 			cu_IUAU;	
 	
 	wire [7:0] au_result;
-	
+			
 	assign o_RLEDS[9] 	= iu_isValid;
-	assign o_RLEDS[8]		= cu_IUAU;
 	assign o_RLEDS[7:4] 	= iu_lastDigit;
 	
 	reg [0:6] hex4;
@@ -37,9 +46,9 @@ module Calculator(
 			hex4 = 7'b1111010;//r
 		else 
 			hex4 = 7'b1110110;//=
-	assign o_HEX4 = hex4;
+	assign _HEX_calculator[4] = hex4;
 	
-	assign o_HEX5 = cu_addSub ? 7'b0100100 : 7'b0011000;
+	assign _HEX_calculator[5] = cu_addSub ? 7'b0100100 : 7'b0011000;
 	
 	IU _iu(
 		.CLOCK(i_CLOCK),
@@ -56,10 +65,10 @@ module Calculator(
 	OU _ou0(
 		.TC_in(cu_IUAU ? au_result : iu_twosCompNum),
 		
-		.SEVSEG_SIGN		(o_HEX3),
-		.SEVSEG_HUNDREDS	(o_HEX2),
-		.SEVSEG_TENS		(o_HEX1),
-		.SEVSEG_ONES		(o_HEX0)
+		.SEVSEG_SIGN		(_HEX_calculator[3]),
+		.SEVSEG_HUNDREDS	(_HEX_calculator[2]),
+		.SEVSEG_TENS		(_HEX_calculator[1]),
+		.SEVSEG_ONES		(_HEX_calculator[0])
 	);
 	
 	CU _cu(
@@ -89,11 +98,34 @@ module Calculator(
 		.Result(au_result)
 	);
 	
-	clock_div#(.WIDTH(64), .DIV(50_000_000)) _spinClock(
+	//game stuff	
+	wire _game_clock;
+	reg gameReset;
+	
+	always @ (negedge i_game) 
+		gameReset = ~gameReset;
+	
+	assign o_RLEDS[8] = _game_clock;
+	
+	working_clock_div#(.WIDTH(64), .DIV(50000000)) _spinClock(
 		.clk(i_CLOCK),
 		.reset(i_CLEAR_ALL),
 		
-		.clk_out(CLK)
+		.clk_out(_game_clock)
+	);
+	
+	budgetTetris _bt(
+		.clk(_game_clock || iu_lastDigit == 4'hC),
+		.reset(i_game),
+		.rot(iu_lastDigit == 4'hD),
+		
+		.signal(o_RLEDS[3]),
+		.o_HEX0(_HEX_game[0]),
+		.o_HEX1(_HEX_game[1]),
+		.o_HEX2(_HEX_game[2]),
+		.o_HEX3(_HEX_game[3]),
+		.o_HEX4(_HEX_game[4]),
+		.o_HEX5(_HEX_game[5])
 	);
 	
 endmodule
