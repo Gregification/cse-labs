@@ -9,7 +9,7 @@ module shift_reg #(
     always @ (posedge trig, negedge reset) begin
         if (~reset)
             out <= 0;
-        else begin
+        else if((in <= 9 || in == 4'hE) && in != 4'hA && in != 4'hB && in != 4'hC) begin		  
             if (dir) begin // 1 = Right
                 out <= out >> WIDTH;
                 out[(COUNT*WIDTH)-1:((COUNT*WIDTH)-1)-WIDTH] <= in;

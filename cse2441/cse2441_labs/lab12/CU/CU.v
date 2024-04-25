@@ -3,6 +3,8 @@ module CU(
 		input i_TRIG, i_CLOCK, i_CLEAR_ENTRY, i_CLEAR_ALL,
 		input [3:0] i_VALUE,
 		output reg o_reset, o_loadA, o_loadB, o_addSub, o_loadR, o_IUAU,
+		
+		//debug
 		output reg [2:0] o_state
 	);
 	reg [2:0] state = 3'b000;
@@ -17,7 +19,7 @@ module CU(
 	wire CLK;
 	wire [7:0] IU_twosComp;
 	
-	clock_div#(.WIDTH(64), .DIV(50_000_000)) _clkDiv(
+	clock_div#(.WIDTH(64), .DIV(2_000_000)) _clkDiv(
 		.clk(i_CLOCK),
 		.reset(i_CLEAR_ALL),
 		
@@ -28,9 +30,9 @@ module CU(
 	always o_loadA = state != S1;
 	always o_loadB = state != S3;
 	always o_loadR = state != S4;
-	always o_IUAU 	= state == S4;
+	always o_IUAU = state == S4;
 	
-	always o_state = state;`
+	always o_state = state;
 	
 	always @ (posedge CLK, negedge i_CLEAR_ALL, negedge i_CLEAR_ENTRY, negedge i_TRIG) begin
 		if(i_CLEAR_ALL == 0)begin

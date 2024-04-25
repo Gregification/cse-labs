@@ -4,7 +4,7 @@ JedecChain;
 	DefaultMfr(6E);
 
 	P ActionCode(Cfg)
-		Device PartName(10M50DAF484) Path("E:/uta_stuff/cse2441/cse2441_labs/lab11/IU/output_files/") File("IU.sof") MfrSpec(OpMask(1));
+		Device PartName(10M50DAF484) Path("F:/uta_stuff/cse2441/cse2441_labs/termProject/output_files/") File("Calculator.sof") MfrSpec(OpMask(1));
 
 ChainEnd;
 

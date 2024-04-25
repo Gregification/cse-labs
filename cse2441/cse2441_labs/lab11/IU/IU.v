@@ -5,12 +5,15 @@ module IU(
 			input [3:0] row,
 			output [3:0] col,
 			output reg [7:0] twosComp,
-			output reg isValid
+			output reg isValid,
+			
+			output [3:0] o_LAST_BCD,
+			output o_trig
 		);
 		
 		wire [15:0] BCD;
 		wire [7:0] binarySM;
-		
+
 		always begin
 			if(binarySM[7] == 1)
 				twosComp = ~binarySM + 1'b1;
@@ -23,7 +26,6 @@ module IU(
 				isValid = 1'b0;
 			else 
 				isValid = 1'b1;
-			
 		end
 		
 		
@@ -33,7 +35,9 @@ module IU(
 			.reset(RESET),
 			
 			.col(col),
-			.out(BCD)
+			.out(BCD),
+			.value(o_LAST_BCD),
+			.trig(o_trig)
 		);
 		
 		BCD2BinarySM bcd_2_sm(

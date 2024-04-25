@@ -20,7 +20,7 @@ module binary2seven(
 				4'd13	: SEV = 7'b1000010; //d
 				4'd14	: SEV = 7'b0110000; //E
 				4'd15	: SEV = 7'b0111000; //F
-            default:SEV = 7'b1100010; //r
+            default:SEV = 7'b1100010; //.
         endcase
 	  end
 endmodule
