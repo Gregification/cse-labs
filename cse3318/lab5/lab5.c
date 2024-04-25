@@ -4,23 +4,24 @@
  * 1002055713
  * 
  * - must use GCC or Clang to compile. (switch statement depends on a feature)
- * - if the table is hard to read compile with "FANCY_PRINT" set to 0
+ * - if the table is hard to read, toggle "FANCY_PRINT" and recompile
  * 
- * runs in O(v^3 + 2  * v^2)
+ * runs in O(v^3 + 2 * v^2)
  *      > v^3 : Warshall's algorithm
  *      > v^2 : finding cycles
  *      > v^2 : print path to leader
+ *      ? FANCY_PRINT being enabled changes run time to O(v^6)
  * 
  * compile on OMEGA
     $   gcc -std=c99 -c lab5.c -o lab5.out;
     $ ./lab5.out < a.dat
 */
-#define FANCY_PRINT 1
+#define FANCY_PRINT 0
 
 #include <stdlib.h>
 #include <stdio.h>
 
-#define BAD -1
+#define BAD 52  //must be a "large 'infinite' value", (V shouldnt exceed 50) 
 
 typedef char unt; //count units to be extra fancy
 
@@ -41,8 +42,8 @@ int main(){
             int d;
             scanf("%d", &d);
             if(d > 50){
-                puts("more than 50 verticies! In the HW section \"Requirements 1.a\" specifies that \"V will not exceed 50\"");
-                puts("the program will work with more but you have to change the typedef of \"unt\"(line 16) form char to something larger (e.g:int)");
+                puts("more than 50 verticies! HW section \"Requirements 1.a\" specifies that \"V will not exceed 50\"");
+                puts("the program will work with more but you have to change the typedef of \"unt\"(line 16) form char to something larger (e.g:int) and change the BAD place holder to something else");
                 exit(EXIT_FAILURE);
             }
             v = d;
@@ -70,20 +71,22 @@ int main(){
     printMat(v, mat);
     
     //warshalls algo O(v^3)
-    for(int x = 0; x < v; x++){
-        for(int y = 0; y < v; y++){
-            if(mat[y][x] == BAD) continue;
+    {
+        for(int x = 0; x < v; x++){
+            for(int y = 0; y < v; y++){
+                if(mat[y][x] == BAD) continue;
 
-            for(int fx = 0; fx < v; fx++){
-                if(mat[y][fx] != BAD) continue;
-                if(mat[x][fx] == BAD) continue;
-                mat[y][fx] = mat[y][x];
+                for(int fx = 0; fx < v; fx++){
+                    if(mat[y][fx] != BAD) continue;
+                    if(mat[x][fx] == BAD) continue;
+                    mat[y][fx] = mat[y][x];
+                }
+                
             }
-            
-        }
-        if(x+1 < v) {
-            printf("\nafter processing column %d\n", x);
-            printMat(v, mat);
+            if(x+1 < v) {
+                printf("\nafter processing column %d\n", x);
+                printMat(v, mat);
+            }
         }
     }
 
@@ -96,41 +99,43 @@ int main(){
         printf("\n\t\x1B[1;33m*%s", "a medium path.     ");
         printf("\n\t\x1B[1;31m*%s", "a long path.       ");
         printf("\n\t\x1B[35m*%s",   "no path exists.    ");
-        puts("\n\x1B[37m");
+        puts("\x1B[37m");
     }
 
     //find cycles, O(v^2)
-    cycl = malloc(v * sizeof(unt));
-    checkAlloc(cycl);
-    for(int i = 0; i < v; i++) cycl[i] = i; //assume everything is a criticle node
+    {
+        cycl = malloc(v * sizeof(unt));
+        checkAlloc(cycl);
+        for(int i = 0; i < v; i++) cycl[i] = i; //assume all nodes are criticle
 
-    for(int y = 0; y < v; y++){
-        for(int x = 0; x < v; x++){
+        for(int y = 0; y < v; y++){
+            for(int x = 0; x < v; x++){
 
-            if(mat[y][x] == BAD) continue;  //if A no connect to B
-            if(mat[mat[y][x]][y] == BAD) continue; //if B no connect to A
+                if(mat[y][x] == BAD) continue;  //if A no connect to B
+                if(mat[mat[y][x]][y] == BAD) continue; //if B no connect to A
 
-            unt cb = cycl[mat[y][x]];//cycle of B
+                unt cb = cycl[mat[y][x]];//cycle of B
 
-            //if cycles are already joined
-            if(cb == cycl[y]) continue;
+                //if cycles are already joined
+                if(cb == cycl[y]) continue;
 
-            //join the 2 cycles, use smallest id
+                //join the 2 cycles, use smallest id
+                unt from = cycl[y], to = cb; 
+                if(from < to){ unt tmp = to; to = from; from = tmp; }
 
-            unt from = cycl[y], to = cb; 
-            if(from < to){ unt tmp = to; to = from; from = tmp; }
-
-            for(int i = 0; i < v; i++)
-                if(cycl[i] == from)
-                    cycl[i] = to;
+                for(int i = 0; i < v; i++)
+                    if(cycl[i] == from)
+                        cycl[i] = to;
+            }
         }
     }
-
-    printf("cycles\n%5s", "");
+    printf("\ncycles\n%5s", "");
     for(int x = 0; x < v; x++)
         printf("%3d", cycl[x]);
-    puts("");
+    puts("\n");
 
+
+    //print cycle leaders and traces
     for(int i = 0; i < v; i++){
         if(cycl[i] == BAD) continue;
 
@@ -142,9 +147,9 @@ int main(){
 
                 printf("\t#%2d under leader(%2d)", oi,  cycl[i]);
                 printf("\n\t\tpath to   : ");
-                printPath(cycl[oi], cycl[i]);
+                printPath(oi, cycl[i]);
                 printf("\n\t\tpath from : ");
-                printPath(cycl[i], cycl[oi]);
+                printPath(cycl[i], oi);
                 printf("\n");
                 cycl[oi] = BAD;
             }
@@ -167,11 +172,12 @@ void findCycles(unt* cycl, unt start, unt target, int c){
 }
 
 void printPath(unt from, unt to){
-    while(mat[from][to] != to){
-        printf("%3d", from);
-        from = mat[from][to];
-    }
     printf("%3d", from);
+    while(mat[from][to] != to){
+        from = mat[from][to];
+        printf("%3d", from);
+    }
+    printf("%3d", mat[from][to]);
 }
 
 void printMat(unt v, unt** mat){
