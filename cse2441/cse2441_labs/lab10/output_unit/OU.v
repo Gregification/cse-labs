@@ -22,22 +22,25 @@ module OU(
 		.A(SM_in),
 		.ONES(BCD_ONES),
 		.TENS(BCD_TENS),
-		.HUNDREDS(BCD_HUNDREDS)
+		.HUNDREDS(BCD_HUNDREDS),
 	);
 	
 	binary2seven _bin2seg_ones (
 		.BIN(BCD_ONES),
-		.SEV(SEVSEG_ONES)
+		.SEV(SEVSEG_ONES),
+		.EMPTY(SEVSEG_ONES == 0 && BCD_HUNDREDS == 0 && BCD_TENS == 0)
 	);
 	
 	binary2seven _bin2seg_tens (
 		.BIN(BCD_TENS),
-		.SEV(SEVSEG_TENS)
+		.SEV(SEVSEG_TENS),
+		.EMPTY(BCD_HUNDREDS == 0 && BCD_TENS == 0)
 	);
 	
 	binary2seven _bin2seg_hundreds (
 		.BIN(BCD_HUNDREDS),
-		.SEV(SEVSEG_HUNDREDS)
+		.SEV(SEVSEG_HUNDREDS),
+		.EMPTY(BCD_HUNDREDS == 0)
 	);
 
 endmodule

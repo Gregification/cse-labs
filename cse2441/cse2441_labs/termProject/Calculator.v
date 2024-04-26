@@ -32,9 +32,11 @@ module Calculator(
 			cu_IUAU;	
 	
 	wire [7:0] au_result;
-			
-	assign o_RLEDS[9] 	= iu_isValid;
-	assign o_RLEDS[7:4] 	= iu_lastDigit;
+	
+	
+	assign o_RLEDS[8] = au_result == 0;
+	assign o_RLEDS[7:4] 	= iu_lastDigit;	
+	assign o_RLEDS[0] = iu_isValid;
 	
 	reg [0:6] hex4;
 	always 
@@ -84,7 +86,7 @@ module Calculator(
 		.o_addSub(cu_addSub),
 		.o_loadR(cu_loadR),
 		.o_IUAU(cu_IUAU),
-		.o_state(o_RLEDS[3:0])
+		//.o_state(o_RLEDS[3:0])
 	);	
 	
 	AU _au(
@@ -105,9 +107,7 @@ module Calculator(
 	always @ (negedge i_game) 
 		gameReset = ~gameReset;
 	
-	assign o_RLEDS[8] = _game_clock;
-	
-	working_clock_div#(.WIDTH(64), .DIV(50000000)) _spinClock(
+	working_clock_div#(.WIDTH(64), .DIV(20_000_000)) _spinClock(
 		.clk(i_CLOCK),
 		.reset(i_CLEAR_ALL),
 		
@@ -128,4 +128,18 @@ module Calculator(
 		.o_HEX5(_HEX_game[5])
 	);
 	
+	integer _a, _b;
+	always if(cu_loadA == 0)
+		_a <= iu_twosCompNum;
+	else if(cu_loadB == 0)
+		_b <= iu_twosCompNum;	
+	
+	reg of;
+	always if(cu_addSub == 0) 
+			of = _a + _b == au_result;
+		else 
+			of = _a - _b == au_result;
+	
+	
+	assign o_RLEDS[9] = of;
 endmodule

@@ -1,8 +1,12 @@
 module binary2seven(
 		input [3:0] BIN,
+		input EMPTY,
         output reg [0:6] SEV
     );
     always @ (BIN) begin
+			if(EMPTY == 1)
+				SEV = 7'b1111111;
+			else
         case (BIN)
             4'd0	: SEV = 7'b0000001; 
             4'd1	: SEV = 7'b1001111; 
