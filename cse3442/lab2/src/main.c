@@ -5,10 +5,8 @@
 #include "wait.h"
 #include "tm4c123gh6pm.h"
 
+//problems with include paths, quick fix
 #include "clock.c"
-
-#include "PortF.h"
-#include "PortA.h"
 
 #define RED_MASK            (1 << 7)
 #define RED_BB              (*((volatile uint32_t *)(7 * 4 + 0x42000000  + (0x400043FC - 0x40000000) * 32)))
