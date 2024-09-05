@@ -4,7 +4,7 @@
 /RemoteSystemsTempFiles
 /dvt
 /targetConfigs/
-/Debug/
+Debug/
 
 *.cmd
 *.ccxml
