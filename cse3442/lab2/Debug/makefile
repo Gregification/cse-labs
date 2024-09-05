@@ -8,8 +8,9 @@ GEN_OPTS__FLAG :=
 GEN_CMDS__FLAG := 
 
 ORDERED_OBJS += \
-"./main.obj" \
 "./tm4c123gh6pm_startup_ccs.obj" \
+"./src/main.obj" \
+"./src/wait.obj" \
 "../tm4c123gh6pm.cmd" \
 $(GEN_CMDS__FLAG) \
 -llibc.a \
@@ -22,7 +23,9 @@ RMDIR := rm -rf
 # All of the sources participating in the build are defined here
 -include sources.mk
 -include subdir_vars.mk
+-include src/subdir_vars.mk
 -include subdir_rules.mk
+-include src/subdir_rules.mk
 -include objects.mk
 
 ifneq ($(MAKECMDGOALS),clean)
@@ -140,8 +143,9 @@ lab2.out: $(OBJS) $(CMD_SRCS) $(GEN_CMDS)
 # Other Targets
 clean:
 	-$(RM) $(EXE_OUTPUTS__QUOTED)
-	-$(RM) "main.obj" "tm4c123gh6pm_startup_ccs.obj" 
-	-$(RM) "main.d" "tm4c123gh6pm_startup_ccs.d" 
+	-$(RM) "tm4c123gh6pm_startup_ccs.obj" "src/main.obj" "src/wait.obj" 
+	-$(RM) "tm4c123gh6pm_startup_ccs.d" "src/main.d" 
+	-$(RM) "src/wait.d" 
 	-@echo 'Finished clean'
 	-@echo ' '
 
