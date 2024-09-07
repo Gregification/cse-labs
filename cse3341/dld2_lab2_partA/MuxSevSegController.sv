@@ -8,22 +8,24 @@ module MuxSevSegController(
 		input 					LOAD, 
 		input 					MUX_CLK,
 		input 					RESET,
-		input			[15:0]	HEX,
-		output reg 	[3:0]		CAT,
+		input	logic [15:0]	HEX,
+		output logic[3:0]		CAT,
 		output logic[6:0]		SEG
 	);	
 	
 	logic [3:0] _currentBin;
 	
+	//acts as the 'PIPO' buffer
 	logic [15:0] _binBuffer;
 	
-	//assign _binBuffer = HEX;
 	always_ff @ (posedge LOAD, negedge RESET)
 		if(RESET == 1'b0)
 			_binBuffer = 16'd0;
 		else if(LOAD == 1'b1)
-			_binBuffer <= HEX;
+			_binBuffer = HEX;
 	
+	//acts as the 'Four2One MUX'
+	//	'CAT' value used as a alternative to 'SEL' since they do the same thing
 	always 
 		case (CAT)
 			default	:	; //undefined
