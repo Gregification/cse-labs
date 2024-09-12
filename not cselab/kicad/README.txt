@@ -1,5 +1,8 @@
 
 
 sources & breif instructions for everything in the libraries folder
+	clone the github / gitlab ones
+
 https://github.com/Digi-Key/digikey-kicad-library
-	- add lib to libs folder. import from within kicad
+https://gitlab.com/kicad/libraries/kicad-symbols
+https://gitlab.com/kicad/libraries/kicad-footprints

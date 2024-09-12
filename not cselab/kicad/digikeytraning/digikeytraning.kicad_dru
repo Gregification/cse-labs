@@ -1,0 +1,1 @@
+(condition "A.Type == 'pad' && (B.Type == 'text' || B.Type == 'graphic')"))

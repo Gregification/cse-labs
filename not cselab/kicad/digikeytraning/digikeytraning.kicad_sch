@@ -1629,12 +1629,6 @@
 		)
 	)
 	(junction
-		(at 205.74 86.36)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "1bc3b5b5-b707-413c-bbf3-921ce7e4f25e")
-	)
-	(junction
 		(at 114.3 83.82)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -1645,12 +1639,6 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "3be3c285-049a-4732-8850-24105be33dbd")
-	)
-	(junction
-		(at 205.74 96.52)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "3f6c02c3-1ea5-4a37-b340-f27be00f9e25")
 	)
 	(junction
 		(at 181.61 91.44)
@@ -1841,16 +1829,6 @@
 			(type default)
 		)
 		(uuid "88f52848-3c66-4fc7-81f5-ef3bea23f1e7")
-	)
-	(wire
-		(pts
-			(xy 205.74 86.36) (xy 205.74 96.52)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "92eed0ba-9c9e-4866-84e2-bff953e5f8ba")
 	)
 	(wire
 		(pts
@@ -2092,7 +2070,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "00c644de-257f-4afd-a29c-ae2d32263621")
-		(property "Reference" "#PWR05"
+		(property "Reference" "#PWR010"
 			(at 205.74 116.84 0)
 			(effects
 				(font
@@ -2142,7 +2120,7 @@
 		(instances
 			(project "digikeytraning"
 				(path "/27567eb1-3407-41a5-b584-f3a6532fdacf"
-					(reference "#PWR05")
+					(reference "#PWR010")
 					(unit 1)
 				)
 			)
@@ -2158,7 +2136,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "06aac8b8-7335-4ad3-b8c6-c494cc0cbc28")
-		(property "Reference" "#PWR06"
+		(property "Reference" "#PWR02"
 			(at 101.6 76.2 0)
 			(effects
 				(font
@@ -2208,7 +2186,7 @@
 		(instances
 			(project ""
 				(path "/27567eb1-3407-41a5-b584-f3a6532fdacf"
-					(reference "#PWR06")
+					(reference "#PWR02")
 					(unit 1)
 				)
 			)
@@ -2240,7 +2218,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Resistor_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P7.62mm_Horizontal"
 			(at 161.29 93.218 90)
 			(effects
 				(font
@@ -2292,7 +2270,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "2c0b3ceb-a053-4c3d-baad-da66c985d557")
-		(property "Reference" "#PWR04"
+		(property "Reference" "#PWR08"
 			(at 181.61 115.57 0)
 			(effects
 				(font
@@ -2342,7 +2320,7 @@
 		(instances
 			(project "digikeytraning"
 				(path "/27567eb1-3407-41a5-b584-f3a6532fdacf"
-					(reference "#PWR04")
+					(reference "#PWR08")
 					(unit 1)
 				)
 			)
@@ -2358,7 +2336,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "356fd24b-f899-4279-9649-a317d22ae64d")
-		(property "Reference" "#PWR02"
+		(property "Reference" "#PWR01"
 			(at 88.9 115.57 0)
 			(effects
 				(font
@@ -2408,7 +2386,7 @@
 		(instances
 			(project "digikeytraning"
 				(path "/27567eb1-3407-41a5-b584-f3a6532fdacf"
-					(reference "#PWR02")
+					(reference "#PWR01")
 					(unit 1)
 				)
 			)
@@ -2424,7 +2402,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "3cfd9015-a73a-4e0b-92bd-6284a92c97a6")
-		(property "Reference" "#PWR010"
+		(property "Reference" "#PWR05"
 			(at 139.7 73.66 0)
 			(effects
 				(font
@@ -2474,7 +2452,7 @@
 		(instances
 			(project "digikeytraning"
 				(path "/27567eb1-3407-41a5-b584-f3a6532fdacf"
-					(reference "#PWR010")
+					(reference "#PWR05")
 					(unit 1)
 				)
 			)
@@ -2490,7 +2468,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "40e5dd14-83d2-49f8-ac17-25fad34cd03f")
-		(property "Reference" "#PWR09"
+		(property "Reference" "#PWR011"
 			(at 223.52 59.69 0)
 			(effects
 				(font
@@ -2540,7 +2518,7 @@
 		(instances
 			(project "digikeytraning"
 				(path "/27567eb1-3407-41a5-b584-f3a6532fdacf"
-					(reference "#PWR09")
+					(reference "#PWR011")
 					(unit 1)
 				)
 			)
@@ -2574,7 +2552,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Capacitor_THT:CP_Radial_D6.3mm_P2.50mm"
 			(at 181.61 99.06 0)
 			(effects
 				(font
@@ -2789,7 +2767,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "4cba21cf-36bd-45b1-9dfc-fab11e5ece7e")
-		(property "Reference" "#PWR011"
+		(property "Reference" "#PWR06"
 			(at 139.7 116.84 0)
 			(effects
 				(font
@@ -2839,7 +2817,7 @@
 		(instances
 			(project "digikeytraning"
 				(path "/27567eb1-3407-41a5-b584-f3a6532fdacf"
-					(reference "#PWR011")
+					(reference "#PWR06")
 					(unit 1)
 				)
 			)
@@ -2873,7 +2851,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Resistor_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P7.62mm_Horizontal"
 			(at 112.522 92.71 90)
 			(effects
 				(font
@@ -2925,7 +2903,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "5fd8df37-ae83-4474-b386-b64c6a0bc397")
-		(property "Reference" "#PWR08"
+		(property "Reference" "#PWR09"
 			(at 205.74 59.69 0)
 			(effects
 				(font
@@ -2975,7 +2953,7 @@
 		(instances
 			(project "digikeytraning"
 				(path "/27567eb1-3407-41a5-b584-f3a6532fdacf"
-					(reference "#PWR08")
+					(reference "#PWR09")
 					(unit 1)
 				)
 			)
@@ -2991,7 +2969,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "751caa09-de23-41b6-97bb-7c9a951b3e99")
-		(property "Reference" "#PWR01"
+		(property "Reference" "#PWR04"
 			(at 114.3 115.57 0)
 			(effects
 				(font
@@ -3041,7 +3019,7 @@
 		(instances
 			(project ""
 				(path "/27567eb1-3407-41a5-b584-f3a6532fdacf"
-					(reference "#PWR01")
+					(reference "#PWR04")
 					(unit 1)
 				)
 			)
@@ -3073,7 +3051,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "555_Badge:ICM7555-PDIP"
 			(at 140.97 86.36 0)
 			(effects
 				(font
@@ -3161,7 +3139,7 @@
 				(justify right)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "LED_THT:LED_D3.0mm"
 			(at 223.52 72.39 0)
 			(effects
 				(font
@@ -3231,7 +3209,7 @@
 				(justify right)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "LED_THT:LED_D3.0mm"
 			(at 205.74 72.39 0)
 			(effects
 				(font
@@ -3301,7 +3279,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Capacitor_THT:CP_Radial_D6.3mm_P2.50mm"
 			(at 114.3 102.87 0)
 			(effects
 				(font
@@ -3353,7 +3331,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "b02cefd7-8a0b-4e8e-8c40-a251b64c291d")
-		(property "Reference" "#PWR03"
+		(property "Reference" "#PWR07"
 			(at 167.64 115.57 0)
 			(effects
 				(font
@@ -3403,7 +3381,7 @@
 		(instances
 			(project "digikeytraning"
 				(path "/27567eb1-3407-41a5-b584-f3a6532fdacf"
-					(reference "#PWR03")
+					(reference "#PWR07")
 					(unit 1)
 				)
 			)
@@ -3419,7 +3397,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "b4b989a1-d6a9-4b9a-b1a0-52f5e243cdf3")
-		(property "Reference" "#PWR07"
+		(property "Reference" "#PWR03"
 			(at 114.3 76.2 0)
 			(effects
 				(font
@@ -3469,7 +3447,7 @@
 		(instances
 			(project ""
 				(path "/27567eb1-3407-41a5-b584-f3a6532fdacf"
-					(reference "#PWR07")
+					(reference "#PWR03")
 					(unit 1)
 				)
 			)
@@ -3503,7 +3481,7 @@
 				(justify right)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Resistor_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P7.62mm_Horizontal"
 			(at 207.518 62.23 90)
 			(effects
 				(font
@@ -3573,7 +3551,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Package_TO_SOT_THT:TO-92_Inline"
+		(property "Footprint" "digikey-footprints:TO-92-3"
 			(at 208.28 93.345 0)
 			(effects
 				(font
@@ -3647,7 +3625,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Resistor_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P7.62mm_Horizontal"
 			(at 189.23 93.218 90)
 			(effects
 				(font
@@ -3879,7 +3857,7 @@
 				(justify right)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Resistor_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P7.62mm_Horizontal"
 			(at 225.298 62.23 90)
 			(effects
 				(font
@@ -3949,7 +3927,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Resistor_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P7.62mm_Horizontal"
 			(at 112.522 80.01 90)
 			(effects
 				(font
@@ -4018,7 +3996,7 @@
 				(justify right)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Resistor_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P7.62mm_Horizontal"
 			(at 169.418 99.06 90)
 			(effects
 				(font
