@@ -15,3 +15,16 @@ THINGS TO DOWNLOAD
     avrdude : https://github.com/avrdudes/avrdude
     avr-gcc and avr-binutils : https://www.nongnu.org/avr-libc/user-manual/overview.html
 
+COMPILING & FLASHING
+    1. Compile for attiny85 - optimize for size
+        avr-gcc -Wall -Os -mmcu=attiny85 main.c
+
+    1.1 (optional) Get the assembly
+        avr-gcc -S -Os -mmcu=attiny85 main.c -o assembly.asm
+
+    2. Dump hex from out file
+        $ hexdump a.out
+        > certutil -encodehex a.out a.hex
+
+    3. avrdude gui
+        https://github.com/ZakKemble/AVRDUDESS
