@@ -1,9 +1,9 @@
 /**  
  * TARGET : ATtiny25/45/85
  * 
- * This is a very limited and simplified lib for the ATtiny25/45/85. 
+ * This is a limited but more intutive version of the offical libs for the ATtiny25/45/85. 
  *      this is intended to help someone get started with the AVR microcontroller.
- *      please use the official library if you anyhting significant. 
+ *      please use the official library(even though they suck) if your doing anything significant. 
  * 
  * CREDIT : if you(the reader) contribute anything append your name and what ever material you may have refrenced.
  *      put together by George Boone.
@@ -232,3 +232,13 @@
 #define TIFR_OCF0B_M            (1 << 3)
 //11.9.8
 #define TIFR_TOV0_M             (1 << 1)
+
+/**
+ * NOTES
+ * 
+ * in the offical lib....
+ * - PORT is the OUTPUT buffer, PIN is the INPUT buffer.
+ *      When you want to set the pin to a "high" or "low" voltage, write to the PORT register.
+ *      When you want to know what voltage is currently presented to a pin, read the PIN register.
+ *      - wtf
+ */

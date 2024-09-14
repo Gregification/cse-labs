@@ -7,6 +7,8 @@
  * blinks pin 0 using a ISR handler
  * 
  * - blink signal sent though pin 5
+ * - __vector_5 is trigged by the ISR every time the timer overflows. 
+ *      the timer is 8 bits, counting up 1 each 1024 ticks.
  */
 
 #ifndef __BLINK_H__

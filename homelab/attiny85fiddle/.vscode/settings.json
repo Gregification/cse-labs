@@ -1,6 +1,11 @@
 {
     "files.associations": {
         "array": "cpp",
-        "attiny_25_45_85_gelper.h": "c"
+        "attiny_25_45_85_gelper.h": "c",
+        "iotnx5.h": "c",
+        "portpins.h": "c",
+        "common.h": "c",
+        "version.h": "c",
+        "fuse.h": "c"
     }
 }
