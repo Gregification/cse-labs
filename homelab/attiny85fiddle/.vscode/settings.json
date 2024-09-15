@@ -6,6 +6,8 @@
         "portpins.h": "c",
         "common.h": "c",
         "version.h": "c",
-        "fuse.h": "c"
+        "fuse.h": "c",
+        "sleep.h": "c",
+        "delay.h": "c"
     }
 }

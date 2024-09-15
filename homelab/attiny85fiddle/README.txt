@@ -19,12 +19,15 @@ COMPILING & FLASHING
     1. Compile for attiny85 - optimize for size
         avr-gcc -Wall -Os -mmcu=attiny85 main.c
 
-    1.1 (optional) Get the assembly
-        avr-gcc -S -Os -mmcu=attiny85 main.c -o assembly.asm
+    2. make Intel hex from the output
+        avr-objcopy -O ihex -j .text -j .data a.out a.hex
 
-    2. Dump hex from out file
-        $ hexdump a.out
-        > certutil -encodehex a.out a.hex
-
-    3. avrdude gui
+    3. avrdude will flash the ihex
         https://github.com/ZakKemble/AVRDUDESS
+
+DUMP HEX
+    $ hexdump a.out
+    > certutil -encodehex a.out a.hex
+
+GET assembly
+    avr-gcc -S -Os -mmcu=attiny85 main.c -o a.asm
