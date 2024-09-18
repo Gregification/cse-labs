@@ -31,3 +31,4 @@ DUMP HEX
 
 GET assembly
     avr-gcc -S -Os -mmcu=attiny85 main.c -o a.asm
+    
