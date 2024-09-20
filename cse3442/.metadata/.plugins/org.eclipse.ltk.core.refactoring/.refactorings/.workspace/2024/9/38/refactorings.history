@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Delete 9 resources" deleteContents="false" description="Delete 9 resources" element1="/lab3/clock.c" element2="/lab3/clock.h" element3="/lab3/PortA.h" element4="/lab3/PortB.h" element5="/lab3/PortF.h" element6="/lab3/tm4c123gh6pm_startup_ccs.c" element7="/lab3/tm4c123gh6pm.cmd" element8="/lab3/tm4c123gh6pm.h" element9="/lab3/clock.o" flags="7" id="org.eclipse.ltk.core.refactoring.delete.resources" resources="9" stamp="1726622178004"/>
+</session>

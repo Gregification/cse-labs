@@ -10,7 +10,8 @@
 .thumb
 
 .const
-W3S_ITTR_N          .field   19999999
+; wait 3 seconds itterator initial value
+W3S_ITTR_N          .field   29999999
 
 .text
 
@@ -19,10 +20,9 @@ W3S_ITTR_N          .field   19999999
 wait3Seconds:                                                               ; time evaluation
                 LDR     R0, W3S_ITTR_N     ; itterating 'n' times           ; 1
                 NOP                                                         ; 1
-                NOP                                                         ; 1
     itterate:   SUB     R0, R0, #1                                          ; n
                 CBZ     R0, break                                           ; 1 + n * 3
-                B       itterate                                            ; 2n - 1
-    break:      BX      LR                                                  ; 2
+                B       itterate                                            ; 2n
+    break:      BX      LR                                                  ; 1
 
 .endm

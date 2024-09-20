@@ -1,4 +1,3 @@
-/.metadata/
 
 #ccs 
 /RemoteSystemsTempFiles
@@ -12,13 +11,10 @@ Debug/
 *.opt
 *.out
 *.mk
-*.metadata
 *.swp
 *.jxbrowser
 *.userdata
-*.metadata
 *.cproject
-#*.project
 *.launches
 *.settings
 *tm4c123gh6pm.h
