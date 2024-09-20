@@ -5498,3 +5498,138 @@ Command-line arguments:  -os win32 -ws win32 -arch x86_64 -product com.ti.ccstud
 
 !ENTRY org.eclipse.equinox.p2.metadata.repository 4 1000 2024-09-19 17:34:17.243
 !MESSAGE No repository found at file:/C:/Users/turtl/AppData/Local/Temp/ccs_d8ad286e-e8e5-491d-6b54-9d7d5c7c38a8/INSTALLER.
+
+!ENTRY org.eclipse.cdt.dsf 4 10005 2024-09-19 19:27:14.113
+!MESSAGE Request for monitor: 'RequestMonitor (com.ti.ccstudio.debug.service.BreakpointService$10$1@33875b47): Status ERROR: com.ti.ccstudio.debug code=10004 Error enabling this function: Target Access Failed com.ti.debug.engine.IBreakpointManager$BreakpointException: Error enabling this function: Target Access Failed' resulted in an error.
+!SUBENTRY 1 com.ti.ccstudio.debug 4 10004 2024-09-19 19:27:14.113
+!MESSAGE Error enabling this function: Target Access Failed
+!STACK 0
+com.ti.debug.engine.IBreakpointManager$BreakpointException: Error enabling this function: Target Access Failed
+	at com.ti.debug.engine.impl.BreakpointManager.checkForException(BreakpointManager.java:60)
+	at com.ti.debug.engine.impl.BreakpointManager.enable(BreakpointManager.java:115)
+	at com.ti.ccstudio.debug.service.contexts.BreakpointManagerDMContext.dsEnabled(BreakpointManagerDMContext.java:727)
+	at com.ti.ccstudio.debug.service.contexts.BreakpointManagerDMContext.modifyBreakpointProperties(BreakpointManagerDMContext.java:434)
+	at com.ti.ccstudio.debug.service.BreakpointService$10.safeRun(BreakpointService.java:736)
+	at com.ti.ccstudio.debug.SafeRunnable.run(SafeRunnable.java:30)
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Unknown Source)
+	at java.base/java.util.concurrent.FutureTask.run(Unknown Source)
+	at java.base/java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(Unknown Source)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(Unknown Source)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(Unknown Source)
+	at java.base/java.lang.Thread.run(Unknown Source)
+
+!ENTRY org.eclipse.cdt.dsf 4 10005 2024-09-19 19:27:14.114
+!MESSAGE Request for monitor: 'RequestMonitor (com.ti.ccstudio.debug.service.BreakpointService$10$1@33875b47): Status ERROR: com.ti.ccstudio.debug code=10004 Error enabling this function: Target Access Failed com.ti.debug.engine.IBreakpointManager$BreakpointException: Error enabling this function: Target Access Failed' resulted in an error.
+!SUBENTRY 1 com.ti.ccstudio.debug 4 10004 2024-09-19 19:27:14.114
+!MESSAGE Error enabling this function: Target Access Failed
+!STACK 0
+com.ti.debug.engine.IBreakpointManager$BreakpointException: Error enabling this function: Target Access Failed
+	at com.ti.debug.engine.impl.BreakpointManager.checkForException(BreakpointManager.java:60)
+	at com.ti.debug.engine.impl.BreakpointManager.enable(BreakpointManager.java:115)
+	at com.ti.ccstudio.debug.service.contexts.BreakpointManagerDMContext.dsEnabled(BreakpointManagerDMContext.java:727)
+	at com.ti.ccstudio.debug.service.contexts.BreakpointManagerDMContext.modifyBreakpointProperties(BreakpointManagerDMContext.java:434)
+	at com.ti.ccstudio.debug.service.BreakpointService$10.safeRun(BreakpointService.java:736)
+	at com.ti.ccstudio.debug.SafeRunnable.run(SafeRunnable.java:30)
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Unknown Source)
+	at java.base/java.util.concurrent.FutureTask.run(Unknown Source)
+	at java.base/java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(Unknown Source)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(Unknown Source)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(Unknown Source)
+	at java.base/java.lang.Thread.run(Unknown Source)
+
+!ENTRY org.eclipse.cdt.dsf 4 10005 2024-09-19 19:27:30.174
+!MESSAGE Request for monitor: '_Application_2_Stellaris In-Circuit Debug Interface/CORTEX_M4_0_Stellaris In-Circuit Debug Interface/CORTEX_M4_0_BreakpointManager_Stellaris In-Circuit Debug Interface/CORTEX_M4_0_BreakpointManager_Breakpoint(93)' resulted in an error.
+!SUBENTRY 1 com.ti.ccstudio.debug 4 10004 2024-09-19 19:27:30.174
+!MESSAGE Error enabling this function: Target Access Failed
+!STACK 0
+com.ti.debug.engine.IBreakpointManager$BreakpointException: Error enabling this function: Target Access Failed
+	at com.ti.debug.engine.impl.BreakpointManager.checkForException(BreakpointManager.java:60)
+	at com.ti.debug.engine.impl.BreakpointManager.enable(BreakpointManager.java:115)
+	at com.ti.ccstudio.debug.service.contexts.BreakpointManagerDMContext.dsEnabled(BreakpointManagerDMContext.java:727)
+	at com.ti.ccstudio.debug.service.contexts.BreakpointManagerDMContext.insertBreakpoint(BreakpointManagerDMContext.java:354)
+	at com.ti.ccstudio.debug.service.contexts.BreakpointManagerDMContext.insertBreakpoint(BreakpointManagerDMContext.java:315)
+	at com.ti.ccstudio.debug.service.BreakpointService.insertBreakpoint(BreakpointService.java:474)
+	at com.ti.ccstudio.debug.service.BreakpointService$8$1.handleCompleted(BreakpointService.java:598)
+	at org.eclipse.cdt.dsf.concurrent.RequestMonitor$2.run(RequestMonitor.java:317)
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Unknown Source)
+	at java.base/java.util.concurrent.FutureTask.run(Unknown Source)
+	at java.base/java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(Unknown Source)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(Unknown Source)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(Unknown Source)
+	at java.base/java.lang.Thread.run(Unknown Source)
+
+!ENTRY org.eclipse.cdt.dsf 4 10005 2024-09-19 19:34:00.407
+!MESSAGE Request for monitor: 'RequestMonitor (com.ti.ccstudio.debug.service.BreakpointService$10$1@15215e2c): Status ERROR: com.ti.ccstudio.debug code=10004 Error enabling this function: Target Access Failed com.ti.debug.engine.IBreakpointManager$BreakpointException: Error enabling this function: Target Access Failed' resulted in an error.
+!SUBENTRY 1 com.ti.ccstudio.debug 4 10004 2024-09-19 19:34:00.407
+!MESSAGE Error enabling this function: Target Access Failed
+!STACK 0
+com.ti.debug.engine.IBreakpointManager$BreakpointException: Error enabling this function: Target Access Failed
+	at com.ti.debug.engine.impl.BreakpointManager.checkForException(BreakpointManager.java:60)
+	at com.ti.debug.engine.impl.BreakpointManager.enable(BreakpointManager.java:115)
+	at com.ti.ccstudio.debug.service.contexts.BreakpointManagerDMContext.dsEnabled(BreakpointManagerDMContext.java:727)
+	at com.ti.ccstudio.debug.service.contexts.BreakpointManagerDMContext.modifyBreakpointProperties(BreakpointManagerDMContext.java:434)
+	at com.ti.ccstudio.debug.service.BreakpointService$10.safeRun(BreakpointService.java:736)
+	at com.ti.ccstudio.debug.SafeRunnable.run(SafeRunnable.java:30)
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Unknown Source)
+	at java.base/java.util.concurrent.FutureTask.run(Unknown Source)
+	at java.base/java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(Unknown Source)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(Unknown Source)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(Unknown Source)
+	at java.base/java.lang.Thread.run(Unknown Source)
+
+!ENTRY org.eclipse.cdt.dsf 4 10005 2024-09-19 19:34:00.408
+!MESSAGE Request for monitor: 'RequestMonitor (com.ti.ccstudio.debug.service.BreakpointService$10$1@15215e2c): Status ERROR: com.ti.ccstudio.debug code=10004 Error enabling this function: Target Access Failed com.ti.debug.engine.IBreakpointManager$BreakpointException: Error enabling this function: Target Access Failed' resulted in an error.
+!SUBENTRY 1 com.ti.ccstudio.debug 4 10004 2024-09-19 19:34:00.408
+!MESSAGE Error enabling this function: Target Access Failed
+!STACK 0
+com.ti.debug.engine.IBreakpointManager$BreakpointException: Error enabling this function: Target Access Failed
+	at com.ti.debug.engine.impl.BreakpointManager.checkForException(BreakpointManager.java:60)
+	at com.ti.debug.engine.impl.BreakpointManager.enable(BreakpointManager.java:115)
+	at com.ti.ccstudio.debug.service.contexts.BreakpointManagerDMContext.dsEnabled(BreakpointManagerDMContext.java:727)
+	at com.ti.ccstudio.debug.service.contexts.BreakpointManagerDMContext.modifyBreakpointProperties(BreakpointManagerDMContext.java:434)
+	at com.ti.ccstudio.debug.service.BreakpointService$10.safeRun(BreakpointService.java:736)
+	at com.ti.ccstudio.debug.SafeRunnable.run(SafeRunnable.java:30)
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Unknown Source)
+	at java.base/java.util.concurrent.FutureTask.run(Unknown Source)
+	at java.base/java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(Unknown Source)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(Unknown Source)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(Unknown Source)
+	at java.base/java.lang.Thread.run(Unknown Source)
+
+!ENTRY org.eclipse.cdt.dsf 4 10005 2024-09-19 19:34:00.938
+!MESSAGE Request for monitor: 'RequestMonitor (com.ti.ccstudio.debug.service.BreakpointService$10$1@75275a11): Status ERROR: com.ti.ccstudio.debug code=10004 Error enabling this function: Target Access Failed com.ti.debug.engine.IBreakpointManager$BreakpointException: Error enabling this function: Target Access Failed' resulted in an error.
+!SUBENTRY 1 com.ti.ccstudio.debug 4 10004 2024-09-19 19:34:00.938
+!MESSAGE Error enabling this function: Target Access Failed
+!STACK 0
+com.ti.debug.engine.IBreakpointManager$BreakpointException: Error enabling this function: Target Access Failed
+	at com.ti.debug.engine.impl.BreakpointManager.checkForException(BreakpointManager.java:60)
+	at com.ti.debug.engine.impl.BreakpointManager.enable(BreakpointManager.java:115)
+	at com.ti.ccstudio.debug.service.contexts.BreakpointManagerDMContext.dsEnabled(BreakpointManagerDMContext.java:727)
+	at com.ti.ccstudio.debug.service.contexts.BreakpointManagerDMContext.modifyBreakpointProperties(BreakpointManagerDMContext.java:434)
+	at com.ti.ccstudio.debug.service.BreakpointService$10.safeRun(BreakpointService.java:736)
+	at com.ti.ccstudio.debug.SafeRunnable.run(SafeRunnable.java:30)
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Unknown Source)
+	at java.base/java.util.concurrent.FutureTask.run(Unknown Source)
+	at java.base/java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(Unknown Source)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(Unknown Source)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(Unknown Source)
+	at java.base/java.lang.Thread.run(Unknown Source)
+
+!ENTRY org.eclipse.cdt.dsf 4 10005 2024-09-19 19:34:00.939
+!MESSAGE Request for monitor: 'RequestMonitor (com.ti.ccstudio.debug.service.BreakpointService$10$1@75275a11): Status ERROR: com.ti.ccstudio.debug code=10004 Error enabling this function: Target Access Failed com.ti.debug.engine.IBreakpointManager$BreakpointException: Error enabling this function: Target Access Failed' resulted in an error.
+!SUBENTRY 1 com.ti.ccstudio.debug 4 10004 2024-09-19 19:34:00.939
+!MESSAGE Error enabling this function: Target Access Failed
+!STACK 0
+com.ti.debug.engine.IBreakpointManager$BreakpointException: Error enabling this function: Target Access Failed
+	at com.ti.debug.engine.impl.BreakpointManager.checkForException(BreakpointManager.java:60)
+	at com.ti.debug.engine.impl.BreakpointManager.enable(BreakpointManager.java:115)
+	at com.ti.ccstudio.debug.service.contexts.BreakpointManagerDMContext.dsEnabled(BreakpointManagerDMContext.java:727)
+	at com.ti.ccstudio.debug.service.contexts.BreakpointManagerDMContext.modifyBreakpointProperties(BreakpointManagerDMContext.java:434)
+	at com.ti.ccstudio.debug.service.BreakpointService$10.safeRun(BreakpointService.java:736)
+	at com.ti.ccstudio.debug.SafeRunnable.run(SafeRunnable.java:30)
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Unknown Source)
+	at java.base/java.util.concurrent.FutureTask.run(Unknown Source)
+	at java.base/java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(Unknown Source)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(Unknown Source)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(Unknown Source)
+	at java.base/java.lang.Thread.run(Unknown Source)

@@ -10,19 +10,21 @@
 .thumb
 
 .const
-W3S_ITTR_N          .field   19999999
+W3S_ITTR_N          .field   29999998
 
 .text
 
 ; blocks for 3 seconds
-; function wastes 120M clock cycles. not accounting arrival and departure time
+; function wastes [120M - 1] clock cycles, next command called after this runs on the 120Mth clock since this funciton was called
 wait3Seconds:                                                               ; time evaluation
                 LDR     R0, W3S_ITTR_N     ; itterating 'n' times           ; 1
                 NOP                                                         ; 1
                 NOP                                                         ; 1
-    itterate:   SUB     R0, R0, #1                                          ; n
-                CBZ     R0, break                                           ; 1 + n * 3
-                B       itterate                                            ; 2n - 1
-    break:      BX      LR                                                  ; 2
+                NOP                                                         ; 1
+                NOP                                                         ; 1
+itterate:       SUB     R0, R0, #1                                          ; n
+                CBZ     R0, break                                           ; n + 3
+                B       itterate                                            ; 2n
+break:          BX      LR                                                  ; 2
 
 .endm

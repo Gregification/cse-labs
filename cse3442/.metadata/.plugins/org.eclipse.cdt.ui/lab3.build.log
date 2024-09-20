@@ -6,26 +6,15 @@
 Building file: "../src/lab3a_GeorgeBoone_s.s"
 Invoking: Arm Compiler
 "C:/ti/ccs1280/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/bin/armcl" -mv7M4 --code_state=16 --float_support=FPv4SPD16 -me --include_path="D:/cse-labs/cse3442/lab3" --include_path="C:/ti/ccs1280/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include" --define=ccs="ccs" --define=PART_TM4C123GH6PM -g --gcc --diag_warning=225 --diag_wrap=off --display_error_number --abi=eabi --preproc_with_compile --preproc_dependency="src/lab3a_GeorgeBoone_s.d_raw" --obj_directory="src"  "../src/lab3a_GeorgeBoone_s.s"
+Finished building: "../src/lab3a_GeorgeBoone_s.s"
  
->> Compilation failure
-src/subdir_rules.mk:16: recipe for target 'src/lab3a_GeorgeBoone_s.obj' failed
+Building target: "lab3.out"
+Invoking: Arm Linker
+"C:/ti/ccs1280/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/bin/armcl" -mv7M4 --code_state=16 --float_support=FPv4SPD16 -me --define=ccs="ccs" --define=PART_TM4C123GH6PM -g --gcc --diag_warning=225 --diag_wrap=off --display_error_number --abi=eabi -z -m"lab3.map" --heap_size=0 --stack_size=512 -i"C:/ti/ccs1280/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/lib" -i"C:/ti/ccs1280/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include" --reread_libs --diag_wrap=off --display_error_number --warn_sections --xml_link_info="lab3_linkInfo.xml" --rom_model -o "lab3.out" "./src/clock.obj" "./src/lab3a_GeorgeBoone.obj" "./src/lab3a_GeorgeBoone_s.obj"  -llibc.a 
+<Linking>
+warning #10247-D: creating output section ".text" without a SECTIONS specification
+warning #10247-D: creating output section ".stack" without a SECTIONS specification
+Finished building target: "lab3.out"
  
-INTERNAL ERROR: C:\ti\ccs1280\ccs\tools\compiler\ti-cgt-arm_20.2.7.LTS\bin\armasm.exe experienced a segmentation fault
-                  while processing section .text file ../src/lab3a_GeorgeBoone_s.s line 23
- 
-This is caused by a defect in the TI Assembler.
-TI Customer Support may be able to suggest a workaround to avoid this.
- 
-Upgrading to the newest version of the compiler may fix this problem.
- 
-Contact TI in the E2E support forums at http://e2e.ti.com under
-"Development Tools", "TI C/C++ Compiler".  See the link titled
-"Submitting an issue".
- 
-We need to see this ENTIRE error message and a complete, reproducible
-test case including ALL of the command-line options.
- 
-gmake: *** [src/lab3a_GeorgeBoone_s.obj] Error 1
-gmake: Target 'all' not remade because of errors.
 
 **** Build Finished ****
