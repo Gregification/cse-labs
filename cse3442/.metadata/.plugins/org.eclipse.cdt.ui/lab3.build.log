@@ -3,18 +3,31 @@
 
 "C:\\ti\\ccs1280\\ccs\\utils\\bin\\gmake" -k -j 24 all -O 
  
+Building file: "../src/lab3b_GeorgeBoone.c"
+Invoking: Arm Compiler
+"C:/ti/ccs1280/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/bin/armcl" -mv7M4 --code_state=16 --float_support=FPv4SPD16 -me --include_path="D:/cse-labs/cse3442/lab3" --include_path="C:/ti/ccs1280/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include" --define=ccs="ccs" --define=PART_TM4C123GH6PM -g --gcc --diag_warning=225 --diag_wrap=off --display_error_number --abi=eabi --preproc_with_compile --preproc_dependency="src/lab3b_GeorgeBoone.d_raw" --obj_directory="src"  "../src/lab3b_GeorgeBoone.c"
+ 
+>> Compilation failure
+src/subdir_rules.mk:9: recipe for target 'src/lab3b_GeorgeBoone.obj' failed
+"../src/lab3b_GeorgeBoone.c", line 32: fatal error #1965: cannot open source file "uart0.h"
+1 catastrophic error detected in the compilation of "../src/lab3b_GeorgeBoone.c".
+Compilation terminated.
+gmake: *** [src/lab3b_GeorgeBoone.obj] Error 1
 Building file: "../src/lab3a_GeorgeBoone_s.s"
 Invoking: Arm Compiler
 "C:/ti/ccs1280/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/bin/armcl" -mv7M4 --code_state=16 --float_support=FPv4SPD16 -me --include_path="D:/cse-labs/cse3442/lab3" --include_path="C:/ti/ccs1280/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include" --define=ccs="ccs" --define=PART_TM4C123GH6PM -g --gcc --diag_warning=225 --diag_wrap=off --display_error_number --abi=eabi --preproc_with_compile --preproc_dependency="src/lab3a_GeorgeBoone_s.d_raw" --obj_directory="src"  "../src/lab3a_GeorgeBoone_s.s"
 Finished building: "../src/lab3a_GeorgeBoone_s.s"
  
-Building target: "lab3.out"
-Invoking: Arm Linker
-"C:/ti/ccs1280/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/bin/armcl" -mv7M4 --code_state=16 --float_support=FPv4SPD16 -me --define=ccs="ccs" --define=PART_TM4C123GH6PM -g --gcc --diag_warning=225 --diag_wrap=off --display_error_number --abi=eabi -z -m"lab3.map" --heap_size=0 --stack_size=512 -i"C:/ti/ccs1280/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/lib" -i"C:/ti/ccs1280/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include" --reread_libs --diag_wrap=off --display_error_number --warn_sections --xml_link_info="lab3_linkInfo.xml" --rom_model -o "lab3.out" "./src/clock.obj" "./src/lab3a_GeorgeBoone.obj" "./src/lab3a_GeorgeBoone_s.obj"  -llibc.a 
-<Linking>
-warning #10247-D: creating output section ".text" without a SECTIONS specification
-warning #10247-D: creating output section ".stack" without a SECTIONS specification
-Finished building target: "lab3.out"
+Building file: "../src/clock.c"
+Invoking: Arm Compiler
+"C:/ti/ccs1280/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/bin/armcl" -mv7M4 --code_state=16 --float_support=FPv4SPD16 -me --include_path="D:/cse-labs/cse3442/lab3" --include_path="C:/ti/ccs1280/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include" --define=ccs="ccs" --define=PART_TM4C123GH6PM -g --gcc --diag_warning=225 --diag_wrap=off --display_error_number --abi=eabi --preproc_with_compile --preproc_dependency="src/clock.d_raw" --obj_directory="src"  "../src/clock.c"
+Finished building: "../src/clock.c"
  
+Building file: "../src/lab3a_GeorgeBoone.c"
+Invoking: Arm Compiler
+"C:/ti/ccs1280/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/bin/armcl" -mv7M4 --code_state=16 --float_support=FPv4SPD16 -me --include_path="D:/cse-labs/cse3442/lab3" --include_path="C:/ti/ccs1280/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include" --define=ccs="ccs" --define=PART_TM4C123GH6PM -g --gcc --diag_warning=225 --diag_wrap=off --display_error_number --abi=eabi --preproc_with_compile --preproc_dependency="src/lab3a_GeorgeBoone.d_raw" --obj_directory="src"  "../src/lab3a_GeorgeBoone.c"
+Finished building: "../src/lab3a_GeorgeBoone.c"
+ 
+gmake: Target 'all' not remade because of errors.
 
 **** Build Finished ****
