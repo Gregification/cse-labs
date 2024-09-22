@@ -2,8 +2,5 @@ Release/*
 .xdchelp
 config/*
 .launches/*
-
-Debug/*
+*Debug*
 /.metadata/
-.js*
-*.obj
