@@ -6,3 +6,4 @@ config/*
 Debug/*
 /.metadata/
 .js*
+*.obj

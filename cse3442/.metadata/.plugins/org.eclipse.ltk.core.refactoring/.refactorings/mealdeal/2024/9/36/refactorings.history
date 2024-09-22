@@ -1,4 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<session version="1.0">
-<refactoring comment="Rename resource &apos;mealdeal/src/inits.h&apos; to &apos;Losh.h&apos;" description="Rename resource &apos;inits.h&apos;" flags="7" id="org.eclipse.ltk.core.refactoring.rename.resource" input="src/inits.h" name="Losh.h" stamp="1725150383747" updateReferences="true"/>
-</session>

@@ -44,6 +44,7 @@ int main(void) {
     //actual ------------------------------------------------------
 
     putsUart0("\v\r\nserial fiddle");
+    PRNT_NEWLINE;
 
     char raw_str[RAW_STR_LEN_MAX];
     uint8_t raw_str_len = 0;
