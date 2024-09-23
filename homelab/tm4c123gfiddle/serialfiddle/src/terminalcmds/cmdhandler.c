@@ -9,88 +9,94 @@
 #include <string.h>
 #include "cmdhandler.h"
 
-CmdHandler * findHandler(CmdHandler * handlers_arr, uint8_t arr_n, char * str, uint8_t str_n){
+CmdHandler * findHandler_e(CmdHandler * h, char * str) {
+    return findHandler(
+            h->handlers_begin,
+            h->handlers_end,
+            str,
+            str + strlen(str)
+        );
+}
+CmdHandler * findHandler(CmdHandler ** h_arr_begin, CmdHandler ** h_arr_end, char * str_begin, char * str_end){
 
     //search for args that match string
+    //  instead of keeping a dynamic array of current matches this just makes 2 loops through the list.
+    //  the first loop finds the highest match strength & number of matches, the second loop runs if there's
+    //  no exact match to print out all the possible matches
 
-    uint8_t
-        matchStrength = 0,  //current strength of command
-        arr_i;              //cmd iterator
+    uint8_t matchStrength = 0;  //current strength of command
+    size_t numMatches = 0;      //match counter
+    CmdHandler ** ret;          //first strongest match
+    CmdHandler ** h_i;          //iterator
 
-    uint8_t
-        matches_n = 0,
-        matches_s = 3;
-    CmdHandler * matches = malloc(matches_s * sizeof(CmdHandler*));
-
-    for(arr_i = 0; arr_i < arr_n; arr_i++){
-        uint8_t
-            curr_strength = 0,      //strength of current command
-            str_i;                  //string iterator
-
-        //find strength of match
-        //  strength => number of consecutive matching chars form the start
-        for(str_i = 0; str_i < str_n; str_i++){
-            bool charMatch =
-                       handlers_arr[arr_i].name[str_i] != '\0'          //if is not end of command name
-                    && handlers_arr[arr_i].name[str_i] == str[str_i];   //if char of command name matches the input
-
-            if(charMatch)
-                curr_strength++;
-            else
-                break;
-        }
-
-        //filter
+    for(h_i = h_arr_begin; h_i != h_arr_end; h_i++){
+        uint8_t curr_strength = cmdMatchStrength((*h_i)->name, str_begin);
 
         if(curr_strength < matchStrength)
             continue;
 
         if(curr_strength > matchStrength){
             matchStrength = curr_strength;
-            matches_n = 0;
+            numMatches = 1;
+            ret = h_i;
+        } else { //else matches == matchStrength
+            numMatches++;
         }
 
-        //add match to list
-
-        //resize list as needed
-        if(matches_n == matches_s) {
-            //with consideration of overflow, list shouldn't be this big anyways
-
-            if(matches_s == 255){
-                matches_n = 0;
-            } else {
-                if(matches_s <= matches_s + 5)
-                    matches_s = 255;
-                else
-                    matches_s += 5;
-
-                if(!(matches = realloc(matches, matches_s))){
-                    //bad alloc. quit!
-                    goto quit;
-                }
-            }
-        }
-
-        matches[matches_n++] = handlers_arr[arr_i];
     }
 
-quit: {
-        CmdHandler * ret = 0;
+    //if single & exact match
+    if(numMatches == 1 && strcmp((*ret)->name, str_begin) == 0){
+        putsUart0("exact match\r\n");
+        putcUart0('\t');
+        putsUart0((*ret)->name);
+        putsUart0("\r\n");
 
-        //if single & exact match
-        if(matches_n == 1 && strlen(matches[matches_n - 1].name) == matchStrength){
-            ret = &(matches[matches_n - 1]);
+    } else { //else print out possibilities
+        putsUart0("unknown handler \"");
+        putsUart0(str_begin);
+        putsUart0("\", similarly named handlers listed\r\n");
 
-        } else { //else print out possibilities
-
-            for(arr_i = 0; arr_i < matches_n; arr_i++){
+        //loop though all possible matches and find the ones that have the same strength(the max)
+        // start at 'ret' because thats the first instance of a max.
+        for(h_i = ret; h_i != h_arr_end; h_i++){
+            if(matchStrength == cmdMatchStrength((*h_i)->name, str_begin)){
                 putcUart0('\t');
-                putsUart0(matches[arr_i].name);
+                putsUart0((*h_i)->name);
                 putsUart0("\r\n");
             }
         }
-
-        free(matches);
-        return ret;
     }
+
+    return *ret;
 }
+
+uint8_t sizeofWord(const char * str){
+    char * r = strchr(str, ' ');
+
+    if(r)
+        return r - str + 1;
+
+    return 0;
+}
+
+uint8_t cmdMatchStrength(const char * name, const char * str){
+    uint8_t curr_strength = 0;  //strength of current command
+    char * str_i;               //string iterator
+
+    //find strength of match
+    //  strength => number of consecutive matching chars form the start
+    for(str_i = str; str_i <= str_end; str_i++){
+        bool charMatch =
+                   (*h_i)->name[str_i - str_begin] != '\0'          //if is not end of command name
+                && (*h_i)->name[str_i - str_begin] == str_i[0];   //if char of command name matches the input
+
+        if(charMatch)
+            curr_strength++;
+        else
+            break;
+    }
+
+    return curr_strength;
+}
+

@@ -101,9 +101,7 @@ int main(void) {
 
         if(!is_raw_complete){
             //warn user
-            //alternatively you could have the max be parsed to string but i haven't figured out how to do that during compile time.
-            putsUart0("input too long, max: 255");
-            continue;
+            putsUart0("input truncated, max: 255");
         }
 
         raw_str[raw_str_len] = '\0';
@@ -118,7 +116,7 @@ int main(void) {
 }
 
 void pushHandler(CmdHandler* h){
-    if(handler_count != 0 && handlers[handler_count-1] == h)
+    if(handler_count != 0 && handlers[handler_count - 1] == h)
         return;
 
     if(handler_count == MAX_HANDLER_DEPTH - 1){
@@ -127,7 +125,7 @@ void pushHandler(CmdHandler* h){
         for(i = 2; i < MAX_HANDLER_DEPTH; i++)
             handlers[i-1] = handlers[i];
 
-        handlers[MAX_HANDLER_DEPTH-1] = h;
+        handlers[MAX_HANDLER_DEPTH - 1] = h;
     } else {
         handlers[handler_count++] = h;
     }
@@ -137,7 +135,7 @@ void pushHandler(CmdHandler* h){
 
 void popHandler(){
     if(handler_count == 0) {
-        pushHandler(&handler_root);
+        pushHandler(&h_root);
     } else {
         handler_count--;
         curr_handler = handlers[handler_count];

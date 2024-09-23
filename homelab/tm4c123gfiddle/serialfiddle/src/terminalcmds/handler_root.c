@@ -6,19 +6,25 @@
  */
 
 #include "handler_root.h"
-#include "../losh/uart0.h"
 
+#include "handler_help.h"
 
-CmdHandler* handlers[] = {
-
-    };
-
-
-CMD_HANDLER_SETUP(
-        root,
-        root of the handler tree
-    ){
-
-    return &handler_root;
+static CmdHandler * leafs[] = {
+                      &h_root,
+                      &h_help
 };
 
+static CMD_NAMED_HANDLER(root);
+CmdHandler h_root = {
+                           .name =              "root",
+                           .description =       "root of the handler tree",
+                           .onStr =             _handler_root,
+                           .handlers_begin =    leafs,
+                           .handlers_end =      leafs + 2
+};
+
+CMD_NAMED_HANDLER(root){
+    findHandler_e(&h_root, str);
+
+    return &h_root;
+};
