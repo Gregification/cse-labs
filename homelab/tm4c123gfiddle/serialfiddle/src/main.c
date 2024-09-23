@@ -15,8 +15,8 @@
 
 //actual length is n-1. i.e., n=4 => 3 letters (+1 terminator)
 #define RAW_STR_LEN_MAX         255
-//probably wont ever need more than 3, don't make more than 255 without updating data types
-#define MAX_HANDLER_DEPTH       7
+//probably wont ever need more than 10, don't make more than 255 without updating data types
+#define MAX_HANDLER_DEPTH       15
 #define PRNT_NEWLINE            putsUart0("\r\n");
 
 //current handler
