@@ -24,10 +24,10 @@ CmdHandler * findHandler(CmdHandler ** h_arr_begin, CmdHandler ** h_arr_end, cha
     //  the first loop finds the highest match strength & number of matches, the second loop runs if there's
     //  no exact match to print out all the possible matches
 
-    uint8_t matchStrength = 0;  //current strength of command
-    size_t numMatches = 0;      //match counter
-    CmdHandler ** ret;          //first strongest match
-    CmdHandler ** h_i;          //iterator
+    uint8_t matchStrength = 0;          //current strength of command
+    size_t numMatches = 0;              //match counter
+    CmdHandler ** ret = h_arr_begin;    //first strongest match
+    CmdHandler ** h_i;                  //iterator
 
     for(h_i = h_arr_begin; h_i != h_arr_end; h_i++){
         uint8_t curr_strength = cmdMatchStrength((*h_i)->name, str_begin);
@@ -55,7 +55,7 @@ CmdHandler * findHandler(CmdHandler ** h_arr_begin, CmdHandler ** h_arr_end, cha
     } else { //else print out possibilities
         putsUart0("unknown handler \"");
         putsUart0(str_begin);
-        putsUart0("\", similarly named handlers listed\r\n");
+        putsUart0("\", similar available handlers listed\r\n");
 
         //loop though all possible matches and find the ones that have the same strength(the max)
         // start at 'ret' because thats the first instance of a max.
@@ -82,19 +82,15 @@ uint8_t sizeofWord(const char * str){
 
 uint8_t cmdMatchStrength(const char * name, const char * str){
     uint8_t curr_strength = 0;  //strength of current command
-    char * str_i;               //string iterator
+    const char * str_i  = str;  //string iterator
+    const char * name_i = name; //name iterator
 
     //find strength of match
     //  strength => number of consecutive matching chars form the start
-    for(str_i = str; str_i <= str_end; str_i++){
-        bool charMatch =
-                   (*h_i)->name[str_i - str_begin] != '\0'          //if is not end of command name
-                && (*h_i)->name[str_i - str_begin] == str_i[0];   //if char of command name matches the input
-
-        if(charMatch)
-            curr_strength++;
-        else
-            break;
+    while((*name_i) == (*str_i) && (*name_i) != '\0'){
+        curr_strength++;
+        str_i++;
+        name_i++;
     }
 
     return curr_strength;
