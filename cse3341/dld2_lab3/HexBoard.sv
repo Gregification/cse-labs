@@ -44,10 +44,10 @@ module HexBoard(
 	always
 		case(CAT)
 			default	:	; //undefined
-			4'b0001	:	_currentBin = _binBuffer[12+:4];
-			4'b0010	:	_currentBin = _binBuffer[8+:4];
-			4'b0100	:	_currentBin = _binBuffer[4+:4];
-			4'b1000	:	_currentBin = _binBuffer[0+:4];
+			4'b0001	:	_curr_digit_bin = _value_buffer[12+:4];
+			4'b0010	:	_curr_digit_bin = _value_buffer[8+:4];
+			4'b0100	:	_curr_digit_bin = _value_buffer[4+:4];
+			4'b1000	:	_curr_digit_bin = _value_buffer[0+:4];
 		endcase
 	
 	/**
@@ -65,11 +65,12 @@ module HexBoard(
 	always_ff @ (posedge CLK, negedge RESET) begin
 		if(RESET == 1'b0)
 			CAT = 4'd0;
-		else if(CLK == 1'b1)
+		else if(CLK == 1'b1) begin
 			CAT = CAT << 1;
 			
 			if(CAT == 4'd0)
 				CAT = 4'd1;
+		end
 	end
 	
 endmodule
