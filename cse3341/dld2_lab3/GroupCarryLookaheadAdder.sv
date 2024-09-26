@@ -6,9 +6,6 @@ George Boone
 wiring done using general formula of C_1 = G_0 | ( P_0 & C_0 )
 
 other things
-	- somewhat different approach than what figure 5 suggested, it didnt say required. (honestly i didnt realise figure 5 existed at the time)
-	- the GCLA4 module was replaced by the FullAdder (incorrect name) which is actually a GCLA2 module
-			so theres 8 GCLA2's instead of 4 GCLA4's
 	- hardcoded equations since I couldnt get bool equations to expand automatically
 	- hardcoded valuses because I hard coded the equations
 	- looked into verilog 'funcitons' and 'generate loops' but neither seem to expand boolean algebra
@@ -19,11 +16,11 @@ module GroupCarryLookaheadAdder(
 		input ADD_SUBTRACT,
 	
 		output [7:0] R,
-		output logic [7:0] C		//carry out values
+		output logic [8:0] C		//carry in values
 	);
 	
 	
-	wire [7:0] g, p, s;
+	logic [7:0] g, p, s;
 	
 	//setup adders and wire the carries, g, and p
 	generate
@@ -32,7 +29,7 @@ module GroupCarryLookaheadAdder(
 			FullAdder __full_adder (
 					.A(A[i]),
 					.B(B[i] ^ ADD_SUBTRACT),
-					.Cin( i == 0 ? 0 : C[i-1]),
+					.Cin(i == 0 ? ADD_SUBTRACT : C[i]),
 					
 					.S(R[i]),
 					.G(g[i]),
@@ -43,10 +40,11 @@ module GroupCarryLookaheadAdder(
 	
 	//manually setup C[0]
 	// exact same value as the first adder module but it gets messy if i try to take it form there
-	assign C[0] = A[0] & (B[0] ^ ADD_SUBTRACT);
+	//assign C[0] = A[0] & (B[0] ^ ADD_SUBTRACT);
 	
-	//brute force it, see comments at top of this file for reasoning
-	//carry look ahead equation for carrys
+	
+	//brute force it, see comments at top of this file for my reasoning
+	//carry lookahead equation for carries
 	//	equations were generated with some custom java (see end of file)
 	assign C[1] = (g[0]) | (C[0] & p[0]);
 	assign C[2] = (g[0] & p[1]) | (C[0] & p[0] & p[1]) | (g[1]);
@@ -55,7 +53,8 @@ module GroupCarryLookaheadAdder(
 	assign C[5] = (g[0] & p[1] & p[2] & p[3] & p[4]) | (C[0] & p[0] & p[1] & p[2] & p[3] & p[4]) | (g[1] & p[2] & p[3] & p[4]) | (g[2] & p[3] & p[4]) | (g[3] & p[4]) | (g[4]);
 	assign C[6] = (g[0] & p[1] & p[2] & p[3] & p[4] & p[5]) | (C[0] & p[0] & p[1] & p[2] & p[3] & p[4] & p[5]) | (g[1] & p[2] & p[3] & p[4] & p[5]) | (g[2] & p[3] & p[4] & p[5]) | (g[3] & p[4] & p[5]) | (g[4] & p[5]) | (g[5]);
 	assign C[7] = (g[0] & p[1] & p[2] & p[3] & p[4] & p[5] & p[6]) | (C[0] & p[0] & p[1] & p[2] & p[3] & p[4] & p[5] & p[6]) | (g[1] & p[2] & p[3] & p[4] & p[5] & p[6]) | (g[2] & p[3] & p[4] & p[5] & p[6]) | (g[3] & p[4] & p[5] & p[6]) | (g[4] & p[5] & p[6]) | (g[5] & p[6]) | (g[6]);
-
+	assign C[8] = (g[0] & p[1] & p[2] & p[3] & p[4] & p[5] & p[6] & p[7]) | (C[0] & p[0] & p[1] & p[2] & p[3] & p[4] & p[5] & p[6] & p[7]) | (g[1] & p[2] & p[3] & p[4] & p[5] & p[6] & p[7]) | (g[2] & p[3] & p[4] & p[5] & p[6] & p[7]) | (g[3] & p[4] & p[5] & p[6] & p[7]) | (g[4] & p[5] & p[6] & p[7]) | (g[5] & p[6] & p[7]) | (g[6] & p[7]) | (g[7]);
+	
 endmodule
 
 
@@ -64,7 +63,7 @@ endmodule
     public static void main(String[] args) {
         ArrayList<String> s = new ArrayList<String>(Arrays.asList("g[0]","C[0] & p[0]"));
 
-        for(int i = 1; i < 8; i++){
+        for(int i = 1; i < 9; i++){
             c(i, s);
             System.out.print("C[" + (i) + "] = ");
 

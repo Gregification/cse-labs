@@ -10,21 +10,21 @@ represents the module named "Condition Code Logic" on Figure 6 of design requiem
 	didnt see anything in hte lab docs saying we couldnt do this either.
 	
 	i.e., CARRY_OUTS[0]==1 => first bit[0] had a carry out.
+	
+- hardcoded values because of spaghetti code
 */
 
-module ConditionCodeLogic #(
-		parameter N = 8
-	)(
-		input [N - 1:0] R,
-		input [N - 1:0] CARRY_OUTS,
+module ConditionCodeLogic (
+		input [7:0] R,
+		input [8:0] CARRY_INS,
 		
 		output OVR,			//overflow
 		output ZERO,		//zero
 		output NEG			//negative
 	);
-
-	assign OVE	= CARRY_OUTS[N - 1] ^ CARRY_OUTS[N - 2];	// C_(n) xor C_(n-1)
-	assign ZERO = R == 8'd0;	
-	assign NEG	= R[N - 1];			//value of MSB
+	
+	assign OVR	= CARRY_INS[8] ^ CARRY_INS[7];	// C_(n) xor C_(n-1)
+	assign ZERO = R == 0;	
+	assign NEG	= R[7];			//value of MSB
 	
 endmodule

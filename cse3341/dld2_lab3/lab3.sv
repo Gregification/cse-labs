@@ -13,6 +13,7 @@ George Boone
 */
 
 //size of primary registers
+//		this is not actually dynamic, spaghetti code.
 `define REG_P_N 8
 
 module lab3(
@@ -27,6 +28,7 @@ module lab3(
 		
 		//UI
 		input [9:0] SWS,
+		input [1:0] LP_SWS,
 		
 		output [3:0] HEXBOARD_CAT,
 		output [6:0] HEXBOARD_SEG,
@@ -38,13 +40,13 @@ module lab3(
 	
 	//wire naming scheme according to diragram on page 4 of the lab description
 	wire [`REG_P_N - 1:0] A, B, Aout, Bout, R;
-	wire [3:0] CCout;
+	wire [3:0] CCout;	//{OVR, ZERO, NEG, Cout}
 	wire [2:0] CCLout;//output of condition code logic
 	wire Cout;
 	
 	//additional wires
 	wire [`REG_P_N - 1:0] NUM = SWS[0+:8];
-	wire [`REG_P_N - 1:0] CARRY_OUTS;
+	wire [`REG_P_N:0] CARRY_INS;
 	wire ADD_SUBTRACT;
 	reg OUT_DELAYED;
 	wire [31:0] _ladder;
@@ -54,7 +56,7 @@ module lab3(
 	assign B = NUM;
 	assign ADD_SUBTRACT = SWS[9];
 	
-	assign RLEDS = SWS;
+	assign RLEDS = SWS[8] ? CARRY_INS[1+:8] : CCout; 
 	
 	//-----------------------------------------------------------------------------------------------------
 	// REGISTER MODULES
@@ -107,14 +109,12 @@ module lab3(
 			.ADD_SUBTRACT(ADD_SUBTRACT),
 			
 			.R(R),
-			.C(CARRY_OUTS)
+			.C(CARRY_INS)
 		);
 	
-	ConditionCodeLogic #(
-			.N(`REG_P_N)
-		) __CCL (
+	ConditionCodeLogic __CCL (
 			.R(R),
-			.CARRY_OUTS(CARRY_OUTS),
+			.CARRY_INS(CARRY_INS),
 			
 			.OVR(CCLout[0]),
 			.ZERO(CCLout[1]),
@@ -123,8 +123,17 @@ module lab3(
 
 	//-----------------------------------------------------------------------------------------------------
 	// NON CORE MODULES
-	//		modeuls that arnt related to the core design. mostly just UI
+	//		modeuls that arnt related to the core design. just UI
+	//		note that there are some logical functions going on, this is only to get the abs of 2's comp.
+	//			so the display modules will put out something legible.
+	//			this is purely a post processing step, it does not effect the core modules in any way.
 	//-----------------------------------------------------------------------------------------------------
+	
+	reg [6:0] A_abs, B_abs, R_abs; 
+	
+	assign A_abs = Aout[7] ? (~Aout[0+:7] + 1'd1) : Aout;
+	assign B_abs = Bout[7] ? (~Bout[0+:7] + 1'd1) : Bout;
+	assign R_abs = R   [7] ? (~R   [0+:7] + 1'd1) : R;
 	
 	ClockLadderN #(
 			.N(32)
@@ -135,39 +144,51 @@ module lab3(
 		);
 		
 	HexBoard __hexboard(
-			.LOAD(OUT & _ladder[20]),
+			.LOAD(OUT_DELAYED & _ladder[20]),
 			.RESET(CLEAR),
 			.CLK(_ladder[17]),
-			.VALUE(R),
+			.VALUE({R[7], 5'b0, R_abs}),	//shuffle sign bit over a few hex
 			
 			.CAT(HEXBOARD_CAT),
 			.SEG(HEXBOARD_SEG)
 		);
 	
-	// display Aout in launchpad hex slots 2, 3
+	// display Bout in launchpad hex slots 0, 1
 	Bin2SevSegI __b2ss_h0(
-		.BIN(Bout[0+:4]),
+		.BIN(B_abs[0+:4]),
 		.INV(0),
 		.SEG(LP_SEG[0+:8])
 	);
 	Bin2SevSegI __b2ss_h1(
-		.BIN(Bout[4+:4]),
+		.BIN(B_abs[4+:3]), 	//exclude sign bit
 		.INV(0),
 		.SEG(LP_SEG[8+:8])
 	);
 	
-	// display Aout in launchpad hex slots 0, 1
+	// display Bouts' sign in launchpad hex 2
 	Bin2SevSegI __b2ss_h2(
-		.BIN(Aout[0+:4]),
-		.INV(0),
+		.BIN(Bout[7] ? 4'd0 : 4'd8),
+		.INV(1),
 		.SEG(LP_SEG[16+:8])
 	);
+	
+	// display Aout in launchpad hex slots 3, 4
 	Bin2SevSegI __b2ss_h3(
-		.BIN(Aout[4+:4]),
+		.BIN(A_abs[0+:4]),
 		.INV(0),
 		.SEG(LP_SEG[24+:8])
 	);
+	Bin2SevSegI __b2ss_h4(
+		.BIN(A_abs[4+:3]), 	//exclude sign bit
+		.INV(0),
+		.SEG(LP_SEG[32+:8])
+	);
 	
-	
+	// display Aouts' sign in launchpad hex 5
+	Bin2SevSegI __b2ss_h5(
+		.BIN(Aout[7] ? 4'd0 : 4'd8),
+		.INV(1),
+		.SEG(LP_SEG[40+:8])
+	);
 	
 endmodule

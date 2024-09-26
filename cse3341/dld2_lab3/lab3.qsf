@@ -144,4 +144,6 @@ set_global_assignment -name SYSTEMVERILOG_FILE HexBoard.sv
 set_global_assignment -name SYSTEMVERILOG_FILE FullAdder.sv
 set_global_assignment -name SYSTEMVERILOG_FILE GroupCarryLookaheadAdder.sv
 set_location_assignment PIN_P11 -to CLK
+set_location_assignment PIN_A7 -to LP_SWS[1]
+set_location_assignment PIN_B8 -to LP_SWS[0]
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

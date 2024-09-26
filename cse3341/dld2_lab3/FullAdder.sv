@@ -23,8 +23,8 @@ module FullAdder(
  
 	assign G = A & B;
 	assign P = AxB;
-	assign S = AxB ^ Cin;
-	assign Cout = (A & B) | (AxB & Cin);
+	assign S = P ^ Cin;
+	assign Cout = G | (P & Cin); 
 	
 endmodule
 
