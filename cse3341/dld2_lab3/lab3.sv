@@ -23,8 +23,7 @@ module lab3(
 		input	INB,
 		input CLK,
 		
-		output [3:0] OUTA,
-		output [3:0] OUTB,
+		output wire [`REG_P_N - 1:0] R,
 		
 		//UI
 		input [9:0] SWS,
@@ -39,7 +38,7 @@ module lab3(
 	);
 	
 	//wire naming scheme according to diragram on page 4 of the lab description
-	wire [`REG_P_N - 1:0] A, B, Aout, Bout, R;
+	wire [`REG_P_N - 1:0] A, B, Aout, Bout;
 	wire [3:0] CCout;	//{OVR, ZERO, NEG, Cout}
 	wire [2:0] CCLout;//output of condition code logic
 	wire Cout;
