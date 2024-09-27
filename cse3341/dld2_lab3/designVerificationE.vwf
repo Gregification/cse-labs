@@ -1,12 +1,12 @@
 /*<simulation_settings>
-<ftestbench_cmd>quartus_eda --gen_testbench --tool=modelsim_oem --format=verilog --write_settings_files=off lab3 -c lab3 --vector_source="D:/cse-labs/cse3341/dld2_lab3/designVerificationA.vwf" --testbench_file="D:/cse-labs/cse3341/dld2_lab3/simulation/qsim/designVerificationA.vwf.vt"</ftestbench_cmd>
-<ttestbench_cmd>quartus_eda --gen_testbench --tool=modelsim_oem --format=verilog --write_settings_files=off lab3 -c lab3 --vector_source="D:/cse-labs/cse3341/dld2_lab3/designVerificationA.vwf" --testbench_file="D:/cse-labs/cse3341/dld2_lab3/simulation/qsim/designVerificationA.vwf.vt"</ttestbench_cmd>
+<ftestbench_cmd>quartus_eda --gen_testbench --tool=modelsim_oem --format=verilog --write_settings_files=off lab3 -c lab3 --vector_source="D:/cse-labs/cse3341/dld2_lab3/designVerificationE.vwf" --testbench_file="D:/cse-labs/cse3341/dld2_lab3/simulation/qsim/designVerificationE.vwf.vt"</ftestbench_cmd>
+<ttestbench_cmd>quartus_eda --gen_testbench --tool=modelsim_oem --format=verilog --write_settings_files=off lab3 -c lab3 --vector_source="D:/cse-labs/cse3341/dld2_lab3/designVerificationE.vwf" --testbench_file="D:/cse-labs/cse3341/dld2_lab3/simulation/qsim/designVerificationE.vwf.vt"</ttestbench_cmd>
 <fnetlist_cmd>quartus_eda --write_settings_files=off --simulation --functional=on --flatten_buses=off --tool=modelsim_oem --format=verilog --output_directory="D:/cse-labs/cse3341/dld2_lab3/simulation/qsim/" lab3 -c lab3</fnetlist_cmd>
 <tnetlist_cmd>quartus_eda --write_settings_files=off --simulation --functional=off --flatten_buses=off --timescale=1ps --tool=modelsim_oem --format=verilog --output_directory="D:/cse-labs/cse3341/dld2_lab3/simulation/qsim/" lab3 -c lab3</tnetlist_cmd>
 <modelsim_script>onerror {exit -code 1}
 vlib work
 vlog -work work lab3.vo
-vlog -work work designVerificationA.vwf.vt
+vlog -work work designVerificationE.vwf.vt
 vsim -c -t 1ps -L fiftyfivenm_ver -L altera_ver -L altera_mf_ver -L 220model_ver -L sgate_ver -L altera_lnsim_ver work.lab3_vlg_vec_tst
 vcd file -direction lab3.msim.vcd
 vcd add -internal lab3_vlg_vec_tst/*
@@ -20,12 +20,11 @@ proc simTimestamp {} {
 after 2500 simTimestamp
 run -all
 quit -f
-
 </modelsim_script>
 <modelsim_script_timing>onerror {exit -code 1}
 vlib work
 vlog -work work lab3.vo
-vlog -work work designVerificationA.vwf.vt
+vlog -work work designVerificationE.vwf.vt
 vsim -novopt -c -t 1ps -L fiftyfivenm_ver -L altera_ver -L altera_mf_ver -L 220model_ver -L sgate_ver -L altera_lnsim_ver work.lab3_vlg_vec_tst
 vcd file -direction lab3.msim.vcd
 vcd add -internal lab3_vlg_vec_tst/*
@@ -39,7 +38,6 @@ proc simTimestamp {} {
 after 2500 simTimestamp
 run -all
 quit -f
-
 </modelsim_script_timing>
 <hdl_lang>verilog</hdl_lang>
 </simulation_settings>*/
@@ -372,8 +370,9 @@ TRANSITION_LIST("SWS[0]")
 	NODE
 	{
 		REPEAT = 1;
+		LEVEL 0 FOR 2000.0;
 		LEVEL 1 FOR 2000.0;
-		LEVEL 0 FOR 28000.0;
+		LEVEL 0 FOR 26000.0;
 	}
 }
 
@@ -382,8 +381,7 @@ TRANSITION_LIST("SWS[1]")
 	NODE
 	{
 		REPEAT = 1;
-		LEVEL 0 FOR 2000.0;
-		LEVEL 1 FOR 2000.0;
+		LEVEL 1 FOR 4000.0;
 		LEVEL 0 FOR 26000.0;
 	}
 }
@@ -393,12 +391,21 @@ TRANSITION_LIST("SWS[2]")
 	NODE
 	{
 		REPEAT = 1;
+		LEVEL 0 FOR 30000.0;
+	}
+}
+
+TRANSITION_LIST("SWS[3]")
+{
+	NODE
+	{
+		REPEAT = 1;
 		LEVEL 1 FOR 2000.0;
 		LEVEL 0 FOR 28000.0;
 	}
 }
 
-TRANSITION_LIST("SWS[3]")
+TRANSITION_LIST("SWS[4]")
 {
 	NODE
 	{
@@ -409,23 +416,12 @@ TRANSITION_LIST("SWS[3]")
 	}
 }
 
-TRANSITION_LIST("SWS[4]")
-{
-	NODE
-	{
-		REPEAT = 1;
-		LEVEL 1 FOR 2000.0;
-		LEVEL 0 FOR 28000.0;
-	}
-}
-
 TRANSITION_LIST("SWS[5]")
 {
 	NODE
 	{
 		REPEAT = 1;
-		LEVEL 0 FOR 2000.0;
-		LEVEL 1 FOR 2000.0;
+		LEVEL 1 FOR 4000.0;
 		LEVEL 0 FOR 26000.0;
 	}
 }
@@ -435,8 +431,7 @@ TRANSITION_LIST("SWS[6]")
 	NODE
 	{
 		REPEAT = 1;
-		LEVEL 1 FOR 2000.0;
-		LEVEL 0 FOR 28000.0;
+		LEVEL 0 FOR 30000.0;
 	}
 }
 
@@ -445,9 +440,8 @@ TRANSITION_LIST("SWS[7]")
 	NODE
 	{
 		REPEAT = 1;
-		LEVEL 0 FOR 2000.0;
 		LEVEL 1 FOR 2000.0;
-		LEVEL 0 FOR 26000.0;
+		LEVEL 0 FOR 28000.0;
 	}
 }
 

@@ -34,7 +34,13 @@ module lab3(
 		
 		output [47:0] LP_SEG,
 		
-		output [9:0] RLEDS
+		output [9:0] RLEDS,
+		
+		//waveform debugging
+		output NEG,
+		output OVR,
+		output ZERO,
+		output Cout_
 	);
 	
 	//wire naming scheme according to diragram on page 4 of the lab description
@@ -119,7 +125,7 @@ module lab3(
 			.ZERO(CCLout[1]),
 			.NEG(CCLout[2])
 		);
-
+		
 	//-----------------------------------------------------------------------------------------------------
 	// NON CORE MODULES
 	//		modeuls that arnt related to the core design. just UI
@@ -127,6 +133,11 @@ module lab3(
 	//			so the display modules will put out something legible.
 	//			this is purely a post processing step, it does not effect the core modules in any way.
 	//-----------------------------------------------------------------------------------------------------
+	
+	assign Cout_ = Cout;
+	assign OVR = CCLout[0];
+	assign NEG = CCLout[2];
+	assign ZERO = CCLout[1];
 	
 	reg [6:0] A_abs, B_abs, R_abs; 
 	
