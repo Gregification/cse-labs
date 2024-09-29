@@ -13,10 +13,10 @@
  *      ? FANCY_PRINT being enabled changes run time to O(v^6)
  * 
  * compile on OMEGA
-    $   gcc -std=c99 -c lab5.c -o lab5.out;
+    $   gcc -std=c99 lab5.c -o lab5.out;
     $ ./lab5.out < a.dat
 */
-#define FANCY_PRINT 0
+#define FANCY_PRINT 1
 
 #include <stdlib.h>
 #include <stdio.h>
