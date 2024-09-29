@@ -138,8 +138,8 @@ set_location_assignment PIN_C10 -to SWS[0]
 set_location_assignment PIN_P11 -to CLK
 set_location_assignment PIN_A7 -to LP_SWS[1]
 set_location_assignment PIN_B8 -to LP_SWS[0]
-set_global_assignment -name SYSTEMVERILOG_FILE ../dld2_lab1_part2/ClockLadderN.sv
-set_global_assignment -name SYSTEMVERILOG_FILE ../dld2_lab2_partA/Bin2SevSegI.sv
+set_global_assignment -name SYSTEMVERILOG_FILE Bin2SevSegI.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ClockLadderN.sv
 set_global_assignment -name SYSTEMVERILOG_FILE lab3.sv
 set_global_assignment -name SYSTEMVERILOG_FILE Register.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ConditionCodeLogic.sv
