@@ -1,2 +1,3 @@
-2024/08/31-17:33:31.214 3dd4 Creating DB D:\cse-labs\cse3442\.jxbrowser.userdata\Default\Site Characteristics Database since it was missing.
-2024/08/31-17:33:31.228 3dd4 Reusing MANIFEST D:\cse-labs\cse3442\.jxbrowser.userdata\Default\Site Characteristics Database/MANIFEST-000001
+2024/08/31-17:44:23.029 4390 Reusing MANIFEST D:\cse-labs\cse3442\.jxbrowser.userdata\Default\Site Characteristics Database/MANIFEST-000001
+2024/08/31-17:44:23.029 4390 Recovering log #3
+2024/08/31-17:44:23.029 4390 Reusing old log D:\cse-labs\cse3442\.jxbrowser.userdata\Default\Site Characteristics Database/000003.log 

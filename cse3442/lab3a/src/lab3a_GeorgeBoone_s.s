@@ -23,7 +23,7 @@ wait3Seconds:                                                               ; ti
                 NOP                                                         ; 1
                 NOP                                                         ; 1
 itterate:       SUB     R0, R0, #1                                          ; n
-                CBZ     R0, break                                           ; n + 3
+                CBZ     R0, break                                           ; n + 2
                 B       itterate                                            ; 2n
 break:          BX      LR                                                  ; 2
 

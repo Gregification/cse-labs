@@ -1,2 +1,3 @@
-2024/08/31-17:33:31.259 57c8 Creating DB D:\cse-labs\cse3442\.jxbrowser.userdata\Default\shared_proto_db since it was missing.
-2024/08/31-17:33:31.267 57c8 Reusing MANIFEST D:\cse-labs\cse3442\.jxbrowser.userdata\Default\shared_proto_db/MANIFEST-000001
+2024/08/31-17:44:23.039 3770 Reusing MANIFEST D:\cse-labs\cse3442\.jxbrowser.userdata\Default\shared_proto_db/MANIFEST-000001
+2024/08/31-17:44:23.039 3770 Recovering log #3
+2024/08/31-17:44:23.039 3770 Reusing old log D:\cse-labs\cse3442\.jxbrowser.userdata\Default\shared_proto_db/000003.log 
