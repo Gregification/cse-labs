@@ -80,14 +80,26 @@ int main(void)
     putsUart0("Press '0' or '1'\n\r");
     putcUart0('>');
 
-
     getsUart0(&data);
-    putsUart0(data.buffer);
 
     parseFields(&data);
     uint32_t n = getFieldInteger(&data, 0);
     char * str = getFieldString(&data, 0);
 
+    bool valid = false;
+    if(isCommand(&data,"set", 2)){
+        putsUart0("command set");
+        valid = true;
+    }
+    if(isCommand(&data,"alert", 1)){
+        putsUart0("command set");
+        valid = true;
+    }
+    if(!valid){
+        putsUart0("invalid command");
+    }
+
+    putsUart0("\n\r");
     //while (true);
     goto meow;
 }
@@ -120,13 +132,14 @@ void getsUart0(USER_DATA * ud){
 }
 
 void parseFields(USER_DATA * ud){
+
     uint8_t i, j;// i for buffer, j for fields
     i = j = 0;
 
     //assume former field was 'd'
     char cur = 'd';
 
-    for(; i < MAX_CHARS && j < MAX_FIELDS; i++){
+    for(; i < MAX_CHARS && j < MAX_FIELDS && ud->buffer[i] != '\0'; i++){
         //the type of the former char is stored in the current buffer
         ud->fieldType[j] = cur;
 
@@ -199,5 +212,14 @@ uint32_t getFieldInteger(USER_DATA * ud, uint8_t fieldNumber){
 }
 
 bool isCommand(USER_DATA * ud, const char strCmd[], uint8_t minArgs) {
+    if(ud->fieldCount <= minArgs || ud->fieldType[0] != 'a')
+        return false;
+
+    uint8_t i;
+    for(i = 0; strCmd[i] != '\0' && ud->buffer[i] != '\0'; i++)
+        if(ud->buffer[i] != strCmd[i])
+            return false;
+
+    return true;
 
 }
