@@ -10,41 +10,35 @@ S_SRCS += \
 
 C_SRCS += \
 ../src/clock.c \
-../src/lab3a_GeorgeBoone.c \
-../src/lab3b_GeorgeBoone.c 
+../src/lab3a_GeorgeBoone.c 
 
 S_DEPS += \
 ./src/lab3a_GeorgeBoone_s.d 
 
 C_DEPS += \
 ./src/clock.d \
-./src/lab3a_GeorgeBoone.d \
-./src/lab3b_GeorgeBoone.d 
+./src/lab3a_GeorgeBoone.d 
 
 OBJS += \
 ./src/clock.obj \
 ./src/lab3a_GeorgeBoone.obj \
-./src/lab3a_GeorgeBoone_s.obj \
-./src/lab3b_GeorgeBoone.obj 
+./src/lab3a_GeorgeBoone_s.obj 
 
 OBJS__QUOTED += \
 "src\clock.obj" \
 "src\lab3a_GeorgeBoone.obj" \
-"src\lab3a_GeorgeBoone_s.obj" \
-"src\lab3b_GeorgeBoone.obj" 
+"src\lab3a_GeorgeBoone_s.obj" 
 
 C_DEPS__QUOTED += \
 "src\clock.d" \
-"src\lab3a_GeorgeBoone.d" \
-"src\lab3b_GeorgeBoone.d" 
+"src\lab3a_GeorgeBoone.d" 
 
 S_DEPS__QUOTED += \
 "src\lab3a_GeorgeBoone_s.d" 
 
 C_SRCS__QUOTED += \
 "../src/clock.c" \
-"../src/lab3a_GeorgeBoone.c" \
-"../src/lab3b_GeorgeBoone.c" 
+"../src/lab3a_GeorgeBoone.c" 
 
 S_SRCS__QUOTED += \
 "../src/lab3a_GeorgeBoone_s.s" 

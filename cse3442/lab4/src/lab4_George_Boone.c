@@ -89,10 +89,17 @@ int main(void)
     bool valid = false;
     if(isCommand(&data,"set", 2)){
         putsUart0("command set");
+
+        uint32_t a = getFieldInteger(&data, 1);
+        uint32_t b = getFieldInteger(&data, 2);
+
         valid = true;
     }
     if(isCommand(&data,"alert", 1)){
-        putsUart0("command set");
+        putsUart0("command alert");
+
+        char * str = getFieldString(&data, 1);
+
         valid = true;
     }
     if(!valid){
@@ -111,10 +118,13 @@ void getsUart0(USER_DATA * ud){
 
         // 4.c
         if(c == 8 || c == 127){ // character is backspace
-            if(count != 0)
+            if(count != 0){
                 count--;
+                putcUart0(c);
+            }
             continue;
         }
+
 
         // 4.d
         if(c == 13) //character is a carriage return
@@ -122,6 +132,8 @@ void getsUart0(USER_DATA * ud){
 
         // 4.e
         if(c >= 32){ //character is printable char
+            putcUart0(c);
+
             ud->buffer[count++] = c;
             if(count == MAX_CHARS)
                 break;
@@ -187,10 +199,10 @@ void parseFields(USER_DATA * ud){
     #ifdef DEBUG
         for(i = 0; i < ud->fieldCount;i++){
             putsUart0("\n\r");
+            putcUart0(ud->fieldType[i]);
+            putsUart0("\n\r");
             char * s = getFieldString(ud, i);
             putsUart0(s);
-            putsUart0("\n\r");
-            putcUart0(ud->fieldType[i]);
         }
         putsUart0("\n\r");
     #endif
