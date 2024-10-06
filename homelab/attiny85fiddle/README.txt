@@ -2,8 +2,6 @@ inspired by "bradform hamilton"s work in a article for The Medium.
 https://medium.com/@bradford_hamilton/bare-metal-programming-attiny85-22be36f4e9ca
 
 thought of the time: 
-"ive got a uv misquito zapper lamp but my cat, huah-huah, keeps staring into it so i cant leave it on meaning the misquitos are eating me :( "
-
 DATASHEET
     https://ww1.microchip.com/downloads/en/DeviceDoc/Atmel-2586-AVR-8-bit-Microcontroller-ATtiny25-ATtiny45-ATtiny85_Datasheet.pdf
 
@@ -17,7 +15,7 @@ THINGS TO DOWNLOAD
 
 COMPILING & FLASHING
     1. Compile for attiny85 - optimize for size
-        avr-gcc -Wall -Os -mmcu=attiny85 main.c
+        avr-gcc --std=c99 -Wall -Os -mmcu=attiny85 main.c
 
     2. make Intel hex from the output
         avr-objcopy -O ihex -j .text -j .data a.out a.hex
