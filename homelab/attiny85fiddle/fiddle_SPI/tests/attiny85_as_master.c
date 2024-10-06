@@ -7,7 +7,7 @@
 #include <stdint.h>
 
 #ifndef __AVR_ATtiny85__
-#define __AVR_ATtiny85__
+    #define __AVR_ATtiny85__
 #endif
 #include <avr/io.h>
 
@@ -19,16 +19,17 @@
 #include "../include/SPI.h"
 
 int main(){
-    SPI_clockMode(0);
-    SPI_begin_master();
+    //SPI_clockMode(0);
+    //SPI_begin_master();
 
-    uint8_t c = 0xFF;
+    uint8_t c = 0b01011010;
 
-    DDRB |= _BV(PB3);
-
+    DDRB |= _BV(PB3) | _BV(SPI_SS);
+    
     while(true){
-        SPI_master_transfer(c);
-
+//        SPI_master_transfer(c);
+        
+        PORTB ^= _BV(SPI_SS);
         PORTB ^= _BV(PB3);
         _delay_ms(500);
     };

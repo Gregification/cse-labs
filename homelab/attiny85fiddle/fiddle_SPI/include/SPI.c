@@ -1,27 +1,34 @@
+// using c99
+
 #include "SPI.h"
 
+#ifndef F_CPU
+    #define F_CPU 8000000UL
+#endif
+#include <util/delay.h>
 #include <util/atomic.h>
 
 void SPI_begin_master(void) {
     // io
-    DDRB |= _BV(SPI_CLK_PIN) | _BV(SPI_MOSI_PIN);       // output
-    DDRB &= ~_BV(SPI_MISO_PIN);                         // input
+    DDRB |= _BV(USCK) | _BV(DO) | _BV(SPI_SS);  // output
+    DDRB &= ~_BV(DI);                           // input
+
+    PORTB |= _BV(SPI_SS); // slave select off
 
     // force to 3-wire mode, USIWM0 high, USIWM1 low
     //      table 15-1
     USICR |= _BV(USIWM0);
     USICR &= ~_BV(USIWM1);
 
-    // use software clock strobe for clock and counting
+    // use external clock for clocking, software strobe for counting
     //      table 15-2
-    USICR |= _BV(USICLK);
-    USICR &= ~(_BV(USICS1) | _BV(USICS0));
+    USICR |= _BV(USICLK) | _BV(USICS1);
 }
 
 void SPI_begin_slave(){
     // io
-    DDRB |= _BV(SPI_MISO_PIN);                          // output
-    DDRB &= ~(_BV(SPI_MOSI_PIN) | _BV(SPI_CLK_PIN));    // input
+    DDRB |= _BV(DO);                            // output
+    DDRB &= ~(_BV(DI) | _BV(USCK) | _BV(SPI_SS));   // input
 
     // force to 3-wire mode, USIWM0 high, USIWM1 low
     //      table 15-1
@@ -48,25 +55,22 @@ void SPI_clockMode(uint8_t spi_clk_mode){
         USICR |= _BV(USICS0);
     }
 }
-#ifndef F_CPU
-    #define F_CPU 8000000UL
-#endif
-#include <util/delay.h>
+
 uint8_t SPI_master_transfer(uint8_t data){
     USIDR = data;
     USISR = _BV(USIOIF); //clears: interrupt flag, and counter. also resets overflow flag
-    
-    // datasheet recommends flat out assignment rather than bit operations
-    const static uint8_t USICR_val = 
-          _BV(USITC)    // cycle the clock
-        | _BV(USICLK)   // enforce internal software defined clock for counting and clocking
-        | _BV(USIWM0);  // enforce 3-wire mode
 
+    // clock
     ATOMIC_BLOCK(ATOMIC_RESTORESTATE){
+        PORTB &= ~_BV(SPI_SS); // slave select on
 
-        while(!(USISR & _BV(USIOIF))){
-            USICR = USICR_val;
+        while ( !(USISR & _BV(USIOIF)) ) {
+            _delay_ms(500);
+            USICR |= _BV(USITC) ;//| _BV(USICLK);
         }
+
+        _delay_us(100);
+        PORTB |= _BV(SPI_SS); // slave select off
     }
 
     return USIDR;
@@ -74,10 +78,16 @@ uint8_t SPI_master_transfer(uint8_t data){
 
 uint8_t SPI_slave_transfer(uint8_t data){
     USIDR = data;
+
+    // wait for slave select
+    while(PINB & _BV(SPI_SS))
+        ;
+
     USISR = _BV(USIOIF); //clears: interrupt flag, and counter. also resets overflow flag
     
-    //wait for master to start clocking
-    while(!(USISR & _BV(USIOIF)))
+    //wait for master to start & finish clocking
+    // break if slave select is off(high)
+    while(!(USISR & _BV(USIOIF)) && !(PINB & _BV(SPI_SS)))
         ;
 
     return USIDR;

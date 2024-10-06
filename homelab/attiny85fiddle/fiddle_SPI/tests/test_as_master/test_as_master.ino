@@ -18,7 +18,7 @@ uint8_t buffer;
 void setup() {
   Serial.begin(BAUD);
 
-  pinMode(SS, INPUT_PULLUP);
+  //pinMode(SS, INPUT_PULLUP);
   pinMode(MOSI, OUTPUT);
   pinMode(SCK, INPUT);
   SPCR |= _BV(SPE);

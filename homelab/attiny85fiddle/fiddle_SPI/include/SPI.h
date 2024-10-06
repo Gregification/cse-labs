@@ -1,6 +1,6 @@
 /*
     ATtiny85 spi communication functional library.
-        - uses USI and pins 5:MOSI, 6:MISO, 7:SCK
+        - uses USI and pins 5:MOSI, 6:MISO, 7:USCK
         - master and slave
         - blocking
         - no interrupts
@@ -20,22 +20,29 @@
 #include <avr/io.h>
 
 #include <stdbool.h>
+#include <stdint.h>
 
-#define SPI_CLK_PIN         PB2
-#define SPI_MOSI_PIN        PB0
-#define SPI_MISO_PIN        PB1
-//no slave select pin because of limited pins
-//      wouldnt be hard to do it with some random pin
+// hard wired pin of the USI
+#define USCK            PB2 // DO NOT CHANGE
+#define DO              PB1 // DO NOT CHANGE
+#define DI              PB0 // DO NOT CHANGE
+#define SPI_SS          PB4 // free to change
 
+/**
+ * acts as master
+ *      - note that SPI_SS is not used, this can lead to synch errors
+ */
 void SPI_begin_master(void);
+
+/**
+ * acts as slave
+ */
 void SPI_begin_slave(void);
 
 void SPI_end(void);
 
 /**
  *  sets spi clock mode
- *      0 : external positive edge
- *      otherwise : external negative edge
  */
 void SPI_clockMode(uint8_t spi_clk_mode);
 
