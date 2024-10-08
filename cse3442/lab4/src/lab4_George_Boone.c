@@ -74,41 +74,37 @@ int main(void)
 
     USER_DATA data;
 
-    meow:
-    // Display greeting
-    putsUart0("Serial Example\n\r");
-    putsUart0("Press '0' or '1'\n\r");
-    putcUart0('>');
+    while(true){
+        putcUart0('>');
 
-    getsUart0(&data);
+        getsUart0(&data);
 
-    parseFields(&data);
-    uint32_t n = getFieldInteger(&data, 0);
-    char * str = getFieldString(&data, 0);
+        parseFields(&data);
+        uint32_t n = getFieldInteger(&data, 0);
+        char * str = getFieldString(&data, 0);
 
-    bool valid = false;
-    if(isCommand(&data,"set", 2)){
-        putsUart0("command set");
+        bool valid = false;
+        if(isCommand(&data,"set", 2)){
+            putsUart0("command set");
 
-        uint32_t a = getFieldInteger(&data, 1);
-        uint32_t b = getFieldInteger(&data, 2);
+            uint32_t a = getFieldInteger(&data, 1);
+            uint32_t b = getFieldInteger(&data, 2);
 
-        valid = true;
+            valid = true;
+        }
+        if(isCommand(&data,"alert", 1)){
+            putsUart0("command alert");
+
+            char * str = getFieldString(&data, 1);
+
+            valid = true;
+        }
+        if(!valid){
+            putsUart0("invalid command");
+        }
+
+        putsUart0("\n\r");
     }
-    if(isCommand(&data,"alert", 1)){
-        putsUart0("command alert");
-
-        char * str = getFieldString(&data, 1);
-
-        valid = true;
-    }
-    if(!valid){
-        putsUart0("invalid command");
-    }
-
-    putsUart0("\n\r");
-    //while (true);
-    goto meow;
 }
 
 void getsUart0(USER_DATA * ud){
