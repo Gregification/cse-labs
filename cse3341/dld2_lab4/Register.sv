@@ -1,4 +1,8 @@
-
+/**
+cse3341, digital logic 2, lab 3
+George Boone
+1002055713
+*/
 
 module Register #(
 		parameter SIZE = 4

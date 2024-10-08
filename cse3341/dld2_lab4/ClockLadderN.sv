@@ -1,3 +1,10 @@
+/**
+cse3341, digital logic 2, lab 3
+George Boone
+1002055713
+
+based off of figure 1 of the assignment
+*/
 //N-bit clock ladder
 module ClockLadderN #( parameter N = 4 ) (
 		input CLK,	//clock
