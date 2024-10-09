@@ -21,7 +21,7 @@ module Bin2SevSegI(
 	);
 	
 	//idk if this can just be a wire, dosen't need to store a value, just wire XOR with INV, but this is eaier to code 
-	logic [0:6] _buffer;
+	reg [0:6] _buffer;
 	
 	//always SEG = _buffer;
 	always SEG = INV ? ~_buffer : _buffer;

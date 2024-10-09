@@ -18,12 +18,12 @@ module HexBoard(
 		input RESET,
 		input [15:0] 	VALUE,	//binary value
 		
-		output logic [3:0]	CAT,	//current toggled 7S display encoding
-		output logic [6:0]	SEG	//current 7S encoding
+		output reg [3:0]	CAT,	//current toggled 7S display encoding
+		output reg [6:0]	SEG	//current 7S encoding
 	);
 
-	logic [3:0]   _curr_digit_bin;	//binary value of the current digit
-	logic [15:0]  _value_buffer;		//interal value register
+	reg [3:0]   _curr_digit_bin;	//binary value of the current digit
+	reg [15:0]  _value_buffer;		//interal value register
 	
 	
 	/**
@@ -63,9 +63,9 @@ module HexBoard(
 	 * go to next digit every clock
 	 */
 	always_ff @ (posedge CLK, negedge RESET) begin
-		if(RESET == 1'b0)
+		if(RESET == 0)
 			CAT = 4'd0;
-		else if(CLK == 1'b1) begin
+		else if(CLK == 1) begin
 			CAT = CAT << 1;
 			
 			if(CAT == 4'd0)

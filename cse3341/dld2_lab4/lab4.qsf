@@ -49,10 +49,53 @@ set_global_assignment -name MAX_CORE_JUNCTION_TEMP 85
 set_global_assignment -name ERROR_CHECK_FREQUENCY_DIVISOR 256
 set_global_assignment -name POWER_PRESET_COOLING_SOLUTION "23 MM HEAT SINK WITH 200 LFPM AIRFLOW"
 set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
-set_global_assignment -name SYSTEMVERILOG_FILE SignedMultiplier_ShiftAdd_4x4.sv
-set_global_assignment -name SYSTEMVERILOG_FILE Register.sv
+set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
+set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
+set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
+set_location_assignment PIN_A7 -to BTN[1]
+set_location_assignment PIN_B8 -to BTN[0]
+set_location_assignment PIN_C11 -to SWS[1]
+set_location_assignment PIN_D12 -to SWS[2]
+set_location_assignment PIN_C12 -to SWS[3]
+set_location_assignment PIN_A12 -to SWS[4]
+set_location_assignment PIN_B12 -to SWS[5]
+set_location_assignment PIN_A13 -to SWS[6]
+set_location_assignment PIN_A14 -to SWS[7]
+set_location_assignment PIN_B14 -to SWS[8]
+set_location_assignment PIN_F15 -to SWS[9]
+set_location_assignment PIN_C10 -to SWS[0]
+set_location_assignment PIN_AB5 -to HB_BTN[1]
+set_location_assignment PIN_AA20 -to HB_BTN[2]
+set_location_assignment PIN_AB21 -to HB_BTN[3]
+set_location_assignment PIN_AB6 -to HB_BTN[0]
+set_location_assignment PIN_A9 -to RLEDS[1]
+set_location_assignment PIN_A10 -to RLEDS[2]
+set_location_assignment PIN_B10 -to RLEDS[3]
+set_location_assignment PIN_D13 -to RLEDS[4]
+set_location_assignment PIN_C13 -to RLEDS[5]
+set_location_assignment PIN_E14 -to RLEDS[6]
+set_location_assignment PIN_D14 -to RLEDS[7]
+set_location_assignment PIN_A11 -to RLEDS[8]
+set_location_assignment PIN_B11 -to RLEDS[9]
+set_location_assignment PIN_A8 -to RLEDS[0]
+set_location_assignment PIN_AA19 -to HEXBOARD_CAT[1]
+set_location_assignment PIN_Y19 -to HEXBOARD_CAT[2]
+set_location_assignment PIN_AB20 -to HEXBOARD_CAT[3]
+set_location_assignment PIN_AB19 -to HEXBOARD_CAT[0]
+set_location_assignment PIN_AA11 -to HEXBOARD_SEGS[1]
+set_location_assignment PIN_Y10 -to HEXBOARD_SEGS[2]
+set_location_assignment PIN_AB9 -to HEXBOARD_SEGS[3]
+set_location_assignment PIN_AB8 -to HEXBOARD_SEGS[4]
+set_location_assignment PIN_AB7 -to HEXBOARD_SEGS[5]
+set_location_assignment PIN_AB17 -to HEXBOARD_SEGS[6]
+set_location_assignment PIN_AA12 -to HEXBOARD_SEGS[0]
+set_location_assignment PIN_P11 -to CLK
 set_global_assignment -name SYSTEMVERILOG_FILE HexBoard.sv
-set_global_assignment -name SYSTEMVERILOG_FILE ClockLadderN.sv
 set_global_assignment -name SYSTEMVERILOG_FILE Bin2SevSegI.sv
+set_global_assignment -name SYSTEMVERILOG_FILE SignedMultiplier_ShiftAdd_4x4.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ClockLadderN.sv
 set_global_assignment -name SYSTEMVERILOG_FILE lab4.sv
-set_global_assignment -name SYSTEMVERILOG_FILE CLAdder_4.sv
+set_global_assignment -name SYSTEMVERILOG_FILE Adder.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ControlUnit.sv
+set_global_assignment -name SYSTEMVERILOG_FILE Subtractor.sv
+set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
