@@ -65,8 +65,10 @@ module SignedMultiplier_ShiftAdd_4x4(
 			_Q_shift_out = PRODUCT[0];
 			
 			// dosent actually sign extend ?!?!?!?!?!?
-			// i hate verilog
-			PRODUCT = PRODUCT >>> 1;
+			//		wonky datatypes or something?
+			//PRODUCT = PRODUCT >>> 1;
+			PRODUCT[0+:(`N*2)-1] = PRODUCT[0+:(`N*2)-1] >> 1; // array wont shift if i dont use arth shift?
+			PRODUCT[(`N*2)-2] = PRODUCT[(`N*2)-1];
 		end
 		
 		else if(_sAdd == 1) begin

@@ -43,13 +43,14 @@ module ControlUnit(
 						endcase
 				_state_add:			_state <= _state_shift;
 				_state_subtract: 	_state <= _state_shift;
-				_state_shift:		
-						if(_counter == 3)
+				_state_shift:		begin
+						if(_counter[0] & _counter[1])
 							_state 	<= _state_halt;
 						else begin
 							_state 	<= _state_test;
-							_counter <= _counter + 1;
+							_counter <= _counter + 1;							
 						end
+					end
 			endcase
 			
 	

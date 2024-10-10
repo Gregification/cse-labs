@@ -33,7 +33,8 @@ module lab4 (
 	// ----------------------------------------------------------------------
 	
 	// inputs
-	assign _clk 	= ~HB_BTN[3];	// btns are inverted to act as pull low
+	assign _clk 	= CLK;
+	//assign _clk 	= ~HB_BTN[3];	// btns are inverted to act as pull low
 	assign _reset 	= HB_BTN[2];
 	assign _inm		= ~BTN[0];	
 	assign _inq		= ~BTN[1];
@@ -89,7 +90,7 @@ module lab4 (
 	// additional debugging
 	// ----------------------------------------------------------------------
 	
-	// this is here to dim the hex output, im doing this lab in a dim room and the hex lights are insufferably bright
+	// this is here to somewhat dim the hex output by strobing
 	wire [47:0] _segs;
 	assign SEGS = _ladder[20] ? _segs : ~(48'b0);
 	
