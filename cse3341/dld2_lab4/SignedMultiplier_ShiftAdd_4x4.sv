@@ -15,23 +15,25 @@ module SignedMultiplier_ShiftAdd_4x4(
 		input	wire	[`N-1:0]	PLICAND, PLIER,	// multiplicand, multiplier
 		
 		output DONE,
-		output wire [`N*2-1:0]	PRODUCT,
+		output reg [(`N*2)-1:0]	PRODUCT,
 		
 		// debug
 		input InM,InQ,
-		output reg [`N-1:0] Q, M,
-		output reg [`N:0]	 A,
-		output reg [5:0] STATE
+		output wire [`N-1:0] A, Q,
+		output reg [`N-1:0]	M,
+		output reg [5:0] 		STATE,
+		output reg _Q_shift_out	// register shift outputs
 	);
 	
 	// wiring
-	reg _A_shift_out, _Q_shift_out;				// register shift outputs
+	reg _carryflag;
 	wire [`N:0] _adder_o, _subtractor_o;	   // add/sub outputs
 	wire _cout;											// adder
 	wire _sHalt, _sStart, _sTest, _sAdd, _sSubtract, _sShift;
 	
-	// product
-	assign PRODUCT = {A[0+:`N], Q};
+	// read only values of product
+	assign A = PRODUCT[4+:4];
+	assign Q = PRODUCT[0+:4];
 	
 	// debug
 	assign STATE = {_sHalt, _sStart, _sTest, _sAdd, _sSubtract, _sShift};
@@ -40,41 +42,39 @@ module SignedMultiplier_ShiftAdd_4x4(
 	// state logic
 	// ----------------------------------------------------------------------
 	
-	always @ (posedge _sHalt) begin
-		DONE <= 1;
-	end
+	assign DONE = STATE[5] == 1;
 	
-	always @ (posedge _sStart, posedge _sShift, posedge _sAdd, posedge _sSubtract, posedge InQ, posedge InM) begin
+	always @ (posedge CLK, posedge InQ, posedge InM) begin
 		if(InQ == 1) begin
-			Q <= PLIER;
+			PRODUCT[0+:4] = PLIER;	// assign Q
+		end else
+		if(InM == 1) begin
+			M = PLICAND;
+		end else
+		
+		if(_sStart == 1) begin
+			PRODUCT[4+:4] = 0; // zero A
+			_Q_shift_out = 0;
 		end
 		
-		else if(InM == 1) begin
-			M <= PLICAND;
-		end
-	
-		if(_sStart == 1) begin
-			Q <= PLIER;
-			M <= PLICAND;
-			A <= 0;
+		else if(_sTest == 1) begin
+			// do nothing
 		end
 		
 		else if(_sShift == 1) begin
-			_A_shift_out <= A[0];
-			_Q_shift_out <= Q[0];
+			_Q_shift_out = PRODUCT[0];
 			
-			Q <= Q >> 1;		
-			A <= A >> 1;
-			
-			Q[`N-1] 	<= _A_shift_out;
+			// dosent actually sign extend ?!?!?!?!?!?
+			// i hate verilog
+			PRODUCT = PRODUCT >>> 1;
 		end
 		
 		else if(_sAdd == 1) begin
-			A <= _adder_o; 		// this includes the carry
+			PRODUCT[4+:4] = _adder_o;			// assign A
 		end
 		
 		else if(_sSubtract == 1) begin
-			A <= _subtractor_o; 	// this includes the carry
+			PRODUCT[4+:4] = _subtractor_o;	// assign A
 		end
 		
 	end

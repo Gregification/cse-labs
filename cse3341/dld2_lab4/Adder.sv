@@ -8,9 +8,7 @@ module Adder#(
 		parameter N = 4
 	)(
 		input [N-1:0] A, B,
-		
-		output [N:0] S,
-		output COUT
+		output [N-1:0] S
 	);
 	
 	assign S = A + B;
