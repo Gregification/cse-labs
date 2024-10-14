@@ -10,10 +10,15 @@
 
 void SPI_begin_master(void) {
     // io
+    #ifdef SPI_USE_SS
     DDRB |= _BV(USCK) | _BV(DO) | _BV(SPI_SS);  // output
+    PORTB |= _BV(SPI_SS);                       // slave select off
+    #else
+    DDRB |= _BV(USCK) | _BV(DO);  // output
+    #endif
+
     DDRB &= ~_BV(DI);                           // input
 
-    PORTB |= _BV(SPI_SS); // slave select off
 
     // force to 3-wire mode, USIWM0 high, USIWM1 low
     //      table 15-1
@@ -28,8 +33,11 @@ void SPI_begin_master(void) {
 void SPI_begin_slave(){
     // io
     DDRB |= _BV(DO);                            // output
+    #ifdef SPI_USE_SS
     DDRB &= ~(_BV(DI) | _BV(USCK) | _BV(SPI_SS));   // input
-
+    #else
+    DDRB &= ~(_BV(DI) | _BV(USCK));   // input
+    #endif
     // force to 3-wire mode, USIWM0 high, USIWM1 low
     //      table 15-1
     USICR |= _BV(USIWM0);
@@ -62,7 +70,9 @@ uint8_t SPI_master_transfer(uint8_t data){
 
     // clock
     ATOMIC_BLOCK(ATOMIC_RESTORESTATE){
+        #ifdef SPI_USE_SS
         PORTB &= ~_BV(SPI_SS); // slave select on
+        #endif
 
         while ( !(USISR & _BV(USIOIF)) ) {
             _delay_ms(500);
@@ -70,7 +80,9 @@ uint8_t SPI_master_transfer(uint8_t data){
         }
 
         _delay_us(100);
+        #ifdef SPI_USE_SS
         PORTB |= _BV(SPI_SS); // slave select off
+        #endif
     }
 
     return USIDR;
@@ -79,16 +91,24 @@ uint8_t SPI_master_transfer(uint8_t data){
 uint8_t SPI_slave_transfer(uint8_t data){
     USIDR = data;
 
+    #ifdef SPI_USE_SS
     // wait for slave select
     while(PINB & _BV(SPI_SS))
         ;
+    #endif
 
     USISR = _BV(USIOIF); //clears: interrupt flag, and counter. also resets overflow flag
     
     //wait for master to start & finish clocking
-    // break if slave select is off(high)
+    #ifdef SPI_USE_SS
+    // additional condition to check slave select, 
+    //      break if slave select is off(high)
     while(!(USISR & _BV(USIOIF)) && !(PINB & _BV(SPI_SS)))
         ;
+    #else
+    while(!(USISR & _BV(USIOIF)))
+        ;
+    #endif
 
     return USIDR;
 }

@@ -17,14 +17,19 @@
 #include <util/delay.h>
 
 #include "../include/SPI.h"
+#include "../include/CRC.h"
 
 int main(){
     SPI_clockMode(0);
     SPI_begin_slave();
 
-    uint8_t c = 0;
-
+    const uint16_t c = crcs, a = arr2;
+    DDRB |= _BV(PB4);
     while(true){
-        SPI_slave_transfer(c-=1);
+
+        SPI_slave_transfer((uint8_t)c);
+        SPI_slave_transfer((uint8_t)(c>>4));
+        SPI_slave_transfer((uint8_t)a);
+        SPI_slave_transfer((uint8_t)(a>>4));
     };
 }

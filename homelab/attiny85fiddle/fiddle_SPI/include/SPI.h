@@ -23,10 +23,14 @@
 #include <stdint.h>
 
 // hard wired pin of the USI
-#define USCK            PB2 // DO NOT CHANGE
-#define DO              PB1 // DO NOT CHANGE
-#define DI              PB0 // DO NOT CHANGE
-#define SPI_SS          PB4 // free to change
+#define USCK            PB2     // DO NOT CHANGE
+#define DO              PB1     // DO NOT CHANGE
+#define DI              PB0     // DO NOT CHANGE
+
+//#define SPI_USE_SS
+#ifdef SPI_USE_SS
+#define SPI_SS          PB4     // free to change 
+#endif
 
 /**
  * acts as master

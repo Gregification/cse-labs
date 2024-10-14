@@ -19,7 +19,12 @@ void loop() {
   Serial.println();
   Serial.print(count++);
   Serial.print("\t: ");
-  Serial.print((uint8_t)SPI.transfer(count));
+  uint8_t a,b;
+  a = SPI.transfer(count);
+  b = SPI.transfer(count);
+  Serial.print(b, HEX);
+  Serial.print(" ");
+  Serial.print(a, HEX);
 
   delay(200);
 }
