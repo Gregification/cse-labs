@@ -1,6 +1,6 @@
 // hardcoded crc codes
 //     using the compiler command below, const arrs are stored 
-//     in EEPROM, staring around 0x0660
+//     in flash, staring around 0x0660
 //          avr-gcc --std=c99 -Wall -Os -mmcu=attiny85
 //
 #ifndef __CRC_H__
