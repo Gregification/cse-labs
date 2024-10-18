@@ -12,10 +12,6 @@ module Mux2t1#(
 		output wire [N-1:0] OUT
 	);
 	
-	always @ (edge CTRL) 
-		if(CTRL == 0)
-			OUT = A;
-		else
-			OUT = B;
+	assign OUT = CTRL ? B : A;
 	
 endmodule

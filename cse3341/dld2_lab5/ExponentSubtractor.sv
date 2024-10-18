@@ -6,16 +6,18 @@ George Boone
 hardcoded exponent subtractor according to figure 1 of lab document
 */
 
-module ExponentSubtractor(
-		input [7:0] EA, EB,
+module ExponentSubtractor#(
+		parameter N = 8
+	)(
+		input [N-1:0] EA, EB,
 		output Cout,
-		output [7:0] ED
+		output [N-1:0] ED
 	);
 	
-	wire [7:0] d, invd;	// difference, inverted-difference
+	wire [N-1:0] d, invd;	// difference, inverted-difference
 	
 	RCSubtractor #(
-			.N(8)
+			.N(N)
 		) 	_rcs	(
 			.A(EA),
 			.B(EB),
@@ -25,17 +27,17 @@ module ExponentSubtractor(
 		);
 	
 	Mux2t1 #(
-			.N(8)
+			.N(N)
 		)	_m2t1	(
 			.CTRL(Cout),
-			.A(d),
-			.B(invd),
+			.A(invd),
+			.B(d),
 			
 			.OUT(ED)
 		);
 		
 	BintTwosComp #(
-			.N(8)
+			.N(N)
 		)	_bttc	(
 			.BIN(d),
 			

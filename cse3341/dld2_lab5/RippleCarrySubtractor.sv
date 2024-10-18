@@ -7,25 +7,24 @@ accepts 2 raw binary nums
 */
 
 module RCSubtractor#(
-		parameter N = 4
+		parameter N = 8
 	)(
-		input [3:0] A, B,
-		output [3:0] D,
+		input [N-1:0] A, B,
+		output [N-1:0] D,
 		output COUT
 	);
 
-	wire [3:0] _carries, _bactual;
+	wire [N-1:0] _carries;
 	
-	assign COUT 		= _carries[3];	// carries are really just borrows
-	assign _bactual 	= ~B; 			// equilvilent to "B[n] ^ 1"
+	assign COUT = _carries[N-1];
 	
 	// ripple carry design
 	genvar i;
 	generate
-		for(i = 0; i < N; i = i+1) begin : adder_array
+		for(i = N-1; i >= 0; i = i-1) begin : adder_array
 			FullAdder _fa(
 				.A(A[i]),
-				.B(_bactual[i]),
+				.B(~B[i]),
 				.CIN(i == 0 ? 1 : _carries[i-1]),
 				.S(D[i]),
 				.COUT(_carries[i])
