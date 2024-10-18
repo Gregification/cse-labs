@@ -7,7 +7,7 @@
 	this module is not part of the logic, it only serves to demo it
 */
 
-`define N 5
+`define N 8
 
 module lab5(
 		// standard in. i got tired of the assignment editor, see immideatly after wire decelerations for assignments
