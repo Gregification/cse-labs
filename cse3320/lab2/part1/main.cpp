@@ -3,43 +3,44 @@
  * George Boone
  * 1002055713
  * 
- * - code was made with inspiration by work of Professor Hiu Lu
- *      - it was not a baseline or hard refrence, but has similar enough parts to warrnet crediting
- *      - https://www.cs.binghamton.edu/~huilu/teaching/lecture5/examples/
  * - takes 1 cli argument: number of children processes, default 1
- * - reads data from stdin
- * - outputs sorted data to stdout
  * - tested on WSL Ubuntu 22.04.5
+ * - time takes is on the last line outputted
+ * - see macros on line 42
  * 
  * compile with:
  * $ g++ main.cpp --std=c++17
  * 
  * run with:
- * $ ./a.out < data.csv > sorted.csv
+ * # WHERE "N" IS THE NUMBER OF CHILD PROCESSES
+ * $ ./a.out N < data.csv > sorted.csv
  * 
+ * process:
+ *  1. init child processes. (all other child processes route output into child process 0)
+ *  2. read all data from stdin
+ *  3. round robin distribute data to child process
+ *  4. wait for child process 0 to finish
+ *  5. print sorted data to stdout
+ * 
+ * refrences:
+ *  - UTA Professor Hiu Lu's cse3320 fall-2024 notes & resources
+ *      - https://www.cs.binghamton.edu/~huilu/teaching/lecture5/examples/
 */
 
 // spaghettie code. I avoided singals since Im not too familiar with it and its another 
 // thing the class hasent gone over. instead used a deticated 'bad' value a end of the pipe.
 
 // side note: 
-// Whats the point of the class if we have to research and discover from 3rd party resources
-// to learn anything. I credit what little I have learned to listening in on Hui Lu lectures.
-// expecially so considering that notes over one of his lectures is compareable to a month of 
-// this classes. The specific lecture notes I heavly refrenced was actually from like the 3rd
-// week of the semester. Even with how simple this assignment is supposed to be we literally
-// did not learn anything that was needed for it. Please cut down on the fluff and whatnot, 
-// Hiu Lu's leacture slides are a great example of how to actually teach this course.
-// Big gripe with the pacing and how the course is so non technical and probably something 
-// a charity teaches at a old folks home for publicity, no one actually learns anything since
-// at least half of everythign this class has covered are things you pick up from even thinking
-// of going for a cs degree or sleeping though a middle school typing course. even if this may
-// was intended to be a blow off class we should at least learn something.
-// kinda expensive financially and time wise for just a os credit, not even accounting how messy 
-// its going to be if any future class needs information that was supposed to be covered in this 
-// class.
+// Whats the point of the class if we have to self teach entirely from 3rd party resources
+// to learn anything. Even with how simple this assignment is we literally did not cover 
+// anything remotely relevant to it. Hiu Lu's leacture slides are a great example of what to
+// actually cover. Big gripe with the pacing and how the course is so non technical, even if 
+// this was intended to be a blow off class we should at least learn something; from how this 
+// class has gone so for far, it should be a 1100 level course. Ive see what this course
+// could be and its sad to see what it is. 
 
 // #define DEBUG
+#define SHOW_TIMEING_RESULTS
 
 #include <vector>       // std::vector
 #include <string>       // std::string
@@ -223,14 +224,19 @@ int main(int argc, char* args[]) {
     std::cout << "split data set among child processes, num entries: " << data.size() << std::endl;
     #endif
 
+    #ifdef SHOW_TIMEING_RESULTS
     long long start_micros = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+    #endif
 
     for(int i = 0; i < data.size(); i++) {
-        write(
+        if(write(
             child_pfds[i % child_pfds.size()][1],
             &data[i],
             sizeof(data[i])
-        );
+        ) <= 0) {
+            std::cerr << "error during write" << std::endl;
+            exit(1);
+        }
     }
 
     #ifdef DEBUG
@@ -246,11 +252,14 @@ int main(int argc, char* args[]) {
         #endif
 
         ENTRY e{.id = -2};
-        write(
+        if(write(
             child_pfds[i][1],
             &e,
             sizeof(data[i])
-        );
+        ) <= 0) {
+            std::cerr << "error during write" << std::endl;
+            exit(1);
+        }
         //close(child_pfds[i][1]);
         #ifdef DEBUG
         sleep(1);
@@ -281,11 +290,14 @@ int main(int argc, char* args[]) {
 
     {
         ENTRY e{.id = -1};
-        write(
+        if(write(
             child_pfds[0][1],
             &e,
             sizeof(data[0])
-        );
+        ) <= 0) {
+            std::cerr << "error during write" << std::endl;
+            exit(1);
+        }
         
         #ifdef DEBUG
         sleep(1);
@@ -307,10 +319,12 @@ int main(int argc, char* args[]) {
     //------------------------------------------------------------------------------------
     // timer ends
     //------------------------------------------------------------------------------------
+    #ifdef SHOW_TIMEING_RESULTS
     long long end_micros = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
     end_micros -= start_micros;
-    std::cout << "time elapsed in (ms): " << end_micros / 1000;
+    std::cout << "time elapsed (ms): " << end_micros / 1000;
     std::cout << "." << end_micros % 1000 << std::endl;
+    #endif
 
     #ifdef DEBUG
     std::cout << "wait for first child processes to finish." <<std::endl;
