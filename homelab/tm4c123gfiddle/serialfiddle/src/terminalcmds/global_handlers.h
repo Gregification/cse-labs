@@ -10,6 +10,6 @@
 
 #include "cmdhandler.h"
 
-CmdHandler ** HANDLER_MAP_GLOBAL;
+CmdHandler * HANDLER_MAP_GLOBAL[];
 
 #endif /* SRC_TERMINALCMDS_GLOBAL_HANDLERS_H_ */

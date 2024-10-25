@@ -10,6 +10,6 @@
 
 #include "cmdhandler.h"
 
-CmdHandler h_root;
+extern CmdHandler h_root;
 
 #endif /* SRC_TERMINALCMDS_HANDLER_ROOT_H_ */

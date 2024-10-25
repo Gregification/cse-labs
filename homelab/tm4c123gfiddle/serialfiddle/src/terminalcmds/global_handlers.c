@@ -10,7 +10,7 @@
 #include "handler_help.h"
 #include "handler_root.h"
 
-CmdHandler ** HANDLER_MAP_GLOBAL = {
+CmdHandler * HANDLER_MAP_GLOBAL[] = {
         &h_root,
         &h_help
     };
