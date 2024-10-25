@@ -6,18 +6,18 @@
  */
 
 #include <stdlib.h>
-#include <string.h>
 #include "cmdhandler.h"
 
 CmdHandler * findHandler_e(CmdHandler * h, char * str) {
     return findHandler(
             h->handlers_begin,
-            h->handlers_end,
+            h->handlers_len,
             str,
-            str + strlen(str)
+            sizeofWord(str)
         );
 }
-CmdHandler * findHandler(CmdHandler ** h_arr_begin, CmdHandler ** h_arr_end, char * str_begin, char * str_end){
+
+CmdHandler * findHandler(CmdHandler ** h_arr, uint8_t h_arr_len, char * str, uint8_t str_len);
 
     //search for args that match string
     //  instead of keeping a dynamic array of current matches this just makes 2 loops through the list.
@@ -26,10 +26,11 @@ CmdHandler * findHandler(CmdHandler ** h_arr_begin, CmdHandler ** h_arr_end, cha
 
     uint8_t matchStrength = 0;          //current strength of command
     size_t numMatches = 0;              //match counter
-    CmdHandler ** ret = h_arr_begin;    //first strongest match
+    CmdHandler ** ret = h_arr;          //first strongest match
     CmdHandler ** h_i;                  //iterator
 
-    for(h_i = h_arr_begin; h_i != h_arr_end; h_i++){
+    // doing pointer arth because this fun has had like 5 reworks and i dont want to remake it again
+    for(h_i = h_arr; h_i < h_arr + h_arr_len; h_i++){
         uint8_t curr_strength = cmdMatchStrength((*h_i)->name, str_begin);
 
         if(curr_strength < matchStrength)
@@ -46,7 +47,7 @@ CmdHandler * findHandler(CmdHandler ** h_arr_begin, CmdHandler ** h_arr_end, cha
     }
 
     //if single & exact match
-    if(numMatches == 1 && strcmp((*ret)->name, str_begin) == 0){
+    if(numMatches == 1 && str_cmp((*ret)->name, str_begin) == 0){
         putsUart0("exact match\r\n");
         putcUart0('\t');
         putsUart0((*ret)->name);
@@ -72,12 +73,26 @@ CmdHandler * findHandler(CmdHandler ** h_arr_begin, CmdHandler ** h_arr_end, cha
 }
 
 uint8_t sizeofWord(const char * str){
-    char * r = strchr(str, ' ');
+    uint8_t i = 0;
 
-    if(r)
-        return r - str + 1;
+    while(str[i] != 0 && (is_alpha(str[i]) || is_numeric(str[i])))
+        i++;
 
-    return 0;
+    return i;
+}
+
+uint8_t str_cmp(char const * a, const char * b){
+    uint8_t d;
+
+    while(!d){
+        d = (*a) - (*b);
+        if((*a) == 0 || (*b) == 0)
+            break;
+        a++;
+        b++;
+    }
+
+    return d;
 }
 
 uint8_t cmdMatchStrength(const char * name, const char * str){
@@ -96,3 +111,29 @@ uint8_t cmdMatchStrength(const char * name, const char * str){
     return curr_strength;
 }
 
+void pushHandler(CmdHandler* h){
+    if(handler_count != 0 && handlers[handler_count - 1] == h)
+        return;
+
+    if(handler_count == MAX_HANDLER_DEPTH - 1){
+        //naive cascade, everything but the first one
+        uint8_t i;
+        for(i = 2; i < MAX_HANDLER_DEPTH; i++)
+            handlers[i-1] = handlers[i];
+
+        handlers[MAX_HANDLER_DEPTH - 1] = h;
+    } else {
+        handlers[handler_count++] = h;
+    }
+
+    curr_handler = h;
+}
+
+void popHandler(){
+    if(handler_count == 0) {
+        pushHandler(&h_root);
+    } else {
+        handler_count--;
+        curr_handler = handlers[handler_count];
+    }
+}

@@ -16,11 +16,11 @@ static CmdHandler * leafs[] = {
 
 static CMD_NAMED_HANDLER(root);
 CmdHandler h_root = {
-                           .name =              "root",
-                           .description =       "root of the handler tree",
-                           .onStr =             _handler_root,
-                           .handlers_begin =    leafs,
-                           .handlers_end =      leafs + 2//sizeof(leafs) / sizeof(leafs[0])
+                           .name                = "root",
+                           .description         = "root of the handler tree",
+                           .onStr               = _handler_root,
+                           .handlers_begin      = leafs,
+                           .handlers_len        = sizeof(leafs) / sizeof(leafs[0])
 };
 
 CMD_NAMED_HANDLER(root){

@@ -6,10 +6,13 @@
  */
 
 /**
- * a node based state machine setup.
- * the main point of this is to mimic inheritance and privates
+ * tree system. fancy wrappers for a bunch of function
+ * the main point of this is to
  *
  * 'CmdHandler' acts as a node, and can point to other CmdHandlers.
+ *
+ * - this has a significant mem footprint. is intended to be the primary program on
+ *      the tm4c.
  */
 
 #ifndef SRC_TERMINALCMDS_CMDHANDLER_H_
@@ -26,6 +29,25 @@
                                                 .description = #DES             \
                                             };                                  \
                                         CMD_NAMED_HANDLER(NAME)
+#define MAX_CHAR_INPUT          80                          // uint8_t
+#define MAX_HANDLER_DEPTH       5                           // uint8_t
+#define PRNT_NEWLINE            putsUart0("\r\n");
+#define MAX_FIELDS              ((MAX_CHAR_INPUT + 1) >> 1) // (x+1)/2
+
+typedef enum {
+    FIELD_NUMERIC       = 1 << 0,
+    FIELD_ALPHA         = 1 << 1,
+    FIELD_ALPHANUMERIC  = 1 << 2,
+} FIELD_TYPE;
+
+typedef struct {
+    char str[MAX_CHAR_INPUT+1];
+    uint8_t str_len;
+    uint8_t fieldPositions  [MAX_FIELDS];
+    uint8_t field_count;
+    FIELD_TYPE field_type   [MAX_FIELDS];
+} USER_DATA;
+
 struct CmdHandler_struct;
 typedef struct CmdHandler_struct CmdHandler;
 
@@ -36,12 +58,11 @@ struct CmdHandler_struct {
     /**description of the command. includes arguments*/
     char * description;
 
-    /**pointer to array of pointers*/
+    /**array of pointers, to child handlers*/
     CmdHandler ** handlers_begin;
-    CmdHandler ** handlers_end;
+    uint8_t handlers_len;
 
-    /**
-     * takes the raw input string form user, does something.
+    /** preforms a custom action from a given user input
      * \param[in] len   length of the input string
      * \param[in] str   the input string. not guaranteed to be unmodified
      * \return pointer to the new handler to use. point to self to remain at the top of stack. null pointer to remove self
@@ -49,21 +70,39 @@ struct CmdHandler_struct {
     CmdHandler * (*onStr)(char * str);
 };
 
+//current handler
+CmdHandler * curr_handler;
+
+//array of pointers, to handlers
+CmdHandler * handlers[MAX_HANDLER_DEPTH];
+uint8_t handler_count = 0;
+
+void pushHandler(CmdHandler*);
+void popHandler();
+
+
 /**
  * finds the matching handler by name, notice the uint8_t size, thats the upper bound of how many you should have.
  *  if no match, then prints out the possible matches.
  *
  * \return pointer to the handler that matches exactly, otherwise returns null and prints possible handlers.
  */
-CmdHandler * findHandler(CmdHandler ** h_arr_begin, CmdHandler ** h_arr_end, char * str_begin, char * str_end);
+CmdHandler * findHandler(CmdHandler ** handler_arr, uint8_t handler_arr_len, char * str, uint8_t str_len);
 CmdHandler * findHandler_e(CmdHandler * h, char * str);
 
+uint8_t is_alpha(char);
+uint8_t is_numeric(char);
+
 /**
- * finds the number of characters until the next space or end of string.
+ * finds the number of characters until the next non alphanumeric char
  * i.e., "cat puter" => 4
  */
 uint8_t sizeofWord(const char * str);
-
 uint8_t cmdMatchStrength(const char * name, const char * str);
+uint8_t str_cmp(char const * str_a, const char * str_b);
+
+#if MAX_CHAR_INPUT+1 >= 255
+    #error MAX-CHAR-INPUT too large
+#endif
 
 #endif /* SRC_TERMINALCMDS_CMDHANDLER_H_ */

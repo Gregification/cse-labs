@@ -4,4 +4,4 @@ config/*
 .launches/*
 *Debug*
 /.metadata/
-.jx*
+*.jx*
