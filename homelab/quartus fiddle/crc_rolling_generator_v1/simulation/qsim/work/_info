@@ -1,0 +1,80 @@
+m255
+K4
+z2
+!s11f vlog 2020.1 2020.02, Feb 28 2020
+13
+!s112 1.1
+!i10d 8192
+!i10e 25
+!i10f 100
+cModel Technology
+Z0 dD:/cse-labs/homelab/quartus fiddle/crc_rolling_generator_v1/simulation/qsim
+vcrc_c_gen
+Z1 !s110 1729692312
+!i10b 1
+!s100 >eUiU9@CmdDgZ3QZd6_Jz3
+Z2 !s11b Dg1SIo80bB@j0V0VzS_@n1
+IWTMORe:VSnlNlb[JI]0:c0
+Z3 VDg1SIo80bB@j0V0VzS_@n1
+R0
+Z4 w1729692311
+Z5 8crc_c_gen.vo
+Z6 Fcrc_c_gen.vo
+!i122 40
+L0 32 838
+Z7 OV;L;2020.1;71
+r1
+!s85 0
+31
+Z8 !s108 1729692312.000000
+Z9 !s107 crc_c_gen.vo|
+Z10 !s90 -work|work|crc_c_gen.vo|
+!i113 1
+Z11 o-work work
+Z12 tCvgOpt 0
+vcrc_c_gen_vlg_vec_tst
+R1
+!i10b 1
+!s100 XLm0nd@iUJHUmH^hclK4j0
+R2
+Ie^^:29<ob:jmMD?am>?c21
+R3
+R0
+R4
+8Waveform.vwf.vt
+FWaveform.vwf.vt
+!i122 41
+L0 30 89
+R7
+r1
+!s85 0
+31
+R8
+!s107 Waveform.vwf.vt|
+!s90 -work|work|Waveform.vwf.vt|
+!i113 1
+R11
+R12
+vhard_block
+!s110 1729692228
+!i10b 1
+!s100 SWAj;OLm?f0LoaB>=I@4l1
+R2
+I_GjQ;K<QeM6EaHf@hic[X3
+R3
+R0
+w1729692227
+R5
+R6
+!i122 38
+L0 1081 45
+R7
+r1
+!s85 0
+31
+!s108 1729692228.000000
+R9
+R10
+!i113 1
+R11
+R12

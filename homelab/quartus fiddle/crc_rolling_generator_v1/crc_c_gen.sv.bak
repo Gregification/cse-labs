@@ -1,0 +1,11 @@
+/**
+continious crc code generator
+*/
+
+module crc_c_gen(
+		input CLK,
+		input NEXT_BIT,
+		
+	);
+
+endmodule

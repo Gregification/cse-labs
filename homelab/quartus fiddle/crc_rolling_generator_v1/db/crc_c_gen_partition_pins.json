@@ -1,0 +1,85 @@
+{
+	"partitions" : [
+		{
+			"name" : "Top",
+			"pins" : [
+				{
+					"name" : "CRC[0]",
+					"strict" : false
+				},
+				{
+					"name" : "CRC[1]",
+					"strict" : false
+				},
+				{
+					"name" : "CRC[2]",
+					"strict" : false
+				},
+				{
+					"name" : "CRC[3]",
+					"strict" : false
+				},
+				{
+					"name" : "CRC[4]",
+					"strict" : false
+				},
+				{
+					"name" : "CRC[5]",
+					"strict" : false
+				},
+				{
+					"name" : "CRC[6]",
+					"strict" : false
+				},
+				{
+					"name" : "CRC[7]",
+					"strict" : false
+				},
+				{
+					"name" : "RESET",
+					"strict" : false
+				},
+				{
+					"name" : "SEED[0]",
+					"strict" : false
+				},
+				{
+					"name" : "SEED[2]",
+					"strict" : false
+				},
+				{
+					"name" : "SEED[3]",
+					"strict" : false
+				},
+				{
+					"name" : "SEED[4]",
+					"strict" : false
+				},
+				{
+					"name" : "SEED[5]",
+					"strict" : false
+				},
+				{
+					"name" : "SEED[6]",
+					"strict" : false
+				},
+				{
+					"name" : "NEXT_BIT",
+					"strict" : false
+				},
+				{
+					"name" : "CLOCK",
+					"strict" : false
+				},
+				{
+					"name" : "SEED[1]",
+					"strict" : false
+				},
+				{
+					"name" : "SEED[7]",
+					"strict" : false
+				}
+			]
+		}
+	]
+}
