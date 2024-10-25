@@ -12,6 +12,4 @@
 
 extern CmdHandler h_help;
 
-void h_help_init(CmdHandler * target);
-
 #endif /* SRC_TERMINALCMDS_HANDLER_HELP_H_ */

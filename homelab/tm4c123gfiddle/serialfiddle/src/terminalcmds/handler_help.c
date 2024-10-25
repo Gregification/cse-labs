@@ -14,30 +14,27 @@ static CMD_NAMED_HANDLER(help);
 CmdHandler h_help = {
        .name                = "help",
        .description         = "lists name and description of selected handler",
-       .onStr               = _handler_help,
+       .onInput             = _handler_help,
        .handlers_begin      = 0,
        .handlers_len        = 0
     };
 
 CMD_NAMED_HANDLER(help){
     CmdHandler* targ = findHandler(
-            target->handlers_begin,
-            target->handlers_len,
-            str,
-            str + strlen(str) - 1
+            handlers,
+            handler_count,
+            usrd->str,
+            sizeofWord(usrd->str)
         );
 
+//    putsUart0("help is running");
     if(targ){
+        putsUart0(targ->name);
         putsUart0(targ->description);
-        putsUart0("\n\r");
+    } else {
+        putsUart0("no target");
     }
+    PRNT_NEWLINE;
 
     return 0;
 };
-
-void h_help_init(CmdHandler * t){
-    if(t)
-        target = t;
-    else
-        target = &h_help;
-}

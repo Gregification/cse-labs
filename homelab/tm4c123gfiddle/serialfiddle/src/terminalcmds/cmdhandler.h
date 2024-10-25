@@ -21,12 +21,13 @@
 #include <stdint.h>
 #include "../losh/uart0.h"
 
-#define CMD_NAMED_HANDLER(NAME) CmdHandler * _handler_##NAME(char * str)
+#define CMD_NAMED_HANDLER(NAME) CmdHandler * _handler_##NAME(USER_DATA * usrd, uint8_t fld_i)
 #define CMD_HANDLER_SETUP(NAME, DES)    CMD_NAMED_HANDLER(NAME);     \
                                         CmdHandler handler_##NAME = {           \
                                                 .name = #NAME,                  \
-                                                .onStr = _handler_##NAME,       \
+                                                .onInput = _handler_##NAME,     \
                                                 .description = #DES             \
+                                                .handlers_len = 0               \
                                             };                                  \
                                         CMD_NAMED_HANDLER(NAME)
 #define MAX_CHAR_INPUT          80                          // uint8_t
@@ -35,18 +36,23 @@
 #define MAX_FIELDS              ((MAX_CHAR_INPUT + 1) >> 1) // (x+1)/2
 
 typedef enum {
+    FIELD_NONE          = 0,
     FIELD_NUMERIC       = 1 << 0,
     FIELD_ALPHA         = 1 << 1,
-    FIELD_ALPHANUMERIC  = 1 << 2,
+    FIELD_ALPHANUMERIC  = 1 << 2
 } FIELD_TYPE;
 
 typedef struct {
     char str[MAX_CHAR_INPUT+1];
     uint8_t str_len;
-    uint8_t fieldPositions  [MAX_FIELDS];
+    uint8_t field_positions  [MAX_FIELDS];
     uint8_t field_count;
     FIELD_TYPE field_type   [MAX_FIELDS];
 } USER_DATA;
+
+void parseUserDataFields(USER_DATA*);
+char * getFieldString(USER_DATA * ud, uint8_t fieldNum);
+uint32_t getFieldInt(USER_DATA * ud, uint8_t fieldNum);
 
 struct CmdHandler_struct;
 typedef struct CmdHandler_struct CmdHandler;
@@ -62,20 +68,15 @@ struct CmdHandler_struct {
     CmdHandler ** handlers_begin;
     uint8_t handlers_len;
 
-    /** preforms a custom action from a given user input
-     * \param[in] len   length of the input string
-     * \param[in] str   the input string. not guaranteed to be unmodified
-     * \return pointer to the new handler to use. point to self to remain at the top of stack. null pointer to remove self
+    /** prefrom's a custom action from a given user input
+     *  returns pointer to the new handler to use. point to self to remain at the top of stack. null pointer to remove self from stack
      */
-    CmdHandler * (*onStr)(char * str);
+    CmdHandler * (*onInput)(USER_DATA *, uint8_t field_index);
 };
-
-//current handler
-CmdHandler * curr_handler;
 
 //array of pointers, to handlers
 CmdHandler * handlers[MAX_HANDLER_DEPTH];
-uint8_t handler_count = 0;
+uint8_t handler_count;
 
 void pushHandler(CmdHandler*);
 void popHandler();
@@ -87,8 +88,8 @@ void popHandler();
  *
  * \return pointer to the handler that matches exactly, otherwise returns null and prints possible handlers.
  */
-CmdHandler * findHandler(CmdHandler ** handler_arr, uint8_t handler_arr_len, char * str, uint8_t str_len);
-CmdHandler * findHandler_e(CmdHandler * h, char * str);
+CmdHandler * findHandler(CmdHandler ** handler_arr, uint8_t handler_arr_len, char const * str, uint8_t str_len);
+CmdHandler * findHandler_e(CmdHandler * h, USER_DATA * ud, uint8_t fieldNumber);
 
 uint8_t is_alpha(char);
 uint8_t is_numeric(char);
