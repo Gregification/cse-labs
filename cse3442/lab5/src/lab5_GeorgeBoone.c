@@ -67,13 +67,13 @@
 
 #define IS_SWS1_HIGH        (GPIO_PORTF_DATA_R & (1<<4))
 
-#define PRNT_NEWLINE        putsUart0("\n\r");
-#define DELAY               10e6
+//#define PRNT_NEWLINE        putsUart0("\n\r");
+#define DELAY               40e6
 
 int main(void)
 {
     initSystemClockTo40Mhz();
-    initUart0();
+    //initUart0();
 
     SYSCTL_RCGCGPIO_R |=
               SYSCTL_RCGCGPIO_R5   // port F
@@ -100,9 +100,10 @@ int main(void)
 
 
     // sws1 pull high
-    GPIO_PORTF_PUR_R |= (1 << 4);
+//    GPIO_PORTF_PUR_R |= (1 << 4);
 
-    putsUart0("lab5 start");
+//    putsUart0("lab5 start");
+
 
     while(true){
         LOWSIDE_R_BB    = 0;
@@ -111,10 +112,8 @@ int main(void)
         MEASURE_LR_BB   = 0;
         MEASURE_C_BB    = 0;
 
-        putsUart0("all low");
-        PRNT_NEWLINE;
         _delay_cycles(DELAY);
-        while(IS_SWS1_HIGH);
+//        while(IS_SWS1_HIGH);
 
         LOWSIDE_R_BB    = 1;
         HIGHSIDE_R_BB   = 0;
@@ -122,10 +121,10 @@ int main(void)
         MEASURE_LR_BB   = 0;
         MEASURE_C_BB    = 0;
 
-        putsUart0("only lowside");
-        PRNT_NEWLINE;
+//        putsUart0("only lowside");
+//        PRNT_NEWLINE;
         _delay_cycles(DELAY);
-        while(IS_SWS1_HIGH);
+//        while(IS_SWS1_HIGH);
 
         LOWSIDE_R_BB    = 0;
         HIGHSIDE_R_BB   = 1;
@@ -133,10 +132,10 @@ int main(void)
         MEASURE_LR_BB   = 0;
         MEASURE_C_BB    = 0;
 
-        putsUart0("only highside");
-        PRNT_NEWLINE;
+//        putsUart0("only highside");
+//        PRNT_NEWLINE;
         _delay_cycles(DELAY);
-        while(IS_SWS1_HIGH);
+//        while(IS_SWS1_HIGH);
 
         LOWSIDE_R_BB    = 0;
         HIGHSIDE_R_BB   = 0;
@@ -144,10 +143,10 @@ int main(void)
         MEASURE_LR_BB   = 0;
         MEASURE_C_BB    = 0;
 
-        putsUart0("only integrate");
-        PRNT_NEWLINE;
+//        putsUart0("only integrate");
+//        PRNT_NEWLINE;
         _delay_cycles(DELAY);
-        while(IS_SWS1_HIGH);
+//        while(IS_SWS1_HIGH);
 
         LOWSIDE_R_BB    = 0;
         HIGHSIDE_R_BB   = 0;
@@ -155,10 +154,10 @@ int main(void)
         MEASURE_LR_BB   = 1;
         MEASURE_C_BB    = 0;
 
-        putsUart0("only measure LR");
-        PRNT_NEWLINE;
+//        putsUart0("only measure LR");
+//        PRNT_NEWLINE;
         _delay_cycles(DELAY);
-        while(IS_SWS1_HIGH);
+//        while(IS_SWS1_HIGH);
 
         LOWSIDE_R_BB    = 0;
         HIGHSIDE_R_BB   = 0;
@@ -166,9 +165,20 @@ int main(void)
         MEASURE_LR_BB   = 0;
         MEASURE_C_BB    = 1;
 
-        putsUart0("only measure C");
-        PRNT_NEWLINE;
+//        putsUart0("only measure C");
+//        PRNT_NEWLINE;
         _delay_cycles(DELAY);
-        while(IS_SWS1_HIGH);
+//        while(IS_SWS1_HIGH);
+
+        LOWSIDE_R_BB    = 0;
+        HIGHSIDE_R_BB   = 0;
+        INTEGRATE_BB    = 0;
+        MEASURE_LR_BB   = 1;
+        MEASURE_C_BB    = 1;
+
+//        putsUart0("M_LR and M_C");
+//        PRNT_NEWLINE;
+        _delay_cycles(DELAY);
+
     }
 }

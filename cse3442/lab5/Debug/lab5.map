@@ -1,17 +1,17 @@
 ******************************************************************************
-                  TI ARM Linker PC v20.2.7                     
+                  TI ARM Linker Unix v20.2.7                   
 ******************************************************************************
->> Linked Fri Oct 25 12:02:20 2024
+>> Linked Fri Oct 25 15:16:26 2024
 
 OUTPUT FILE NAME:   <lab5.out>
-ENTRY POINT SYMBOL: "_c_int00_noinit_noargs"  address: 00000689
+ENTRY POINT SYMBOL: "_c_int00_noinit_noargs"  address: 00000465
 
 
 MEMORY CONFIGURATION
 
          name            origin    length      used     unused   attr    fill
 ----------------------  --------  ---------  --------  --------  ----  --------
-  FLASH                 00000000   00040000  000006d8  0003f928  R  X
+  FLASH                 00000000   00040000  000004b4  0003fb4c  R  X
   SRAM                  20000000   00008000  00000200  00007e00  RW X
 
 
@@ -19,9 +19,9 @@ SEGMENT ALLOCATION MAP
 
 run origin  load origin   length   init length attrs members
 ----------  ----------- ---------- ----------- ----- -------
-00000000    00000000    000006d8   000006d8    r-x
+00000000    00000000    000004b4   000004b4    r-x
   00000000    00000000    0000026c   0000026c    r-- .intvecs
-  0000026c    0000026c    0000046c   0000046c    r-x .text
+  0000026c    0000026c    00000248   00000248    r-x .text
 20000000    20000000    00000200   00000000    rw-
   20000000    20000000    00000200   00000000    rw- .stack
 
@@ -34,14 +34,13 @@ section   page    origin      length       input sections
 .intvecs   0    00000000    0000026c     
                   00000000    0000026c     tm4c123gh6pm_startup_ccs.obj (.intvecs)
 
-.text      0    0000026c    0000046c     
-                  0000026c    000002c8     lab5_GeorgeBoone.obj (.text)
-                  00000534    00000154     uart0.obj (.text)
-                  00000688    0000002c     rtsv7M4_T_le_v4SPD16_eabi.lib : boot_cortex_m.c.obj (.text:_c_int00_noinit_noargs:_c_int00_noinit_noargs)
-                  000006b4    00000010     clock.obj (.text)
-                  000006c4    0000000c     tm4c123gh6pm_startup_ccs.obj (.text)
-                  000006d0    00000004     rtsv7M4_T_le_v4SPD16_eabi.lib : pre_init.c.obj (.text:_system_pre_init)
-                  000006d4    00000004                                   : exit.c.obj (.text:abort:abort)
+.text      0    0000026c    00000248     
+                  0000026c    000001f8     lab5_GeorgeBoone.obj (.text)
+                  00000464    0000002c     rtsv7M4_T_le_v4SPD16_eabi.lib : boot_cortex_m.c.obj (.text:_c_int00_noinit_noargs:_c_int00_noinit_noargs)
+                  00000490    00000010     clock.obj (.text)
+                  000004a0    0000000c     tm4c123gh6pm_startup_ccs.obj (.text)
+                  000004ac    00000004     rtsv7M4_T_le_v4SPD16_eabi.lib : pre_init.c.obj (.text:_system_pre_init)
+                  000004b0    00000004                                   : exit.c.obj (.text:abort:abort)
 
 .cinit     0    00000000    00000000     UNINITIALIZED
 
@@ -59,19 +58,18 @@ MODULE SUMMARY
 
        Module                         code   ro data   rw data
        ------                         ----   -------   -------
-    .\
+    ./
        tm4c123gh6pm_startup_ccs.obj   12     620       0      
     +--+------------------------------+------+---------+---------+
        Total:                         12     620       0      
                                                               
-    .\src\
-       lab5_GeorgeBoone.obj           712    0         0      
-       uart0.obj                      340    0         0      
+    ./src/
+       lab5_GeorgeBoone.obj           504    0         0      
        clock.obj                      16     0         0      
     +--+------------------------------+------+---------+---------+
-       Total:                         1068   0         0      
+       Total:                         520    0         0      
                                                               
-    C:\ti\ccs1280\ccs\tools\compiler\ti-cgt-arm_20.2.7.LTS\lib\rtsv7M4_T_le_v4SPD16_eabi.lib
+    /home/greg/ti/ccs1280/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/lib/rtsv7M4_T_le_v4SPD16_eabi.lib
        boot_cortex_m.c.obj            44     0         0      
        exit.c.obj                     4      0         0      
        pre_init.c.obj                 4      0         0      
@@ -80,15 +78,15 @@ MODULE SUMMARY
                                                               
        Stack:                         0      0         512    
     +--+------------------------------+------+---------+---------+
-       Grand Total:                   1132   620       512    
+       Grand Total:                   584    620       512    
 
 
 GLOBAL SYMBOLS: SORTED ALPHABETICALLY BY Name 
 
 address   name                   
 -------   ----                   
-000006d5  C$$EXIT                
-000006c5  ResetISR               
+000004b1  C$$EXIT                
+000004a1  ResetISR               
 20000200  __STACK_END            
 00000200  __STACK_SIZE           
 20000200  __STACK_TOP            
@@ -102,19 +100,13 @@ UNDEFED   __mpu_init
 20000000  __stack                
 20000000  __start___llvm_prf_cnts
 20000000  __stop___llvm_prf_cnts 
-00000689  _c_int00_noinit_noargs 
-000006d1  _system_pre_init       
-000006d5  abort                  
+00000465  _c_int00_noinit_noargs 
+000004ad  _system_pre_init       
+000004b1  abort                  
 ffffffff  binit                  
 00000000  g_pfnVectors           
-0000062b  getcUart0              
-000006b5  initSystemClockTo40Mhz 
-00000535  initUart0              
-0000063f  kbhitUart0             
+00000491  initSystemClockTo40Mhz 
 0000026d  main                   
-000005e3  putcUart0              
-000005ff  putsUart0              
-0000059f  setUart0BaudRate       
 
 
 GLOBAL SYMBOLS: SORTED BY Symbol Address 
@@ -125,18 +117,12 @@ address   name
 00000000  g_pfnVectors           
 00000200  __STACK_SIZE           
 0000026d  main                   
-00000535  initUart0              
-0000059f  setUart0BaudRate       
-000005e3  putcUart0              
-000005ff  putsUart0              
-0000062b  getcUart0              
-0000063f  kbhitUart0             
-00000689  _c_int00_noinit_noargs 
-000006b5  initSystemClockTo40Mhz 
-000006c5  ResetISR               
-000006d1  _system_pre_init       
-000006d5  C$$EXIT                
-000006d5  abort                  
+00000465  _c_int00_noinit_noargs 
+00000491  initSystemClockTo40Mhz 
+000004a1  ResetISR               
+000004ad  _system_pre_init       
+000004b1  C$$EXIT                
+000004b1  abort                  
 20000000  __stack                
 20000000  __start___llvm_prf_cnts
 20000000  __stop___llvm_prf_cnts 
@@ -150,4 +136,4 @@ ffffffff  __c_args__
 ffffffff  binit                  
 UNDEFED   __mpu_init             
 
-[28 symbols]
+[22 symbols]

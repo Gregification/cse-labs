@@ -2,8 +2,6 @@
 # Automatically-generated file. Do not edit!
 ################################################################################
 
-SHELL = cmd.exe
-
 # Add inputs and outputs from these tool invocations to the build variables 
 S_SRCS += \
 ../src/lab3a_GeorgeBoone_s.s 
@@ -25,16 +23,16 @@ OBJS += \
 ./src/lab3a_GeorgeBoone_s.obj 
 
 OBJS__QUOTED += \
-"src\clock.obj" \
-"src\lab3a_GeorgeBoone.obj" \
-"src\lab3a_GeorgeBoone_s.obj" 
+"src/clock.obj" \
+"src/lab3a_GeorgeBoone.obj" \
+"src/lab3a_GeorgeBoone_s.obj" 
 
 C_DEPS__QUOTED += \
-"src\clock.d" \
-"src\lab3a_GeorgeBoone.d" 
+"src/clock.d" \
+"src/lab3a_GeorgeBoone.d" 
 
 S_DEPS__QUOTED += \
-"src\lab3a_GeorgeBoone_s.d" 
+"src/lab3a_GeorgeBoone_s.d" 
 
 C_SRCS__QUOTED += \
 "../src/clock.c" \
