@@ -12,17 +12,17 @@ CmdHandler * target;
 
 static CMD_NAMED_HANDLER(help);
 CmdHandler h_help = {
-                           .name =              "help",
-                           .description =       "lists name and description of selected handler",
-                           .onStr =             _handler_help,
-                           .handlers_begin =    0,
-                           .handlers_end =      0
-};
+       .name                = "help",
+       .description         = "lists name and description of selected handler",
+       .onStr               = _handler_help,
+       .handlers_begin      = 0,
+       .handlers_len        = 0
+    };
 
 CMD_NAMED_HANDLER(help){
     CmdHandler* targ = findHandler(
             target->handlers_begin,
-            target->handlers_end,
+            target->handlers_len,
             str,
             str + strlen(str) - 1
         );
