@@ -24,7 +24,7 @@ module lab6(
 	wire OnOff, Clear, Set, Clock;
 	wire onoff_state;
 	wire [31:0] clk_ladder;
-	wire [7:0] A, Y;
+	wire [7:0] A, Y; 
 	wire [2:0] shift_amount;
 	
 	assign OnOff 		= ~KEYBOARD_BTN[0];
