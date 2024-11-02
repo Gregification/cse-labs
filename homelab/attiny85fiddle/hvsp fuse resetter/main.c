@@ -84,9 +84,10 @@ int main(){
     // program high fuses
     //------------------------------------------------------------------------------------
     
-    transfer(0b0100'0000, 0b0100'1100);
-    // transfer(0b0100'0000, 0b0100'1100);
-    // transfer(0b0100'0000, 0b0100'1100);
+    transfer(0b0100'0000, 0b0100'1100);         // instruction 1 / 5
+    transfer(0b1101'1111, 0b0010'1100);         // instruction 2 / 6
+    transfer(0b0000'0000, 0b0111'0100);         // instruction 3 
+    transfer(0b0000'0000, 0b0111'1100);         // instruction 4
 
     //------------------------------------------------------------------------------------
     // exit
@@ -97,9 +98,9 @@ int main(){
 }
 
 uint16_t transfer_bit(uint8_t sdi_bit, uint8_t sii_bit){
-    //read in on rising clock edge, MSB first
-    PORTB &= ~SCI;
-    _delay_us(1);
+    //MSB first
+    //write on rising clock edge
+    //read on falling edge
 
     if(sdi_bit == 0)
         PORTB &= ~SDI;
@@ -111,10 +112,15 @@ uint16_t transfer_bit(uint8_t sdi_bit, uint8_t sii_bit){
     else
         PORTB |= SII;
     
+    // clock to high
     PORTB |= SCI;
-    _delay_us(1);
-    PORTB &= ~SCI;
+    _delay_loop_1(2);
 
+    // clock to low
+    PORTB &= ~SCI;
+    _delay_loop_1(2);
+
+    // read and return
     return (PINB & SDO) ? 1 : 0;
 }
 
