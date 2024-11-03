@@ -4118,7 +4118,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Package_DFN_QFN:Micrel_MLF-8-1EP_2x2mm_P0.5mm_EP0.8x1.3mm_ThermalVias"
+		(property "Footprint" "Package_DFN_QFN:Micrel_MLF-8-1EP_2x2mm_P0.5mm_EP0.6x1.2mm"
 			(at 218.44 149.86 0)
 			(effects
 				(font
