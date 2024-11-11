@@ -195,13 +195,82 @@ int main(void)
         parseFields(&data);
         bool valid = false;
 
+        if(isCommand(&data, "auto", 0)){
+            valid = true;
+
+            //----------test if cap-----------
+            // charge then discharge
+            //if V drops instantly its a R, if it holds its C, something in between its L
+
+
+            // charge
+            timer1A_reset(30000);
+            set_all_pins_low();
+            HIGHSIDE_R_BB   = 1;
+            MEASURE_C_BB    = 1;
+
+            measure_rise();
+
+            PRINT_NEW_LINE;
+            if(timeout){
+                putsUart0("possibly big component, 'auto' cmd is for small components");
+                goto end_of_auto_cmd;
+            } else {
+                putsUart0("charged!");
+                _delay_cycles(80e6);    // let it charge some more
+            }
+
+            // discharge
+            timer1A_reset(1000);
+            HIGHSIDE_R_BB   = 0;
+            measure_fall();
+
+            if(timeout){
+                // is capacitor
+                PRINT_NEW_LINE;
+                putsUart0("detected capacitor");
+
+                timer1A_reset(5000);
+                measure_C();
+                goto end_of_auto_cmd;
+            } else {
+                PRINT_NEW_LINE;
+                putsUart0("not a capacitor");
+            }
+
+            //------------test if resistor of sufficient size or inductor
+
+            // discharge to reset for final measurements
+            set_all_pins_low();
+            LOWSIDE_R_BB    = 1;
+            _delay_cycles(10e6);
+
+            // charge
+            timer1A_reset(5000);
+            MEASURE_LR_BB   = 1;
+            measure_rise();
+
+            if(timeout){
+                PRINT_NEW_LINE;
+                putsUart0("detected rizister");
+
+                timer1A_reset(5000);
+                measure_R();
+                goto end_of_auto_cmd;
+            } else {
+                // is inductor
+                PRINT_NEW_LINE;
+                putsUart0("detected inductor");
+                timer1A_reset(5000);
+                measure_L();
+            }
+
+            end_of_auto_cmd: ;
+        } else
         if(isCommand(&data,"l", 0)){
             valid = true;
-            putsUart0("\n\rindurristance");
 
-            set_all_pins_low();
-            MEASURE_LR_BB   = 1;
-            LOWSIDE_R_BB    = 1;
+            measure_L();
 
         } else
         if(isCommand(&data,"c", 1)){
@@ -231,8 +300,15 @@ int main(void)
         if(isCommand(&data,"r", 0)){
             valid = true;
 
-            timer1A_reset(5000);
+            timer1A_reset(30000);
             measure_R();
+            set_all_pins_low();
+        }
+
+        if(valid){
+            set_all_pins_low();
+            MEASURE_C_BB    = 1;
+            LOWSIDE_R_BB    = 1;
         }
 
         if(isCommand(&data,"mlr", 1)){
@@ -473,14 +549,60 @@ inline void measure_rise(){
 
 inline void measure_fall(){
     TIMER1_CTL_R |= TIMER_CTL_TAEN;     // start timer
-    while(!COMP_ACSTAT0_R && !timeout)   // wait for cap or timeout
+    while((COMP_ACSTAT0_R & 2 == 0) && !timeout)  // wait for cap or timeout
         ;
 
     timeCount = TIMER1_TAV_R;           // save timer value
     TIMER1_CTL_R &= ~TIMER_CTL_TAEN;    // stop timer
 }
 
-float measure_L();
+float measure_L(){
+    // charge
+    set_all_pins_low();
+    MEASURE_LR_BB   = 1;
+    LOWSIDE_R_BB    = 1;
+
+    measure_rise();
+
+    // discharge
+    HIGHSIDE_R_BB   = 0;
+    _delay_cycles(40e2);
+    LOWSIDE_R_BB    = 1;
+    _delay_cycles(20e6);
+
+    double inductance = -1;
+
+    if(!timeout){
+        char str[40];
+        PRINT_NEW_LINE;
+        snprintf(str, sizeof(str), "ticks: %7d", timeCount);
+        putsUart0(str);
+        PRINT_NEW_LINE;
+
+        /*test results
+         * henry    :   average tick
+         * 100p     :         1543.75
+         * 750p     :         2398.75
+         * 12n      :        64217.5
+         * 22n      :       118560.0
+         * 25u      :    131916178.8
+         * 57u      :    305046702.3
+         * 140u     :    774646821.3
+         */
+
+        const double
+            x   = timeCount,
+            xx  = x * x,
+            xxx = x * xx;
+
+        inductance = 4e-27 * xxx - 2e-17 * xx + 2e-7 * x - 0.0002;
+        snprintf(str, sizeof(str), "inductance (uH): %6.6f", inductance);
+        putsUart0(str);
+    }
+
+    return inductance;
+}
+
 float measure_C(){
     // charge
     //  assuming positive lead on DUT2
@@ -535,6 +657,8 @@ float measure_R(){
     MEASURE_LR_BB   = 1;
 
     measure_rise();
+
+    set_all_pins_low();
 
     float resistance = -1;
 
