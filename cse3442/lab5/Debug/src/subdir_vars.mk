@@ -2,6 +2,8 @@
 # Automatically-generated file. Do not edit!
 ################################################################################
 
+SHELL = cmd.exe
+
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
 ../src/clock.c \
@@ -19,14 +21,14 @@ OBJS += \
 ./src/uart0.obj 
 
 OBJS__QUOTED += \
-"src/clock.obj" \
-"src/lab5_GeorgeBoone.obj" \
-"src/uart0.obj" 
+"src\clock.obj" \
+"src\lab5_GeorgeBoone.obj" \
+"src\uart0.obj" 
 
 C_DEPS__QUOTED += \
-"src/clock.d" \
-"src/lab5_GeorgeBoone.d" \
-"src/uart0.d" 
+"src\clock.d" \
+"src\lab5_GeorgeBoone.d" \
+"src\uart0.d" 
 
 C_SRCS__QUOTED += \
 "../src/clock.c" \

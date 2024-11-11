@@ -2,7 +2,9 @@
 # Automatically-generated file. Do not edit!
 ################################################################################
 
-CG_TOOL_ROOT := /home/greg/ti/ccs1280/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS
+SHELL = cmd.exe
+
+CG_TOOL_ROOT := C:/ti/ccs1280/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS
 
 GEN_OPTS__FLAG := 
 GEN_CMDS__FLAG := 
@@ -18,8 +20,8 @@ $(GEN_CMDS__FLAG) \
 
 -include ../makefile.init
 
-RM := rm -rf
-RMDIR := rm -rf
+RM := DEL /F
+RMDIR := RMDIR /S/Q
 
 # All of the sources participating in the build are defined here
 -include sources.mk
@@ -137,15 +139,15 @@ all: $(OBJS) $(CMD_SRCS) $(GEN_CMDS)
 lab3b.out: $(OBJS) $(CMD_SRCS) $(GEN_CMDS)
 	@echo 'Building target: "$@"'
 	@echo 'Invoking: Arm Linker'
-	"/home/greg/ti/ccs1280/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/bin/armcl" -mv7M4 --code_state=16 --float_support=FPv4SPD16 -me --define=ccs="ccs" --define=PART_TM4C123GH6PM -g --gcc --diag_warning=225 --diag_wrap=off --display_error_number --abi=eabi -z -m"lab3b.map" --heap_size=0 --stack_size=512 -i"/home/greg/ti/ccs1280/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/lib" -i"/home/greg/ti/ccs1280/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include" --reread_libs --diag_wrap=off --display_error_number --warn_sections --xml_link_info="lab3b_linkInfo.xml" --rom_model -o "lab3b.out" $(ORDERED_OBJS)
+	"C:/ti/ccs1280/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/bin/armcl" -mv7M4 --code_state=16 --float_support=FPv4SPD16 -me --define=ccs="ccs" --define=PART_TM4C123GH6PM -g --gcc --diag_warning=225 --diag_wrap=off --display_error_number --abi=eabi -z -m"lab3b.map" --heap_size=0 --stack_size=512 -i"C:/ti/ccs1280/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/lib" -i"C:/ti/ccs1280/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include" --reread_libs --diag_wrap=off --display_error_number --warn_sections --xml_link_info="lab3b_linkInfo.xml" --rom_model -o "lab3b.out" $(ORDERED_OBJS)
 	@echo 'Finished building target: "$@"'
 	@echo ' '
 
 # Other Targets
 clean:
 	-$(RM) $(EXE_OUTPUTS__QUOTED)
-	-$(RM) "tm4c123gh6pm_startup_ccs.obj" "src/clock.obj" "src/lab3b_GeorgeBoone.obj" "src/uart0.obj" 
-	-$(RM) "tm4c123gh6pm_startup_ccs.d" "src/clock.d" "src/lab3b_GeorgeBoone.d" "src/uart0.d" 
+	-$(RM) "tm4c123gh6pm_startup_ccs.obj" "src\clock.obj" "src\lab3b_GeorgeBoone.obj" "src\uart0.obj" 
+	-$(RM) "tm4c123gh6pm_startup_ccs.d" "src\clock.d" "src\lab3b_GeorgeBoone.d" "src\uart0.d" 
 	-@echo 'Finished clean'
 	-@echo ' '
 

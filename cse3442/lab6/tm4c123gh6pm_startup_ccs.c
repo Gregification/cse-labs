@@ -22,9 +22,9 @@
 //
 //*****************************************************************************
 
+#include <src/lab6_GeorgeBoone.h>
 #include <stdint.h>
 
-#include "src/interrupt.h"
 
 //*****************************************************************************
 //
@@ -106,11 +106,11 @@ void (* const g_pfnVectors[])(void) =
     IntDefaultHandler,                      // Watchdog timer
     IntDefaultHandler,                      // Timer 0 subtimer A
     IntDefaultHandler,                      // Timer 0 subtimer B
-    IntDefaultHandler,                      // Timer 1 subtimer A
+    timer1AInt,                             // Timer 1 subtimer A
     IntDefaultHandler,                      // Timer 1 subtimer B
     IntDefaultHandler,                      // Timer 2 subtimer A
     IntDefaultHandler,                      // Timer 2 subtimer B
-    IntDefaultHandler,                      // Analog Comparator 0
+    AnalogCmp0Int,                          // Analog Comparator 0
     IntDefaultHandler,                      // Analog Comparator 1
     IntDefaultHandler,                      // Analog Comparator 2
     IntDefaultHandler,                      // System Control (PLL, OSC, BO)

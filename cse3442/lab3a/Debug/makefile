@@ -2,7 +2,9 @@
 # Automatically-generated file. Do not edit!
 ################################################################################
 
-CG_TOOL_ROOT := /home/greg/ti/ccs1280/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS
+SHELL = cmd.exe
+
+CG_TOOL_ROOT := C:/ti/ccs1280/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS
 
 GEN_OPTS__FLAG := 
 GEN_CMDS__FLAG := 
@@ -16,8 +18,8 @@ $(GEN_CMDS__FLAG) \
 
 -include ../makefile.init
 
-RM := rm -rf
-RMDIR := rm -rf
+RM := DEL /F
+RMDIR := RMDIR /S/Q
 
 # All of the sources participating in the build are defined here
 -include sources.mk
@@ -133,16 +135,16 @@ all: $(OBJS) $(GEN_CMDS)
 lab3a.out: $(OBJS) $(GEN_CMDS)
 	@echo 'Building target: "$@"'
 	@echo 'Invoking: Arm Linker'
-	"/home/greg/ti/ccs1280/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/bin/armcl" -mv7M4 --code_state=16 --float_support=FPv4SPD16 -me --define=ccs="ccs" --define=PART_TM4C123GH6PM -g --gcc --diag_warning=225 --diag_wrap=off --display_error_number --abi=eabi -z -m"lab3a.map" --heap_size=0 --stack_size=512 -i"/home/greg/ti/ccs1280/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/lib" -i"/home/greg/ti/ccs1280/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include" --reread_libs --diag_wrap=off --display_error_number --warn_sections --xml_link_info="lab3a_linkInfo.xml" --rom_model -o "lab3a.out" $(ORDERED_OBJS)
+	"C:/ti/ccs1280/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/bin/armcl" -mv7M4 --code_state=16 --float_support=FPv4SPD16 -me --define=ccs="ccs" --define=PART_TM4C123GH6PM -g --gcc --diag_warning=225 --diag_wrap=off --display_error_number --abi=eabi -z -m"lab3a.map" --heap_size=0 --stack_size=512 -i"C:/ti/ccs1280/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/lib" -i"C:/ti/ccs1280/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include" --reread_libs --diag_wrap=off --display_error_number --warn_sections --xml_link_info="lab3a_linkInfo.xml" --rom_model -o "lab3a.out" $(ORDERED_OBJS)
 	@echo 'Finished building target: "$@"'
 	@echo ' '
 
 # Other Targets
 clean:
 	-$(RM) $(EXE_OUTPUTS__QUOTED)
-	-$(RM) "src/clock.obj" "src/lab3a_GeorgeBoone.obj" "src/lab3a_GeorgeBoone_s.obj" 
-	-$(RM) "src/clock.d" "src/lab3a_GeorgeBoone.d" 
-	-$(RM) "src/lab3a_GeorgeBoone_s.d" 
+	-$(RM) "src\clock.obj" "src\lab3a_GeorgeBoone.obj" "src\lab3a_GeorgeBoone_s.obj" 
+	-$(RM) "src\clock.d" "src\lab3a_GeorgeBoone.d" 
+	-$(RM) "src\lab3a_GeorgeBoone_s.d" 
 	-@echo 'Finished clean'
 	-@echo ' '
 
