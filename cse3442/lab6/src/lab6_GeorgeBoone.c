@@ -9,6 +9,7 @@
 
 #include <src/lab6_GeorgeBoone.h>
 
+#include <math.h>
 #include "uchar.h"
 #include "clock.h"
 #include "uart0.h"
@@ -106,9 +107,6 @@ void enable_acomp0_ints();
 
 void AnalogCmp0Int(){
     timeCount = stop_timer1a();
-    PRINT_NEW_LINE;
-    putsUart0("! analog comparator interrupt");
-    PRINT_NEW_LINE;
 
     COMP_ACINTEN_R &= ~COMP_ACINTEN_IN0;    // disable interrupts for comparator 0
     COMP_ACRIS_R = COMP_ACRIS_IN0;          // clear raw interrupt flags, uP.1222
@@ -270,6 +268,7 @@ int main(void)
         if(isCommand(&data,"l", 0)){
             valid = true;
 
+            timer1A_reset(10000);
             measure_L();
 
         } else
@@ -559,13 +558,19 @@ inline void measure_fall(){
 float measure_L(){
     // charge
     set_all_pins_low();
+    _delay_cycles(40e6);
+
+    set_all_pins_low();
+    INTEGRATE_BB    = 1;
     MEASURE_LR_BB   = 1;
-    LOWSIDE_R_BB    = 1;
 
     measure_rise();
 
+
+
     // discharge
     HIGHSIDE_R_BB   = 0;
+    MEASURE_C_BB    = 1;
     _delay_cycles(40e2);
     LOWSIDE_R_BB    = 1;
     _delay_cycles(20e6);
@@ -581,21 +586,10 @@ float measure_L(){
 
         /*test results
          * henry    :   average tick
-         * 100p     :         1543.75
-         * 750p     :         2398.75
-         * 12n      :        64217.5
-         * 22n      :       118560.0
-         * 25u      :    131916178.8
-         * 57u      :    305046702.3
-         * 140u     :    774646821.3
+         *
          */
-
-        const double
-            x   = timeCount,
-            xx  = x * x,
-            xxx = x * xx;
-
-        inductance = 4e-27 * xxx - 2e-17 * xx + 2e-7 * x - 0.0002;
+        inductance = 0.147 * pow(2.71828, 0.16419 * timeCount);
+//        inductance = 19.54325 * log(timeCount) + 3180;
         snprintf(str, sizeof(str), "inductance (uH): %6.6f", inductance);
         putsUart0(str);
     }
