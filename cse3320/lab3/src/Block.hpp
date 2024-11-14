@@ -43,22 +43,34 @@ struct Block;
 #define MAX_NUM_BLOCKS          ((DISK_UNIT)(MAX_DISK_SIZE / sizeof(Block)))
 
 struct Block {
+    struct BlockStandard {
+        DISK_UNIT   next_block;
+        BLOCK_UNIT  data_len;
+    };
+
     union {
         std::array<uint8_t, std::numeric_limits<BLOCK_UNIT>::max()-1> raw_bytes;
         struct{
-            DISK_UNIT   next_block;
-            BLOCK_UNIT  data_len;
-            char        asFileStart_name    [(sizeof(raw_bytes)-3) / 2];
-            char        asFileStart_owner   [(sizeof(raw_bytes)-3) - sizeof(asFileStart_name)];
+            BlockStandard   standard;
+            union{
+                struct{
+                    char        asFileStart_name    [(sizeof(raw_bytes)-sizeof(standard)) / 2];
+                    char        asFileStart_owner   [(sizeof(raw_bytes)-sizeof(standard)) - sizeof(asFileStart_name)];
+                };
+                DISK_UNIT       asFAT_filestart     [(sizeof(raw_bytes)-sizeof(standard))];
+                char            data_start          [sizeof(raw_bytes)-sizeof(standard)];
+            };
         };
     };
 };
+
+#define MAX_DATA_SIZE           (sizeof(Block::raw_bytes)-sizeof(Block::data_start))
 
 //--------------------------------------------------------------
 // general tests
 //--------------------------------------------------------------
 
-static_assert(MAX_DISK_SIZE >= sizeof(Block));
+static_assert(MAX_DISK_SIZE >= sizeof(Block) * 10);
 static_assert(std::is_standard_layout<Block>::value);
 
 #endif
