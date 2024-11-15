@@ -18,6 +18,13 @@ int main(){
 
     FATManager fatm;
 
+    fatm.open_fs("default.assignemnt3");
+    // for(int j = 0; j < 4; j++){
+    //     std::cout << j << std::endl;
+    //     for(auto i : fatm.find_empty_blocks(j+1)) 
+    //         std::cout << "\t" << i << std::endl;
+    // }
+
     int cmd_num = 0;
     goto run_cmd;
 
@@ -25,18 +32,19 @@ int main(){
         std::cout << "> ";
         
         {
+            cmd_num = 0;
             std::string cmd;
             std::getline(std::cin, cmd);
 
             if(cmd == "q")
                 exit(0);
             else if(cmd == "i") {
-                std::cout << "'disk' file: " << fatm.currentfs().string() << std::endl;
-                std::cout << "num blocks: " << fatm.total_num_blocks() << std::endl;
-                std::cout << "\tblock total size: " << std::to_string(sizeof(Block)) << std::endl;
-                std::cout << "\tblock overhead:   " << std::to_string(sizeof(Block::standard)) << std::endl;
-                std::cout << "\tblock data size:  " << std::to_string(sizeof(Block::data_start)) << std::endl;
-                std::cout << "\tblock efficiency: " << std::to_string(sizeof(Block::data_start) / sizeof(Block)) << std::endl;
+                std::cout << "'disk' file:          " << fatm.currentfs().string()                                          << std::endl;
+                std::cout << "num blocks:           " << fatm.total_num_blocks()                                            << std::endl;
+                std::cout << "\tblock total size:   " << std::to_string(sizeof(Block))                                      << std::endl;
+                std::cout << "\tblock overhead:     " << std::to_string(sizeof(Block::standard))                            << std::endl;
+                std::cout << "\tblock data size:    " << std::to_string(sizeof(Block::data_start))                          << std::endl;
+                std::cout << "\tblock efficiency:   " << std::to_string((float)sizeof(Block::data_start) / sizeof(Block))   << std::endl;
                 continue;
             }
 
@@ -118,6 +126,7 @@ int main(){
                 std::string cmd;
                 std::getline(std::cin, cmd);
                 fatm.add_from_host_fs({cmd});
+                std::cout << "b" << std::endl;
             }break;
 
             case 8:{

@@ -17,7 +17,7 @@ Block getBlockThrowable(fs::path diskPath, DISK_UNIT block_num){
         if(op.has_value())
             return op.value();
 
-    throw std::runtime_error("unable to fetch from disk! blk" + std::to_string(block_num));
+    throw std::runtime_error("unable to fetch from disk! block #" + std::to_string(block_num));
 }
 
 std::optional<std::ifstream> getifstream(fs::path pth){
@@ -66,12 +66,10 @@ bool FATManager::setBlock(fs::path diskPath, DISK_UNIT block_num, Block * const 
 
         fout->close();
 
-        // if no errors during write
-        if(fout.value())
-            return true;
+        return !(fout.value().bad());            
     } 
 
-    return {};
+    return false;
 }
 
 void FATManager::add_blocks(DISK_UNIT num_blocks){
@@ -93,6 +91,9 @@ void FATManager::add_blocks(DISK_UNIT num_blocks){
 
 void FATManager::open_fs(fs::path pth){
     diskPath = pth;
+    if(!fs::exists(pth)){
+        add_blocks(1);
+    }
 }
 
 void FATManager::save_fs(fs::path pth){
@@ -102,7 +103,8 @@ void FATManager::save_fs(fs::path pth){
 void FATManager::list_files(DISK_UNIT start_idx, DISK_UNIT num_to_list){
     Block fat = getBlockThrowable(diskPath, 0);
 
-    for(auto it = begin(fat); it != end() && num_to_list > 0; ++it){
+    for(auto it = begin(fat, 0); it != end() && num_to_list > 0; ++it){
+        // std::cout << "meow" << std::endl;
 
         // if not at start of page
         if(start_idx > fat.standard.data_len){
@@ -117,13 +119,12 @@ void FATManager::list_files(DISK_UNIT start_idx, DISK_UNIT num_to_list){
                     num_to_list--;
 
                     char buf[sizeof(Block::asFileStart_name)+1];
-                    buf[sizeof(buf)-1] = '\0';
 
                     snprintf(buf, sizeof(buf)-1, "%s", (*it).asFileStart_name);
-                    std::cout << buf << std::endl;
+                    std::cout << buf;
 
                     snprintf(buf, sizeof(buf)-1, "%s", (*it).asFileStart_owner);
-                    std::cout << buf << std::endl;
+                    std::cout << "\t\t\t\t" <<buf << std::endl;
                 }
             }
 
@@ -162,10 +163,11 @@ void FATManager::rename(std::string _old, std::string _new){
 }
 
 void FATManager::add_from_host_fs(fs::path host_path){
-    if(!fs::exists(host_path))
-        throw std::runtime_error("file does not exist on host: " + host_path.string());
+    if(!fs::exists(host_path)){
+        std::cout << "file does not exist on host: " << host_path.string() << std::endl;
+        return;
+    }
 
-    DISK_UNIT former_block_num = find_empty_blocks(1)[0];
     Block blk;
         blk.standard.data_len   = MAX_DATA_SIZE;
         blk.standard.next_block = 0;
@@ -174,15 +176,21 @@ void FATManager::add_from_host_fs(fs::path host_path){
     // set name of link
     snprintf(blk.asFileStart_name, std::min(sizeof(Block::asFileStart_name), host_path.filename().string().size()), "%s", host_path.filename().string().c_str());
 
-    if(auto fin = getifstream(diskPath)){
-        fin->seekg(0, std::ios::end);
-        size_t end_pos = fin->tellg();
-        fin->seekg(0, std::ios::beg);
+    DISK_UNIT former_block_num = find_empty_blocks(1)[0];
+    std::cout << "\tD:header, as block: " << std::to_string(former_block_num) << std::endl;
 
-        while(fin->good()){
-            { // point old block to new one and save it
+    std::cout << "adding fat entry" << std::endl;
+    add_fat_entry(former_block_num, diskPath);
+
+    if(auto fin = getifstream(diskPath)){
+        while(!fin->eof()){
+            { // point old block to new one then save the old 
+                std::cout << "finding new empty block ... ";
                 DISK_UNIT empty_blk = find_empty_blocks(1)[0];
                 blk.standard.next_block = empty_blk;
+                std::cout << " found block #" << std::to_string(empty_blk) << std::endl;
+
+                std::cout << "\t writing block: " << std::to_string(former_block_num) << std::endl;
                 setBlock(diskPath, former_block_num, &blk);
 
                 former_block_num = empty_blk;
@@ -190,16 +198,24 @@ void FATManager::add_from_host_fs(fs::path host_path){
 
             fin->read(
                     reinterpret_cast<char*>((&blk) + offsetof(Block, Block::data_start)),
-                    MAX_DATA_SIZE
+                    sizeof(Block::data_start)
                 );
-
-            blk.standard.data_len = std::min(end_pos - fin->tellg(), MAX_DATA_SIZE);
+            
+            std::cout << "set size ";
+            if(fin->eof()){
+                blk.standard.data_len = MAX_DATA_SIZE;
+            } else 
+                blk.standard.data_len = MAX_DATA_SIZE - fin->tellg() % MAX_DATA_SIZE;
+            std::cout << "to " << std::to_string(blk.standard.data_len);
+            std::cout << " out of " << std::to_string(MAX_DATA_SIZE) << std::endl;
         }
         fin->close();
 
         //save the final block
         setBlock(diskPath, former_block_num, &blk);
+        
     }
+    std::cout << "a" << std::endl;
 }
 
 void FATManager::copy_to_host_fs(std::string _name){
@@ -210,7 +226,7 @@ void FATManager::copy_to_host_fs(std::string _name){
     }
 
     if(auto fout = getofstream(diskPath.append("../" + std::to_string(finfo.headder_block_number))) ) {
-        for(auto fat = begin(getBlockThrowable(diskPath, finfo.headder_block_number)); fat != end(); ++fat){
+        for(auto fat = begin(getBlockThrowable(diskPath, finfo.headder_block_number), finfo.headder_block_number); fat != end(); ++fat){
             fout->write(
                     reinterpret_cast<char const *>((*fat).data_start),
                     (*fat).standard.data_len
@@ -233,7 +249,7 @@ void FATManager::add_link(fs::path pth, std::string link){
     DISK_UNIT link_header_block = find_empty_blocks(1)[0];
     {
         Block blk;
-            blk.standard.data_len   = MAX_DATA_SIZE;
+            blk.standard.data_len   = MAX_FILE_ENTRIES;
             blk.standard.next_block = finfo.headder_block_number; // link to the original file
         
         // set name of link
@@ -267,7 +283,7 @@ void FATManager::add_link(fs::path pth, std::string link){
         {
             // find end of list
             BLOCK_UNIT blk_num = finfo.FAT_block_number;
-            for(auto fat = begin(getBlockThrowable(diskPath, blk_num)); fat != end(); ++fat){
+            for(auto fat = begin(getBlockThrowable(diskPath, blk_num), blk_num); fat != end(); ++fat){
                 if((*fat).standard.next_block == 0){
                     // update the end of the list
                     // i raelly should make some macro for this
@@ -331,7 +347,7 @@ FATManager::FATfileinfo FATManager::find_by_name(std::string name){
         .FAT_block              = {},
     };
 
-    for(auto fat = begin(getBlockThrowable(diskPath, 0)); fat != end(); ++fat){ // for FAT block
+    for(auto fat = begin(getBlockThrowable(diskPath, 0), 0); fat != end(); ++fat){ // for FAT block
         info.FAT_block = *fat;
 
         for(info.FAT_block_entry_number = 0; info.FAT_block_entry_number < (*fat).standard.data_len; info.FAT_block_entry_number++){               // for file entry
@@ -360,21 +376,39 @@ DISK_UNIT FATManager::total_num_blocks(){
 }
 
 std::vector<DISK_UNIT> FATManager::find_empty_blocks(DISK_UNIT num_blocks){
+    
     std::vector<DISK_UNIT> empty_blocks;
 
-    DISK_UNIT i = 0;
-    for(i = 0; i < total_num_blocks() && num_blocks > 0; i++){
-        Block blk = getBlockThrowable(diskPath, i);
+    // I LOVE ASSIGNEMNTS WITH ODD DUE DATES. I LOVE WONKING ROUND MY SCHEDULE SO MUCH!!
+    // (thers bigger problems if your using this to seriously store files)
+    // i apologize for the code you see here
+    for(DISK_UNIT i = 1; i < total_num_blocks(); i++)
+        empty_blocks.push_back(i);
 
-        if(blk.standard.data_len == 0){
-            empty_blocks.push_back(i);
-            num_blocks--;
-        }
+    for(auto fat = begin(getBlockThrowable(diskPath, 0), 0); fat != end(); ++fat){ // for FAT block
+        for(DISK_UNIT file_entry_num = 0; file_entry_num < (*fat).standard.data_len; file_entry_num++){ // for file entry
+            std::cout << "\t removing file at block:" << std::to_string((*fat).asFAT_filestart[file_entry_num]);
+            Block file_root = getBlockThrowable(diskPath, (*fat).asFAT_filestart[file_entry_num]);      // get file header
+            std::cout << "\t , named: " << file_root.asFileStart_name << std::endl;
+
+            //remove block from list
+            if(std::find(empty_blocks.begin(), empty_blocks.end(), file_root.standard.next_block) != empty_blocks.end())
+                empty_blocks.erase(std::find(empty_blocks.begin(), empty_blocks.end(), file_root.standard.next_block));
+
+            for(auto fb = begin(file_root, (*fat).asFAT_filestart[file_entry_num]); fb != end();){ // for all blocks used by the file
+                //remove block from list
+                if(std::find(empty_blocks.begin(), empty_blocks.end(), (*fb).standard.next_block) != empty_blocks.end())
+                    empty_blocks.erase(std::find(empty_blocks.begin(), empty_blocks.end(), (*fb).standard.next_block));
+
+                ++fb;
+            }
+        }        
     }
 
     if(empty_blocks.size() < num_blocks){
         add_blocks(num_blocks - empty_blocks.size());
 
+        DISK_UNIT i = total_num_blocks();
         for(; num_blocks > 0; num_blocks--)
             empty_blocks.push_back(i++);
     }
@@ -387,7 +421,7 @@ void FATManager::formatfs(){
     // im goning to be stupid about this so heres a massive list of all used cells
     std::vector<DISK_UNIT> used_cells = {0};
 
-    for(auto fat = begin(getBlockThrowable(diskPath, 0)); fat != end() && (*fat).standard.data_len != 0; ++fat){
+    for(auto fat = begin(getBlockThrowable(diskPath, 0), 0); fat != end() && (*fat).standard.data_len != 0; ++fat){
         for(BLOCK_UNIT i = 0; i < (*fat).standard.data_len; i++){
             used_cells.push_back((*fat).asFAT_filestart[i]);
         }
@@ -418,5 +452,45 @@ void FATManager::unset_block(DISK_UNIT blk_num){
         fout->write(reinterpret_cast<char*>(&unsetted), sizeof(unsetted));
 
         fout->close();
+    }
+}
+
+void FATManager::add_fat_entry(DISK_UNIT block_num, fs::path diskPath){
+    DISK_UNIT current_fat_block_num = 0;
+    for(auto fat = begin(getBlockThrowable(diskPath, 0), 0); fat != end(); ++fat){
+        std::cout << "cealckneclkn" << std::endl;
+
+        if((*fat).standard.data_len < MAX_FILE_ENTRIES){ // if not full
+            // add a entry
+            Block former_fat = (*fat);
+                former_fat.asFAT_filestart[former_fat.standard.data_len++] = block_num;
+            setBlock(diskPath, current_fat_block_num, &former_fat);
+            std::cout << "adding entry to not full FAT block" << std::endl;
+            break;
+        }
+
+        if((*fat).standard.next_block == 0){ // if end of list
+            std::cout << "making new FAT block" << std::endl;
+            //make a new FAT block to add it to
+            DISK_UNIT new_fat_block_num = find_empty_blocks(1)[0];
+            {
+                Block blk;
+                    blk.standard.data_len = 1;
+                    blk.asFAT_filestart[0] = block_num;
+                setBlock(diskPath, new_fat_block_num, &blk);
+            }
+
+            // link new FAT block to FAT list
+            {
+                Block former_fat = (*fat);
+                    former_fat.standard.next_block = new_fat_block_num;
+                setBlock(diskPath, current_fat_block_num, &former_fat);
+            }
+
+            break;
+        }
+
+
+        current_fat_block_num = (*fat).standard.next_block;
     }
 }

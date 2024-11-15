@@ -19,6 +19,7 @@
 #include <cstdint>
 #include <limits>
 #include <array>
+#include <iostream>
 
 struct Block;
 
@@ -64,9 +65,7 @@ struct Block {
     };
 };
 
-#define MAX_DATA_SIZE           (sizeof(Block::data_start))
-
-#define MAX_FILE_ENTRIES        (MAX_DATA_SIZE / sizeof(DISK_UNIT))
+#define MAX_DATA_SIZE           (sizeof(Block::raw_bytes)-sizeof(Block::data_start))
 
 //--------------------------------------------------------------
 // general tests
@@ -74,5 +73,14 @@ struct Block {
 
 static_assert(MAX_DISK_SIZE >= sizeof(Block) * 10);
 static_assert(std::is_standard_layout<Block>::value);
+
+int main(){
+    std::cout << "block         " << std::to_string(sizeof(Block))              << std::endl;
+    std::cout << "struct:       " << std::to_string(sizeof(Block::standard))    << std::endl;
+    std::cout << "raw data:     " << std::to_string(sizeof(Block::raw_bytes))   << std::endl;
+    std::cout << "data start:   " << std::to_string(sizeof(Block::data_start))  << std::endl;
+
+    return 0;
+}
 
 #endif

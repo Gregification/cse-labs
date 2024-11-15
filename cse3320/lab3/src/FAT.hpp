@@ -56,12 +56,15 @@ public:
     std::vector<DISK_UNIT> find_empty_blocks(DISK_UNIT num_blocks);
     void formatfs();
 
+    void add_fat_entry(DISK_UNIT block_num, fs::path diskPath);
     /** removes internal data and next block pointer */
     void unset_block(DISK_UNIT);
 
     class Iterator : public std::iterator<std::forward_iterator_tag, Block> {
     private:
         Block current;
+        DISK_UNIT block_num = 0;
+        bool isbad = false;
     public:
         // DISK_UNIT block_num; //gets messy if this is here
         fs::path diskPath;
@@ -70,22 +73,23 @@ public:
 
         Block operator*() const { return current; }
         Iterator& operator++() {
-            // block_num = current.standard.next_block;
             auto blk_option = getBlock(diskPath, current.standard.next_block);
+            isbad = !blk_option.has_value() || ((blk_option.value().standard.next_block == block_num) && block_num != 0);
+            block_num = current.standard.next_block;
 
-            if(blk_option.has_value())
-                current = blk_option.value();
-            else 
+            if(isbad)
                 current = Block{};
+            else
+                current = blk_option.value();
 
             return *this;
         }
         bool operator!=(const Iterator& other) const {
-            return std::memcmp(&current, &other.current, sizeof(Block)) != 0;
+            return isbad ? other.isbad : (std::memcmp(&current, &other.current, sizeof(Block)) != 0);
         }
     };
 
-    Iterator begin(Block head)  { return Iterator(head, diskPath); }
+    Iterator begin(Block head, DISK_UNIT block_num)  { block_num = block_num; return Iterator(head, diskPath); }
     Iterator end()              { return Iterator(Block{}, diskPath); }
 
 
