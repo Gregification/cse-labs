@@ -48,7 +48,7 @@
         "silk_text_thickness": 0.1,
         "silk_text_upright": false,
         "zones": {
-          "min_clearance": 0.4572
+          "min_clearance": 0.8128
         }
       },
       "diff_pair_dimensions": [
@@ -127,9 +127,9 @@
         "min_silk_clearance": 0.0,
         "min_text_height": 0.8,
         "min_text_thickness": 0.08,
-        "min_through_hole_diameter": 0.20066,
+        "min_through_hole_diameter": 0.7366,
         "min_track_width": 0.381,
-        "min_via_annular_width": 0.381,
+        "min_via_annular_width": 0.508,
         "min_via_diameter": 1.143,
         "solder_mask_to_copper_clearance": 0.0,
         "use_height_for_length_calcs": true
@@ -212,8 +212,8 @@
           "drill": 0.0
         },
         {
-          "diameter": 1.524,
-          "drill": 0.762
+          "diameter": 1.778,
+          "drill": 0.8382
         }
       ],
       "zones_allow_external_fillets": true
@@ -505,11 +505,11 @@
       "gencad": "",
       "idf": "",
       "netlist": "",
-      "plot": "",
+      "plot": "../../../../../",
       "pos_files": "",
       "specctra_dsn": "",
       "step": "",
-      "svg": "",
+      "svg": "../../../../../",
       "vrml": ""
     },
     "page_layout_descr_file": ""
