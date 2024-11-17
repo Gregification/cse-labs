@@ -4413,7 +4413,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Package_TO_SOT_THT:TO-92_Inline"
+		(property "Footprint" "Package_TO_SOT_THT:TO-92L_HandSolder"
 			(at 116.205 81.28 0)
 			(effects
 				(font
@@ -4892,7 +4892,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Package_TO_SOT_THT:TO-92_Inline"
+		(property "Footprint" "Package_TO_SOT_THT:TO-92L_HandSolder"
 			(at 128.27 111.125 0)
 			(effects
 				(font
