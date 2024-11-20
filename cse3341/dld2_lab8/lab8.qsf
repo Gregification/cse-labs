@@ -100,6 +100,9 @@ set_location_assignment PIN_W11 -to LCD_Board_SW[3] -comment D19
 set_location_assignment PIN_Y11 -to LCD_Board_SW[4] -comment D17
 set_location_assignment PIN_AB3 -to LCD_Board_PB[10] -comment "B1_R-D33 - R5"
 set_location_assignment PIN_Y3 -to LCD_Board_PB[11] -comment "B2_R-D32  - R4"
+set_global_assignment -name SYSTEMVERILOG_FILE ShiftRegister.sv
+set_global_assignment -name SYSTEMVERILOG_FILE lab8.sv
+set_global_assignment -name SYSTEMVERILOG_FILE KeyPad.sv
 set_global_assignment -name SYSTEMVERILOG_FILE LCD.sv
 set_global_assignment -name SYSTEMVERILOG_FILE bcd2disp.sv
 set_global_assignment -name SYSTEMVERILOG_FILE TEST_LCD.sv

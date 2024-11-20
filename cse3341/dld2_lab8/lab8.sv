@@ -16,7 +16,10 @@ module lab8
      output   [0:9] 		  DE10_LED		, // DE10_Lite Red LEDs
 	  output               lcd_rs       , // LCD Register Select
 	  output               lcd_rw       , // LCD Read Write Select
-	  output               lcd_e          // LCD Execute
+	  output               lcd_e,          // LCD Execute
+	  input [3:0] KEYPAD_ROWS,
+		output[3:0] KEYPAD_COLS
+		
 	  );  
 	  
 	 assign DE10_LED[0:9]      = LCD_Board_PB[0:9];
@@ -47,7 +50,22 @@ module lab8
 		 .A(32'hABCD),
 		 .B(32'h1),
 		 .C(32'hAAAA),
-		 .Operation(2'b10) // PLUS
+		 .Operation(2'b01) // PLUS
 	);
 
+	KeyPad #(
+			.N(4)
+		) __key_pad (
+			.CLK(_ladder[`KEYPAD_CLKLADDER_B]),
+			.SHIFT(_pressed),
+			.RESET(RESET),
+			
+			.ROWS(KEYPAD_ROWS),
+			
+			.COLS(KEYPAD_COLS),
+			.PRESSED(_pressed),
+			.NXTVAL(_val),
+			.VALUE(_value)
+		);
+	
 endmodule
