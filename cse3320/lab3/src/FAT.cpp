@@ -7,6 +7,7 @@
 #include "FAT.hpp"
 #include <iostream>
 #include <cstddef>
+#include <algorithm>
 
 fs::path FATManager::currentfs(){
     return diskPath;
@@ -101,6 +102,8 @@ void FATManager::save_fs(fs::path pth){
 }
 
 void FATManager::list_files(DISK_UNIT start_idx, DISK_UNIT num_to_list){
+    return;
+
     Block fat = getBlockThrowable(diskPath, 0);
 
     for(auto it = begin(fat, 0); it != end() && num_to_list > 0; ++it){

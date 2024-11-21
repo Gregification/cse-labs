@@ -2808,6 +2808,16 @@
 		)
 		(uuid "fb90071e-91b2-423c-9a95-ca7dae8a84ad")
 	)
+	(text "maybe"
+		(exclude_from_sim no)
+		(at 129.794 84.074 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "770870aa-2f73-4f4c-b130-5702570afd84")
+	)
 	(text "optional"
 		(exclude_from_sim no)
 		(at 160.274 67.564 90)
