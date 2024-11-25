@@ -14,7 +14,7 @@ THINGS TO DOWNLOAD
     avr-gcc and avr-binutils : https://www.nongnu.org/avr-libc/user-manual/overview.html
 
 COMPILING & FLASHING
-    1. Compile for attiny85 - optimize for size
+    1. Compile for attiny85 - optimize for size , dont forget inclueds
         avr-gcc --std=c99 -Wall -Os -mmcu=attiny85 main.c
 
     2. make Intel hex from the output

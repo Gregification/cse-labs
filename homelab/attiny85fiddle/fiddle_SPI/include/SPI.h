@@ -27,7 +27,7 @@
 #define DO              PB1     // DO NOT CHANGE
 #define DI              PB0     // DO NOT CHANGE
 
-//#define SPI_USE_SS
+// #define SPI_USE_SS
 #ifdef SPI_USE_SS
 #define SPI_SS          PB4     // free to change 
 #endif

@@ -16,6 +16,8 @@
 #endif
 #include <util/delay.h>
 
+#define SPI_USE_SS
+
 #include "../include/SPI.h"
 #include "../include/CRC.h"
 
@@ -24,7 +26,7 @@ int main(){
     SPI_begin_slave();
 
     const uint16_t c = crcs, a = arr2;
-    DDRB |= _BV(PB4);
+    // DDRB |= _BV(PB4);
     while(true){
 
         SPI_slave_transfer((uint8_t)c);
