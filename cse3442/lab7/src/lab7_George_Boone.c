@@ -57,16 +57,21 @@ int main(void)
 
     //---------------init ssi0 as spi--------------------
     SSI0_SPI_init_master();
-
+    SS_BB = SS_OFF;
+    _delay_cycles(10e6);
 
     //------------MCP to lab requirements----------------
+//    {
+//        uint8_t tx[1] = {0x4};
+//        SSI0_SPI_master_transfer_arr(tx, tx, sizeof(tx));
+//    }
 
     /*GPIO
      * input    : 7
      * output   : 4, 5
      */
     SSI0_SPI_MCP23S08_WRITE(MCP23S08_ADDR_IODIR, _BV(7));
-
+    uint8_t v = SSI0_SPI_MCP23S08_READ(MCP23S08_ADDR_IODIR);
     // general configuration
     SSI0_SPI_MCP23S08_WRITE(MCP23S08_ADDR_INTCON,   0x06);      // interrupt line active high, enable hardware addressing
 
@@ -125,6 +130,7 @@ void SSI0_SPI_init_master(){
 
     // SS pin gets special treatment in this case since its manually controlled
     GPIO_PORTA_DIR_R    |= SS_M;
+    GPIO_PORTA_DEN_R    |= SS_M;
     SS_BB = SS_OFF;
 
     GPIO_PORTA_AFSEL_R  |= SCK_M | DI_M | DO_M;         // use alt function
@@ -138,7 +144,7 @@ void SSI0_SPI_init_master(){
     SSI0_CR1_R  =   0;                                  // operate as master
     SSI0_CC_R   =   SSI_CC_CS_SYSPLL;                   // use system clock (40MHz expected)
     SSI0_CPSR_R =   20;                                 // clk div by 20 for 2MHz
-    SSI0_CR0_R  &=  ~(SSI_CR0_SCR_M | SSI_CR0_FRF_M);   // bit rate same as clk , freescale spi format
+    SSI0_CR0_R  &=  ~(SSI_CR0_SCR_M | SSI_CR0_FRF_M | SSI_CR0_DSS_M);   // bit rate same as clk , freescale spi format
     SSI0_CR0_R  |=  SSI_CR0_SPO | SSI_CR0_SPH;          // spi 11 : clk idle high , read on second clk edge
     SSI0_CR0_R  |=  SSI_CR0_DSS_8;                      // 8 bit
     SSI0_CR1_R  |=  SSI_CR1_SSE;                        // enable
@@ -164,8 +170,10 @@ void SSI0_SPI_master_transfer_arr(uint8_t * tx, uint8_t * rx, size_t len){
      *  this is configured to transmit 9 bits along with extra logic to convert it to 8 bits
      */
 
+    uint8_t former_cr0 = SSI0_CR0_R;
     // SSI0 to 9 bit mode
     SSI0_CR1_R  &=  ~SSI_CR1_SSE;       // disable to safely configure
+    SSI0_CR0_R  &=  ~(SSI_CR0_DSS_M);   // clear bit mode
     SSI0_CR0_R  |=  SSI_CR0_DSS_9;      // 9 bit mode
     SSI0_CR1_R  |=  SSI_CR1_SSE;        // enable
 
@@ -174,41 +182,68 @@ void SSI0_SPI_master_transfer_arr(uint8_t * tx, uint8_t * rx, size_t len){
     // write one read one approach
     size_t i;
     for(i = 0; i < len; i++){
-        SSI0_DR_R = tx[i] << 1;
+        uint16_t tx_b = tx[i] << 1;
+        SSI0_DR_R = ((uint16_t)tx[i]) << 1;
 
         while(SSI0_SR_R & SSI_SR_BSY);
 
-        rx[i] = SSI0_DR_R >> 1;
+        if(rx)
+            rx[i] = SSI0_DR_R >> 1;
+        else
+            SSI0_DR_R;//read to clear buffer
     }
 
     SS_BB = SS_OFF;
 
-    // SSI0 to 8 bit mode (assuming thats what it was before)
+    // revert local SSI0 CR0 changes
     SSI0_CR1_R  &=  ~SSI_CR1_SSE;       // disable to safely configure
-    SSI0_CR0_R  |=  SSI_CR0_DSS_8;      // 8 bit mode
+    SSI0_CR0_R  =   former_cr0;
     SSI0_CR1_R  |=  SSI_CR1_SSE;        // enable
 }
 
 uint8_t SSI0_SPI_MCP23S08_READ(uint8_t addr){
-    uint8_t txrx[3] = {
-            MCP23S08_OPC | MCP23S08_OPC_RW_M,   // read
-            addr,
-            0xEE                                // dummy transfer value
-        };
+    uint8_t txrx[2];
 
-    SSI0_SPI_master_transfer_arr(txrx, txrx, sizeof(txrx));
+    txrx[0] = MCP23S08_OPC;
+    txrx[1] = addr;
+    SSI0_SPI_master_transfer_arr(txrx, NULL, 2);
 
-    return txrx[2];
+    txrx[0] = MCP23S08_OPC | MCP23S08_OPC_RW_M;
+    txrx[1] = addr;
+
+    SSI0_SPI_master_transfer_arr(txrx, txrx, 2);
+
+    SS_BB = SS_ON;
+    _delay_cycles(3);
+    SS_BB = SS_OFF;
+    _delay_cycles(3);
+    SS_BB = SS_ON;
+    _delay_cycles(3);
+    SS_BB = SS_OFF;
+    _delay_cycles(3);
+
+    return txrx[1];
 }
 
 void SSI0_SPI_MCP23S08_WRITE(uint8_t addr, uint8_t val){
-    uint8_t tx[3] = {
-            MCP23S08_OPC | MCP23S08_OPC_RW_M,   // write
-            addr,
-            val
+    uint8_t tx[2] = {
+            MCP23S08_OPC,
+            addr
         };
 
-    SSI0_SPI_master_transfer_arr(tx, tx, sizeof(tx));
+    SSI0_SPI_master_transfer_arr(tx, NULL, 2);
+
+    tx[1] = val;
+    SSI0_SPI_master_transfer_arr(tx, NULL, 2);
+
+    SS_BB = SS_ON;
+    _delay_cycles(3);
+    SS_BB = SS_OFF;
+    _delay_cycles(3);
+    SS_BB = SS_ON;
+    _delay_cycles(3);
+    SS_BB = SS_OFF;
+    _delay_cycles(3);
 }
 
 void intr_MCP23S08(){
