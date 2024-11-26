@@ -210,40 +210,22 @@ uint8_t SSI0_SPI_MCP23S08_READ(uint8_t addr){
 
     txrx[0] = MCP23S08_OPC | MCP23S08_OPC_RW_M;
     txrx[1] = addr;
-
     SSI0_SPI_master_transfer_arr(txrx, txrx, 2);
-
-    SS_BB = SS_ON;
-    _delay_cycles(3);
-    SS_BB = SS_OFF;
-    _delay_cycles(3);
-    SS_BB = SS_ON;
-    _delay_cycles(3);
-    SS_BB = SS_OFF;
-    _delay_cycles(3);
 
     return txrx[1];
 }
 
 void SSI0_SPI_MCP23S08_WRITE(uint8_t addr, uint8_t val){
-    uint8_t tx[2] = {
-            MCP23S08_OPC,
-            addr
-        };
+    uint8_t tx[2];
 
+    tx[0] = MCP23S08_OPC;
+    tx[1] = addr;
     SSI0_SPI_master_transfer_arr(tx, NULL, 2);
 
+    tx[0] = MCP23S08_OPC;
     tx[1] = val;
     SSI0_SPI_master_transfer_arr(tx, NULL, 2);
 
-    SS_BB = SS_ON;
-    _delay_cycles(3);
-    SS_BB = SS_OFF;
-    _delay_cycles(3);
-    SS_BB = SS_ON;
-    _delay_cycles(3);
-    SS_BB = SS_OFF;
-    _delay_cycles(3);
 }
 
 void intr_MCP23S08(){
