@@ -49,7 +49,7 @@ module dld2_termProject (
 	assign LCD_Board_LED[7]   = LCD_Board_PB[11];  
 
 	
-	//--------------------------internal-----------------------------
+	
 	
 	reg 	[31:0] 		clk_ladder;
 	reg 	[2:0][31:0]	float_vals;
@@ -77,8 +77,6 @@ module dld2_termProject (
 	assign DE10_LED[1]			= raw_input_counter[0];
 	assign DE10_LED[2]			= raw_input_counter[1];
 	assign DE10_LED[3]			= raw_input_counter[2];
-	
-	assign float_vals[2] = 32'h3f00_0000;
 	
 	always_ff @ (negedge _pressed) begin
 		raw_input_counter += 1;

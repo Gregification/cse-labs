@@ -52,7 +52,6 @@ set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
 set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
 set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
 set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
-set_global_assignment -name SYSTEMVERILOG_FILE dld2_termProject.sv
 set_location_assignment PIN_A7 -to DEVBOARD_BTN[1]
 set_location_assignment PIN_B8 -to DEVBOARD_BTN[0]
 set_location_assignment PIN_C11 -to DEVBOARD_SWS[1]
@@ -112,6 +111,16 @@ set_location_assignment PIN_W11 -to LCD_Board_SW[3] -comment D19
 set_location_assignment PIN_Y11 -to LCD_Board_SW[4] -comment D17
 set_location_assignment PIN_AB3 -to LCD_Board_PB[10] -comment "B1_R-D33 - R5"
 set_location_assignment PIN_Y3 -to LCD_Board_PB[11] -comment "B2_R-D32  - R4"
+set_location_assignment PIN_AB7 -to KEYPAD_ROWS[1]
+set_location_assignment PIN_AB6 -to KEYPAD_ROWS[2]
+set_location_assignment PIN_AB5 -to KEYPAD_ROWS[3]
+set_location_assignment PIN_AB8 -to KEYPAD_ROWS[0]
+set_location_assignment PIN_AA11 -to KEYPAD_COLS[1]
+set_location_assignment PIN_Y10 -to KEYPAD_COLS[2]
+set_location_assignment PIN_AB9 -to KEYPAD_COLS[3]
+set_location_assignment PIN_AA12 -to KEYPAD_COLS[0]
+set_global_assignment -name SYSTEMVERILOG_FILE BarrelRightShifter.sv
+set_global_assignment -name SYSTEMVERILOG_FILE dld2_termProject.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ShiftRegister.sv
 set_global_assignment -name SYSTEMVERILOG_FILE KeyPad.sv
 set_global_assignment -name SYSTEMVERILOG_FILE LCD.sv
@@ -124,12 +133,8 @@ set_global_assignment -name SYSTEMVERILOG_FILE Characters.sv
 set_global_assignment -name SYSTEMVERILOG_FILE bin2bcd.sv
 set_global_assignment -name SYSTEMVERILOG_FILE bin2binbcd.sv
 set_global_assignment -name SYSTEMVERILOG_FILE f322bcd.sv
-set_location_assignment PIN_AB7 -to KEYPAD_ROWS[1]
-set_location_assignment PIN_AB6 -to KEYPAD_ROWS[2]
-set_location_assignment PIN_AB5 -to KEYPAD_ROWS[3]
-set_location_assignment PIN_AB8 -to KEYPAD_ROWS[0]
-set_location_assignment PIN_AA11 -to KEYPAD_COLS[1]
-set_location_assignment PIN_Y10 -to KEYPAD_COLS[2]
-set_location_assignment PIN_AB9 -to KEYPAD_COLS[3]
-set_location_assignment PIN_AA12 -to KEYPAD_COLS[0]
+set_global_assignment -name SYSTEMVERILOG_FILE F32AdderSubtractor.sv
+set_global_assignment -name SYSTEMVERILOG_FILE Mux2t1.sv
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
+set_global_assignment -name SYSTEMVERILOG_FILE CLA.sv
+set_global_assignment -name SYSTEMVERILOG_FILE FullAdder.sv

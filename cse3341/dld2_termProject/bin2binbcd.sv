@@ -8,6 +8,7 @@ module bin2binbcd
 	#(parameter                 WIDTH  = 32              , // Bit Width
 	  parameter                 DIGITS = 10              ) // Digits
 	 (input         [WIDTH-1:0] bin                      , // 2's Complement Binary Input
+	  output 						 sign							  ,
 	  output    reg [3:0]       bcd         [DIGITS-1:0]); // BCD Output
 	
 	integer i,j;

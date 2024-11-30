@@ -67,7 +67,7 @@ module LCD
 		.disp(b_disp)
 	);
 	
-	f322bcd #(
+	bin2binbcd #(
 		.WIDTH(WIDTH),
 		.DIGITS(DIGITS)
 		) c_bin2bcd (

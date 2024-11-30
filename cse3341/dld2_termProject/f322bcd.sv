@@ -4,10 +4,6 @@ George Boone
 1002055713
 
 float 32 to bcd
-
-- double dabble logic baselined off of 'bin2bcd' module
-
-brute forced, double dabble each side of decimal
 */
 
 module f322bcd
