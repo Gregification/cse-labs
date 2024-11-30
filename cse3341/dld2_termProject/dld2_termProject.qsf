@@ -113,7 +113,6 @@ set_location_assignment PIN_Y11 -to LCD_Board_SW[4] -comment D17
 set_location_assignment PIN_AB3 -to LCD_Board_PB[10] -comment "B1_R-D33 - R5"
 set_location_assignment PIN_Y3 -to LCD_Board_PB[11] -comment "B2_R-D32  - R4"
 set_global_assignment -name SYSTEMVERILOG_FILE ShiftRegister.sv
-set_global_assignment -name SYSTEMVERILOG_FILE lab8.sv
 set_global_assignment -name SYSTEMVERILOG_FILE KeyPad.sv
 set_global_assignment -name SYSTEMVERILOG_FILE LCD.sv
 set_global_assignment -name SYSTEMVERILOG_FILE bcd2disp.sv
@@ -125,4 +124,12 @@ set_global_assignment -name SYSTEMVERILOG_FILE Characters.sv
 set_global_assignment -name SYSTEMVERILOG_FILE bin2bcd.sv
 set_global_assignment -name SYSTEMVERILOG_FILE bin2binbcd.sv
 set_global_assignment -name SYSTEMVERILOG_FILE f322bcd.sv
+set_location_assignment PIN_AB7 -to KEYPAD_ROWS[1]
+set_location_assignment PIN_AB6 -to KEYPAD_ROWS[2]
+set_location_assignment PIN_AB5 -to KEYPAD_ROWS[3]
+set_location_assignment PIN_AB8 -to KEYPAD_ROWS[0]
+set_location_assignment PIN_AA11 -to KEYPAD_COLS[1]
+set_location_assignment PIN_Y10 -to KEYPAD_COLS[2]
+set_location_assignment PIN_AB9 -to KEYPAD_COLS[3]
+set_location_assignment PIN_AA12 -to KEYPAD_COLS[0]
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

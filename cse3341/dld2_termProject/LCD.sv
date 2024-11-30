@@ -34,7 +34,7 @@ module LCD
 		.DIGITS(DIGITS)
 		) a_bin2bcd (
 		.bin(A),
-//		.sign(a_sign),
+		.sign(a_sign),
 		.bcd(a_bcd)
 	);
 	
@@ -53,7 +53,7 @@ module LCD
 		.DIGITS(DIGITS)
 		) b_bin2bcd (
 		.bin(B),
-//		.sign(b_sign),
+		.sign(b_sign),
 		.bcd(b_bcd)
 	);
 	
@@ -72,7 +72,7 @@ module LCD
 		.DIGITS(DIGITS)
 		) c_bin2bcd (
 		.bin(C),
-//		.sign(c_sign),
+		.sign(c_sign),
 		.bcd(c_bcd)
 	);
 	

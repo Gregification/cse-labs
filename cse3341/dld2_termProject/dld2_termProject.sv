@@ -2,6 +2,12 @@
 	cse3341, digital logic 2, term project
 	George Boone
 	1002055713
+	
+	float23 adder-subtractor
+	
+	- 2 input modes, toggled by de10 board sw0
+		- mantissa & expo : edit 4 specific bits of the matissa controlled by the scroll of the exponent
+		- raw input : little endian, MSB first, itterates across entire float in pairs of 4 bits
 */
 
 module dld2_termProject (
@@ -29,9 +35,10 @@ module dld2_termProject (
 	wire lcd_reset;
 	 
 	//----------------------------io---------------------------------
+	
 	assign lcd_reset = DEVBOARD_BTN[0];
 	
-	assign DE10_LED[0:9]      = LCD_Board_PB[0:9];
+//	assign DE10_LED[0:9]      = LCD_Board_PB[0:9];
 	assign LCD_Board_LED[0]   = LCD_Board_SW[0];
 	assign LCD_Board_LED[1]   = LCD_Board_SW[1];
 	assign LCD_Board_LED[2]   = LCD_Board_SW[2];
@@ -41,23 +48,99 @@ module dld2_termProject (
 	assign LCD_Board_LED[6]   = LCD_Board_PB[11];  
 	assign LCD_Board_LED[7]   = LCD_Board_PB[11];  
 
+	
 	//--------------------------internal-----------------------------
-	reg 	[1:0][31:0]	float_vals;
 	
-	//----------------------------ui---------------------------------
-	reg 			sel_row;
+	reg 	[31:0] 		clk_ladder;
+	reg 	[2:0][31:0]	float_vals;
+	reg	[1:0]			opearation;
+	reg	[3:0]		input_val;
+	reg 					sel_row;
+	wire 					_pressed;
+	wire	[7:0]			sel_expo;
+	wire	[23:0]		sel_mantissa;
+	//jank code
+	wire					raw_input_mode;
+		reg[2:0]			raw_input_counter;
 	
-	always_ff @ (negedge LCD_Board_PB[0+:4]) begin
-		if(LCD_Board_PB[0] == 0)
-			sel_row = sel_row + 1;
-		else if(LCD_Board_PB[3] == 0)
-			sel_row = sel_row - 1;
+	assign sel_expo		= float_vals[sel_row][23+:8];
+	assign sel_mantissa	= float_vals[sel_row][0+:23];
+	
+	always_ff @ (posedge CLK)
+		clk_ladder += 1;
+	
+	
+	//----------------------------ui---------------------------------	
+	assign raw_input_mode		= DEVBOARD_SWS[0];
+	
+	assign DE10_LED[0]			= raw_input_mode;
+	assign DE10_LED[1]			= raw_input_counter[0];
+	assign DE10_LED[2]			= raw_input_counter[1];
+	assign DE10_LED[3]			= raw_input_counter[2];
+	
+	assign float_vals[2] = 32'h3f00_0000;
+	
+	always_ff @ (negedge _pressed) begin
+		raw_input_counter += 1;
 		
-		if(LCD_Board_PB[1] == 0)
-			float_vals[sel_row][23+:8] = float_vals[sel_row][23+:8] + 1;
-		else if(LCD_Board_PB[2] == 0)
-			float_vals[sel_row][23+:8] = float_vals[sel_row][23+:8] - 1;
+		if(LCD_Board_PB[0] | LCD_Board_PB[3])
+			raw_input_counter = 0;
 	end
+	
+	always_ff @ (posedge clk_ladder[22], posedge _pressed) begin
+		static reg ltch;
+		
+		if(_pressed) begin
+			if(ltch) begin
+				ltch = 0;
+			
+				if(raw_input_mode) begin
+					float_vals[sel_row] 	&= ~(4'hF		<< (28 - raw_input_counter*4));
+					float_vals[sel_row] 	|=  input_val 	<< (28 - raw_input_counter*4);
+				end else if(sel_expo >= 127) begin
+					float_vals[sel_row][0+:23] &= ~(4'hF		<< (23-4-(sel_expo-127)));
+					float_vals[sel_row][0+:23] |=  (input_val << (23-4-(sel_expo-127)));
+				end
+			
+			end
+		end else begin
+			ltch = 1;
+			
+			if(|LCD_Board_PB[0+:4]) begin
+				
+				if(LCD_Board_PB[2]) begin
+					float_vals[sel_row][23+:8] += 1;
+				end
+				
+				if(LCD_Board_PB[1]) begin
+					float_vals[sel_row][23+:8] -= 1;
+				end
+				
+			end else if(LCD_Board_PB[4])
+				float_vals[sel_row][23+:8] = 8'd127;
+			else if(LCD_Board_PB[5])
+				float_vals[sel_row]			= 0;
+				
+		end
+	end
+	
+	// DO NOT CHANGE, it works. it however will not work if moved to the statement above
+	always_ff @ (negedge |LCD_Board_PB[0+:4]) begin
+		if(LCD_Board_PB[0] != 0)
+			sel_row -= 1;
+		if(LCD_Board_PB[3] != 0)
+			sel_row += 1;
+	end
+	
+	always_ff @ (negedge DEVBOARD_BTN[1])
+		case(opearation)
+			2'b01 : opearation = 2'b10;
+			2'b10	: opearation = 2'b01;
+			default:opearation = 2'b10;
+		endcase
+	
+	
+	//--------------------------modules------------------------------
 	
 	LCD #(
 		 .WIDTH(64),
@@ -74,29 +157,24 @@ module dld2_termProject (
 		 .lcd_rw(lcd_rw),
 		 .lcd_e(lcd_e),
 		 .lcd_reset(!lcd_reset),
-		 .A(32'h3fc00000),
-		 .B(32'd4),
-		 .C(32'hc0080000),
-		 .Operation(2'b01) // PLUS
+		 .A(float_vals[0]),
+		 .B(float_vals[1]),
+		 .C(float_vals[2]),
+		 .Operation(opearation)
 	);
-
-	reg [31:0] clk_ladder;
-	always_ff @ (posedge CLK)
-		clk_ladder = clk_ladder + 1'b1;
 	
 	KeyPad #(
-			.N(4)
+			.N(1)
 		) __key_pad (
-			.CLK(clk_ladder[28]),
-			.SHIFT(_pressed),
-			.RESET(RESET),
+			.CLK(clk_ladder[19]),
+			.SHIFT(!_pressed),
+			.RESET(lcd_reset),
 			
 			.ROWS(KEYPAD_ROWS),
 			
 			.COLS(KEYPAD_COLS),
 			.PRESSED(_pressed),
-			.NXTVAL(_val),
-			.VALUE(_value)
+			.NXTVAL(input_val)
 		);
 
 endmodule

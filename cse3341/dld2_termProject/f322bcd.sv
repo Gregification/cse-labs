@@ -20,11 +20,13 @@ module f322bcd
 	
 	integer i,j;
 	
+	reg [11:0] packed_bcd;
+	
 	reg	[23:0]		eff_mantissa;
 	wire 	[23:0]		mantissa;
 	wire 	[7:0] 		expo;
 	
-	assign expo 		= bin[23+:8] - 127;
+	assign expo 		= bin[23+:8];
 	assign mantissa 	= bin[0+:23] | (1 << 23);
 	assign sign			= bin[31];
 	
@@ -32,32 +34,47 @@ module f322bcd
 		bcd[RADIX] = 4'hF;
 		
 		//---------------left---------------------
-		if(expo >= 0)
-			if(expo > 23)
-				eff_mantissa = mantissa << (expo - 23);
+		if(expo >= 127)
+			if(expo > 127+23)
+				eff_mantissa = mantissa << (expo - (127+23));
 			else 
-				eff_mantissa = mantissa >> (23 - expo);
+				eff_mantissa = mantissa >> ((127+23) - expo);
 		else
 			eff_mantissa = 0;
 		
 		for(i = RADIX+1; i < DIGITS; i = i + 1) begin
-			bcd[i] = eff_mantissa & (1 << (i-RADIX-1));
+			bcd[i] = (eff_mantissa & (1 << (i-RADIX-1))) != 0;
 		end
 		
 		//---------------right--------------------
-		if(expo < 0)			
-			if(expo > -24)
-				eff_mantissa = mantissa >> (-expo - 1);
-			else
-				eff_mantissa = mantissa >> (-expo);
-		else if(expo == 0)
-			eff_mantissa = mantissa << 1;
+		if(expo < 127)
+			eff_mantissa = mantissa >> (127-expo - 1);
+		else if(expo > 127)
+			eff_mantissa = mantissa << (expo-127 + 1);
 		else
-			eff_mantissa = 0;
+			eff_mantissa = mantissa << 1;
+			
 		
 		for(i = RADIX-1; i >= 0; i = i - 1) begin
-			bcd[i] = eff_mantissa & (1 << (i-RADIX-1));
+			bcd[i] = (eff_mantissa & (1 << (23 - ((RADIX-1)-i)))) != 0;
 		end
+		
+		//-------------exponent-------------------
+		for(i = 0; i <= 8+(8-4)/3; i = i+1)
+			packed_bcd[i] = 0;
+			
+		packed_bcd[8-1:0] = expo;
+		
+		for(i = 0; i <= 8-4; i = i+1) begin
+			for(j = 0; j <= i/3; j = j+1) begin
+				if (packed_bcd[8-i+4*j -: 4] > 4)
+					packed_bcd[8-i+4*j -: 4] = packed_bcd[8-i+4*j -: 4] + 4'd3;
+			end
+		end
+		
+		bcd[16]	= packed_bcd[3 -:4];
+		bcd[17]	= packed_bcd[7 -:4];
+		bcd[18]	= packed_bcd[11-:4];
 		
 	end
 
