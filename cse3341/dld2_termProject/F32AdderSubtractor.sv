@@ -34,19 +34,22 @@ module F32AdderSubtractor(
 	
 	//------------------inner module connections---------------------
 	
-	wire	[23:0]	m_shift_mux, m_shift, m_add, cla_res, m_norm;
+	wire	[23:0]	m_shift_mux, m_shift, m_add, cla_res;
+	wire 	[23:0]	m_norm, m_norm_left_shifted, m_norm_right_shifted;
 	wire	[7:0]		e_mux, e_ctrled;
 	wire	[7:0]		e_diff;
 	wire				e_diff_cout;
 	wire				cla_cout;
 	wire				e_ctrled_cout;
 	
+	assign m_norm = OP ? m_norm_left_shifted : m_norm_right_shifted;
+	
 	always case(debug)
 			default	: begin
 				// packed assignments get reversed
 				R[23+:8]	= e_ctrled;
 				R[0+:23]	= m_norm;
-				R[31]		= e_ctrled_cout;
+				R[31]		= !e_diff_cout;
 			end
 			8'h01 	: R = e_mux;
 			8'h02 	: R = e_ctrled;
@@ -58,12 +61,12 @@ module F32AdderSubtractor(
 			8'h08 	: R = m_shift;
 			8'h09 	: R = 9;
 			8'h0A 	: R = m_add;
-			8'h0B 	: R = m_norm;
+			8'h0B 	: R = m_norm_left_shifted;
 			8'h0C 	: R = cla_res;
 			8'h0D 	: R = 13;
 			8'h0E 	: R = cla_cout;
 			8'h0F 	: R = OP;
-			8'h10 	: R = 16;
+			8'h10 	: R = m_norm_right_shifted;
 			8'h11 	: R = 17;
 		endcase
 	
@@ -105,11 +108,22 @@ module F32AdderSubtractor(
 			.N(24),
 			.NLayers($clog2(24)),
 			.SHIFT_LEFT(0)
-		) _mantissa_normalizer (
+		) _mantissa_normalizer_right (
 			.IN(cla_res),
 			.CTRL(cla_cout),
 			
-			.OUT(m_norm)
+			.OUT(m_norm_right_shifted)
+		);
+		
+	BarrelShifter#(
+			.N(24),
+			.NLayers($clog2(24)),
+			.SHIFT_LEFT(1)
+		) _mantissa_normalizer_left (
+			.IN(cla_res),
+			.CTRL(cla_cout),
+			
+			.OUT(m_norm_left_shifted)
 		);
 	
 	Mux2t1#(
@@ -127,7 +141,7 @@ module F32AdderSubtractor(
 	) _ctrled_expo (
 		.A(e_mux),
 		.B(cla_cout),
-		.ADD_SUB(0),		// 0:add, 1:sub
+		.ADD_SUB(OP),		// 0:add, 1:sub
 		
 		.R(e_ctrled),
 		.COUT(e_ctrled_cout)
@@ -147,12 +161,11 @@ module F32AdderSubtractor(
 	CLA#(
 		.N(24)
 	) _cla_unit (
-		.A(m_shift),
-		.B(m_add),
+		.A(m_add),
+		.B(m_shift),
 		.ADD_SUB(OP),		// 0:add, 1:sub
 		
 		.R(cla_res),
 		.COUT(cla_cout)
 	);
-		
 endmodule

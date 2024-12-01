@@ -91,6 +91,8 @@ module dld2_termProject (
 	assign DE10_LED[0]			= |raw_input_counter;
 	assign DE10_LED[1]			= add_sub;
 	
+	assign opearation				= add_sub ? 2'b10 : 2'b01;
+	
 	always_ff @ (negedge _pressed) begin
 		raw_input_counter += 1;
 		
@@ -136,19 +138,12 @@ module dld2_termProject (
 	end
 	
 	// DO NOT CHANGE, it works. it however will not work if moved to the statement above
-	always_ff @ (negedge |LCD_Board_PB[0+:4]) begin
+	always_ff @ (negedge |LCD_Board_PB[0+:7]) begin
 		if(LCD_Board_PB[0] != 0)
-			sel_row -= 1;
-		if(LCD_Board_PB[3] != 0)
-			sel_row += 1;
+			sel_row = 0;
+		if(LCD_Board_PB[3] != 0 || LCD_Board_PB[6] != 0)
+			sel_row = 1;
 	end
-	
-	always_ff @ (negedge DEVBOARD_BTN[1])
-		case(opearation)
-			2'b01 : opearation = 2'b10;
-			2'b10	: opearation = 2'b01;
-			default:opearation = 2'b10;
-		endcase
 	
 	
 	//--------------------------modules------------------------------
@@ -171,7 +166,7 @@ module dld2_termProject (
 		 .A(float_vals[0]),
 		 .B(float_vals[1]),
 		 .C(float_vals[2]),
-		 .Operation(0),
+		 .Operation(opearation),
 		 
 		 .debug(|debug)
 	);

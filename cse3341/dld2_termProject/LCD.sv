@@ -140,10 +140,10 @@ module LCD
 		.display_chars(display_chars)
 	);
 	
-	assign lcd_rs = !initilizer_done ? initilizer_rs : driver_rs;
-	assign lcd_rw = !initilizer_done ? initilizer_rw : driver_rw;
-	assign lcd_e = !initilizer_done ? initilizer_e : driver_e;
-	assign lcd_data = !initilizer_done ? initilizer_data : driver_data;
+	assign lcd_rs 		= !initilizer_done ? initilizer_rs 		: driver_rs;
+	assign lcd_rw 		= !initilizer_done ? initilizer_rw 		: driver_rw;
+	assign lcd_e 		= !initilizer_done ? initilizer_e 		: driver_e;
+	assign lcd_data 	= !initilizer_done ? initilizer_data 	: driver_data;
 
 endmodule
 
