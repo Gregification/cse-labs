@@ -62,7 +62,7 @@ module F32AdderSubtractor(
 			8'h0C 	: R = cla_res;
 			8'h0D 	: R = 13;
 			8'h0E 	: R = cla_cout;
-			8'h0F 	: R = 15;
+			8'h0F 	: R = OP;
 			8'h10 	: R = 16;
 			8'h11 	: R = 17;
 		endcase
@@ -92,7 +92,7 @@ module F32AdderSubtractor(
 	
 	BarrelShifter#(
 			.N(24),
-			.NLayers(5),
+			.NLayers(6),
 			.SHIFT_LEFT(0)
 		) mantissa_shifter (
 			.IN(m_shift_mux),
@@ -103,7 +103,7 @@ module F32AdderSubtractor(
 	
 	BarrelShifter#(
 			.N(24),
-			.NLayers(1),
+			.NLayers($clog2(24)),
 			.SHIFT_LEFT(0)
 		) _mantissa_normalizer (
 			.IN(cla_res),
@@ -127,7 +127,7 @@ module F32AdderSubtractor(
 	) _ctrled_expo (
 		.A(e_mux),
 		.B(cla_cout),
-		.ADD_SUB(OP),		// 0:add, 1:sub
+		.ADD_SUB(0),		// 0:add, 1:sub
 		
 		.R(e_ctrled),
 		.COUT(e_ctrled_cout)
@@ -140,8 +140,9 @@ module F32AdderSubtractor(
 		.A(mb),
 		.B(ma),
 		
-		.SELECTED(m_add)
+		.SELECTED(m_add[0+:23])
 	);
+	assign m_add[23] = 1;
 	
 	CLA#(
 		.N(24)
