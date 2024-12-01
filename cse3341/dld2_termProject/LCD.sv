@@ -16,7 +16,8 @@ module LCD
 	  input    [WIDTH-1:0]       A                                         , // Value A
 	  input    [WIDTH-1:0]       B                                         , // Value B
 	  input    [WIDTH-1:0]       C                                         , // Value C
-	  input    [1:0]             Operation                                ); // Operation
+	  input    [1:0]             Operation                                 , // Operation
+	  input							  debug												  );
 
 	wire [7:0] display_chars [0:LINES-1][0:CHARS-1];
 	
@@ -24,6 +25,7 @@ module LCD
 	wire [3:0] a_bcd   [DIGITS-1:0];
 	wire [3:0] b_bcd   [DIGITS-1:0];
 	wire [3:0] c_bcd   [DIGITS-1:0];
+	wire [3:0] c_bcd_debug   [DIGITS-1:0];
 	wire [7:0] a_disp  [CHARS-1:0];
 	wire [7:0] b_disp  [CHARS-1:0];
 	wire [7:0] c_disp  [CHARS-1:0];
@@ -67,13 +69,22 @@ module LCD
 		.disp(b_disp)
 	);
 	
-	bin2binbcd #(
+	f322bcd #(
+		.WIDTH(WIDTH),
+		.DIGITS(DIGITS)
+		) c_f322bcd (
+		.bin(C),
+		.sign(c_sign),
+		.bcd(c_bcd)
+	);
+	
+	bin2bcd #(
 		.WIDTH(WIDTH),
 		.DIGITS(DIGITS)
 		) c_bin2bcd (
 		.bin(C),
 		.sign(c_sign),
-		.bcd(c_bcd)
+		.bcd(c_bcd_debug)
 	);
 	
 	bcd2disp #(
@@ -81,8 +92,7 @@ module LCD
 		.CHARS(CHARS),
 		.DIGITS(DIGITS)
 		) c_bcd2disp (
-		.sign(c_sign),
-		.bcd(c_bcd),
+		.bcd(debug ? c_bcd_debug : c_bcd),
 		.disp(c_disp)
 	);
 	

@@ -119,7 +119,7 @@ set_location_assignment PIN_AA11 -to KEYPAD_COLS[1]
 set_location_assignment PIN_Y10 -to KEYPAD_COLS[2]
 set_location_assignment PIN_AB9 -to KEYPAD_COLS[3]
 set_location_assignment PIN_AA12 -to KEYPAD_COLS[0]
-set_global_assignment -name SYSTEMVERILOG_FILE BarrelRightShifter.sv
+set_global_assignment -name SYSTEMVERILOG_FILE BarrelShifter.sv
 set_global_assignment -name SYSTEMVERILOG_FILE dld2_termProject.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ShiftRegister.sv
 set_global_assignment -name SYSTEMVERILOG_FILE KeyPad.sv
@@ -135,6 +135,7 @@ set_global_assignment -name SYSTEMVERILOG_FILE bin2binbcd.sv
 set_global_assignment -name SYSTEMVERILOG_FILE f322bcd.sv
 set_global_assignment -name SYSTEMVERILOG_FILE F32AdderSubtractor.sv
 set_global_assignment -name SYSTEMVERILOG_FILE Mux2t1.sv
-set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
 set_global_assignment -name SYSTEMVERILOG_FILE CLA.sv
 set_global_assignment -name SYSTEMVERILOG_FILE FullAdder.sv
+set_global_assignment -name SYSTEMVERILOG_FILE CLADiff.sv
+set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

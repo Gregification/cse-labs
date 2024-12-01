@@ -6,7 +6,7 @@
 	a generic full adder
 */
 
-module FullerAdder(
+module FullAdder(
 		input 	A,
 		input 	B,
 		input		C,
@@ -18,8 +18,9 @@ module FullerAdder(
 	wire axb, ac, axbc;
 	
 	xor(axb, 	A, 	B);
-	and(ab,		A,		B);
 	xor(R,		axb,	C);
+	
+	and(ab,		A,		B);
 	and(axbc,	axb,	C);
 	or	(COUT,	axbc,	ab);
 	

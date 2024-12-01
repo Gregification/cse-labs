@@ -20,13 +20,14 @@ module CLA#(
 	wire	[N:0]		C;
 	wire	[N-1:0]	G, P, S;
 	
-	assign C[0] 	= ADD_SUB;
+	assign C[0]		= ADD_SUB;
 	assign COUT		= C[N];
 	assign R 		= S;
 	
 	genvar i;
-		for(i = 0; i < N; i +=1) begin : full_adders
-			FullerAdder FullAdder_inst (
+	generate
+		for(i = 0; i < N; i = i + 1) begin : full_adders
+			FullAdder FullAdder_inst (
 				.A(A[i]),
 				.B(B[i] ^ ADD_SUB),
 				.C(C[i]),
@@ -38,9 +39,9 @@ module CLA#(
 	
 	genvar j;
 	generate
-		for(j = 0; i < N; j += 1) begin : term_gen
-			assign G[j]		= A[j] & B[j];
-			assign P[j]		= A[j] | B[j];
+		for(j = 0; j < N; j = j + 1) begin : term_gen
+			assign G[j]		= A[j] & (B[j] ^ ADD_SUB);
+			assign P[j]		= A[j] | (B[j] ^ ADD_SUB);
 			assign C[j+1]	= G[j] | (P[j] & C[j]);
 		end
 	endgenerate
