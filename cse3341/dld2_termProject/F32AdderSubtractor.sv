@@ -41,8 +41,19 @@ module F32AdderSubtractor(
 	wire				e_diff_cout;
 	wire				cla_cout;
 	wire				e_ctrled_cout;
+	wire				OP_eff;
+	wire	[5:0]		first_bit;
 	
-	assign m_norm = OP ? m_norm_left_shifted : m_norm_right_shifted;
+	assign OP_eff = OP;
+	assign m_norm = OP_eff ? m_norm_left_shifted : m_norm_right_shifted;
+	
+	integer i;
+	always for(i = 23; i >= 0; i -= 1) begin
+		if(((1<<i) & cla_res) != 0) begin
+			first_bit = 23-i;
+			break;
+		end
+	end
 	
 	always case(debug)
 			default	: begin
@@ -68,6 +79,9 @@ module F32AdderSubtractor(
 			8'h0F 	: R = OP;
 			8'h10 	: R = m_norm_right_shifted;
 			8'h11 	: R = 17;
+			8'h12 	: R = first_bit;
+			8'h13 	: R = 19;
+			8'h14 	: R = 20;
 		endcase
 	
 	//---------------------------modules-----------------------------
@@ -114,14 +128,14 @@ module F32AdderSubtractor(
 			
 			.OUT(m_norm_right_shifted)
 		);
-		
+	
 	BarrelShifter#(
 			.N(24),
 			.NLayers($clog2(24)),
 			.SHIFT_LEFT(1)
 		) _mantissa_normalizer_left (
 			.IN(cla_res),
-			.CTRL(cla_cout),
+			.CTRL(cla_cout * first_bit),
 			
 			.OUT(m_norm_left_shifted)
 		);
@@ -140,7 +154,7 @@ module F32AdderSubtractor(
 		.N(24)
 	) _ctrled_expo (
 		.A(e_mux),
-		.B(cla_cout),
+		.B(cla_cout * first_bit),
 		.ADD_SUB(OP),		// 0:add, 1:sub
 		
 		.R(e_ctrled),

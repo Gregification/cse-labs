@@ -108,8 +108,8 @@ module dld2_termProject (
 				ltch = 0;
 			
 				if(raw_input_mode) begin
-					float_vals[sel_row] 	&= ~(4'hF		<< (28 - raw_input_counter*4));
-					float_vals[sel_row] 	|=  input_val 	<< (28 - raw_input_counter*4);
+					float_vals[sel_row] 	&= ~(4'hF		<< (32-4 - raw_input_counter*4));
+					float_vals[sel_row] 	|=  input_val 	<< (32-4 - raw_input_counter*4);
 				end else if(sel_expo >= 127) begin
 					float_vals[sel_row][0+:23] &= ~(4'hF		<< (23-4-(sel_expo-127)));
 					float_vals[sel_row][0+:23] |=  (input_val << (23-4-(sel_expo-127))) & ~23'b0;
@@ -138,10 +138,10 @@ module dld2_termProject (
 	end
 	
 	// DO NOT CHANGE, it works. it however will not work if moved to the statement above
-	always_ff @ (negedge |LCD_Board_PB[0+:7]) begin
-		if(LCD_Board_PB[0] != 0)
+	always_ff @ (|LCD_Board_PB[0+:7], LCD_Board_SW[3]) begin
+		if((LCD_Board_PB[0] != 0) || LCD_Board_SW[3])
 			sel_row = 0;
-		if(LCD_Board_PB[3] != 0 || LCD_Board_PB[6] != 0)
+		if((LCD_Board_PB[3] != 0) || (LCD_Board_PB[6] != 0) || !LCD_Board_SW[3])
 			sel_row = 1;
 	end
 	
