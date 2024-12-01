@@ -69,7 +69,7 @@ module dld2_termProject (
 	assign LCD_Board_LED[7] = float_vals[2] >> (valCViewReversed*4+3);
 	
 	assign DE10_LED[9]   = overflow;  
-	assign DE10_LED[8]   = underflow;  
+	assign DE10_LED[8]   = underflow;
 	
 	assign sel_expo		= float_vals[sel_row][23+:8];
 	assign sel_mantissa	= float_vals[sel_row][0+:23];
@@ -85,10 +85,11 @@ module dld2_termProject (
 	assign raw_input_mode		= DEVBOARD_SWS[0];
 	assign add_sub					= DEVBOARD_SWS[1];
 	assign debug					= DEVBOARD_SWS[2+:8];
+	assign DE10_LED[2]   = 1;	// user refrence of the 1st input bit  	
+	assign DE10_LED[6]   = 1;	// user refrence of the 4th input bit  	
 	
-	assign DE10_LED[0]			= raw_input_mode;
+	assign DE10_LED[0]			= |raw_input_counter;
 	assign DE10_LED[1]			= add_sub;
-	assign DE10_LED[2]			= |raw_input_counter;
 	
 	always_ff @ (negedge _pressed) begin
 		raw_input_counter += 1;
@@ -170,7 +171,7 @@ module dld2_termProject (
 		 .A(float_vals[0]),
 		 .B(float_vals[1]),
 		 .C(float_vals[2]),
-		 .Operation(opearation[1]),
+		 .Operation(0),
 		 
 		 .debug(|debug)
 	);

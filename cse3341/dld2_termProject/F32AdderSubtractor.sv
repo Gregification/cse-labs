@@ -43,18 +43,28 @@ module F32AdderSubtractor(
 	
 	always case(debug)
 			default	: begin
+				// packed assignments get reversed
 				R[23+:8]	= e_ctrled;
 				R[0+:23]	= m_norm;
 				R[31]		= e_ctrled_cout;
 			end
-			8'h01 	: R = 1;
-			8'h02 	: R = e_ctrled_cout;
-			8'h04 	: R = e_diff_cout;
-			8'h08 	: R = 4;
-			8'h10	 	: R = e_mux;
-			8'h20 	: R = e_ctrled;
-			8'h40 	: R = ma;
-			8'h80 	: R = m_shift;
+			8'h01 	: R = e_mux;
+			8'h02 	: R = e_ctrled;
+			8'h03 	: R = e_ctrled_cout;
+			8'h04 	: R = 4;
+			8'h05	 	: R = e_diff;
+			8'h06 	: R = e_diff_cout;
+			8'h07 	: R = m_shift_mux;
+			8'h08 	: R = m_shift;
+			8'h09 	: R = 9;
+			8'h0A 	: R = m_add;
+			8'h0B 	: R = m_norm;
+			8'h0C 	: R = cla_res;
+			8'h0D 	: R = 13;
+			8'h0E 	: R = cla_cout;
+			8'h0F 	: R = 15;
+			8'h10 	: R = 16;
+			8'h11 	: R = 17;
 		endcase
 	
 	//---------------------------modules-----------------------------
@@ -137,11 +147,11 @@ module F32AdderSubtractor(
 		.N(24)
 	) _cla_unit (
 		.A(m_shift),
-		.B(e_add),
+		.B(m_add),
 		.ADD_SUB(OP),		// 0:add, 1:sub
 		
 		.R(cla_res),
-		.COUT(cout)
+		.COUT(cla_cout)
 	);
 		
 endmodule
