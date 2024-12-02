@@ -46,6 +46,7 @@ module dld2_termProject (
 	//jank code
 	wire					raw_input_mode;
 		reg[2:0]			raw_input_counter;
+	wire					enable_tetris;
 	 
 	//----------------------------io---------------------------------
 	
@@ -53,7 +54,8 @@ module dld2_termProject (
 	wire					overflow, underflow;
 	wire					add_sub;					//0:add
 	
-	assign lcd_reset = DEVBOARD_BTN[0];
+	assign lcd_reset 			= DEVBOARD_BTN[0];
+	assign enable_tetris		= &DEVBOARD_SWS;
 	
 	// array assignments get reversed for some reason ... at this point i just want this to work
 	reg [3:0] valCViewReversed;
@@ -148,6 +150,14 @@ module dld2_termProject (
 	
 	//--------------------------modules------------------------------
 	
+	// things to handle mutiple lcd drivers
+	wire 		[1:0][2:0]	lcd_rs_rw_e;
+	wire		[1:0][7:0] 	lcd_data_b;
+	assign lcd_rs 		= lcd_rs_rw_e[enable_tetris][0]; // me not figuring out block assignments strikes again
+	assign lcd_rw 		= lcd_rs_rw_e[enable_tetris][1];
+	assign lcd_e  		= lcd_rs_rw_e[enable_tetris][2];
+	assign lcd_data	= lcd_data_b[enable_tetris];
+	
 	LCD #(
 		 .WIDTH(64),
 		 .DIGITS(19),
@@ -157,11 +167,11 @@ module dld2_termProject (
 		 .CHARS(20),
 		 .LINE_STARTS({7'h00, 7'h40, 7'h14, 7'h54})
 		 )(
-		 .clk(CLK),
-		 .lcd_data(lcd_data),
-		 .lcd_rs(lcd_rs),
-		 .lcd_rw(lcd_rw),
-		 .lcd_e(lcd_e),
+		 .clk(enable_tetris ? 0 : CLK),
+		 .lcd_data(lcd_data_b[0]),
+		 .lcd_rs	(lcd_rs_rw_e[0][0]),
+		 .lcd_rw	(lcd_rs_rw_e[0][1]),
+		 .lcd_e	(lcd_rs_rw_e[0][2]),
 		 .lcd_reset(!lcd_reset),
 		 .A(float_vals[0]),
 		 .B(float_vals[1]),
@@ -170,6 +180,40 @@ module dld2_termProject (
 		 
 		 .debug(|debug)
 	);
+	
+	wire left, right, down, rot_left, rot_right, reset;
+	wire g_clk;
+	assign g_clk 	= clk_ladder[24];
+	assign left 	= input_val == 4'd15;
+	assign right	= input_val == 4'd3;
+	assign down 	= input_val == 4'd2;
+	assign rot_left= input_val == 4'd11;
+	assign rot_right=input_val == 4'd7;
+	assign reset	= !lcd_reset;
+	
+	assign DE10_LED[3] = _pressed & left;
+	assign DE10_LED[4] = _pressed & right;
+	assign DE10_LED[5] = _pressed & down;
+	
+	BudgetTetris#(
+		.ROWS(4),
+		.COLS(20),
+		.LINE_STARTS({7'h00, 7'h40, 7'h14, 7'h54})
+	)(
+		// game
+		.g_clk	(enable_tetris ? g_clk : 0),
+		.g_ctrl	(_pressed ? {left, right, down, rot, reset} : 0), // left, right, down, rotate-left, rotate-right, reset-game
+		
+		// lcd
+		.lcd_clk(enable_tetris ? CLK : 0),
+		.lcd_data (lcd_data_b[1]),
+		.lcd_rs	(lcd_rs_rw_e[1][0]),
+		.lcd_rw	(lcd_rs_rw_e[1][1]),
+		.lcd_e	(lcd_rs_rw_e[1][2]),
+		.lcd_reset(!lcd_reset)
+	);
+	
+	assign DE10_LED[7] = g_clk;
 	
 	KeyPad #(
 			.N(1)

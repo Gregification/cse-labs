@@ -119,6 +119,7 @@ set_location_assignment PIN_AA11 -to KEYPAD_COLS[1]
 set_location_assignment PIN_Y10 -to KEYPAD_COLS[2]
 set_location_assignment PIN_AB9 -to KEYPAD_COLS[3]
 set_location_assignment PIN_AA12 -to KEYPAD_COLS[0]
+set_global_assignment -name SYSTEMVERILOG_FILE BudgetTetris.sv
 set_global_assignment -name SYSTEMVERILOG_FILE BarrelShifter.sv
 set_global_assignment -name SYSTEMVERILOG_FILE dld2_termProject.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ShiftRegister.sv

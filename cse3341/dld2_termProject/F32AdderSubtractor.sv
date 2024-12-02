@@ -44,8 +44,11 @@ module F32AdderSubtractor(
 	wire				OP_eff;
 	wire	[5:0]		first_bit;
 	
-	assign OP_eff = OP;
+	assign OP_eff = OP ^ sa ^ sb;
 	assign m_norm = OP_eff ? m_norm_left_shifted : m_norm_right_shifted;
+	
+	assign OVERFLOW 	= first_bit > 23;
+	assign UNDERFLOW 	= e_diff		> 23;
 	
 	integer i;
 	always for(i = 23; i >= 0; i -= 1) begin
@@ -80,7 +83,7 @@ module F32AdderSubtractor(
 			8'h10 	: R = m_norm_right_shifted;
 			8'h11 	: R = 17;
 			8'h12 	: R = first_bit;
-			8'h13 	: R = 19;
+			8'h13 	: R = OP_eff;
 			8'h14 	: R = 20;
 		endcase
 	
