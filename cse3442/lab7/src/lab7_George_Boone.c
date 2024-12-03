@@ -82,8 +82,10 @@ int main(void)
     GPIO_PORTA_DEN_R    |=  INT_M;             // as digital
 
     // set up interrupt
-    GPIO_PORTA_IM_R     |=  INT_M;             // disable port A interrupts
-    GPIO_PORTA_IS_R     |=  INT_M;             // level sensitive
+    GPIO_PORTA_IM_R     &=  ~INT_M;             // disable port A interrupts
+//    GPIO_PORTA_IS_R     |=  INT_M;             // level sensitive
+//    GPIO_PORTA_IEV_R    |=  INT_M;             // active high
+    GPIO_PORTA_IS_R     &=  ~INT_M;             // edge sensitive
     GPIO_PORTA_IEV_R    |=  INT_M;             // active high
     GPIO_PORTA_IM_R     |=  INT_M;             // enable port A interrupts
 
@@ -217,5 +219,6 @@ void intr_MCP23S08(){
 
     if(flags & _BV(7)){
         BTN_PRESSED = true;
+        GPIO_PORTA_IM_R     &=  ~INT_M;             // disable port A interrupts
     }
 }
