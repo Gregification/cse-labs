@@ -21,6 +21,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <stdlib.h>
 
 #include "tm4c123gh6pm.h"
 
@@ -30,33 +31,33 @@
 #define SII_M           _BV(1)
 #define SDO_M           _BV(2)
 #define SCI_M           _BV(3)
-#define HVC_M           _BV(4)
-#define VCC_M           _BV(5)
+#define VCC_M           _BV(4)
+#define HVC_M           _BV(5)
 
 #define SDO_V           (GPIO_PORTE_DATA_R | SDO_M)
 
 #define SDI_BB          (*((volatile uint32_t *)(0 * 4 + 0x42000000 + (0x400243FC - 0x40000000) * 32)))
 #define SII_BB          (*((volatile uint32_t *)(1 * 4 + 0x42000000 + (0x400243FC - 0x40000000) * 32)))
 #define SCI_BB          (*((volatile uint32_t *)(3 * 4 + 0x42000000 + (0x400243FC - 0x40000000) * 32)))
-#define HVC_BB          (*((volatile uint32_t *)(4 * 4 + 0x42000000 + (0x400243FC - 0x40000000) * 32)))
-#define VCC_BB          (*((volatile uint32_t *)(5 * 4 + 0x42000000 + (0x400243FC - 0x40000000) * 32)))
+#define VCC_BB          (*((volatile uint32_t *)(4 * 4 + 0x42000000 + (0x400243FC - 0x40000000) * 32)))
+#define HVC_BB          (*((volatile uint32_t *)(5 * 4 + 0x42000000 + (0x400243FC - 0x40000000) * 32)))
 
 #define PROG_ENABLE0_BB SDI_BB
 #define PROG_ENABLE1_BB SII_BB
 #define PROG_ENABLE2_BB (*((volatile uint32_t *)(2 * 4 + 0x42000000 + (0x400243FC - 0x40000000) * 32)))
 
-#define CLK_DELAY       14
-#define HV_VCC_DELAY    (40e6 / 1e6 * 2)
+#define CLK_DELAY       (40e6 / 1e6 * 2)
+#define HV_VCC_DELAY    (40e6 / 1e6 * 50)
 
 void init_GPIO();
 void sdo_as_input();
 void sdo_as_output();
 
-struct Instr {
+typedef struct {
     uint8_t input;
     uint8_t instruction;
     uint8_t output;
-};
+} Instr;
 
 void transfer_instruction(Instr* txrx, uint8_t len);
 
@@ -72,7 +73,6 @@ int main(void)
     sdo_as_output();
 
     HVC_BB = 0;
-    _delay_cycles(HV_VCC_DELAY);
     VCC_BB = 0;
     PROG_ENABLE0_BB = 0;
     PROG_ENABLE1_BB = 0;
@@ -94,22 +94,52 @@ int main(void)
 
 
     /** programming */
+    {
+        Instr *instrs;
 
-    // set fuse bits to 0xDF
-    // TODO
+        // lol, lmao, you better have wired this to a attiny85 else who knows what
+        //      these instructions are doing
+//        // read chip signature to confirm is ATtiny85
+//        uint32_t signature = 0;
+//        instrs = (Instr[4]){
+//                  {0x08  ,   0x4C},
+//                  {0x00  ,   0x0C},
+//                  {0x00  ,   0x68},
+//                  {0x00  ,   0x6C},
+//                };
+//        for(instrs[1].input = 0; instrs[1].input <= 3; instrs[1].input++){
+//            transfer_instruction(instrs, 4);
+//
+//            signature |= instrs[3].output << (4 * instrs[1].input);
+//        }
+
+        // set fuse bits to 0xDF
+        instrs = (Instr[4]){
+                  {0x40  ,   0x4C},
+                  {0xDF  ,   0x2C},
+                  {0x00  ,   0x74},
+                  {0x00  ,   0x7C},
+                };
+        transfer_instruction(instrs, 4);
+
+        free(instrs);
+    }
 
     /** exit HVSP mode */
 
     HVC_BB = 0;
-    _delay_cycles(HV_VCC_DELAY));
+    _delay_cycles(HV_VCC_DELAY);
     VCC_BB = 0;
+
+    while(true)
+        ;
 
     return 0;
 }
 
 void init_GPIO() {
     SYSCTL_RCGCGPIO_R |= SYSCTL_RCGCGPIO_R4;                    // clock to port E
-    _delay_clcles(3);
+    _delay_cycles(3);
 
     GPIO_PORTE_DIR_R |= SDI_M | SII_M | SCI_M | HVC_M | VCC_M;  // outputs
     sdo_as_input();                                             // inputs
@@ -147,10 +177,10 @@ void transfer_instruction(Instr* txrx, uint8_t len){
      */
 
     SCI_BB = 0; // ensure clock is low (it should already be low)
-    _delay_cycles(CLK_DELAY);
 
     uint8_t packet_i;
     for(packet_i = 0; packet_i < len; packet_i++){
+        _delay_cycles(CLK_DELAY);
 
         uint8_t bit_i;
         for(bit_i = 0; bit_i < 11; bit_i++){
@@ -158,17 +188,17 @@ void transfer_instruction(Instr* txrx, uint8_t len){
             _delay_cycles(CLK_DELAY);
             SCI_BB = 1;
 
-            // SDI
-            SDI_BB = (txrx[packet_i].input       >> (8-bit_i)) & 1;
-
-            // SII
-            SII_BB = (txrx[packet_i].instruction >> (8-bit_i)) & 1;
-
             _delay_cycles(CLK_DELAY);
             SCI_BB = 0;
 
             // SDO
             txrx[packet_i].output |= (SDO_V != 0) << (7-bit_i);
+
+            // SDI
+            SDI_BB = (txrx[packet_i].input       >> (7-bit_i)) & 1;
+
+            // SII
+            SII_BB = (txrx[packet_i].instruction >> (7-bit_i)) & 1;
 
         }
     }
