@@ -1,10 +1,11 @@
 #CCS
 
-Release/*
-.xdchelp
-config/*
-.launches/*
-Debug/*
-.metadata/*
+/Release/
+/.xdchelp
+/config/
+/.launches/
+/Debug/
+/.metadata/
 *.jx*
 *.prefs
+/terminalcmds/
