@@ -63,7 +63,7 @@ module F32AdderSubtractor(
 				// packed assignments get reversed
 				R[23+:8]	= e_ctrled;
 				R[0+:23]	= m_norm;
-				R[31]		= !e_diff_cout;
+				R[31]		= e_diff_cout ^ OP_eff;
 			end
 			8'h01 	: R = e_mux;
 			8'h02 	: R = e_ctrled;
@@ -157,7 +157,7 @@ module F32AdderSubtractor(
 		.N(24)
 	) _ctrled_expo (
 		.A(e_mux),
-		.B(cla_cout * first_bit),
+		.B(cla_cout * (OP ? first_bit : 1)),
 		.ADD_SUB(OP),		// 0:add, 1:sub
 		
 		.R(e_ctrled),

@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Rename resource &apos;serialfiddle/src/uart/uartN&apos; to &apos;uartN.h&apos;" description="Rename resource &apos;uartN&apos;" flags="7" id="org.eclipse.ltk.core.refactoring.rename.resource" input="src/uart/uartN" name="uartN.h" stamp="1726947702073" updateReferences="true"/>
+</session>

@@ -97,7 +97,7 @@ module BudgetTetris#(
 									
 							end else if(x == ctrl_x && y == ctrl_y) begin
 								ctrl_y = 0;
-							end
+							end  
 					end
 					
 					// pop row 

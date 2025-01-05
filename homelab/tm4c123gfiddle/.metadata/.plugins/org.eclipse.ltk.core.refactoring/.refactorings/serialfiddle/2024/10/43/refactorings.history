@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Rename resource &apos;serialfiddle/src/terminalcmds/global_handlers&apos; to &apos;global_handlers.h&apos;" description="Rename resource &apos;global_handlers&apos;" flags="7" id="org.eclipse.ltk.core.refactoring.rename.resource" input="src/terminalcmds/global_handlers" name="global_handlers.h" stamp="1729833464112" updateReferences="true"/>
+</session>

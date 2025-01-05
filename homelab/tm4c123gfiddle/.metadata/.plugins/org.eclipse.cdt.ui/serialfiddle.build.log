@@ -1,0 +1,34 @@
+
+**** Build of configuration Debug for project serialfiddle ****
+
+"C:\\ti\\ccs1280\\ccs\\utils\\bin\\gmake" -k -j 24 all -O 
+ 
+Building file: "../src/main.c"
+Invoking: Arm Compiler
+"C:/ti/ccs1280/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/bin/armcl" -mv7M4 --code_state=16 --float_support=FPv4SPD16 -me --include_path="D:/cse-labs/homelab/tm4c123gfiddle/serialfiddle" --include_path="D:/cse-labs/homelab/tm4c123gfiddle/includes" --include_path="C:/ti/ccs1280/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include" --define=ccs="ccs" --define=PART_TM4C123GH6PM -g --gcc --diag_warning=225 --diag_wrap=off --display_error_number --abi=eabi --preproc_with_compile --preproc_dependency="src/main.d_raw" --obj_directory="src"  "../src/main.c"
+Finished building: "../src/main.c"
+ 
+Building file: "../src/terminalcmds/global_handlers.c"
+Invoking: Arm Compiler
+"C:/ti/ccs1280/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/bin/armcl" -mv7M4 --code_state=16 --float_support=FPv4SPD16 -me --include_path="D:/cse-labs/homelab/tm4c123gfiddle/serialfiddle" --include_path="D:/cse-labs/homelab/tm4c123gfiddle/includes" --include_path="C:/ti/ccs1280/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include" --define=ccs="ccs" --define=PART_TM4C123GH6PM -g --gcc --diag_warning=225 --diag_wrap=off --display_error_number --abi=eabi --preproc_with_compile --preproc_dependency="src/terminalcmds/global_handlers.d_raw" --obj_directory="src/terminalcmds"  "../src/terminalcmds/global_handlers.c"
+Finished building: "../src/terminalcmds/global_handlers.c"
+ 
+Building file: "../src/terminalcmds/handler_root.c"
+Invoking: Arm Compiler
+"C:/ti/ccs1280/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/bin/armcl" -mv7M4 --code_state=16 --float_support=FPv4SPD16 -me --include_path="D:/cse-labs/homelab/tm4c123gfiddle/serialfiddle" --include_path="D:/cse-labs/homelab/tm4c123gfiddle/includes" --include_path="C:/ti/ccs1280/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include" --define=ccs="ccs" --define=PART_TM4C123GH6PM -g --gcc --diag_warning=225 --diag_wrap=off --display_error_number --abi=eabi --preproc_with_compile --preproc_dependency="src/terminalcmds/handler_root.d_raw" --obj_directory="src/terminalcmds"  "../src/terminalcmds/handler_root.c"
+Finished building: "../src/terminalcmds/handler_root.c"
+ 
+Building file: "../src/terminalcmds/cmdhandler.c"
+Invoking: Arm Compiler
+"C:/ti/ccs1280/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/bin/armcl" -mv7M4 --code_state=16 --float_support=FPv4SPD16 -me --include_path="D:/cse-labs/homelab/tm4c123gfiddle/serialfiddle" --include_path="D:/cse-labs/homelab/tm4c123gfiddle/includes" --include_path="C:/ti/ccs1280/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include" --define=ccs="ccs" --define=PART_TM4C123GH6PM -g --gcc --diag_warning=225 --diag_wrap=off --display_error_number --abi=eabi --preproc_with_compile --preproc_dependency="src/terminalcmds/cmdhandler.d_raw" --obj_directory="src/terminalcmds"  "../src/terminalcmds/cmdhandler.c"
+"../src/terminalcmds/cmdhandler.c", line 160: warning #169-D: argument of type "const char *" is incompatible with parameter of type "char *"
+Finished building: "../src/terminalcmds/cmdhandler.c"
+ 
+Building target: "serialfiddle.out"
+Invoking: Arm Linker
+"C:/ti/ccs1280/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/bin/armcl" -mv7M4 --code_state=16 --float_support=FPv4SPD16 -me --define=ccs="ccs" --define=PART_TM4C123GH6PM -g --gcc --diag_warning=225 --diag_wrap=off --display_error_number --abi=eabi -z -m"serialfiddle.map" --heap_size=0 --stack_size=512 -i"C:/ti/ccs1280/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/lib" -i"C:/ti/ccs1280/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include" --reread_libs --diag_wrap=off --display_error_number --warn_sections --xml_link_info="serialfiddle_linkInfo.xml" --rom_model -o "serialfiddle.out" "./tm4c123gh6pm_startup_ccs.obj" "./src/losh/clock.obj" "./src/losh/uart0.obj" "./src/main.obj" "./src/terminalcmds/cmdhandler.obj" "./src/terminalcmds/global_handlers.obj" "./src/terminalcmds/handler_help.obj" "./src/terminalcmds/handler_root.obj" "../tm4c123gh6pm.cmd"  -llibc.a 
+<Linking>
+Finished building target: "serialfiddle.out"
+ 
+
+**** Build Finished ****

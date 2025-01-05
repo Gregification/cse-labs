@@ -1,0 +1,10 @@
+"./tm4c123gh6pm_startup_ccs.obj"
+"./src/losh/clock.obj"
+"./src/losh/uart0.obj"
+"./src/main.obj"
+"./src/terminalcmds/cmdhandler.obj"
+"./src/terminalcmds/global_handlers.obj"
+"./src/terminalcmds/handler_help.obj"
+"./src/terminalcmds/handler_root.obj"
+"../tm4c123gh6pm.cmd"
+-llibc.a

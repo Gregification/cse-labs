@@ -141,9 +141,9 @@ module dld2_termProject (
 	
 	// DO NOT CHANGE, it works. it however will not work if moved to the statement above
 	always_ff @ (|LCD_Board_PB[0+:7], LCD_Board_SW[3]) begin
-		if((LCD_Board_PB[0] != 0) || LCD_Board_SW[3])
+		if((LCD_Board_PB[0] != 0))// || LCD_Board_SW[3])
 			sel_row = 0;
-		if((LCD_Board_PB[3] != 0) || (LCD_Board_PB[6] != 0) || !LCD_Board_SW[3])
+		if((LCD_Board_PB[3] != 0) || (LCD_Board_PB[6] != 0))// || !LCD_Board_SW[3])
 			sel_row = 1;
 	end
 	

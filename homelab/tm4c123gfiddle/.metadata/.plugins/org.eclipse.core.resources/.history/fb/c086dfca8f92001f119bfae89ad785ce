@@ -1,0 +1,15 @@
+/*
+ * Handlers.h
+ *
+ *  Created on: Oct 25, 2024
+ *      Author: turtl
+ */
+
+#ifndef SRC_TERMINALCMDS_HANDLERS_H_
+#define SRC_TERMINALCMDS_HANDLERS_H_
+
+// this is not a exhaustive list
+//  some handlers may have their own private arrays. see each source file to be certain
+
+
+#endif /* SRC_TERMINALCMDS_HANDLERS_H_ */
