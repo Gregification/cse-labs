@@ -1,8 +1,8 @@
 Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
 ---------------------------------------------------------------------------------------------------------------------------------------------
-| Tool Version : Vivado v.2024.2 (lin64) Build 5239630 Fri Nov 08 22:34:34 MST 2024
-| Date         : Wed Jan 29 10:19:21 2025
-| Host         : remotehost running 64-bit Ubuntu 24.04.1 LTS
+| Tool Version : Vivado v.2024.2 (win64) Build 5239630 Fri Nov 08 22:35:27 MST 2024
+| Date         : Sat Feb  1 18:31:21 2025
+| Host         : catputer running 64-bit major release  (build 9200)
 | Command      : report_clock_utilization -file lab1_clock_utilization_routed.rpt
 | Design       : lab1
 | Device       : 7z007s-clg400
