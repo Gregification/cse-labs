@@ -104,3 +104,8 @@
 */*/*/bd/*/ip/*/*.tcl
 hw_handoff
 ipshared
+
+
+
+# custom things
+*.runs
