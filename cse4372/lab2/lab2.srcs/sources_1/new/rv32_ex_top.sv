@@ -29,7 +29,7 @@
     alu_out_buffer <= 0; 
 
 module rv32_ex_top(
-        // system clock nad synchronous reset
+        // system clock and synchronous reset
         input clk,
         input reset,
         
@@ -43,193 +43,15 @@ module rv32_ex_top(
         output reg [31:0] alu_out
     );
     
-    reg         [31:0] alu_out_buffer;
 
-    // all iw components  
-    wire        [6:0]  opcode  = iw_in[6:0];
-    wire        [4:0]  rd      = iw_in[11:7];
-    wire        [2:0]  funct3  = iw_in[14:12];
-    wire signed [4:0]  rs1     = iw_in[19:15];
-    wire signed [4:0]  rs2     = iw_in[24:20];
-    wire        [4:0]  shamt   = rs2;
-    wire        [6:0]  funct7  = iw_in[31:25];
-    wire signed [31:0] i_I     = {{20{iw_in[31]}}, iw_in[31:20]};
-    wire signed [31:0] i_S     = {{20{iw_in[31]}}, iw_in[31:25], iw_in[11:7]};
-    wire signed [31:0] i_B     = {{19{iw_in[31]}}, iw_in[31], iw_in[7], iw_in[30:25], iw_in[11:8], 1'b0};
-    wire        [31:0] i_U     = {iw_in[31:12], 12'b0};
-    wire signed [31:0] i_J     = {{11{iw_in[31]}}, iw_in[31], iw_in[19:12], iw_in[20], iw_in[30:21], 1'b0};
-
-    reg         [31:0] alu_A;
-    reg         [31:0] alu_B;
-    reg                alu_sub;
-    wire        [31:0] alu_out_raw;
-    rv32_ex_alu32 ALU (
-        .a(alu_A),
-        .b(alu_B),
-        .sub(alu_sub),
+    rv32_ex_alu32 alu32 (
+        // from id
+        .pc_in(pc_in),
+        .iw_in(iw_in),
+        .rs1_data_in(rs1_data_in),
+        .rs2_data_in(rs2_data_in),
         
-        .out(alu_out_raw)
+        // to mem
+        .alu_out(alu_out)
     );
-    
-    // latch prevention
-    initial begin
-        alu_out = 0;
-    end
-
-    // assign alu_out = alu_out_buffer;
-    always_ff @(posedge clk) begin
-        if(reset)
-            alu_out = 0;
-        else
-            alu_out = alu_out_buffer;    
-    end
-
-    // iw parsing
-    //      color coding based off excel sheet
-    always_comb begin
-        `DEFAULT_COMBO_STATE
-
-        case (opcode)
-            7'b0110011: begin   // R type : orange
-                case (funct3)
-                    3'b000: begin // ADD, SUB
-                        alu_A <= rs1_data_in;
-                        alu_B <= rs2_data_in;
-                        alu_sub <= funct7[5];
-                        alu_out_buffer <= alu_out_raw;
-                    end
-                    3'b001: alu_out_buffer <= rs1_data_in << rs2[4:0]; // SLL : shift left logical
-                    3'b010: alu_out_buffer <= rs1_data_in < rs2_data_in; // SLT : store 1 if signed less than
-                    3'b011: alu_out_buffer <= $unsigned(rs1_data_in) < $unsigned(rs2_data_in); // SLTU : store 1 if less than unsigned
-                    3'b100: alu_out_buffer <= rs1_data_in ^ rs2_data_in; // XOR
-                    3'b101: if(iw_in[30] == 1) 
-                            alu_out_buffer <= rs1_data_in >>> rs2[4:0]; // SRA : shift right arithmetic
-                        else
-                            alu_out_buffer <= rs1_data_in >> rs2[4:0]; // SRL : shift right logical
-                    3'b110: alu_out_buffer <= rs1_data_in | rs2_data_in; // OR
-                    3'b111: alu_out_buffer <= rs1_data_in & rs2_data_in; // AND
-                endcase // funct3
-            end // R type : orange
-            
-            7'b1100111: begin // I type : dull blue
-                // JALR : jump to address relative to register value
-                // rd <- pc + 4 //TODO
-
-                // pc
-                alu_A <= {rs1_data_in[31:1], 1'b0};
-                alu_B <= i_I;
-                alu_out_buffer <= alu_out_raw;
-            end // I type : dull blue
-
-            7'b0000011: begin // I type : dull red
-                case (funct3)
-                    3'b000: begin // LB : load byte signed
-                        alu_A <= rs1_data_in;
-                        alu_B <= i_I;
-                        alu_out_buffer <= {{24{alu_out_raw[7]}}, alu_out_raw[7:0]};
-                    end
-                    3'b001: begin // LH : load halfword signed
-                        alu_A <= rs1_data_in;
-                        alu_B <= i_I;
-                        alu_out_buffer <= {{16{alu_out_raw[15]}}, alu_out_raw[15:0]};
-                    end
-                    3'b010: begin // LW : load word signed
-                        alu_A <= rs1_data_in;
-                        alu_B <= i_I;
-                        alu_out_buffer <= alu_out_raw;
-                    end
-                    3'b100: begin // LBU : load byte unsigned
-                        alu_A <= rs1_data_in;
-                        alu_B <= i_I;
-                        alu_out_buffer <= {24'b0, alu_out_raw[7:0]};
-                    end
-                    3'b101: begin // LHU : load halfword unsigned
-                        alu_A <= rs1_data_in;
-                        alu_B <= i_I;
-                        alu_out_buffer <= {16'b0, alu_out_raw[15:0]};
-                    end
-                endcase // funct3
-            end // I type : dull red
-
-            7'b0010011: begin // I type : yellow
-                case (funct3)
-                    3'b000: begin // ADDI
-                        alu_A <= rs1_data_in;
-                        alu_B <= i_I;
-                        alu_sub <= 0;
-                        alu_out_buffer <= alu_out_raw;
-                    end
-                    3'b001: alu_out_buffer <= rs1_data_in << shamt; // SLLI : shift left logical immediate
-                    3'b010: alu_out_buffer <= rs1_data_in < i_I; // SLTI : store 1 if signed less than immediate
-                    3'b011: alu_out_buffer <= $unsigned(rs1_data_in) < $unsigned(i_I); // SLTIU : store 1 if less than unsigned immediate
-                    3'b100: alu_out_buffer <= rs1_data_in ^ i_I; // XORI
-                    3'b101: if(iw_in[30] == 1) 
-                            alu_out_buffer <= rs1_data_in >> shamt; // SRLI : shift right logical immediate
-                        else
-                            alu_out_buffer <= rs1_data_in >>> shamt; // SRAI : shift right arithmetic immediate
-                    3'b110: alu_out_buffer <= rs1_data_in | i_I; // ORI
-                    3'b111: alu_out_buffer <= rs1_data_in & i_I; // ANDI
-                endcase // funct 3
-            end // I type : yellow
-
-            // 7'b0001111: begin // I type : white
-            //     // FENCE     //TODO
-            // end // I type : white
-
-            // 7'b1110011: begin // I type : gray
-            //     if(iw_in[20]) begin
-            //         // ECALL     //TODO
-            //     end else begin
-            //         // EBREAK    //TODO
-            //     end
-            // end // I type : gray
-
-            7'b0100011: begin // S type : dull pruple
-                case (funct3)
-                    3'b000, 3'b001, 3'b010: begin 
-                        // SB : store byte
-                        // SH : store halfword
-                        // SW : store word
-
-                        // calculates address to store to
-                        alu_A <= rs1_data_in;
-                        alu_B <= i_S;
-                        alu_out_buffer <= alu_out_raw;
-                    end
-                endcase // funct3
-            end // S type : dull pruple
-
-            7'b1100011: begin // B type : white
-                // case (funct3)
-                    // 3'b000: // BEQ   //TODO
-                    // 3'b001: // BNE   //TODO
-                    // 3'b100: // BLT   //TODO
-                    // 3'b101: // BGE   //TODO
-                    // 3'b110: // BLTU  //TODO
-                    // 3'b111: // BGEU  //TODO
-                // endcase // funct3
-            end // B type : white
-
-            7'b0110111: begin // U type : dull blue
-                alu_out_buffer <= {i_U[31:12], 12'b0}; // LUI : load upper immediate
-            end // U type : dull blue
-
-            7'b0010111: begin // U type : dark green
-                // AUIPC : add upper immediate to PC
-                alu_A <= pc_in;
-                alu_B <= {i_U[31:12], 12'b0};
-                alu_out_buffer <= alu_out_raw;
-            end // U type : dark green
-
-            7'b1101111: begin // J type : ilme green
-                // JAL : jump to address relative to PC
-                // rd <- pc + 4 // TODO
-
-                // pc
-                alu_A <= pc_in;
-                alu_B <= i_J;
-                alu_out_buffer <= alu_out_raw;
-            end // J type : ilme green
-        endcase // opcode
-    end
 endmodule

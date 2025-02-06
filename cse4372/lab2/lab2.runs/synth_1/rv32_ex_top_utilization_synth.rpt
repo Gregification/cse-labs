@@ -1,7 +1,7 @@
 Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
 ---------------------------------------------------------------------------------------------------------------------------------------------
 | Tool Version : Vivado v.2024.2 (win64) Build 5239630 Fri Nov 08 22:35:27 MST 2024
-| Date         : Sun Feb  2 19:12:00 2025
+| Date         : Thu Feb  6 08:32:39 2025
 | Host         : catputer running 64-bit major release  (build 9200)
 | Command      : report_utilization -file rv32_ex_top_utilization_synth.rpt -pb rv32_ex_top_utilization_synth.pb
 | Design       : rv32_ex_top
@@ -31,11 +31,11 @@ Table of Contents
 +-------------------------+------+-------+------------+-----------+-------+
 |        Site Type        | Used | Fixed | Prohibited | Available | Util% |
 +-------------------------+------+-------+------------+-----------+-------+
-| Slice LUTs*             |  703 |     0 |          0 |     14400 |  4.88 |
-|   LUT as Logic          |  703 |     0 |          0 |     14400 |  4.88 |
+| Slice LUTs*             |  780 |     0 |          0 |     14400 |  5.42 |
+|   LUT as Logic          |  780 |     0 |          0 |     14400 |  5.42 |
 |   LUT as Memory         |    0 |     0 |          0 |      6000 |  0.00 |
-| Slice Registers         |   32 |     0 |          0 |     28800 |  0.11 |
-|   Register as Flip Flop |   32 |     0 |          0 |     28800 |  0.11 |
+| Slice Registers         |    0 |     0 |          0 |     28800 |  0.00 |
+|   Register as Flip Flop |    0 |     0 |          0 |     28800 |  0.00 |
 |   Register as Latch     |    0 |     0 |          0 |     28800 |  0.00 |
 | F7 Muxes                |    0 |     0 |          0 |      8800 |  0.00 |
 | F8 Muxes                |    0 |     0 |          0 |      4400 |  0.00 |
@@ -60,7 +60,7 @@ Warning! For any ECO changes, please run place_design if there are unplaced inst
 | 0     |          Yes |           - |          Set |
 | 0     |          Yes |           - |        Reset |
 | 0     |          Yes |         Set |            - |
-| 32    |          Yes |       Reset |            - |
+| 0     |          Yes |       Reset |            - |
 +-------+--------------+-------------+--------------+
 
 
@@ -93,7 +93,7 @@ Warning! For any ECO changes, please run place_design if there are unplaced inst
 +-----------------------------+------+-------+------------+-----------+--------+
 |          Site Type          | Used | Fixed | Prohibited | Available |  Util% |
 +-----------------------------+------+-------+------------+-----------+--------+
-| Bonded IOB                  |  162 |     0 |          0 |       100 | 162.00 |
+| Bonded IOB                  |  160 |     0 |          0 |       100 | 160.00 |
 | Bonded IPADs                |    0 |     0 |          0 |         2 |   0.00 |
 | Bonded IOPADs               |    0 |     0 |          0 |       130 |   0.00 |
 | PHY_CONTROL                 |    0 |     0 |          0 |         2 |   0.00 |
@@ -116,7 +116,7 @@ Warning! For any ECO changes, please run place_design if there are unplaced inst
 +------------+------+-------+------------+-----------+-------+
 |  Site Type | Used | Fixed | Prohibited | Available | Util% |
 +------------+------+-------+------------+-----------+-------+
-| BUFGCTRL   |    1 |     0 |          0 |        32 |  3.13 |
+| BUFGCTRL   |    0 |     0 |          0 |        32 |  0.00 |
 | BUFIO      |    0 |     0 |          0 |         8 |  0.00 |
 | MMCME2_ADV |    0 |     0 |          0 |         2 |  0.00 |
 | PLLE2_ADV  |    0 |     0 |          0 |         2 |  0.00 |
@@ -149,16 +149,15 @@ Warning! For any ECO changes, please run place_design if there are unplaced inst
 +----------+------+---------------------+
 | Ref Name | Used | Functional Category |
 +----------+------+---------------------+
-| LUT6     |  436 |                 LUT |
-| LUT5     |  163 |                 LUT |
-| IBUF     |  130 |                  IO |
-| LUT4     |  129 |                 LUT |
-| LUT3     |   83 |                 LUT |
-| LUT2     |   61 |                 LUT |
+| LUT6     |  383 |                 LUT |
+| LUT2     |  184 |                 LUT |
+| LUT3     |  133 |                 LUT |
+| IBUF     |  128 |                  IO |
+| LUT4     |  119 |                 LUT |
+| LUT5     |   96 |                 LUT |
+| CARRY4   |   62 |          CarryLogic |
 | OBUF     |   32 |                  IO |
-| FDRE     |   32 |        Flop & Latch |
-| CARRY4   |   24 |          CarryLogic |
-| BUFG     |    1 |               Clock |
+| LUT1     |    4 |                 LUT |
 +----------+------+---------------------+
 
 
