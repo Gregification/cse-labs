@@ -5,7 +5,10 @@
  *      Author: greg
  */
 
+#include <stdlib.h>
+
 #include "UART_UI.h"
+#include "../framework/uart0.h"
 
 void getsUart0(USER_DATA * ud){
     uint8_t count = 0;
@@ -21,10 +24,11 @@ void getsUart0(USER_DATA * ud){
             continue;
         }
 
-
         // 4.d
-        if(c == 13) //character is a carriage return
+        if(c == 13){ //character is a carriage return
+            putsUart0("\n\r");
             break;
+        }
 
         // 4.e
         if(c >= 32){ //character is printable char
@@ -35,7 +39,6 @@ void getsUart0(USER_DATA * ud){
                 break;
         }
     }
-
     ud->buffer[count] = '\0';
 }
 
@@ -53,8 +56,8 @@ void parseFields(USER_DATA * ud){
 
         //classify current char
         cur = 'd';
-        if (    ( ud->buffer[i] <= 'z'&& ud->buffer[i] >= 'a')
-            &&  ( ud->buffer[i] >= 'A'&& ud->buffer[i] <= 'Z'))
+        if (    ( ud->buffer[i] >= 'a' && ud->buffer[i] <= 'z')
+            ||  ( ud->buffer[i] >= 'A' && ud->buffer[i] <= 'Z')
         ){
             cur = 'a';
         } else if (ud->buffer[i] <= '9' && ud->buffer[i] >= '0'){
