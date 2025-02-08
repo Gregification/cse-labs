@@ -1,8 +1,8 @@
-Release/*
+*/Release/*
 .xdchelp
 config/*
-.launches/*
-.jxbrowser*
-Debug/*
+*/.launches/*
+*/.jxbrowser*
+*/Debug/*
 /.metadata/
 *.prefs

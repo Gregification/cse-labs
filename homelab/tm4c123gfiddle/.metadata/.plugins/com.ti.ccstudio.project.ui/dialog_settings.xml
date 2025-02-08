@@ -8,7 +8,7 @@
 	</section>
 	<section name="com.ti.ccstudio.project.ui.internal.wizards.project.ProjectSettingsPage">
 		<item key="CCS.TARGET" value="devices/tm4c123gh6pm"/>
-		<item key="CCS.CONNECTION" value="C:\ti\ccs1280\ccs\ccs_base\common\targetdb\connections\Stellaris_ICDI_Connection.xml"/>
+		<item key="CCS.CONNECTION" value="C:\ti\ccs1281\ccs\ccs_base\common\targetdb\connections\Stellaris_ICDI_Connection.xml"/>
 		<section name="1">
 			<item key="CCS.OUTPUT_TYPE" value="executable"/>
 			<item key="CCS.LINKER_COMMAND_FILE" value="null"/>
