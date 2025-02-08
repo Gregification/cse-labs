@@ -23,11 +23,6 @@
 //  - ISA details: https://msyksphinz-self.github.io/riscv-isadoc/html/rvi.html#sb
 //  - ISA excel sheet made by Jason Losh
 
-`define DEFAULT_COMBO_STATE alu_A <= 0; \
-    alu_B <= 0; \
-    alu_sub <= 0; \
-    alu_out_buffer <= 0; 
-
 module rv32_ex_top(
         // system clock and synchronous reset
         input clk,

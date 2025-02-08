@@ -79,7 +79,7 @@ module rv32_ex_alu32(
                 // rd <- pc + 4 //TODO
 
                 // pc
-                alu_out <= {rs1_data_in[31:1], 1'b0} + i_I;
+                alu_out <= $signed({rs1_data_in[31:1], 1'b0} + i_I);
             end // I type : dull blue
 
             7'b0000011: begin // I type : dull red
@@ -90,6 +90,9 @@ module rv32_ex_alu32(
                     3'b100, // LBU : load byte unsigned
                     3'b101: // LHU : load halfword unsigned
                         alu_out <= rs1_data_in + i_I;
+                    default: begin
+                        `DEFAULT_COMBO_STATE
+                    end
                 endcase // funct3
             end // I type : dull red
 
@@ -127,6 +130,9 @@ module rv32_ex_alu32(
                     3'b001, // SH : store halfword
                     3'b010: // SW : store word
                         alu_out <= rs1_data_in + i_S;
+                    default: begin
+                        `DEFAULT_COMBO_STATE
+                    end
                 endcase // funct3
             end // S type : dull pruple
 
@@ -150,9 +156,12 @@ module rv32_ex_alu32(
             end // U type : dark green
 
             7'b1101111: begin // J type : ilme green
-                alu_out <= pc_in + i_J; // JAL : jump to address relative to PC
+                alu_out <= $signed(pc_in + i_J); // JAL : jump to address relative to PC
             end // J type : ilme green
-
+            
+            default: begin
+                `DEFAULT_COMBO_STATE
+            end
         endcase // opcode
     end
     
