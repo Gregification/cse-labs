@@ -11,7 +11,7 @@
 #include <stdbool.h>
 
 #define MAX_CHARS 80
-#define MAX_FIELDS 5
+#define MAX_FIELDS 7
 
 typedef struct _USER_DATA {
         char buffer[MAX_CHARS+1];

@@ -65,10 +65,8 @@ void parseFields(USER_DATA * ud){
         }
 
         //if is a delimiter : ignore
-        if(cur == 'd'){
-            ud->buffer[i] = '\0';
+        if(cur == 'd')
             continue;
-        }
 
         //if nothing changed : ignore
         if(cur == ud->fieldType[j])
@@ -77,8 +75,8 @@ void parseFields(USER_DATA * ud){
         //on transition from ...
         switch(ud->fieldType[j]){
             // d -> a, n
-            case 'd':{
-                    // new field
+            case 'd': if(i != 0){
+                    // new field,
                     ud->fieldType[j] = cur;
                     ud->fieldPosition[j] = i;
                     j++;
@@ -115,14 +113,14 @@ char * getFieldString(USER_DATA * ud, uint8_t fieldNumber){
 
 uint32_t getFieldInteger(USER_DATA * ud, uint8_t fieldNumber){
     char * str = getFieldString(ud, fieldNumber);
-    if(str || ud->fieldType[fieldNumber] != 'n')
+    if(!str || ud->fieldType[fieldNumber] != 'n')
         return 0;
     char *t;
     return (uint32_t)strtoul(str, &t, 10);
 }
 
 bool isCommand(USER_DATA * ud, char strCmd[], uint8_t minArgs) {
-    if(ud->fieldCount <= minArgs || ud->fieldType[0] != 'a')
+    if(ud->fieldCount < minArgs || ud->fieldType[0] != 'a')
         return false;
 
     uint8_t i;
