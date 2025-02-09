@@ -23,6 +23,7 @@
  * baselined off of the seq_logic.sv example
 */
 
+`define IW_ADD (32'b00000001111111111000111110110011)
 
 module top(
     input CLK100,           // 100 MHz clock input
@@ -53,7 +54,7 @@ module top(
     );
      
     // Terminate all of the unused outputs or i/o's
-    assign LED = 10'b0000000000;
+    // assign LED = 10'b0000000000;
     assign RGB0 = 3'b000;
     assign RGB1 = 3'b000;
     // assign SS_ANODE = 4'b0000;
@@ -69,14 +70,11 @@ module top(
     assign IMU_CS_M = 1'b1;
     assign IMU_DEN_AG = 1'b0;
     
+    // clock ladder
     wire clk = CLK100;
     reg [31:0] clk_ladder = 0;
-
-
-    // clock ladder
-    always_ff @ (posedge(clk)) begin
+    always_ff @ (posedge(clk))
         clk_ladder <= clk_ladder + 1;
-    end
 
     // internal nets
     wire reset;
@@ -88,21 +86,22 @@ module top(
     reg [31:0]  test_rs1_data;
     reg [31:0]  test_rs2_data;
     reg [31:0]  test_alu_out;
-
-    reg [3:0][159:0] test_cases = {
-    //  {32'h pc_in     ,32'b iw_in     , 32'b rs1_d_in , 32'b rs2_d_in , 32'b expcted alu_out},
-        {32'h00000000   , 32'h00000001  , 32'h00000002  , 32'h00000003  , 32'h00000004},
-        {32'h0000000a   , 32'h0000000b  , 32'h0000000c  , 32'h0000000d  , 32'h0000000e},
-        {32'h00000014   , 32'h00000015  , 32'h00000016  , 32'h00000017  , 32'h00000018}
-    };
-
-    assign test_pc_in   = test_case[31:0];
-    assign test_iw_in   = test_case[63:32];
-    assign test_rs1_data= test_case[95:64];
-    assign test_rs2_data= test_case[127:96];
-    assign test_expected_alu_out = test_case[159:128];
-    assign test_case    = test_cases[test_case_idx];
+    reg [3:0][159:0] test_cases;
     assign test_case_idx= sw_buffer[7:0];
+    assign test_pc_in   = test_case[159:128];
+    assign test_iw_in   = test_case[127:96];
+    assign test_rs1_data= test_case[95:64];
+    assign test_rs2_data= test_case[63:32];
+    assign test_expected_alu_out = test_case[31:0];
+    assign test_case    = test_cases[test_case_idx];
+    assign LED = {10{test_alu_out != test_expected_alu_out}};
+    
+    assign test_cases = {
+    //  {pc         , iw            , rs1_d     , rs2_d     , expcted alu_out},
+        {32'hBBBB   , `IW_ADD       , 32'dEEEE  , 32'dFFFF  , 32'h8888},
+        {32'hCCCC   , `IW_ADD       , 32'hDDDD  , 32'h6666  , 32'h7777},
+        {32'h1111   , `IW_ADD       , 32'h3333  , 32'h4444  , 32'h5555}
+    };
 
     LatchBuffer _reset_buffer(
         .clk(clk),
@@ -118,7 +117,7 @@ module top(
     );
 
     rv32_ex_top test_target(
-        .clk(clk_slow),
+        .clk(clk_ladder[22]),
         .reset(reset),
 
         .pc_in(test_pc_in),
@@ -129,7 +128,7 @@ module top(
         .alu_out(test_alu_out)
     );
 
-    // hex display
+    //---hex display------------------------------------------------------
     reg [15:0] hex_display;
     reg [31:0] hex_targ;
     wire [2:0] disp_idx;
@@ -138,7 +137,6 @@ module top(
     assign hex_display = sw_buffer[11] ? hex_targ[31:16] : hex_targ[15:0];
 
     always_comb begin
-
         case(disp_idx)
             3'b000: hex_targ <= test_pc_in;
             3'b001: hex_targ <= test_iw_in;
@@ -150,45 +148,37 @@ module top(
         endcase
     end
 
-    reg [3:0] bcd_out [3:0];
-    bin2bcd #(
-        .WIDTH(16),
-        .DIGITS(4)
-    )_bcd (
-        .bin(hex_display),
-        .sign(0),
-        .bcd(bcd_out)
-    );
-
     reg [3:0] anode_b;
     reg [7:0] cathode_b;
-    reg [3:0] bcd;
+    reg [3:0] bin;
     assign SS_ANODE = anode_b;
     assign SS_CATHODE = cathode_b;
     always_ff @ (posedge(clk_ladder[18])) begin
         case(anode_b)
+            4'b0111 : begin 
+                anode_b <= 4'b1110;
+                bin <= hex_display[3:0];
+            end
             4'b1110 : begin 
                 anode_b <= 4'b1101;
-                bcd <= bcd_out[1];
+                bin <= hex_display[7:4];
             end
             4'b1101 : begin 
                 anode_b <= 4'b1011;
-                bcd <= bcd_out[2];
+                bin <= hex_display[11:8];
             end
             4'b1011 : begin 
                 anode_b <= 4'b0111;
-                bcd <= bcd_out[3];
-            end
-            4'b0111 : begin 
-                anode_b <= 4'b1110;
-                bcd <= bcd_out[0];
+                bin <= hex_display[15:12];
             end
             default : begin 
                 anode_b <= 4'b1110;
-                bcd <= bcd_out[0];
+                bin <= hex_display[3:0];
             end
         endcase
-        case(bcd)
+    end
+    always_comb
+        case(bin)
             4'b0000 : cathode_b <= 8'b11000000;
             4'b0001 : cathode_b <= 8'b11111001;
             4'b0010 : cathode_b <= 8'b10100100;
@@ -207,6 +197,5 @@ module top(
             4'b1111 : cathode_b <= 8'b10001110;
             default : cathode_b <= 8'b11000010;
         endcase
-    end
 
 endmodule

@@ -38,7 +38,15 @@ module rv32_ex_top(
         output reg [31:0] alu_out
     );
     
-
+    always_ff @ (posedge(clk)) begin
+        if(reset) begin
+            alu_out <= 0;
+        end else begin
+            alu_out <= alu_out_buffer;
+        end
+    end
+    
+    reg [31:0] alu_out_buffer;
     rv32_ex_alu32 alu32 (
         // from id
         .pc_in(pc_in),
@@ -47,6 +55,6 @@ module rv32_ex_top(
         .rs2_data_in(rs2_data_in),
         
         // to mem
-        .alu_out(alu_out)
+        .alu_out(alu_out_buffer)
     );
 endmodule

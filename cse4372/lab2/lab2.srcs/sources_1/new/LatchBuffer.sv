@@ -19,6 +19,7 @@
 // 
 //////////////////////////////////////////////////////////////////////////////////
 
+// this has nothing to do with latches, i just name it that; its a hassle to rename.
 // indended to handle input metastability saftely
 module LatchBuffer#(
         parameter WIDTH = 1
