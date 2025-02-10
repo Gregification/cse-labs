@@ -61,14 +61,14 @@ module rv32_ex_alu32(
             7'b0110011: begin   // R type : orange
                 case (funct3)
                     3'b000: alu_out <= funct7[5] ? rs1_data_in - rs2_data_in : rs1_data_in + rs2_data_in; // ADD, SUB
-                    3'b001: alu_out <= rs1_data_in << rs2[4:0]; // SLL : shift left logical
+                    3'b001: alu_out <= rs1_data_in << rs2_data_in[4:0]; // SLL : shift left logical
                     3'b010: alu_out <= rs1_data_in < rs2_data_in; // SLT : store 1 if signed less than
                     3'b011: alu_out <= $unsigned(rs1_data_in) < $unsigned(rs2_data_in); // SLTU : store 1 if less than unsigned
                     3'b100: alu_out <= rs1_data_in ^ rs2_data_in; // XOR
                     3'b101: if(iw_in[30] == 1) 
-                            alu_out <= rs1_data_in >>> rs2[4:0]; // SRA : shift right arithmetic
+                            alu_out <= rs1_data_in >>> rs2_data_in[4:0]; // SRA : shift right arithmetic
                         else
-                            alu_out <= rs1_data_in >> rs2[4:0]; // SRL : shift right logical
+                            alu_out <= rs1_data_in >> rs2_data_in[4:0]; // SRL : shift right logical
                     3'b110: alu_out <= rs1_data_in | rs2_data_in; // OR
                     3'b111: alu_out <= rs1_data_in & rs2_data_in; // AND
                 endcase // funct3
@@ -79,7 +79,8 @@ module rv32_ex_alu32(
                 // rd <- pc + 4 //TODO
 
                 // pc
-                alu_out <= $signed({rs1_data_in[31:1], 1'b0} + i_I);
+                alu_out[31:1]   <= {i_I + rs1_data_in}[31:1];
+                alu_out[0]      <= 0;
             end // I type : dull blue
 
             7'b0000011: begin // I type : dull red
@@ -90,9 +91,6 @@ module rv32_ex_alu32(
                     3'b100, // LBU : load byte unsigned
                     3'b101: // LHU : load halfword unsigned
                         alu_out <= rs1_data_in + i_I;
-                    default: begin
-                        `DEFAULT_COMBO_STATE
-                    end
                 endcase // funct3
             end // I type : dull red
 
@@ -104,9 +102,9 @@ module rv32_ex_alu32(
                     3'b011: alu_out <= $unsigned(rs1_data_in) < $unsigned(i_I); // SLTIU : store 1 if less than unsigned immediate
                     3'b100: alu_out <= rs1_data_in ^ i_I; // XORI
                     3'b101: if(iw_in[30] == 1) 
-                            alu_out <= rs1_data_in >> shamt; // SRLI : shift right logical immediate
-                        else
                             alu_out <= rs1_data_in >>> shamt; // SRAI : shift right arithmetic immediate
+                        else
+                            alu_out <= rs1_data_in >> shamt; // SRLI : shift right logical immediate
                     3'b110: alu_out <= rs1_data_in | i_I; // ORI
                     3'b111: alu_out <= rs1_data_in & i_I; // ANDI
                 endcase // funct 3
@@ -130,9 +128,6 @@ module rv32_ex_alu32(
                     3'b001, // SH : store halfword
                     3'b010: // SW : store word
                         alu_out <= rs1_data_in + i_S;
-                    default: begin
-                        `DEFAULT_COMBO_STATE
-                    end
                 endcase // funct3
             end // S type : dull pruple
 
@@ -158,10 +153,6 @@ module rv32_ex_alu32(
             7'b1101111: begin // J type : ilme green
                 alu_out <= $signed(pc_in + i_J); // JAL : jump to address relative to PC
             end // J type : ilme green
-            
-            default: begin
-                `DEFAULT_COMBO_STATE
-            end
         endcase // opcode
     end
     
