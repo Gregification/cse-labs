@@ -116,6 +116,8 @@ module top(
     `define IW_SRAI_M   (32'b01000000000011111101111110010011)
     `define IW_JALR_M   (32'b00000000000011111000111111100111)
     `define IW_JAL_M    (32'b00000000000000000000111111101111)
+    `define IW_LUI_M    (32'b00000000000000000000111110110111)
+    `define IW_AIPIC_M  (32'b)
     
     /** note
      *      - indexes are numbered bottom to top
