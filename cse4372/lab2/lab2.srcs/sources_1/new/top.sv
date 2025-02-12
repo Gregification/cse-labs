@@ -86,7 +86,7 @@ module top(
     reg [11:0]  sw_buffer;
 
     // reg     [159:0] test_cases[]; // synthesis error "dynamic range is not supported" ...
-    reg     [88:0][159:0] test_cases;
+    reg     [94:0][159:0] test_cases;
     reg     [7:0]   test_idx;
     wire    [31:0]  test_iw_in;
     wire    [31:0]  test_pc_in;
@@ -117,7 +117,7 @@ module top(
     `define IW_JALR_M   (32'b00000000000011111000111111100111)
     `define IW_JAL_M    (32'b00000000000000000000111111101111)
     `define IW_LUI_M    (32'b00000000000000000000111110110111)
-    `define IW_AIPIC_M  (32'b)
+    `define IW_AUPIC_M  (32'b00000000000000000000111110010111)
     
     /** note
      *      - indexes are numbered bottom to top
@@ -134,9 +134,14 @@ module top(
     */
     assign test_cases           = {
         //  {pc         , iw mask     | immediate value     , rs1_d     , rs2_d ,  expcted alu_out},
+            { 32'h0098  ,  `IW_AUPIC_M | ( 20'h0   << 12)   ,  32'h0    , 32'h0 ,  32'h100   },
+            { 32'h0097  ,  `IW_AUPIC_M | (-20'h3   << 12)   ,  32'h0    , 32'h0 ,  32'h0     },
+            { 32'h0096  ,  `IW_AUPIC_M | ( 1'h1    << 21)   ,  32'h0    , 32'h0 ,  32'h98    },
+
+        //  {pc         , iw mask     | immediate value     , rs1_d     , rs2_d ,  expcted alu_out},
             { 32'h0095  ,  `IW_JALR_M | ( 12'h0   << 20)    , -32'h1    , 32'h0 ,  32'h0     },
             { 32'h0094  ,  `IW_JALR_M | (-12'hF   << 20)    ,  32'h0    , 32'h1 , -32'hE     },
-            { 32'h0093  ,  `IW_JALR_M | (-12'hE   << 20)    , -32'h1    , 32'h2 , -32'hE     },
+            { 32'h0093  ,  `IW_JALR_M | (-12'hE   << 20)    , -32'h1    , 32'h2 , -32'hD     },
             { 32'h0092  ,  `IW_JALR_M | ( 12'h5D  << 20)    , -32'h0    , 32'h3 ,  32'h5C    },
             { 32'h0091  ,  `IW_JALR_M | ( 12'hEA  << 20)    ,  32'h3    , 32'h4 ,  32'hEC    },
             { 32'h0089  ,  `IW_JALR_M | ( 12'hFF  << 20)    ,  32'h5    , 32'h5 ,  32'h104   },
