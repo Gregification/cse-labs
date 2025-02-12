@@ -33,14 +33,10 @@ typedef union {
 typedef struct {
     IP localhost_ip; //32b
     IP MQTTbroker_ip;
-
-    uint8_t num_topics;
-    char ** subscribed_topics; //2d string arr . local copy.
 } NetworkSetting;
 
-bool saveNetSettingToEeprom(uint8_t index, NetworkSetting const *, bool save_subscribed_topicss);
+bool saveNetSettingToEeprom(uint8_t index, NetworkSetting const *);
 bool loadNetSettingFromEeprom(uint8_t index, NetworkSetting * out);
-void freeNetSettingPtrs(NetworkSetting *);
 
 void ipv4tostring(uint32_t ip, char str[16]);
 #endif /* SRC_ENV_H_ */

@@ -67,13 +67,23 @@ int main(void)
 //        } else if(isCommand(&data,"unsubscribe TOPIC", 1)){
 //        } else if(isCommand(&data,"connect", 0)){
 //        } else if(isCommand(&data,"disconnect", 0)){
-        } else if(isCommand(&data,"select ns", 1)){
-        } else if(isCommand(&data,"save ns", 2)){
-            if(data.fieldType[1] != 'n'){
-                putsUart0("expected index");
-                if(ns->subscribed_topics[i])
-            }
+        } else if(isCommand(&data,"select ns", 2)){
             uint8_t idx = getFieldInteger(&data, 1);
+            if(idx < NET_SETTINGS_MAX_SAVED){
+                putsUart0("invalid index");
+                PRNTNEWLN;
+            } else {
+                loadNetSettingFromEeprom(idx, &ns);
+            }
+        } else if(isCommand(&data,"save ns", 2)){
+            uint8_t idx = getFieldInteger(&data, 1);
+
+            if(saveNetSettingToEeprom(idx, &ns))
+                putsUart0("save success");
+            else
+                putsUart0("failed to save");
+
+            PRNTNEWLN;
         } else if(isCommand(&data,"list ns", 1)){
             for(int i = 0; i < NET_SETTINGS_MAX_SAVED; i++){
                 putsUart0("ns: ");
@@ -83,7 +93,7 @@ int main(void)
                 NetworkSetting tns;
                 loadNetSettingFromEeprom(i, &tns);
                 printNetWorkSettingToUart0(&tns);
-                freeNetSettingPtrs(&tns);
+                PRNTNEWLN;
             }
         } else {
             putsUart0("invalid command");
@@ -105,10 +115,4 @@ void printNetWorkSettingToUart0(NetworkSetting * ns){
     putsUart0(str);
     PRNTNEWLN;
 
-    for(int i = 0; i < ns->num_topics; i++)
-        if(ns->subscribed_topics[i]){
-            putsUart0(ns->subscribed_topics[i]);
-            PRNTNEWLN;
-        } else
-            ns->num_topics = i-1;
 }

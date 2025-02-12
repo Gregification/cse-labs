@@ -19,60 +19,21 @@
 #include "env.h"
 #include "uart_interface/UART_UI.h"
 
-#define SIZE32(X) ( sizeof(X) / 4 + (sizeof(X) % 4) != 0)               // returns # of 32b units needed to store
-#define SIZEOFTOPIC32 SIZE32(MAX_CHARS * NET_SETTINGS_MAX_SAVED_TOPICS)
-#define SIZE32OFNS ( SIZE32(NetworkSetting) + SIZEOFTOPIC32 )             // size32 each setting needs
-
-char * getStrFromEeprom(uint16_t addr){
-    char * str = calloc(MAX_CHARS, sizeof(char));
-
-    for(int i = 0; i < MAX_CHARS; i+=4)
-        str[i] = readEeprom(addr++);
-
-    return str;
-}
-
-void writeStrToEeprom(uint16_t start, char const * str){
-    for(int i = 0; i < MAX_CHARS && str[i] != '\0'; i += 4){
-        uint32_t block = 0;
-        for(int j = 0; j < 4; j++){
-            if(str[i+j] == '\0')
-                break;
-            block &= str[i] << (8*(3-j));
-        }
-        writeEeprom(start++, block);
-    }
-}
-
-/**
- * in eeprom
- *      [start]     [end]       [meaning]
- * |    0xstart     0x+size32   NetworkSettings #1
- * |    0x+1        0x+1            topic count ( LTE to max_saved_topics)
- * |    0x+1        0xinputlen      topics
- * |    0x....      0x....      NetworkSettings #<max saved count> 
- * |    0x....      0x....          ... for each setting struct
- */
+#define SIZE32(X) ( sizeof(X) / 4 + (sizeof(X) % 4) != 0)   // returns # of 32b units needed to store
+#define SIZE32OFNS SIZE32(NetworkSetting)                   // size32 each setting needs
 
 /**
  * @return true if save success
  */
-bool saveNetSettingToEeprom(uint8_t index, NetworkSetting const * ns, bool save_subscribed_topics){
+bool saveNetSettingToEeprom(uint8_t index, NetworkSetting const * ns){
     if(index >= NET_SETTINGS_MAX_SAVED_TOPICS)
         return false;
 
-    uint16_t offset = SIZE32OFNS * index;
+    uint16_t offset = EEPROM_ADDR_NET_SETTINGS_START + SIZE32OFNS * index;
     
-    // hardcoded saves
-    writeEeprom(offset++, *((uint32_t *)(&(ns->localhost_ip))));
-    writeEeprom(offset++, *((uint32_t *)(&(ns->MQTTbroker_ip))));
-    writeEeprom(offset++, *((uint32_t *)(&(ns->num_topics))));
-
-    // save topics
-    for(int i = 0; i < NET_SETTINGS_MAX_SAVED_TOPICS; i++){
-        writeStrToEeprom(offset, ns->subscribed_topics[i]);
-        offset += SIZEOFTOPIC32;
-    }
+    uint32_t const raw[SIZE32OFNS] = (uint32_t const *)ns;
+    for(int i = 0; i < SIZE32OFNS / 4; i++)
+        writeEeprom(offset++, raw[i]);
 
     return true;
 }
@@ -84,29 +45,13 @@ bool loadNetSettingFromEeprom(uint8_t index, NetworkSetting * ns){
     if(index >= NET_SETTINGS_MAX_SAVED_TOPICS)
         return false;
 
-    uint16_t offset = SIZE32OFNS * index;
+    uint16_t offset = EEPROM_ADDR_NET_SETTINGS_START + SIZE32OFNS * index;
     
-    // hardcoded saves
-    ns->localhost_ip    = (IP)readEeprom(offset++);
-    ns->MQTTbroker_ip   = (IP)readEeprom(offset++);
-    ns->num_topics      = readEeprom(offset++);
-
-    // save topics
-    freeNetSettingPtrs(ns);
-    for(int i = 0; i < NET_SETTINGS_MAX_SAVED_TOPICS; i++){
-        writeStrToEeprom(offset, ns->subscribed_topics[i]);
-        offset += SIZEOFTOPIC32;
-        ns->num_topics++;
-    }
+    uint32_t raw[SIZE32OFNS] = (uint32_t *)ns;
+        for(int i = 0; i < SIZE32OFNS / 4; i++)
+            raw[i] = readEeprom(offset++);
 
     return true;
-}
-
-void freeNetSettingPtrs(NetworkSetting * ns){
-    for(int i = 0; i < NET_SETTINGS_MAX_SAVED_TOPICS; i++)
-        if(!(ns->subscribed_topics[i]))
-            free(ns->subscribed_topics[i]);
-    ns->num_topics = 0;
 }
 
 void ipv4tostring(uint32_t ip_raw, char str[16]){
