@@ -79,6 +79,11 @@ module rv32_ex_alu32(
                 // rd <- pc + 4 //TODO
 
                 // pc
+                /* page 8 of 2019 spec. 
+                 *      "the JALR instruction now clears the lowest bit of the calculated target address,
+                 *       to simplifyhardware and to allow auxiliary information to be stored in function
+                 *       pointers."
+                 */
                 alu_out[31:1]   <= {i_I + rs1_data_in}[31:1];
                 alu_out[0]      <= 0;
             end // I type : dull blue

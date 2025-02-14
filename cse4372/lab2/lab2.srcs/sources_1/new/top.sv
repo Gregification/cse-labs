@@ -86,7 +86,8 @@ module top(
     reg [11:0]  sw_buffer;
 
     // reg     [159:0] test_cases[]; // synthesis error "dynamic range is not supported" ...
-    reg     [94:0][159:0] test_cases;
+    reg     [98
+    :0][159:0] test_cases;
     reg     [7:0]   test_idx;
     wire    [31:0]  test_iw_in;
     wire    [31:0]  test_pc_in;
@@ -118,30 +119,36 @@ module top(
     `define IW_JAL_M    (32'b00000000000000000000111111101111)
     `define IW_LUI_M    (32'b00000000000000000000111110110111)
     `define IW_AUPIC_M  (32'b00000000000000000000111110010111)
-    
+    `define IW_LB_M     (32'b00000000000011111000111110000011)
+    `define IW_LH_M     (32'b00000000000011111001111110000011)
+    `define IW_LW_M     (32'b00000000000011111010111110000011)
+    `define IW_LBU_M    (32'b00000000000011111100111110000011)
+    `define IW_LHU_M    (32'b00000000000011111101111110000011)
+   
     /** note
      *      - indexes are numbered bottom to top
      */
      /**
-            3'b000: test_pc_in
-            3'b001: test_iw_in
-            3'b010: test_rs1_data
-            3'b011: test_rs2_data
-            3'b100: test_expected_alu_out
-            3'b101: test_alu_out
-            3'b110: test_idx
-            3'b111: test_pc_in (incrementing idx)
+        3'b000: test_pc_in
+        3'b001: test_iw_in
+        3'b010: test_rs1_data
+        3'b011: test_rs2_data
+        3'b100: test_expected_alu_out
+        3'b101: test_alu_out
+        3'b110: test_idx
+        3'b111: test_pc_in (incrementing idx)
     */
     assign test_cases           = {
         //  {pc         , iw mask     | immediate value     , rs1_d     , rs2_d ,  expcted alu_out},
-            { 32'h0098  ,  `IW_AUPIC_M | ( 20'h0   << 12)   ,  32'h0    , 32'h0 ,  32'h100   },
-            { 32'h0097  ,  `IW_AUPIC_M | (-20'h3   << 12)   ,  32'h0    , 32'h0 ,  32'h0     },
-            { 32'h0096  ,  `IW_AUPIC_M | ( 1'h1    << 21)   ,  32'h0    , 32'h0 ,  32'h98    },
+            { 32'h0099  ,  `IW_LB_M   | ( 12'h3   << 20)    ,  32'h1    , 32'h0 ,  32'h4     },
+            { 32'h0098  ,  `IW_LH_M   | ( 12'h3   << 20)    ,  32'h1    , 32'h0 ,  32'h4     },
+            { 32'h0097  ,  `IW_LW_M   | ( 12'h3   << 20)    ,  32'h1    , 32'h0 ,  32'h4     },
+            { 32'h0096  ,  `IW_LBU_M  | ( 12'h3   << 20)    ,  32'h1    , 32'h0 ,  32'h4     },
+            { 32'h0095  ,  `IW_LHU_M  | ( 12'h3   << 20)    ,  32'h1    , 32'h0 ,  32'h4     },
 
         //  {pc         , iw mask     | immediate value     , rs1_d     , rs2_d ,  expcted alu_out},
-            { 32'h0095  ,  `IW_JALR_M | ( 12'h0   << 20)    , -32'h1    , 32'h0 ,  32'h0     },
-            { 32'h0094  ,  `IW_JALR_M | (-12'hF   << 20)    ,  32'h0    , 32'h1 , -32'hE     },
-            { 32'h0093  ,  `IW_JALR_M | (-12'hE   << 20)    , -32'h1    , 32'h2 , -32'hD     },
+            { 32'h0094  ,  `IW_JALR_M | ( 12'h0   << 20)    , -32'h1    , 32'h0 , -32'h2     },
+            { 32'h0093  ,  `IW_JALR_M | (-12'hF   << 20)    ,  32'h0    , 32'h1 , -32'h10    },
             { 32'h0092  ,  `IW_JALR_M | ( 12'h5D  << 20)    , -32'h0    , 32'h3 ,  32'h5C    },
             { 32'h0091  ,  `IW_JALR_M | ( 12'hEA  << 20)    ,  32'h3    , 32'h4 ,  32'hEC    },
             { 32'h0089  ,  `IW_JALR_M | ( 12'hFF  << 20)    ,  32'h5    , 32'h5 ,  32'h104   },
@@ -323,7 +330,7 @@ module top(
     always_ff @ (posedge(`CLK_TESTING)) begin
         if(reset)
             increment <= 0;
-        if((disp_idx == 3'b111) && (test_expected_alu_out == test_alu_out))
+        else if((disp_idx == 3'b111) && (test_expected_alu_out == test_alu_out))
             increment <= increment + 1;
 
     end
