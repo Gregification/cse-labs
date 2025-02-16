@@ -82,8 +82,7 @@
 // Initialize Hardware
 void initHw()
 {
-    // Initialize system clock to 40 MHz
-//    initSystemClockTo40Mhz();
+    // Initialize system clock to 66.66 MHz (seems that going any higher involves a multi-step process synchronizing the PLL? TODO)
     initSysClkTo66Mhz67();
 
     // Enable clocks
@@ -113,7 +112,7 @@ void displayConnectionInfo()
         if (i < HW_ADD_LENGTH-1)
             putcUart0(':');
     }
-    putcUart0('\n\r');
+    PRNTNEWLN;
     getIpAddress(ip);
     putsUart0("  IP:    ");
     for (i = 0; i < IP_ADD_LENGTH; i++)
@@ -123,7 +122,7 @@ void displayConnectionInfo()
         if (i < IP_ADD_LENGTH-1)
             putcUart0('.');
     }
-    putcUart0('\n\r');
+    PRNTNEWLN;
     getIpSubnetMask(ip);
     putsUart0("  SN:    ");
     for (i = 0; i < IP_ADD_LENGTH; i++)
@@ -133,7 +132,7 @@ void displayConnectionInfo()
         if (i < IP_ADD_LENGTH-1)
             putcUart0('.');
     }
-    putcUart0('\n\r');
+    PRNTNEWLN;
     getIpGatewayAddress(ip);
     putsUart0("  GW:    ");
     for (i = 0; i < IP_ADD_LENGTH; i++)
@@ -143,7 +142,7 @@ void displayConnectionInfo()
         if (i < IP_ADD_LENGTH-1)
             putcUart0('.');
     }
-    putcUart0('\n\r');
+    PRNTNEWLN;
     getIpDnsAddress(ip);
     putsUart0("  DNS:   ");
     for (i = 0; i < IP_ADD_LENGTH; i++)
@@ -153,7 +152,7 @@ void displayConnectionInfo()
         if (i < IP_ADD_LENGTH-1)
             putcUart0('.');
     }
-    putcUart0('\n\r');
+    PRNTNEWLN;
     getIpTimeServerAddress(ip);
     putsUart0("  Time:  ");
     for (i = 0; i < IP_ADD_LENGTH; i++)
@@ -163,7 +162,7 @@ void displayConnectionInfo()
         if (i < IP_ADD_LENGTH-1)
             putcUart0('.');
     }
-    putcUart0('\n\r');
+    PRNTNEWLN;
     getIpMqttBrokerAddress(ip);
     putsUart0("  MQTT:  ");
     for (i = 0; i < IP_ADD_LENGTH; i++)
@@ -173,7 +172,7 @@ void displayConnectionInfo()
         if (i < IP_ADD_LENGTH-1)
             putcUart0('.');
     }
-    putcUart0('\n\r');
+    PRNTNEWLN;
     if (isEtherLinkUp())
         putsUart0("  Link is up\n\r");
     else
@@ -254,13 +253,18 @@ void processShell()
         end = (c == 13) || (count == MAX_CHARS);
         if (!end)
         {
-            if ((c == 8 || c == 127) && count > 0)
+            if ((c == 8 || c == 127) && count > 0){
                 count--;
-            if (c >= ' ' && c < 127)
+                putcUart0(c);
+            }
+            if (c >= ' ' && c < 127){
                 strInput[count++] = c;
+                putcUart0(c);
+            }
         }
         else
         {
+            putsUart0("\n\r");
             strInput[count] = '\0';
             count = 0;
             token = strtok(strInput, " ");
@@ -311,6 +315,22 @@ void processShell()
             if (strcmp(token, "reboot") == 0)
             {
                 NVIC_APINT_R = NVIC_APINT_VECTKEY | NVIC_APINT_SYSRESETREQ;
+            }
+            if (strcmp(token, "status") == 0)
+            {
+                char str[16];
+                IPv4 ip;
+                getIpAddress(ip.bytes);
+                    ip.raw = ntohl(ip.raw);
+                putsUart0("  IP: ");
+                IPv4tostring(&ip, str);
+                putsUart0(str);
+
+                putsUart0("\n\r  MQTT broker: ");
+                getIpMqttBrokerAddress(ip.bytes);
+                    ip.raw = ntohl(ip.raw);
+                IPv4tostring(&ip, str);
+                putsUart0(str);
             }
             if (strcmp(token, "set") == 0)
             {
@@ -389,11 +409,14 @@ void processShell()
                 putsUart0("  mqtt ACTION [USER [PASSWORD]]\n\r");
                 putsUart0("    where ACTION = {connect|disconnect|publish TOPIC DATA\n\r");
                 putsUart0("                   |subscribe TOPIC|unsubscribe TOPIC}\n\r");
+                putsUart0("  status\n\r");
                 putsUart0("  ip\n\r");
                 putsUart0("  ping w.x.y.z\n\r");
                 putsUart0("  reboot\n\r");
                 putsUart0("  set ip|gw|dns|time|mqtt|sn w.x.y.z\n\r");
             }
+
+            putsUart0("\n\r> ");
         }
     }
 }
