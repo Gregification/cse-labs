@@ -56,6 +56,9 @@
 #include "tcp.h"
 #include "mqtt.h"
 
+#include "../another_clock_file.h"
+#include "../env.h"
+
 // Pins
 #define RED_LED PORTF,1
 #define BLUE_LED PORTF,2
@@ -80,7 +83,8 @@
 void initHw()
 {
     // Initialize system clock to 40 MHz
-    initSystemClockTo40Mhz();
+//    initSystemClockTo40Mhz();
+    initSysClkTo66Mhz67();
 
     // Enable clocks
     enablePort(PORTF);
@@ -109,7 +113,7 @@ void displayConnectionInfo()
         if (i < HW_ADD_LENGTH-1)
             putcUart0(':');
     }
-    putcUart0('\n');
+    putcUart0('\n\r');
     getIpAddress(ip);
     putsUart0("  IP:    ");
     for (i = 0; i < IP_ADD_LENGTH; i++)
@@ -119,7 +123,7 @@ void displayConnectionInfo()
         if (i < IP_ADD_LENGTH-1)
             putcUart0('.');
     }
-    putcUart0('\n');
+    putcUart0('\n\r');
     getIpSubnetMask(ip);
     putsUart0("  SN:    ");
     for (i = 0; i < IP_ADD_LENGTH; i++)
@@ -129,7 +133,7 @@ void displayConnectionInfo()
         if (i < IP_ADD_LENGTH-1)
             putcUart0('.');
     }
-    putcUart0('\n');
+    putcUart0('\n\r');
     getIpGatewayAddress(ip);
     putsUart0("  GW:    ");
     for (i = 0; i < IP_ADD_LENGTH; i++)
@@ -139,7 +143,7 @@ void displayConnectionInfo()
         if (i < IP_ADD_LENGTH-1)
             putcUart0('.');
     }
-    putcUart0('\n');
+    putcUart0('\n\r');
     getIpDnsAddress(ip);
     putsUart0("  DNS:   ");
     for (i = 0; i < IP_ADD_LENGTH; i++)
@@ -149,7 +153,7 @@ void displayConnectionInfo()
         if (i < IP_ADD_LENGTH-1)
             putcUart0('.');
     }
-    putcUart0('\n');
+    putcUart0('\n\r');
     getIpTimeServerAddress(ip);
     putsUart0("  Time:  ");
     for (i = 0; i < IP_ADD_LENGTH; i++)
@@ -159,7 +163,7 @@ void displayConnectionInfo()
         if (i < IP_ADD_LENGTH-1)
             putcUart0('.');
     }
-    putcUart0('\n');
+    putcUart0('\n\r');
     getIpMqttBrokerAddress(ip);
     putsUart0("  MQTT:  ");
     for (i = 0; i < IP_ADD_LENGTH; i++)
@@ -169,11 +173,11 @@ void displayConnectionInfo()
         if (i < IP_ADD_LENGTH-1)
             putcUart0('.');
     }
-    putcUart0('\n');
+    putcUart0('\n\r');
     if (isEtherLinkUp())
-        putsUart0("  Link is up\n");
+        putsUart0("  Link is up\n\r");
     else
-        putsUart0("  Link is down\n");
+        putsUart0("  Link is down\n\r");
 }
 
 void readConfiguration()
@@ -381,14 +385,14 @@ void processShell()
 
             if (strcmp(token, "help") == 0)
             {
-                putsUart0("Commands:\n");
-                putsUart0("  mqtt ACTION [USER [PASSWORD]]\n");
-                putsUart0("    where ACTION = {connect|disconnect|publish TOPIC DATA\n");
-                putsUart0("                   |subscribe TOPIC|unsubscribe TOPIC}\n");
-                putsUart0("  ip\n");
-                putsUart0("  ping w.x.y.z\n");
-                putsUart0("  reboot\n");
-                putsUart0("  set ip|gw|dns|time|mqtt|sn w.x.y.z\n");
+                putsUart0("Commands:\n\r");
+                putsUart0("  mqtt ACTION [USER [PASSWORD]]\n\r");
+                putsUart0("    where ACTION = {connect|disconnect|publish TOPIC DATA\n\r");
+                putsUart0("                   |subscribe TOPIC|unsubscribe TOPIC}\n\r");
+                putsUart0("  ip\n\r");
+                putsUart0("  ping w.x.y.z\n\r");
+                putsUart0("  reboot\n\r");
+                putsUart0("  set ip|gw|dns|time|mqtt|sn w.x.y.z\n\r");
             }
         }
     }
@@ -402,7 +406,7 @@ void processShell()
 // Ether frame header (18) + Max MTU (1500)
 #define MAX_PACKET_SIZE 1518
 
-int w(void)
+int main(void)
 {
     uint8_t buffer[MAX_PACKET_SIZE];
     etherHeader *data = (etherHeader*) buffer;
@@ -413,7 +417,7 @@ int w(void)
 
     // Setup UART0
     initUart0();
-    setUart0BaudRate(115200, 40e6);
+    setUart0BaudRate(115200, F_CPU);
 
     // Init timer
     initTimer();
@@ -422,7 +426,7 @@ int w(void)
     initSockets();
 
     // Init ethernet interface (eth0)
-    putsUart0("\nStarting eth0\n");
+    putsUart0("\n\rStarting eth0\n\r");
     initEther(ETHER_UNICAST | ETHER_BROADCAST | ETHER_HALFDUPLEX);
     setEtherMacAddress(2, 3, 4, 5, 6, 7);// TODD correct this
 

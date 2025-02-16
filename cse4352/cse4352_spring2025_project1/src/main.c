@@ -18,7 +18,7 @@
 
 void printNetWorkSettingToUart0(NetworkSetting *);
 
-int main(void)
+int m(void)//main
 {
     //------------------init----------------------
 
