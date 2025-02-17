@@ -21,6 +21,8 @@
 #include "mqtt.h"
 #include "timer.h"
 
+#include "../ipHandlers.h"
+
 // ------------------------------------------------------------------------------
 //  Globals
 // ------------------------------------------------------------------------------
@@ -35,6 +37,14 @@
 
 void connectMqtt()
 {
+//    if(mqtt_socket == NULL)
+//        if(!(mqtt_socket = newSocket()))
+//            return;
+
+//    if(mqtt_socket->state == TCP_CLOSED)
+//        startTCPConnection(mqtt_socket);
+
+    // data to be sent : https://cedalo.com/blog/mqtt-connection-beginners-guide/
 }
 
 void disconnectMqtt()

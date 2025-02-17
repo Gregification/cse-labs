@@ -4,57 +4,30 @@
  *  Created on: Feb 7, 2025
  *      Author: greg
  * 
- * - the memory layout is not effecient. was made for simpilicity.
- *      each topic is reserved the full input width. only the first X
- *      amount of topics are saved(NET_SETTINGS_MAX_SAVED_TOPICS).
- * - the parting logic assumes 32b divisions.
  */
 
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
-
-#include "framework/eeprom.h"
-
 #include "env.h"
-#include "uart_interface/UART_UI.h"
+#include "framework/timer.h"
 
-#define SIZE32(X) ( sizeof(X) / 4 + (sizeof(X) % 4) != 0)   // returns # of 32b units needed to store
-#define SIZE32OFNS SIZE32(NetworkSetting)                   // size32 each setting needs
+//#define SIZE32OFNS SIZE32(NetworkSetting)                   // size32 each setting needs
 
-///**
-// * @return true if save success
-// */
-//bool saveNetSettingToEeprom(uint8_t index, NetworkSetting const * ns){
-//    if(index >= NET_SETTINGS_MAX_SAVED_TOPICS)
-//        return false;
-//
-//    uint16_t offset = EEPROM_ADDR_NET_SETTINGS_START + SIZE32OFNS * index;
-//
-//    uint32_t const * raw = (uint32_t const *)ns;
-//
-//    for(int i = 0; i < SIZE32OFNS / 4; i++)
-//        writeEeprom(offset++, raw[i]);
-//
-//    return true;
-//}
-//
-///**
-// * @return true if read success
-// */
-//bool loadNetSettingFromEeprom(uint8_t index, NetworkSetting * ns){
-//    if(index >= NET_SETTINGS_MAX_SAVED_TOPICS)
-//        return false;
-//
-//    uint16_t offset = EEPROM_ADDR_NET_SETTINGS_START + SIZE32OFNS * index;
-//
-//    uint32_t * raw = (uint32_t *)ns;
-//
-//    for(int i = 0; i < SIZE32OFNS / 4; i++)
-//        raw[i] = readEeprom(offset++);
-//
-//    return true;
-//}
+#define MAX_ETHH 12
+#define ETHH_TIMEOUT_PERIOD 1
+
+uint8_t buffer[MAX_PACKET_SIZE] = {0};
+etherHeader *data = (etherHeader*) buffer;
+
+ethHandler ethernetHandlers[MAX_ETHH];
+
+void initEnv(){
+    for(int i = 0; i < MAX_ETHH; i++){
+        ethernetHandlers[i].resolve = NULL;
+        ethernetHandlers[i].data[0] = NULL;
+    }
+}
 
 void IPv4tostring(IPv4 * ip, char str[16]){
     snprintf(str, 16, "%01hhd.%01hhd.%01hhd.%01hhd", // PRIu8 didnt work out
@@ -63,4 +36,67 @@ void IPv4tostring(IPv4 * ip, char str[16]){
             ip->bytes[1],
             ip->bytes[0]
         );
+    str[16] = '\0';
+}
+
+void _ethResolverTimeoutWatcher(){
+    bool complete = true;
+
+    for(int i = 0; i < MAX_ETHH; i++){
+        if(isValidEthernetHandler(&ethernetHandlers[i]) && ethernetHandlers[i].timeout_sec == ETHH_NO_TIMEOUT) {
+            // if timed out
+            if(ethernetHandlers[i].timeout_sec <= ETHH_TIMEOUT_PERIOD){
+                // call on-timeout if it has one
+                if(ethernetHandlers[i].onTimeout)
+                    ethernetHandlers[i].onTimeout();
+
+                // remove the timed out handler
+                ethernetHandlers[i].resolve = NULL;
+            }
+            else {
+                // something still needs the timer, keep timing.
+                complete = false;
+                ethernetHandlers[i].timeout_sec -= ETHH_TIMEOUT_PERIOD;
+            }
+        }
+    }
+
+    if(complete)
+        stopTimer(_ethResolverTimeoutWatcher);
+}
+
+bool isValidEthernetHandler(ethHandler * eh){
+    return eh->resolve != NULL;
+}
+
+bool addEthernetHandler(ethHandler eh){
+    for(int i = 0; i < MAX_ETHH; i++){
+        if(!isValidEthernetHandler(&ethernetHandlers[i])){
+            // if handler valid, and the timer can be started
+            if(isValidEthernetHandler(&eh) && startPeriodicTimer(_ethResolverTimeoutWatcher, ETHH_TIMEOUT_PERIOD) ){
+                    ethernetHandlers[i] = eh;
+                    return true;
+            }
+
+            return false;
+        }
+    }
+    return false;
+}
+
+void handleEthernetHeader(etherHeader * eh){
+    for(int i = 0; i < MAX_ETHH; i++){
+        if(isValidEthernetHandler(&ethernetHandlers[i])){
+            ethResolution er = ethernetHandlers[i].resolve(&ethernetHandlers[i], eh);
+
+            if(er.removeResolver)
+                ethernetHandlers[i].resolve = NULL;
+
+            if(er.forceTimeout)
+                ethernetHandlers[i].timeout_sec = 0;
+
+            if(er.removeEth)
+                return;
+        }
+    }
 }

@@ -1,0 +1,18 @@
+1739732189: mosquitto version 2.0.11 starting
+1739732189: Config loaded from ./basic1.conf.
+1739732189: Starting in local only mode. Connections will only be possible from clients running on this machine.
+1739732189: Create a configuration file which defines a listener to allow remote access.
+1739732189: For more details see https://mosquitto.org/documentation/authentication-methods/
+1739732189: Opening ipv4 listen socket on port 1883.
+1739732189: Error: Address already in use
+1739732189: Opening ipv6 listen socket on port 1883.
+1739732189: Error: Address already in use
+1739732252: mosquitto version 2.0.11 starting
+1739732252: Config loaded from ./basic1.conf.
+1739732252: Starting in local only mode. Connections will only be possible from clients running on this machine.
+1739732252: Create a configuration file which defines a listener to allow remote access.
+1739732252: For more details see https://mosquitto.org/documentation/authentication-methods/
+1739732252: Opening ipv4 listen socket on port 1883.
+1739732252: Error: Address already in use
+1739732252: Opening ipv6 listen socket on port 1883.
+1739732252: Error: Address already in use

@@ -14,28 +14,48 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "another_clock_file.h"
+#include "framework/eth0.h"
+#include "framework/timer.h"
 
-#define F_CPU 66666666                  // DNM : "initHW()" for where this value is set, values must match
-#define UART0_BAUD 115200
-//#define EEPROM_ADDR_NET_SETTINGS_START 0x0000
-//#define NET_SETTINGS_MAX_SAVED 3        // arbitrary value
-//#define NET_SETTINGS_MAX_SAVED_TOPICS 3 // arbitrary value
-
-#define PRNTNEWLN putsUart0("\n\r");
-
-typedef union {
+typedef union _IPv4 {
     uint32_t raw;
     uint8_t bytes[4];
 } IPv4;
 
-//typedef struct {
-//    IPv4 localhost_ip; //32b
-//    IPv4 MQTTbroker_ip;
-//} NetworkSetting;
-//
-//bool saveNetSettingToEeprom(uint8_t index, NetworkSetting const *);
-//bool loadNetSettingFromEeprom(uint8_t index, NetworkSetting * out);
+typedef struct __attribute__((__packed__)) _ethResolution {
+    bool removeEth;
+    bool removeResolver;
+    bool forceTimeout;
+} ethResolution;
+typedef struct _ethHandler ethHandler;
+struct _ethHandler {
+    ethResolution (*resolve)(ethHandler *, etherHeader *);
+    _callback onTimeout;
+    uint8_t timeout_sec;
+    uint8_t data[0];
+};
 
+#define F_CPU 66666666                  // DNM : see "initHW()" for where this value is set, values must match
+#define UART0_BAUD 115200
+#define ETHH_NO_TIMEOUT 0xFF
+#define ETHH_RESOLUTION_do_nothing
+
+// Max packet is calculated as:
+// Ether frame header (18) + Max MTU (1500)
+#define MAX_PACKET_SIZE 1518
+
+#define SIZETO32(X) ( X / 4 + ((X % 4) != 0))   // returns # of 32b units needed to store
+#define PRNTNEWLN putsUart0("\n\r");
+
+// DO NOT ACCESS IN A INTERRUPT
+extern uint8_t buffer[MAX_PACKET_SIZE];
+extern etherHeader *data;
+
+void initEnv();
 void IPv4tostring(IPv4 * ip, char str[16]);
+inline bool isValidEthernetHandler(ethHandler *);
+bool addEthernetHandler(ethHandler eh);
+void handleEthernetHeader(etherHeader *);
 
 #endif /* SRC_ENV_H_ */

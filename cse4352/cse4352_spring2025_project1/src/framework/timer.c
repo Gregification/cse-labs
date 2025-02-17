@@ -26,7 +26,7 @@
 // Global variables
 //-----------------------------------------------------------------------------
 
-#define NUM_TIMERS 10
+#define NUM_TIMERS 20
 
 _callback fn[NUM_TIMERS];
 uint32_t period[NUM_TIMERS];

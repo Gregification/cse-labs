@@ -30,7 +30,22 @@ typedef struct _tcpHeader // 20 or more bytes
   uint16_t destPort;
   uint32_t sequenceNumber;
   uint32_t acknowledgementNumber;
-  uint16_t offsetFields;
+  union __attribute__((__packed__)) {
+      uint16_t offsetFields;
+
+      struct __attribute__((__packed__)) { // from https://en.wikipedia.org/wiki/Transmission_Control_Protocol
+          unsigned int fFIN : 1;
+          unsigned int fSYN : 1;
+          unsigned int fRST : 1;
+          unsigned int fPSH : 1;
+          unsigned int fACK : 1;
+          unsigned int fURG : 1;
+          unsigned int fECE : 1;
+          unsigned int fCRW : 1;
+          unsigned int : 4;             // reserved
+          unsigned int dataoffset : 4;
+      };
+  };
   uint16_t windowSize;
   uint16_t checksum;
   uint16_t urgentPointer;
@@ -61,6 +76,8 @@ typedef struct _tcpHeader // 20 or more bytes
 #define CWR 0x0080
 #define NS  0x0100
 #define OFS_SHIFT 12
+
+#define MSS 1486
 
 //-----------------------------------------------------------------------------
 // Subroutines

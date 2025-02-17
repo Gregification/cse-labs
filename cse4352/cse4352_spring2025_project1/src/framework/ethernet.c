@@ -56,7 +56,6 @@
 #include "tcp.h"
 #include "mqtt.h"
 
-#include "../another_clock_file.h"
 #include "../env.h"
 
 // Pins
@@ -244,7 +243,7 @@ void processShell()
     uint8_t i;
     uint8_t ip[IP_ADD_LENGTH];
     uint32_t* p32;
-    char *topic, *data;
+    char *topic, *cdata;
 
     if (kbhitUart0())
     {
@@ -303,15 +302,6 @@ void processShell()
             {
                 displayConnectionInfo();
             }
-            if (strcmp(token, "ping") == 0)
-            {
-                for (i = 0; i < IP_ADD_LENGTH; i++)
-                {
-                    token = strtok(NULL, " .");
-                    ip[i] = asciiToUint8(token);
-                }
-                //removed from this version to save space: sendPingRequest(ip)
-            }
             if (strcmp(token, "reboot") == 0)
             {
                 NVIC_APINT_R = NVIC_APINT_VECTKEY | NVIC_APINT_SYSRESETREQ;
@@ -320,9 +310,10 @@ void processShell()
             {
                 char str[16];
                 IPv4 ip;
+
+                putsUart0("  IP: ");
                 getIpAddress(ip.bytes);
                     ip.raw = ntohl(ip.raw);
-                putsUart0("  IP: ");
                 IPv4tostring(&ip, str);
                 putsUart0(str);
 
@@ -411,7 +402,6 @@ void processShell()
                 putsUart0("                   |subscribe TOPIC|unsubscribe TOPIC}\n\r");
                 putsUart0("  status\n\r");
                 putsUart0("  ip\n\r");
-                putsUart0("  ping w.x.y.z\n\r");
                 putsUart0("  reboot\n\r");
                 putsUart0("  set ip|gw|dns|time|mqtt|sn w.x.y.z\n\r");
             }
@@ -425,16 +415,25 @@ void processShell()
 // Main
 //-----------------------------------------------------------------------------
 
-// Max packet is calculated as:
-// Ether frame header (18) + Max MTU (1500)
-#define MAX_PACKET_SIZE 1518
+ethResolution _ethH_general(ethHandler * self, etherHeader * data){
+    if (isIpUnicast(data))
+    {
+        // Handle ICMP ping request
+        if (isPingRequest(data))
+        {
+            sendPingResponse(data);
+        }
+    }
+
+    return (ethResolution){
+        .removeEth      = false,
+        .removeResolver = false,
+        .forceTimeout   = false
+    };
+}
 
 int main(void)
 {
-    uint8_t buffer[MAX_PACKET_SIZE];
-    etherHeader *data = (etherHeader*) buffer;
-    socket s;
-
     // Init controller
     initHw();
 
@@ -457,10 +456,46 @@ int main(void)
     initEeprom();
     readConfiguration();
 
+    // Init env
+    initEnv();
+
+    // Init handlers
+    {
+        if(
+                addEthernetHandler((ethHandler){
+                    .timeout_sec= ETHH_NO_TIMEOUT,
+                    .resolve    = _ethH_general,
+                    .onTimeout  = NULL
+                })
+          ){}
+        else {
+            putsUart0("failed to init packet handlers");
+
+            while(1)
+                {}
+        }
+    }
+
     setPinValue(GREEN_LED, 1);
     waitMicrosecond(100000);
     setPinValue(GREEN_LED, 0);
     waitMicrosecond(100000);
+
+    {
+        etherHeader * d = data;
+        ipHeader * ip = (ipHeader *)d->data;
+        tcpHeader * tcp = (tcpHeader *)ip->data;
+        socket s;
+        s.localPort = 0x000F;
+        getIpMqttBrokerAddress(s.remoteIpAddress);
+        s.remotePort = 0x0001;
+        for(int i = 0; i < HW_ADD_LENGTH; i++)
+            s.remoteHwAddress[i] = 0xff;
+        s.sequenceNumber = 1;
+        s.acknowledgementNumber = 1;
+
+        sendTcpMessage(d, &s, 0, NULL, 0);
+    }
 
     // Main Loop
     // RTOS and interrupts would greatly improve this code,
@@ -493,13 +528,10 @@ int main(void)
             // Handle IP datagram
             if (isIp(data))
             {
+                handleEthernetHeader(data);
+
             	if (isIpUnicast(data))
             	{
-                    // Handle ICMP ping request
-                    if (isPingRequest(data))
-                    {
-                        sendPingResponse(data);
-                    }
 
                     // Handle TCP datagram
                     if (isTcp(data))
@@ -507,8 +539,8 @@ int main(void)
                         if (isTcpPortOpen(data))
                         {
                         }
-                        else
-                            sendTcpResponse(data, &s, ACK | RST);
+//                        else
+//                            sendTcpResponse(data, &s, ACK | RST);
                     }
                 }
             }
