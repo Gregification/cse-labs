@@ -119,6 +119,7 @@ module lab3(
         .wb_enable(wb_enable),
         .wb_reg(wb_reg),
         .wb_data(wb_data),
+
         .rs1_data(rs1_data),
         .rs2_data(rs2_data)
     );
@@ -128,38 +129,48 @@ module lab3(
     reg [31:0]  hex_display;            // the 32bit value displayed
     wire        hex_toggle_show_upper;  // toggles showing upper/lower 16bits of the display value; 
 
-    assign hex_toggle_show_upper = sws[11];
-
     //---testing/display logic------------------------------------------------------
 
-    assign hex_display[31:0] = sws[10] ? wb_data : {rs1_data, rs2_data};
+    // assign hex_display[31:0] = sws[10] ? wb_data : {rs2_data, rs1_data};
 
-    reg             write_rs1_reg;
-    reg             write_rs2_reg;
-    reg             write_wb_reg;
+    reg     [2:0]   select;
     reg     [2:0]   wb_addr_to_write;
     wire    [31:0]  wb_data_to_addr;
 
-    assign write_rs1_reg        = btns[3];
-    assign write_rs2_reg        = btns[2];
-    assign write_wb_reg         = btns[1];
-    assign wb_enable            = sws[9];
-    assign wb_data_to_addr [3:0]= sws[3:0];
-    assign wb_addr_to_write     = sws[6:4];
+    assign select               = sws[10:8];
+    assign wb_enable            = btns[1];
+
+    assign hex_toggle_show_upper= sws[11];
+    assign wb_data_to_addr      = sws[3:0];
+    assign wb_addr_to_write     = sws[7:5];
 
     always_ff @ (posedge(`CLK_TESTING)) begin
-        if(write_rs1_reg)
-            rs1_reg <= sws[4:0];
-        if(write_rs2_reg)
-            rs2_reg <= sws[4:0];
-        if(write_wb_reg) 
-            wb_reg <= sws[4:0];
+        case(select)
+            3'b000 : hex_display <= rs1_data;
+            3'b001 : hex_display <= rs2_data;
+            3'b010 : begin
+                hex_display <= rs1_reg;
+                if(btns[3]) rs1_reg <= sws;
+            end
+            3'b011 : begin
+                hex_display <= rs2_reg;
+                if(btns[3]) rs2_reg <= sws;
+            end
+            3'b100 : begin
+                hex_display <= wb_reg;
+                if(btns[3]) wb_reg <= sws;
+            end
+            3'b101 : begin
+                hex_display <= wb_data;
+                
+                if(btns[3]) begin
+                    wb_data = wb_data & ~((32'hF) << wb_addr_to_write*4);
+                    wb_data = wb_data | (wb_data_to_addr << wb_addr_to_write*4);
+                end
+            end
 
-        if(sws[9]) begin
-            //wb_reg[wb_addr_to_write*4:+4] <= wb_data_to_addr;
-            wb_data = wb_data & ~((32'hF) << wb_addr_to_write*4);
-            wb_data = wb_data | (wb_data_to_addr << wb_addr_to_write*4);
-        end
+            default : hex_display <= 32'hABCDEF1;
+        endcase
     end
 
 

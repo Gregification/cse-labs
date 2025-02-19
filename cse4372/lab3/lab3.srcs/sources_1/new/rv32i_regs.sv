@@ -40,12 +40,12 @@ module rv32i_regs(
         output [31:0] rs2_data
     );
     
-    reg     [31:31] registers;
+    reg     [31:0][31:0] registers;
 
     always_ff @ (posedge(clk)) begin
         if (reset) begin
 
-            registers <= 0;
+            registers <= '{default : '0};
 
         end else begin
 
