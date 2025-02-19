@@ -450,7 +450,7 @@ int main(void)
     // Init ethernet interface (eth0)
     putsUart0("\n\rStarting eth0\n\r");
     initEther(ETHER_UNICAST | ETHER_BROADCAST | ETHER_HALFDUPLEX);
-    setEtherMacAddress(2, 3, 4, 5, 6, 7);// TODD correct this
+    setEtherMacAddress(2, 3, 4, 5, 6, 105);
 
     // Init EEPROM
     initEeprom();
@@ -485,16 +485,19 @@ int main(void)
         etherHeader * d = data;
         ipHeader * ip = (ipHeader *)d->data;
         tcpHeader * tcp = (tcpHeader *)ip->data;
+
         socket s;
-        s.localPort = 0x000F;
+        s.localPort = htons(1234);
         getIpMqttBrokerAddress(s.remoteIpAddress);
-        s.remotePort = 0x0001;
+        s.remotePort = htons(4321);
+
         for(int i = 0; i < HW_ADD_LENGTH; i++)
             s.remoteHwAddress[i] = 0xff;
-        s.sequenceNumber = 1;
-        s.acknowledgementNumber = 1;
+        s.sequenceNumber = random32();
+        s.acknowledgementNumber = 0;
 
-        sendTcpMessage(d, &s, 0, NULL, 0);
+        char msg[4] = "meow";
+        sendTcpMessage(d, &s, SYN, msg, 4);
     }
 
     // Main Loop

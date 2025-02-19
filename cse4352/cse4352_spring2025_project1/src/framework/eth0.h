@@ -41,10 +41,10 @@ typedef struct _enc28j60Frame // 4 bytes
 
 typedef struct _etherHeader // 14 bytes
 {
-  uint8_t destAddress[6];
-  uint8_t sourceAddress[6];
-  uint16_t frameType;
-  uint8_t data[0];
+    uint8_t destAddress[6];
+    uint8_t sourceAddress[6];
+    uint16_t frameType;
+    uint8_t data[0];
 } etherHeader;
 
 // Ethernet frame types

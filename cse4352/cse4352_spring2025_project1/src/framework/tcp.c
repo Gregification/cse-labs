@@ -117,48 +117,81 @@ void sendTcpResponse(etherHeader *ether, socket* s, uint16_t flags)
 
 // Send TCP message
 // MOD
-void sendTcpMessage(etherHeader *ether, socket *s, uint16_t flags, uint8_t data[], uint16_t dataSize)
+void sendTcpMessage(etherHeader *ether, socket *sock, uint16_t flags, uint8_t data[], uint16_t dataSize)
 {
-    ether->frameType    = TYPE_IP;
     for(int i = 0; i < HW_ADD_LENGTH; i++)
-        ether->destAddress[i]  = s->remoteHwAddress[i];
+        ether->destAddress[i]  = sock->remoteHwAddress[i];
     getEtherMacAddress(ether->sourceAddress);
+    ether->frameType    = htons(TYPE_IP);
 
     ipHeader * ip       = (ipHeader *)ether->data;
-    ip->size            = 5;
-    ip->rev             = 0;
+    ip->size            = SIZETO32(sizeof(ipHeader));
+    ip->rev             = 4; // "for IPv4, this is always equal to 4" - the great one (aka Wiki)
     ip->typeOfService   = 0;
-    ip->length          = htonl(sizeof(ipHeader) + dataSize);
-    ip->id              = 0;
-    ip->flagsAndOffset  = 0;
+    ip->length          = htons(ip->size * 4 + dataSize);
+    ip->id              = htons(0);
+    ip->flagsAndOffset  = htons(0);
     ip->ttl             = 100;
     ip->protocol        = PROTOCOL_TCP;
     ip->headerChecksum  = 0;
+    getIpAddress(ip->sourceIp);
     for(int i = 0; i < IP_ADD_LENGTH; i++)
-        ip->sourceIp[i] = i == 2 ? 0xFF : 0x00;
-//    getIpAddress(ip->sourceIp);
-    for(int i = 0; i < IP_ADD_LENGTH; i++)
-        ip->destIp[i]   = s->remoteIpAddress[i];
+        ip->destIp[i]   = sock->remoteIpAddress[i];
+
+    // ip checksum calculation
+    {
+        // note that the frame types lower bits are 0x00 so we dont have to do anything to preserve it.
+        uint32_t sum;
+        sumIpWords((uint8_t *)ip, sizeof(ipHeader), &sum);
+        ip->headerChecksum = htons(getIpChecksum(sum));
+        ip->length     = htons(ip->size * 4 + dataSize + sizeof());
+    }
+
 
     tcpHeader * tcp     = (tcpHeader *)ip->data;
-    tcp->sourcePort     = s->localPort;
-    tcp->destPort       = s->remotePort;
-    tcp->sequenceNumber = s->sequenceNumber;
-    tcp->acknowledgementNumber  = s->acknowledgementNumber;
-    tcp->offsetFields   = flags;
-    tcp->windowSize     = MSS;
+    tcp->sourcePort     = sock->localPort;
+    tcp->destPort       = sock->remotePort;
+    tcp->sequenceNumber = sock->sequenceNumber;
+    tcp->acknowledgementNumber  = sock->acknowledgementNumber;
+    tcp->offsetFields   = htons(flags);
+    tcp->dataoffset     = SIZETO32(sizeof(tcpHeader));
+    tcp->windowSize     = htonl(MSS);
     tcp->checksum       = 0;
     tcp->urgentPointer  = 0;
     for(uint16_t i = 0; i < dataSize; i++)
-        tcp->data[i]    = data[i];
+        tcp->data[i] = data[i];
 
-    uint32_t sum;
-    sumIpWords(tcp, sizeof(tcpHeader) + dataSize, &sum);
-    tcp->checksum       = getIpChecksum(sum);
+    {
+        struct {
+            IPv4 srcIP;
+            IPv4 destIP;
+            uint16_t fixed;
+            uint8_t protocol;
+            uint8_t tcpSegLen;
+            uint8_t data1;
+        } tcpPesudoHeader;
+        getIpAddress(tcpPesudoHeader.srcIP.bytes);
+        for(int i = 0; i < IP_ADD_LENGTH; i++)
+            tcpPesudoHeader.destIP.bytes[i] = sock->remoteIpAddress[i];
+        tcpPesudoHeader.protocol = 0;
+        tcpPesudoHeader.tcpSegLen = dataSize + sizeof(tcpHeader);
+        tcpPesudoHeader.srcIP.raw = tcpPesudoHeader.srcIP.raw;
+        tcpPesudoHeader.destIP.raw = tcpPesudoHeader.destIP.raw;
 
-    size_t sizeof_etherHeader = sizeof(etherHeader);
-    size_t ip_len_host = ntohs(ip->length);
-    size_t packet_size = sizeof(etherHeader) + ntohs(ip->length);
-    bool success = putEtherPacket(ether, packet_size);
-    success;
+        uint32_t sum;
+
+        if(dataSize > 0){
+            tcpPesudoHeader.data1 = tcp->data[0];
+            sumIpWords(tcp->data + 1, dataSize-1, &sum);
+        }
+
+        sumIpWords(&tcpPesudoHeader, sizeof(tcpPesudoHeader), &sum);
+        uint16_t chksum = getIpChecksum(sum);
+        tcp->checksum   = htons(getIpChecksum(sum));
+//        tcp->checksum = htons(0xa8da);
+    }
+
+    ip->headerChecksum = htons(0xa8da);
+
+    putEtherPacket(ether, sizeof(etherHeader) + ntohs(ip->length));
 }
