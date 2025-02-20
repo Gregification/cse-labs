@@ -23,6 +23,7 @@
 #include <stdbool.h>
 #include "ip.h"
 #include "socket.h"
+#include "../env.h"
 
 typedef struct _tcpHeader // 20 or more bytes
 {

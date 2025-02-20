@@ -19,8 +19,8 @@
 #include "framework/timer.h"
 
 typedef union _IPv4 {
-    uint32_t raw;
     uint8_t bytes[4];
+    uint32_t raw;
 } IPv4;
 
 typedef struct __attribute__((__packed__)) _ethResolution {
@@ -45,7 +45,7 @@ struct _ethHandler {
 // Ether frame header (18) + Max MTU (1500)
 #define MAX_PACKET_SIZE 1518
 
-#define SIZETO32(X) ( X / 4 + ((X % 4) != 0))   // returns # of 32b units needed to store
+#define SIZETO32(X) ( (X) / 4 + (((X) % 4) != 0))   // returns # of 32b units needed to store
 #define PRNTNEWLN putsUart0("\n\r");
 
 // DO NOT ACCESS IN A INTERRUPT
