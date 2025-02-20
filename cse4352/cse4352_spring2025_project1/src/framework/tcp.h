@@ -99,7 +99,7 @@ void processTcpArpResponse(etherHeader *ether);
 void setTcpPortList(uint16_t ports[], uint8_t count);
 bool isTcpPortOpen(etherHeader *ether);
 void sendTcpResponse(etherHeader *ether, socket* s, uint16_t flags);
-void sendTcpMessage(etherHeader *ether, socket* s, uint16_t flags, uint8_t data[], uint16_t dataSize);
+void sendTcpMessage(etherHeader *ether, socket* s, uint16_t flags, void * data, uint16_t dataSize);
 
 #endif
 

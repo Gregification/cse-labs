@@ -58,6 +58,23 @@ uint8_t getTcpState(uint8_t instance)
 // MOD
 bool isTcp(etherHeader* ether)
 {
+    ipHeader * ip   = (ipHeader *)ether->data;
+    tcpHeader * tcp = (tcpHeader *)ip->data;
+
+    uint16_t dataSize = ip->length - (ip->size * 4);
+
+    // check check sum
+    uint32_t sum = 0;
+    sumIpWords(ip->sourceIp, 2 * sizeof(IPv4), &sum); //src and dest
+    sum += (ip->protocol & 0xff) << 8;
+    sum += htons(sizeof(tcpHeader) + dataSize);
+    sumIpWords(tcp, sizeof(tcpHeader) + dataSize, &sum);
+    sum -= tcp->checksum;
+
+    if(tcp->checksum != getIpChecksum(sum))
+        return false;
+
+    // check flags
     return  ether->frameType == htons(TYPE_IP)
             && ((ipHeader *)ether->data)->protocol == htons(PROTOCOL_TCP);
 }
@@ -117,8 +134,9 @@ void sendTcpResponse(etherHeader *ether, socket* s, uint16_t flags)
 
 // Send TCP message
 // MOD
-void sendTcpMessage(etherHeader *ether, socket *sock, uint16_t flags, uint8_t data[], uint16_t dataSize)
+void sendTcpMessage(etherHeader *ether, socket *sock, uint16_t flags, void * dater, uint16_t dataSize)
 {
+    uint8_t * data = (uint8_t *)dater;
     for(int i = 0; i < HW_ADD_LENGTH; i++)
         ether->destAddress[i]  = sock->remoteHwAddress[i];
     getEtherMacAddress(ether->sourceAddress);
@@ -139,7 +157,6 @@ void sendTcpMessage(etherHeader *ether, socket *sock, uint16_t flags, uint8_t da
         ip->destIp[i]   = sock->remoteIpAddress[i];
 
     calcIpChecksum(ip);
-
 
     tcpHeader * tcp     = (tcpHeader *)ip->data;
     tcp->sourcePort     = sock->localPort;
@@ -163,7 +180,6 @@ void sendTcpMessage(etherHeader *ether, socket *sock, uint16_t flags, uint8_t da
 
         tcp->checksum   = getIpChecksum(sum);
     }
-
 
     putEtherPacket(ether, sizeof(etherHeader) + ntohs(ip->length));
 }

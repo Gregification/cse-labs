@@ -496,8 +496,8 @@ int main(void)
         s.sequenceNumber = random32();
         s.acknowledgementNumber = 0;
 
-        char msg[4] = "meow";
-        sendTcpMessage(d, &s, SYN, msg, 4);
+        char msg[5] = "mooop";
+        sendTcpMessage(d, &s, SYN, (uint8_t *)msg, sizeof(msg));
     }
 
     // Main Loop
