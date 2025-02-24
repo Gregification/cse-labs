@@ -34,18 +34,23 @@ typedef struct _tcpHeader // 20 or more bytes
   union __attribute__((__packed__)) {
       uint16_t offsetFields;
 
-      // these structure values are in network order
-      struct __attribute__((__packed__)) { // from https://en.wikipedia.org/wiki/Transmission_Control_Protocol
-          unsigned int : 4;             // reserved
+      // in network order
+      struct __attribute__((__packed__)) { // based on https://en.wikipedia.org/wiki/Transmission_Control_Protocol
+          int : 4;                  // reserved
           unsigned int dataoffset : 4;
-          unsigned int fCRW : 1;
-          unsigned int fECE : 1;
-          unsigned int fURG : 1;
-          unsigned int fACK : 1;
-          unsigned int fPSH : 1;
-          unsigned int fRST : 1;
-          unsigned int fSYN : 1;
           unsigned int fFIN : 1;
+          unsigned int fSYN : 1;
+          unsigned int fRST : 1;
+          unsigned int fPSH : 1;
+          unsigned int fACK : 1;
+          unsigned int fURG : 1;
+          unsigned int fECE : 1;
+          unsigned int fCRW : 1;
+      };
+
+      struct __attribute__((__packed__)) {
+          int : 8;                  // offset
+          uint8_t flags;
       };
   };
   uint16_t windowSize;
@@ -100,6 +105,19 @@ void setTcpPortList(uint16_t ports[], uint8_t count);
 bool isTcpPortOpen(etherHeader *ether);
 void sendTcpResponse(etherHeader *ether, socket* s, uint16_t flags);
 void sendTcpMessage(etherHeader *ether, socket* s, uint16_t flags, void * data, uint16_t dataSize);
+
+/*
+ * tx a tcp message with given data immediately or adds to pending queue,
+ *      depending on connection state. pending queue can be sent later by
+ *      calling "sendTcpPendingMessages(...)"
+ *
+ * @param s must be available when ever the data is sent
+ * @param data will be copied
+ * @return true if the tx request has been queued or sent. fails if internal queue
+ *      buffer overflows. messages larger than the buffer will still attempt to tx
+ *      immediately.
+ */
+//bool queueTcpData(socket * s, void * data,  uint16_t datasize);
 
 #endif
 

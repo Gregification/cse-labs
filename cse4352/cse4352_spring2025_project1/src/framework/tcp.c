@@ -23,23 +23,39 @@
 #include "timer.h"
 #include "../env.h"
 
-// ------------------------------------------------------------------------------
-//  Globals
-// ------------------------------------------------------------------------------
-
 #define MAX_TCP_PORTS 4
-
-uint16_t tcpPorts[MAX_TCP_PORTS];
-uint8_t tcpPortCount = 0;
-uint8_t tcpState[MAX_TCP_PORTS];
+//#define TCP_PENQUE_MAX_MSG_COUNT 5
+//#define TCP_PENQUE_MAX_TOTAL_MEM 1500
 
 // ------------------------------------------------------------------------------
 //  Structures
 // ------------------------------------------------------------------------------
 
+//typedef struct _penqueEntry{
+//    socket * sock;
+//    uint8_t * data;
+//    uint16_t len;
+//} penqueEntry;
+
+// ------------------------------------------------------------------------------
+//  Globals
+// ------------------------------------------------------------------------------
+
+uint16_t tcpPorts[MAX_TCP_PORTS];
+uint8_t tcpState[MAX_TCP_PORTS];
+
+//penqueEntry pendingMessages[TCP_PENQUE_MAX_MSG_COUNT];
+
 //-----------------------------------------------------------------------------
 // Subroutines
 //-----------------------------------------------------------------------------
+
+void timeoutTimeWaits(){
+    uint8_t i;
+    for(i = 0; i < MAX_TCP_PORTS; i++)
+        if(tcpState[i] == TCP_TIME_WAIT)
+            tcpState[i] = TCP_CLOSED;
+}
 
 // Set TCP state
 void setTcpState(uint8_t instance, uint8_t state)
@@ -61,14 +77,14 @@ bool isTcp(etherHeader* ether)
     ipHeader * ip   = (ipHeader *)ether->data;
     tcpHeader * tcp = (tcpHeader *)ip->data;
 
-    uint16_t dataSize = ip->length - (ip->size * 4);
+    uint16_t dataSize = ntohs(ip->length) - (ip->size * 4);
 
     // check check sum
     uint32_t sum = 0;
     sumIpWords(ip->sourceIp, 2 * sizeof(IPv4), &sum); //src and dest
     sum += (ip->protocol & 0xff) << 8;
-    sum += htons(sizeof(tcpHeader) + dataSize);
-    sumIpWords(tcp, sizeof(tcpHeader) + dataSize, &sum);
+    sum += htons(dataSize);
+    sumIpWords(tcp,dataSize, &sum);
     sum -= tcp->checksum;
 
     if(tcp->checksum != getIpChecksum(sum))
@@ -76,7 +92,7 @@ bool isTcp(etherHeader* ether)
 
     // check flags
     return  ether->frameType == htons(TYPE_IP)
-            && ((ipHeader *)ether->data)->protocol == htons(PROTOCOL_TCP);
+            && ip->protocol == PROTOCOL_TCP;
 }
 
 // Determines whether a TCP packet has the SYN flag
@@ -107,8 +123,87 @@ void sendTcpPendingMessages(etherHeader *ether)
 }
 
 // MOD
-void processTcpResponse(etherHeader *ether)
+void processTcpResponse(etherHeader * e)
 {
+    socket * s = newSocket();
+    if(!s) return;
+    getSocketInfoFromTcpPacket(e, s);
+
+    ipHeader *ip = (ipHeader*)e->data;
+    tcpHeader* tcp = (tcpHeader*)((uint8_t*)ip + (ip->size * 4));
+
+    uint8_t pi; // index of port
+    for(pi = 0; pi < MAX_TCP_PORTS; pi++)
+        if(tcpPorts[pi] == ntohs(*(uint16_t *)s->localPort))
+            break;
+
+    if(pi == MAX_TCP_PORTS) return;
+
+    if(tcp->fRST)
+        tcpState[pi] = TCP_CLOSED;
+
+    switch(tcpState[pi]){
+        case TCP_LISTEN :
+            if(tcp->fSYN) {
+                sendTcpResponse(e, s, SYN | ACK);
+                tcpState[pi] = TCP_SYN_RECEIVED;
+            } else
+                sendTcpResponse(e, s, RST);
+            break;
+
+        case TCP_SYN_SENT :
+            if(tcp->fSYN && tcp->fACK) {
+                sendTcpResponse(e, s, ACK);
+                tcpState[pi] = TCP_ESTABLISHED;
+            } else
+                sendTcpResponse(e, s, RST);
+            break;
+
+        case TCP_SYN_RECEIVED :
+            if(tcp->fACK) {
+                tcpState[pi] = TCP_ESTABLISHED;
+            } else
+                sendTcpResponse(e, s, RST);
+            break;
+
+        case TCP_FIN_WAIT_1 :
+            if(tcp->fACK) {
+                tcpState[pi] = TCP_FIN_WAIT_2;
+            } else
+                sendTcpResponse(e, s, FIN);
+
+        case TCP_FIN_WAIT_2 :
+            if(tcp->fFIN) {
+                tcpState[pi] = TCP_TIME_WAIT;
+                sendTcpResponse(e, s, ACK);
+                startOneshotTimer(timeoutTimeWaits, 2);
+            } else
+                sendTcpResponse(e, s, FIN);
+            break;
+
+        case TCP_TIME_WAIT :
+            sendTcpResponse(e, s, FIN);
+            tcpState[pi] = TCP_FIN_WAIT_1;
+            break;
+
+        case TCP_ESTABLISHED :
+            if(tcp->fFIN){
+                sendTcpResponse(e, s, ACK);
+            }
+
+        case TCP_CLOSE_WAIT :
+            sendTcpResponse(e, s, FIN);
+            break;
+
+        case TCP_LAST_ACK :
+            if(tcp->fACK){
+                tcpState[pi] = TCP_CLOSED;
+            } else
+                sendTcpResponse(e, s, FIN);
+
+    }
+
+    deleteSocket(s);
 }
 
 // MOD
@@ -124,19 +219,32 @@ void setTcpPortList(uint16_t ports[], uint8_t count)
 // MOD
 bool isTcpPortOpen(etherHeader *ether)
 {
+    ipHeader *ip = (ipHeader*)ether->data;
+    tcpHeader* tcp = (tcpHeader*)((uint8_t*)ip + (ip->size * 4));
+    IPv4 localPort = {ntohs(tcp->destPort)};
+
+    if(localPort.raw == 0) // invalid port
+        return false;
+
+    uint8_t i;
+    for(i = 0; i < MAX_TCP_PORTS; i++)
+        if(tcpPorts[i] == localPort.raw){       // port exists
+            return tcpState[i] != TCP_CLOSED;   // port not closed
+        }
+
     return false;
 }
 
 // MOD
-void sendTcpResponse(etherHeader *ether, socket* s, uint16_t flags)
+void sendTcpResponse(etherHeader * ether, socket* sock, uint16_t flags)
 {
+    sendTcpMessage(ether, sock, flags, 0, 0);
 }
 
 // Send TCP message
 // MOD
 void sendTcpMessage(etherHeader *ether, socket *sock, uint16_t flags, void * dater, uint16_t dataSize)
 {
-    uint8_t * data = (uint8_t *)dater;
     for(int i = 0; i < HW_ADD_LENGTH; i++)
         ether->destAddress[i]  = sock->remoteHwAddress[i];
     getEtherMacAddress(ether->sourceAddress);
@@ -144,7 +252,7 @@ void sendTcpMessage(etherHeader *ether, socket *sock, uint16_t flags, void * dat
 
     ipHeader * ip       = (ipHeader *)ether->data;
     ip->size            = SIZETO32(sizeof(ipHeader));
-    ip->rev             = 4; // "for IPv4, this is always equal to 4" - the great one (aka Wiki)
+    ip->rev             = 4; // IPv4
     ip->typeOfService   = 0;
     ip->length          = htons((ip->size * 4) + dataSize + sizeof(tcpHeader));
     ip->id              = htons(0);
@@ -159,17 +267,17 @@ void sendTcpMessage(etherHeader *ether, socket *sock, uint16_t flags, void * dat
     calcIpChecksum(ip);
 
     tcpHeader * tcp     = (tcpHeader *)ip->data;
-    tcp->sourcePort     = sock->localPort;
-    tcp->destPort       = sock->remotePort;
-    tcp->sequenceNumber = sock->sequenceNumber;
-    tcp->acknowledgementNumber  = sock->acknowledgementNumber;
+    tcp->sourcePort     = htons(sock->localPort);
+    tcp->destPort       = htons(sock->remotePort);
+    tcp->sequenceNumber = htonl(sock->sequenceNumber);
+    tcp->acknowledgementNumber  = htonl(sock->acknowledgementNumber);
     tcp->offsetFields   = htons(flags);
     tcp->dataoffset     = SIZETO32(sizeof(tcpHeader));
-    tcp->windowSize     = htonl(MSS);
+    tcp->windowSize     = htons(MSS);
     tcp->checksum       = 0;
     tcp->urgentPointer  = 0;
     for(uint16_t i = 0; i < dataSize; i++)
-        tcp->data[i] = data[i];
+        tcp->data[i] = ((uint8_t *)dater)[i];
 
     {
         uint32_t sum = 0;
@@ -182,4 +290,16 @@ void sendTcpMessage(etherHeader *ether, socket *sock, uint16_t flags, void * dat
     }
 
     putEtherPacket(ether, sizeof(etherHeader) + ntohs(ip->length));
+    sock->sequenceNumber += dataSize;
 }
+
+//bool queueTcpData(socket * sock, void * data,  uint16_t datasize){
+//    uint8_t i;
+//    for(i = 0; i < MAX_TCP_PORTS; i++){
+//        if(tcpState[i] == TCP_ESTABLISHED && *(uint32_t *)tcpPorts[i] == *(uint32_t *)sock->remoteIpAddress){
+//
+//        }
+//    }
+//
+//    return false;
+//}

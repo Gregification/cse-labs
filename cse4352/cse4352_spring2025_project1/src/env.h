@@ -23,6 +23,11 @@ typedef union _IPv4 {
     uint32_t raw;
 } IPv4;
 
+typedef union _MAC {
+    uint8_t bytes[8];
+    uint64_t raw;
+} MAC;
+
 typedef struct __attribute__((__packed__)) _ethResolution {
     bool removeEth;
     bool removeResolver;
@@ -47,10 +52,6 @@ struct _ethHandler {
 
 #define SIZETO32(X) ( (X) / 4 + (((X) % 4) != 0))   // returns # of 32b units needed to store
 #define PRNTNEWLN putsUart0("\n\r");
-
-// DO NOT ACCESS IN A INTERRUPT
-extern uint8_t buffer[MAX_PACKET_SIZE];
-extern etherHeader *data;
 
 void initEnv();
 void IPv4tostring(IPv4 * ip, char str[16]);

@@ -243,7 +243,7 @@ void processShell()
     uint8_t i;
     uint8_t ip[IP_ADD_LENGTH];
     uint32_t* p32;
-    char *topic, *cdata;
+    char *topic, *data;
 
     if (kbhitUart0())
     {
@@ -415,6 +415,8 @@ void processShell()
 // Main
 //-----------------------------------------------------------------------------
 
+// i was going to do something with this before i fully understood how this framework was structured
+//      this is somewhat pointless now, but high effort to remove.
 ethResolution _ethH_general(ethHandler * self, etherHeader * data){
     if (isIpUnicast(data))
     {
@@ -434,6 +436,10 @@ ethResolution _ethH_general(ethHandler * self, etherHeader * data){
 
 int main(void)
 {
+    uint8_t buffer[MAX_PACKET_SIZE];
+    etherHeader *data = (etherHeader*) buffer;
+    socket s;
+
     // Init controller
     initHw();
 
@@ -458,6 +464,9 @@ int main(void)
 
     // Init env
     initEnv();
+
+    // Init arp
+    initArp();
 
     // Init handlers
     {
@@ -484,20 +493,17 @@ int main(void)
     {
         etherHeader * d = data;
         ipHeader * ip = (ipHeader *)d->data;
-        tcpHeader * tcp = (tcpHeader *)ip->data;
 
-        socket s;
-        s.localPort = htons(1234);
+        s.localPort = 1234;
         getIpMqttBrokerAddress(s.remoteIpAddress);
-        s.remotePort = htons(4321);
+        s.remotePort = 4321;
 
         for(int i = 0; i < HW_ADD_LENGTH; i++)
             s.remoteHwAddress[i] = 0xff;
         s.sequenceNumber = random32();
         s.acknowledgementNumber = 0;
 
-        char msg[5] = "mooop";
-        sendTcpMessage(d, &s, SYN, (uint8_t *)msg, sizeof(msg));
+        sendTcpMessage(d, &s, 0, 0, 0);
     }
 
     // Main Loop
@@ -527,6 +533,9 @@ int main(void)
             // Handle ARP request
             if (isArpRequest(data))
                 sendArpResponse(data);
+            else if(isArpResponse(data)){
+
+            }
 
             // Handle IP datagram
             if (isIp(data))
@@ -539,13 +548,18 @@ int main(void)
                     // Handle TCP datagram
                     if (isTcp(data))
                     {
+                        // updates port status
+                        processTcpResponse(data);
+
                         if (isTcpPortOpen(data))
                         {
+
+                            // handle in comming data
                         }
-//                        else
-//                            sendTcpResponse(data, &s, ACK | RST);
+                        else
+                            sendTcpResponse(data, &s, ACK | RST);
                     }
-                }
+            	}
             }
         }
     }

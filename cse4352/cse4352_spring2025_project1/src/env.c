@@ -17,9 +17,6 @@
 #define MAX_ETHH 12
 #define ETHH_TIMEOUT_PERIOD 1
 
-uint8_t buffer[MAX_PACKET_SIZE] = {0};
-etherHeader *data = (etherHeader*) buffer;
-
 ethHandler ethernetHandlers[MAX_ETHH];
 
 void initEnv(){

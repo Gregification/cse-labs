@@ -120,7 +120,7 @@
 uint8_t nextPacketLsb = 0x00;
 uint8_t nextPacketMsb = 0x00;
 uint8_t sequenceId = 1;
-uint8_t hwAddress[HW_ADD_LENGTH] = {2,3,4,5,6,7};
+uint8_t hwAddress[HW_ADD_LENGTH] = {2,3,4,5,6,0x69};
 
 // ------------------------------------------------------------------------------
 //  Structures
