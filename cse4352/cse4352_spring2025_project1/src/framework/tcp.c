@@ -18,56 +18,94 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include "arp.h"
 #include "tcp.h"
 #include "timer.h"
 #include "../env.h"
 
-#define MAX_TCP_PORTS 4
-//#define TCP_PENQUE_MAX_MSG_COUNT 5
-//#define TCP_PENQUE_MAX_TOTAL_MEM 1500
+#define MAX_TCP_SOCKETS 3
+#define TCP_PENQUE_MAX_MSG_COUNT 5
+#define TCP_PENQUE_MAX_TOTAL_MEM 1500
 
 // ------------------------------------------------------------------------------
 //  Structures
 // ------------------------------------------------------------------------------
 
-//typedef struct _penqueEntry{
-//    socket * sock;
-//    uint8_t * data;
-//    uint16_t len;
-//} penqueEntry;
+// probe count defaults
+#define SI_PROBES_CONN     2   // connecting
+#define SI_PROBES_KEPAL    3   // keep-alives
+#define SI_PROBES_DCON     2   // disconnecting
+
+// probe timeouts
+#define SI_TO_CONN      2
+#define SI_TO_KEPAL     4
+#define SI_TO_DCON      2
+
+uint16_t pendingMsgMemUsed = 0;
+
+typedef struct _pendingMsg {
+    uint8_t socketInfoIdx;
+    uint16_t datasize;
+    uint8_t * data; // allocated memory
+} pendingMsg;
 
 // ------------------------------------------------------------------------------
 //  Globals
 // ------------------------------------------------------------------------------
 
-uint16_t tcpPorts[MAX_TCP_PORTS];
-uint8_t tcpState[MAX_TCP_PORTS];
+socketInfo * sockets[MAX_TCP_SOCKETS];
 
-//penqueEntry pendingMessages[TCP_PENQUE_MAX_MSG_COUNT];
+pendingMsg pendingMessages[TCP_PENQUE_MAX_MSG_COUNT];
 
 //-----------------------------------------------------------------------------
 // Subroutines
 //-----------------------------------------------------------------------------
 
-void timeoutTimeWaits(){
-    uint8_t i;
-    for(i = 0; i < MAX_TCP_PORTS; i++)
-        if(tcpState[i] == TCP_TIME_WAIT)
-            tcpState[i] = TCP_CLOSED;
+inline bool isSockInfoActive(socketInfo const * si){
+    return si->sock && si->sock->state != TCP_CLOSED;
+}
+
+void initSockInfoState(socketInfo * si){
+    si->start_time = systick - 1; // force update on next pass
+
+    switch(si->sock->state){
+        case TCP_LISTEN:
+        case TCP_SYN_SENT:
+        case TCP_SYN_RECEIVED:
+            si->timeout = SI_TO_CONN;
+            si->probes_left = SI_PROBES_CONN;
+            break;
+
+        case TCP_ESTABLISHED:
+            si->timeout = SI_TO_KEPAL;
+            si->probes_left = SI_PROBES_KEPAL;
+            break;
+
+        case TCP_CLOSED:
+        case TCP_CLOSE_WAIT:
+        case TCP_CLOSING:
+        case TCP_TIME_WAIT:
+        case TCP_FIN_WAIT_1:
+        case TCP_FIN_WAIT_2:
+        case TCP_LAST_ACK:
+            si->timeout = SI_TO_DCON;
+            si->probes_left = SI_PROBES_DCON;
+            break;
+    }
 }
 
 // Set TCP state
-void setTcpState(uint8_t instance, uint8_t state)
-{
-    tcpState[instance] = state;
-}
-
-// Get TCP state
-uint8_t getTcpState(uint8_t instance)
-{
-    return tcpState[instance];
-}
+//void setTcpState(uint8_t instance, uint8_t state)
+//{
+//    tcpState[instance] = state;
+//}
+//
+//// Get TCP state
+//uint8_t getTcpState(uint8_t instance)
+//{
+//    return tcpState[instance];
+//}
 
 // Determines whether packet is TCP packet
 // Must be an IP packet
@@ -120,90 +158,123 @@ bool isTcpAck(etherHeader *ether)
 // MOD
 void sendTcpPendingMessages(etherHeader *ether)
 {
+    socket * s = newSocket();
+    if(!s) return;
+    getSocketInfoFromTcpPacket(ether, s);
+
+    uint8_t i;
+    for(i = 0; i < TCP_PENQUE_MAX_MSG_COUNT; i++){
+        socketInfo * si = sockets[pendingMessages[i].socketInfoIdx];
+        pendingMsg * pm = &pendingMessages[i];
+
+        if(pm->datasize && pm->data) { // message exist
+            if(isSockInfoActive(si)) { // socket open
+                if(si->sock->state == TCP_ESTABLISHED){
+                    // send message
+                    sendTcpMessage(ether, si->sock, 0, pm->data, pm->datasize);
+
+                    free(pm->data);
+                    pendingMsgMemUsed -= pm->datasize;
+                    pm->datasize = 0;
+                }
+            }
+            else if(si->sock && si->sock->state == TCP_CLOSED){ // socket is closed
+                free(pm->data);
+                pendingMsgMemUsed -= pm->datasize;
+                pm->datasize = 0;
+            }
+        }
+    }
+
+    deleteSocket(s);
 }
 
+// assume the socket from the ethernet packet is valid
 // MOD
 void processTcpResponse(etherHeader * e)
 {
-    socket * s = newSocket();
+    socketInfo * s = isTcpPortOpen(e);
     if(!s) return;
-    getSocketInfoFromTcpPacket(e, s);
 
-    ipHeader *ip = (ipHeader*)e->data;
-    tcpHeader* tcp = (tcpHeader*)((uint8_t*)ip + (ip->size * 4));
-
-    uint8_t pi; // index of port
-    for(pi = 0; pi < MAX_TCP_PORTS; pi++)
-        if(tcpPorts[pi] == ntohs(*(uint16_t *)s->localPort))
-            break;
-
-    if(pi == MAX_TCP_PORTS) return;
+    ipHeader * ip = (ipHeader*)e->data;
+    tcpHeader * tcp = (tcpHeader*)((uint8_t*)ip + (ip->size * 4));
 
     if(tcp->fRST)
-        tcpState[pi] = TCP_CLOSED;
+        s->sock->state = TCP_CLOSED;
 
-    switch(tcpState[pi]){
+    bool recalTimeout = false;
+
+    switch(s->sock->state){
         case TCP_LISTEN :
             if(tcp->fSYN) {
-                sendTcpResponse(e, s, SYN | ACK);
-                tcpState[pi] = TCP_SYN_RECEIVED;
-            } else
-                sendTcpResponse(e, s, RST);
+                recalTimeout = true;
+                sendTcpResponse(e, s->sock, SYN | ACK);
+                s->sock->state = TCP_SYN_RECEIVED;
+            }
             break;
 
         case TCP_SYN_SENT :
             if(tcp->fSYN && tcp->fACK) {
-                sendTcpResponse(e, s, ACK);
-                tcpState[pi] = TCP_ESTABLISHED;
-            } else
-                sendTcpResponse(e, s, RST);
+                recalTimeout = true;
+                sendTcpResponse(e, s->sock, ACK);
+                s->sock->state = TCP_ESTABLISHED;
+            }
             break;
 
         case TCP_SYN_RECEIVED :
             if(tcp->fACK) {
-                tcpState[pi] = TCP_ESTABLISHED;
-            } else
-                sendTcpResponse(e, s, RST);
+                recalTimeout = true;
+                s->sock->state = TCP_ESTABLISHED;
+            }
             break;
 
         case TCP_FIN_WAIT_1 :
             if(tcp->fACK) {
-                tcpState[pi] = TCP_FIN_WAIT_2;
-            } else
-                sendTcpResponse(e, s, FIN);
+                recalTimeout = true;
+                s->sock->state = TCP_FIN_WAIT_2;
+            }
 
         case TCP_FIN_WAIT_2 :
             if(tcp->fFIN) {
-                tcpState[pi] = TCP_TIME_WAIT;
-                sendTcpResponse(e, s, ACK);
-                startOneshotTimer(timeoutTimeWaits, 2);
-            } else
-                sendTcpResponse(e, s, FIN);
+                recalTimeout = true;
+                s->sock->state = TCP_TIME_WAIT;
+                sendTcpResponse(e, s->sock, ACK);
+            }
             break;
 
         case TCP_TIME_WAIT :
-            sendTcpResponse(e, s, FIN);
-            tcpState[pi] = TCP_FIN_WAIT_1;
+            recalTimeout = true;
+            sendTcpResponse(e, s->sock, FIN);
+            s->sock->state = TCP_FIN_WAIT_1;
             break;
 
         case TCP_ESTABLISHED :
+            s->sock->sequenceNumber += ip->length - (ip->size * 4) - sizeof(tcpHeader);
+            s->sock->acknowledgementNumber = s->sock->sequenceNumber + 1;
+            if(tcp->fACK)
+                recalTimeout = true;
             if(tcp->fFIN){
-                sendTcpResponse(e, s, ACK);
+                recalTimeout = true;
+                sendTcpResponse(e, s->sock, ACK | FIN);
             }
+            break;
 
+        case TCP_CLOSING :
         case TCP_CLOSE_WAIT :
-            sendTcpResponse(e, s, FIN);
+            sendTcpResponse(e, s->sock, ACK);
+            recalTimeout = true;
+            s->sock->state = TCP_LAST_ACK;
             break;
 
         case TCP_LAST_ACK :
             if(tcp->fACK){
-                tcpState[pi] = TCP_CLOSED;
-            } else
-                sendTcpResponse(e, s, FIN);
-
+                recalTimeout = true;
+                s->sock->state = TCP_CLOSED;
+            }
     }
 
-    deleteSocket(s);
+    if(recalTimeout)
+        initSockInfoState(s);
 }
 
 // MOD
@@ -217,22 +288,77 @@ void setTcpPortList(uint16_t ports[], uint8_t count)
 }
 
 // MOD
-bool isTcpPortOpen(etherHeader *ether)
+socketInfo * isTcpPortOpen(etherHeader const * ether)
 {
-    ipHeader *ip = (ipHeader*)ether->data;
-    tcpHeader* tcp = (tcpHeader*)((uint8_t*)ip + (ip->size * 4));
-    IPv4 localPort = {ntohs(tcp->destPort)};
+    socket * s = newSocket();
+    if(!s) return false;
 
-    if(localPort.raw == 0) // invalid port
-        return false;
+    getSocketInfoFromTcpPacket(ether, s);
 
+    // if local socket exists
     uint8_t i;
-    for(i = 0; i < MAX_TCP_PORTS; i++)
-        if(tcpPorts[i] == localPort.raw){       // port exists
-            return tcpState[i] != TCP_CLOSED;   // port not closed
-        }
+    for(i = 0; i < MAX_TCP_SOCKETS; i++)
+        if(isSockInfoActive(sockets[i]) && isSocketSame(sockets[i]->sock, s))
+            break;
 
-    return false;
+    deleteSocket(s);
+
+    if(i == MAX_TCP_SOCKETS)
+        return NULL;
+    else
+        return sockets[i];
+}
+
+// assuming socket info is valid
+void updateSocketInfo(socketInfo * si, etherHeader * e){
+    if(isSockInfoActive(si) && (systick - si->start_time < si->timeout)) // if not timed out
+        return;
+
+    if(si->probes_left == 0){
+        sendTcpResponse(e, si->sock, RST);
+        si->sock->state = TCP_CLOSED;
+    }
+
+    si->probes_left--;
+    si->start_time == systick;
+
+    switch(si->sock->state){
+        case TCP_CLOSED:
+        case TCP_LISTEN:
+            return;
+
+        case TCP_CLOSE_WAIT:
+            // do nothing
+            break;
+
+        case TCP_CLOSING:
+            // do
+        case TCP_ESTABLISHED:
+            sendTcpResponse(e, si->sock, ACK);
+            break;
+
+        case TCP_FIN_WAIT_2:
+            // do same as FIN_WAIT_1
+        case TCP_FIN_WAIT_1:
+            sendTcpResponse(e, si->sock, FIN);
+            break;
+
+        case TCP_LAST_ACK:
+            sendTcpResponse(e, si->sock, FIN);
+            break;
+
+        case TCP_SYN_RECEIVED:
+            sendTcpResponse(e, si->sock, SYN | ACK);
+            break;
+
+        case TCP_SYN_SENT:
+            sendTcpResponse(e, si->sock, SYN);
+            break;
+
+        case TCP_TIME_WAIT:
+            // do nothing
+            break;
+    }
 }
 
 // MOD
@@ -293,13 +419,13 @@ void sendTcpMessage(etherHeader *ether, socket *sock, uint16_t flags, void * dat
     sock->sequenceNumber += dataSize;
 }
 
-//bool queueTcpData(socket * sock, void * data,  uint16_t datasize){
+bool queueTcpData(socket * s, void * data,  uint16_t datasize){
 //    uint8_t i;
 //    for(i = 0; i < MAX_TCP_PORTS; i++){
 //        if(tcpState[i] == TCP_ESTABLISHED && *(uint32_t *)tcpPorts[i] == *(uint32_t *)sock->remoteIpAddress){
 //
 //        }
 //    }
-//
-//    return false;
-//}
+
+    return false;
+}

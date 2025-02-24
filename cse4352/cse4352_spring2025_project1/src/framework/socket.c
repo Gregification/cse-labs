@@ -22,7 +22,7 @@
 #include "udp.h"
 #include "tcp.h"
 
-#define MAX_SOCKETS 10
+#define MAX_SOCKETS 5
 
 // ------------------------------------------------------------------------------
 //  Globals
@@ -113,4 +113,16 @@ void getSocketInfoFromTcpPacket(etherHeader *ether, socket *s)
         s->remoteIpAddress[i] = ip->sourceIp[i];
     s->remotePort = ntohs(tcp->sourcePort);
     s->localPort = ntohs(tcp->destPort);
+}
+
+bool isSocketSame(socket const * a, socket const * b){
+    if(!(a && b))
+        return false;
+
+    uint8_t i;
+    for(i = 0; i < sizeof(IPv4) + sizeof(MAC) + sizeof(port) * 2; i++)
+        if(((uint8_t *)a)[i] != ((uint8_t *)b)[i])
+            return false;
+
+    return true;
 }

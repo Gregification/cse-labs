@@ -48,8 +48,6 @@ typedef struct _ARPEntry {
     };
 } ARPEntry;
 
-#define ARP_ENTRY_PRIORITY_MAX 128
-
 ARPEntry arpLot[ARP_BUFFER_SIZE];
 
 //-----------------------------------------------------------------------------
@@ -123,6 +121,11 @@ bool addArpLOTEntry(MAC * hwip, IPv4 * ip, uint8_t priority){
     }
 
     return false;
+}
+
+bool addArpEntry(etherHeader * ether, uint8_t priority){
+    arpPacket *arp = (arpPacket*)ether->data;
+    return addArpLOTEntry((MAC *)ether->sourceAddress, (IPv4 *)arp->sourceIp, priority);
 }
 
 // Determines whether packet is ARP

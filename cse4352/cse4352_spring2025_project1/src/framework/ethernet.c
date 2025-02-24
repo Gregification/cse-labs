@@ -492,7 +492,6 @@ int main(void)
 
     {
         etherHeader * d = data;
-        ipHeader * ip = (ipHeader *)d->data;
 
         s.localPort = 1234;
         getIpMqttBrokerAddress(s.remoteIpAddress);
@@ -533,9 +532,8 @@ int main(void)
             // Handle ARP request
             if (isArpRequest(data))
                 sendArpResponse(data);
-            else if(isArpResponse(data)){
-
-            }
+            else if(isArpResponse(data))
+                addArpEntry(data, ARP_ENTRY_PRIORITY_MAX);
 
             // Handle IP datagram
             if (isIp(data))
@@ -548,16 +546,18 @@ int main(void)
                     // Handle TCP datagram
                     if (isTcp(data))
                     {
-                        // updates port status
-                        processTcpResponse(data);
 
-                        if (isTcpPortOpen(data))
+                        socketInfo * si;
+                        if (si = isTcpPortOpen(data))
                         {
-
-                            // handle in comming data
+                            if(si->sock->state == TCP_ESTABLISHED)
+                                sendTcpResponse(data, si->sock, ACK);
                         }
                         else
                             sendTcpResponse(data, &s, ACK | RST);
+
+                        // updates port status
+                        processTcpResponse(data);
                     }
             	}
             }

@@ -46,5 +46,10 @@ void getSocketInfoFromArpResponse(etherHeader *ether, socket *s);
 void getSocketInfoFromUdpPacket(etherHeader *ether, socket *s);
 void getSocketInfoFromTcpPacket(etherHeader *ether, socket *s);
 
+/**
+ * @return true if IP addr, HW addr, and ports are the same
+ */
+bool isSocketSame(socket const * a, socket const * b);
+
 #endif
 

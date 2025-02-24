@@ -25,7 +25,8 @@
 #include "ip.h"
 #include "../env.h"
 
-#define ARP_BUFFER_SIZE 5
+#define ARP_BUFFER_SIZE 3
+#define ARP_ENTRY_PRIORITY_MAX 10
 
 typedef struct _arpPacket // 28 bytes
 {
@@ -55,11 +56,12 @@ MAC * ArpFind(uint8_t ip[IP_ADD_LENGTH]);
 /*
  * @return : true if entry now exists. replaces a existing entry. a entry cannot
  *      be replaced if it is in a pending state, or if its priority is greater
- *      than the replacements. if possible, replace the lowest priority entry.
+ *      than the replacement. if possible, replacing the lowest priority entry.
  *      if entry IP already exists, writes MAC and sets priority to largest of
  *      the two.
  */
 bool addArpLOTEntry(MAC * hwip, IPv4 * ip, uint8_t priority);
+bool addArpEntry(etherHeader * ether, uint8_t priority);
 
 #endif
 

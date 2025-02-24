@@ -86,12 +86,19 @@ typedef struct _tcpHeader // 20 or more bytes
 
 #define MSS 1486
 
+typedef struct _socketInfo {
+    uint8_t probes_left;
+    uint16_t start_time;
+    uint8_t timeout;        // timeout time per attempt
+    socket * sock;
+} socketInfo;
+
 //-----------------------------------------------------------------------------
 // Subroutines
 //-----------------------------------------------------------------------------
 
-void setTcpState(uint8_t instance, uint8_t state);
-uint8_t getTcpState(uint8_t instance);
+//void setTcpState(uint8_t instance, uint8_t state);
+//uint8_t getTcpState(uint8_t instance);
 
 bool isTcp(etherHeader *ether);
 bool isTcpSyn(etherHeader *ether);
@@ -101,12 +108,42 @@ void sendTcpPendingMessages(etherHeader *ether);
 void processDhcpResponse(etherHeader *ether);
 void processTcpArpResponse(etherHeader *ether);
 
-void setTcpPortList(uint16_t ports[], uint8_t count);
-bool isTcpPortOpen(etherHeader *ether);
+//void setTcpPortList(uint16_t ports[], uint8_t count);
+
+/**
+ * @return pointer to local open TCP socket
+ */
+socketInfo * isTcpPortOpen(etherHeader const * ether);
 void sendTcpResponse(etherHeader *ether, socket* s, uint16_t flags);
 void sendTcpMessage(etherHeader *ether, socket* s, uint16_t flags, void * data, uint16_t dataSize);
 
-/*
+/** evaluates a specific SI's timeout state and resends messages as needed */
+void updateSocketInfo(socketInfo * si, etherHeader * e);
+
+/** initiates a connection using the given socket if it dosen't already exist.
+ *  - socket state set to TCP_ESTABLISHED on success
+ *  - socket state set to TCP_CLOSED if all connection attempts fail
+ * @param s assocaited socket
+ * @param e buffer mem to use
+ * @return NULL if no conflicting sockets already opened. else pointer to open
+ *      conflicting socket. conflicting if it's a duplicate local/remote HW/IP
+ */
+socket * openTcpConn(socket * s, etherHeader * e, uint8_t attempts);
+
+/** negotiates disconnect. non immediate disconnect
+ * @param s assocaited socket
+ * @param e buffer mem to use
+ * @param attampts attempts before forcing a disconnect. defaults to ST_TTL_CONN if set to 0
+ */
+void closeTcpConnSoft(socket * s, etherHeader * e, uint8_t attemps);
+
+/** forces disconnect using RST flag. immediate disconnect
+ * @param s assocaited socket
+ * @param e buffer mem to use
+ */
+void closeTcpConnHard(socket * s, etherHeader * e);
+
+/**
  * tx a tcp message with given data immediately or adds to pending queue,
  *      depending on connection state. pending queue can be sent later by
  *      calling "sendTcpPendingMessages(...)"
@@ -117,7 +154,7 @@ void sendTcpMessage(etherHeader *ether, socket* s, uint16_t flags, void * data, 
  *      buffer overflows. messages larger than the buffer will still attempt to tx
  *      immediately.
  */
-//bool queueTcpData(socket * s, void * data,  uint16_t datasize);
+bool queueTcpData(socket * s, void * data,  uint16_t datasize);
 
 #endif
 

@@ -18,6 +18,8 @@
 #include "framework/eth0.h"
 #include "framework/timer.h"
 
+#define port uint8_t
+
 typedef union _IPv4 {
     uint8_t bytes[4];
     uint32_t raw;

@@ -37,8 +37,13 @@ bool reload[NUM_TIMERS];
 // Subroutines
 //-----------------------------------------------------------------------------
 
+void _incrementTick(){
+    systick++;
+}
+
 void initTimer()
 {
+    systick = 0;
     uint8_t i;
 
     // Enable clocks
@@ -60,6 +65,8 @@ void initTimer()
         fn[i] = NULL;
         reload[i] = false;
     }
+
+    startPeriodicTimer(_incrementTick, TIMER_TICK_UNIT_S);
 }
 
 bool startOneshotTimer(_callback callback, uint32_t seconds)
