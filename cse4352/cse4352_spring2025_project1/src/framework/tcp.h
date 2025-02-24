@@ -117,16 +117,24 @@ socketInfo * isTcpPortOpen(etherHeader const * ether);
 void sendTcpResponse(etherHeader *ether, socket* s, uint16_t flags);
 void sendTcpMessage(etherHeader *ether, socket* s, uint16_t flags, void * data, uint16_t dataSize);
 
+void processTcpResponse(socketInfo * si, etherHeader * e);
+
+/** retreives the matching socket info if of the given socket if it exists */
+socketInfo * tcpSocketInfoFind(socket * s);
+
+bool isSockInfoActive(socketInfo const * si);
+
 /** evaluates a specific SI's timeout state and resends messages as needed */
 void updateSocketInfo(socketInfo * si, etherHeader * e);
 
 /** initiates a connection using the given socket if it dosen't already exist.
  *  - socket state set to TCP_ESTABLISHED on success
- *  - socket state set to TCP_CLOSED if all connection attempts fail
+ *  - socket state set to TCP_CLOSED on fail or if all connection attempts fail
  * @param s assocaited socket
  * @param e buffer mem to use
- * @return NULL if no conflicting sockets already opened. else pointer to open
- *      conflicting socket. conflicting if it's a duplicate local/remote HW/IP
+ * @return pointer to open conflicting socket. NULL if no conflicting sockets already
+ *      opened; or if unable to start connection. conflicting if it's a duplicate
+ *      local/remote HW/IP
  */
 socket * openTcpConn(socket * s, etherHeader * e, uint8_t attempts);
 

@@ -437,8 +437,8 @@ ethResolution _ethH_general(ethHandler * self, etherHeader * data){
 int main(void)
 {
     uint8_t buffer[MAX_PACKET_SIZE];
-    etherHeader *data = (etherHeader*) buffer;
-    socket s;
+    etherHeader * data = (etherHeader*) buffer;
+    socket * buff_s = newSocket();
 
     // Init controller
     initHw();
@@ -463,27 +463,27 @@ int main(void)
     readConfiguration();
 
     // Init env
-    initEnv();
+//    initEnv();
 
     // Init arp
     initArp();
 
     // Init handlers
-    {
-        if(
-                addEthernetHandler((ethHandler){
-                    .timeout_sec= ETHH_NO_TIMEOUT,
-                    .resolve    = _ethH_general,
-                    .onTimeout  = NULL
-                })
-          ){}
-        else {
-            putsUart0("failed to init packet handlers");
-
-            while(1)
-                {}
-        }
-    }
+//    {
+//        if(
+//                addEthernetHandler((ethHandler){
+//                    .timeout_sec= ETHH_NO_TIMEOUT,
+//                    .resolve    = _ethH_general,
+//                    .onTimeout  = NULL
+//                })
+//          ){}
+//        else {
+//            putsUart0("failed to init packet handlers");
+//
+//            while(1)
+//                {}
+//        }
+//    }
 
     setPinValue(GREEN_LED, 1);
     waitMicrosecond(100000);
@@ -493,16 +493,17 @@ int main(void)
     {
         etherHeader * d = data;
 
-        s.localPort = 1234;
-        getIpMqttBrokerAddress(s.remoteIpAddress);
-        s.remotePort = 4321;
+        buff_s->localPort = 0;
+//        getIpMqttBrokerAddress(s.remoteIpAddress);
+        buff_s->remotePort = 0;
 
         for(int i = 0; i < HW_ADD_LENGTH; i++)
-            s.remoteHwAddress[i] = 0xff;
-        s.sequenceNumber = random32();
-        s.acknowledgementNumber = 0;
+            buff_s->remoteHwAddress[i] = 0xff;
+        buff_s->sequenceNumber = random32();
+        buff_s->acknowledgementNumber = 0;
 
-        sendTcpMessage(d, &s, 0, 0, 0);
+        // dummy message to indicate presence
+        sendTcpMessage(d, buff_s, RST, 0, 0);
     }
 
     // Main Loop
@@ -514,7 +515,7 @@ int main(void)
         processShell();
 
         // TCP pending messages
-        sendTcpPendingMessages(data);
+//        sendTcpPendingMessages(data);
 
         // Packet processing
         if (isEtherDataAvailable())
@@ -533,31 +534,33 @@ int main(void)
             if (isArpRequest(data))
                 sendArpResponse(data);
             else if(isArpResponse(data))
-                addArpEntry(data, ARP_ENTRY_PRIORITY_MAX);
+                addArpEntry(data, ARP_ENTRY_PRIORITY_MAX / 2);
 
             // Handle IP datagram
             if (isIp(data))
             {
-                handleEthernetHeader(data);
+//                handleEthernetHeader(data);
 
             	if (isIpUnicast(data))
             	{
+            	    // Handle ICMP ping request
+                    if (isPingRequest(data))
+                    {
+                        sendPingResponse(data);
+                        continue;
+                    }
 
                     // Handle TCP datagram
                     if (isTcp(data))
                     {
-
                         socketInfo * si;
                         if (si = isTcpPortOpen(data))
                         {
-                            if(si->sock->state == TCP_ESTABLISHED)
-                                sendTcpResponse(data, si->sock, ACK);
+//                            // updates tcp state machine
+////                            processTcpResponse(si, data);
                         }
                         else
-                            sendTcpResponse(data, &s, ACK | RST);
-
-                        // updates port status
-                        processTcpResponse(data);
+                            sendTcpResponse(data, buff_s, ACK | RST);
                     }
             	}
             }

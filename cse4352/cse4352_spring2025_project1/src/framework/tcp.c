@@ -62,8 +62,16 @@ pendingMsg pendingMessages[TCP_PENQUE_MAX_MSG_COUNT];
 // Subroutines
 //-----------------------------------------------------------------------------
 
+socketInfo * tcpSocketInfoFind(socket * s){
+    uint8_t i;
+    for(i = 0; i < MAX_TCP_SOCKETS; i++)
+        if(isSocketSame(s, sockets[i]))
+            return &sockets[i];
+    return NULL;
+}
+
 inline bool isSockInfoActive(socketInfo const * si){
-    return si->sock && si->sock->state != TCP_CLOSED;
+    return si->probes_left != 0 && si->sock && si->sock->state != TCP_CLOSED;
 }
 
 void initSockInfoState(socketInfo * si){
@@ -93,6 +101,55 @@ void initSockInfoState(socketInfo * si){
             si->probes_left = SI_PROBES_DCON;
             break;
     }
+
+    // because the updater dosent know this hasent run yet,
+    //so 1 extra probe counter is consumed
+    si->probes_left += 1;
+}
+
+socket * openTcpConn(socket * s, etherHeader * e, uint8_t attempts){
+    uint8_t i;
+    for(i = 0; i < MAX_TCP_SOCKETS; i++)
+        if(isSockInfoActive(sockets[i])){ // socket is used
+            if(isSocketSame(s, sockets[i]->sock))
+                return sockets[i]->sock;
+        } else { // socket unused
+            // insert new socket
+
+            sockets[i]->sock = s;
+            s->state = TCP_SYN_SENT;
+            initSockInfoState(sockets[i]);
+
+            if(attempts)
+                sockets[i]->probes_left = attempts + 1;
+
+            updateSocketInfo(sockets[i], e);
+
+            return NULL;
+        }
+
+    return NULL;
+}
+
+void closeTcpConnSoft(socket * s, etherHeader * e, uint8_t attemps){
+    socketInfo * si = tcpSocketInfoFind(s);
+    if(!si || !isSockInfoActive(si))
+        return;
+
+    si->sock->state = TCP_FIN_WAIT_1;
+    initSockInfoState(si);
+
+    if(attemps)
+        si->probes_left = attemps + 1;
+}
+
+void closeTcpConnHard(socket * s, etherHeader * e){
+    socketInfo * si = tcpSocketInfoFind(s);
+    if(!si || !isSockInfoActive(si))
+        return;
+
+    si->sock->state = TCP_CLOSED;
+    si->sock = NULL;
 }
 
 // Set TCP state
@@ -178,7 +235,7 @@ void sendTcpPendingMessages(etherHeader *ether)
                     pm->datasize = 0;
                 }
             }
-            else if(si->sock && si->sock->state == TCP_CLOSED){ // socket is closed
+            else {// socket is closed
                 free(pm->data);
                 pendingMsgMemUsed -= pm->datasize;
                 pm->datasize = 0;
@@ -191,11 +248,8 @@ void sendTcpPendingMessages(etherHeader *ether)
 
 // assume the socket from the ethernet packet is valid
 // MOD
-void processTcpResponse(etherHeader * e)
+void processTcpResponse(socketInfo * s, etherHeader * e)
 {
-    socketInfo * s = isTcpPortOpen(e);
-    if(!s) return;
-
     ipHeader * ip = (ipHeader*)e->data;
     tcpHeader * tcp = (tcpHeader*)((uint8_t*)ip + (ip->size * 4));
 
@@ -261,9 +315,7 @@ void processTcpResponse(etherHeader * e)
 
         case TCP_CLOSING :
         case TCP_CLOSE_WAIT :
-            sendTcpResponse(e, s->sock, ACK);
-            recalTimeout = true;
-            s->sock->state = TCP_LAST_ACK;
+            sendTcpResponse(e, s->sock, ACK | FIN);
             break;
 
         case TCP_LAST_ACK :
@@ -315,8 +367,10 @@ void updateSocketInfo(socketInfo * si, etherHeader * e){
         return;
 
     if(si->probes_left == 0){
+        // if anything at any point times out ; reset.
         sendTcpResponse(e, si->sock, RST);
         si->sock->state = TCP_CLOSED;
+        si->sock = NULL;
     }
 
     si->probes_left--;
@@ -328,7 +382,9 @@ void updateSocketInfo(socketInfo * si, etherHeader * e){
             return;
 
         case TCP_CLOSE_WAIT:
-            // do nothing
+            si->sock->state = TCP_LAST_ACK;
+            sendTcpResponse(e, si->sock, ACK | FIN);
+            initSockInfoState(si);
             break;
 
         case TCP_CLOSING:
@@ -364,6 +420,7 @@ void updateSocketInfo(socketInfo * si, etherHeader * e){
 // MOD
 void sendTcpResponse(etherHeader * ether, socket* sock, uint16_t flags)
 {
+    getSocketInfoFromTcpPacket(ether, sock);
     sendTcpMessage(ether, sock, flags, 0, 0);
 }
 
