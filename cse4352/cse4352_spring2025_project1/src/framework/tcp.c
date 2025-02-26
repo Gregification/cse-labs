@@ -33,14 +33,14 @@
 // ------------------------------------------------------------------------------
 
 // probe count defaults
-#define SI_PROBES_CONN     2   // connecting
+#define SI_PROBES_CONN     3   // connecting
 #define SI_PROBES_KEPAL    3   // keep-alives
-#define SI_PROBES_DCON     2   // disconnecting
+#define SI_PROBES_DCON     3   // disconnecting
 
 // probe timeouts
-#define SI_TO_CONN      5
-#define SI_TO_KEPAL     8
-#define SI_TO_DCON      5
+#define SI_TO_CONN      2
+#define SI_TO_KEPAL     10
+#define SI_TO_DCON      2
 
 uint16_t pendingMsgMemUsed = 0;
 
@@ -83,8 +83,6 @@ socketInfo * tcpSocketInfoFind(socket * s){
 }
 
 void initSockInfoState(socketInfo * si){
-    si->start_time = systick - 1; // force update on next pass
-
     switch(si->sock->state){
         case TCP_LISTEN:
         case TCP_SYN_SENT:
@@ -110,9 +108,7 @@ void initSockInfoState(socketInfo * si){
             break;
     }
 
-    // because the updater dosent know this hasent run yet,
-    //so 1 extra probe counter is consumed
-    si->probes_left += 1;
+    si->start_time = systick - si->timeout - 1; // force update on next pass
 }
 
 socket * openTcpConn(socket * s, etherHeader * e, uint8_t attempts){
@@ -375,24 +371,21 @@ void updateSocketInfos(etherHeader * e){
 // assuming socket info is valid
 void updateSocketInfo(socketInfo * si, etherHeader * e){
     if(!isSockInfoActive(si)){
-        if(si && si->sock)
-            si->sock->state = TCP_CLOSED;
         return;
     }
 
-    if(systick - si->start_time < si->timeout)
-        // if not timed out
+    if(systick - si->start_time < si->timeout) // not timed out
         return;
 
-    if(si->probes_left == 0){
-        // if anything at any point times out ; reset.
+    if(si->probes_left == 0){ // anything at any point times out
+        // reset
         sendTcpResponse(e, si->sock, RST);
         si->sock->state = TCP_CLOSED;
         si->sock = NULL;
     }
 
     si->probes_left--;
-    si->start_time == systick;
+    si->start_time = systick;
 
     switch(si->sock->state){
         case TCP_CLOSED:

@@ -60,7 +60,7 @@ void connectMqtt(etherHeader * e)
         return;
     }
 
-    mqttsocket->remotePort = htons(1883);
+    mqttsocket->remotePort = 1883;
 
     openTcpConn(mqttsocket, e, 0);
 
