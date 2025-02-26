@@ -236,7 +236,7 @@ uint8_t asciiToUint8(const char str[])
     return data;
 }
 
-void processShell()
+void processShell(etherHeader * e)
 {
     bool end;
     char c;
@@ -272,7 +272,7 @@ void processShell()
                 token = strtok(NULL, " ");
                 if (strcmp(token, "connect") == 0)
                 {
-                    connectMqtt();
+                    connectMqtt(e);
                 }
                 if (strcmp(token, "disconnect") == 0)
                 {
@@ -391,6 +391,7 @@ void processShell()
                     setIpMqttBrokerAddress(ip);
                     p32 = (uint32_t*)ip;
                     writeEeprom(EEPROM_MQTT, *p32);
+                    ArpFind((uint8_t *)p32);
                 }
             }
 
@@ -417,28 +418,27 @@ void processShell()
 
 // i was going to do something with this before i fully understood how this framework was structured
 //      this is somewhat pointless now, but high effort to remove.
-ethResolution _ethH_general(ethHandler * self, etherHeader * data){
-    if (isIpUnicast(data))
-    {
-        // Handle ICMP ping request
-        if (isPingRequest(data))
-        {
-            sendPingResponse(data);
-        }
-    }
-
-    return (ethResolution){
-        .removeEth      = false,
-        .removeResolver = false,
-        .forceTimeout   = false
-    };
-}
+//ethResolution _ethH_general(ethHandler * self, etherHeader * data){
+//    if (isIpUnicast(data))
+//    {
+//        // Handle ICMP ping request
+//        if (isPingRequest(data))
+//        {
+//            sendPingResponse(data);
+//        }
+//    }
+//
+//    return (ethResolution){
+//        .removeEth      = false,
+//        .removeResolver = false,
+//        .forceTimeout   = false
+//    };
+//}
 
 int main(void)
 {
     uint8_t buffer[MAX_PACKET_SIZE];
     etherHeader * data = (etherHeader*) buffer;
-    socket * buff_s = newSocket();
 
     // Init controller
     initHw();
@@ -468,6 +468,9 @@ int main(void)
     // Init arp
     initArp();
 
+    // init tcp sockets
+    initTcp();
+
     // Init handlers
 //    {
 //        if(
@@ -491,19 +494,28 @@ int main(void)
     waitMicrosecond(100000);
 
     {
-        etherHeader * d = data;
+        socket buff_s;
 
-        buff_s->localPort = 0;
+        buff_s.localPort = 0;
 //        getIpMqttBrokerAddress(s.remoteIpAddress);
-        buff_s->remotePort = 0;
+        buff_s.remotePort = 0;
 
-        for(int i = 0; i < HW_ADD_LENGTH; i++)
-            buff_s->remoteHwAddress[i] = 0xff;
-        buff_s->sequenceNumber = random32();
-        buff_s->acknowledgementNumber = 0;
+        for(uint8_t i = 0; i < HW_ADD_LENGTH; i++)
+            buff_s.remoteHwAddress[i] = 0xff;
+        for(uint8_t i = 0; i < IP_ADD_LENGTH; i++)
+            buff_s.remoteIpAddress[i] = 0xff;
+
+        buff_s.sequenceNumber = random32();
+        buff_s.acknowledgementNumber = 0;
 
         // dummy message to indicate presence
-        sendTcpMessage(d, buff_s, RST, 0, 0);
+        sendTcpMessage(data, &buff_s, RST, 0, 0);
+    }
+    {
+        IPv4 src, dest;
+        getIpMqttBrokerAddress(dest.bytes);
+        getIpAddress(src.bytes);
+        sendArpRequest(data, src.bytes, dest.bytes);
     }
 
     // Main Loop
@@ -512,10 +524,11 @@ int main(void)
     while (true)
     {
         // Terminal processing here
-        processShell();
+        processShell(data);
 
         // TCP pending messages
 //        sendTcpPendingMessages(data);
+        updateSocketInfos(data);
 
         // Packet processing
         if (isEtherDataAvailable())
@@ -556,15 +569,16 @@ int main(void)
                         socketInfo * si;
                         if (si = isTcpPortOpen(data))
                         {
-//                            // updates tcp state machine
-////                            processTcpResponse(si, data);
+                            // updates tcp state machine
+                            processTcpResponse(si, data);
                         }
-                        else
-                            sendTcpResponse(data, buff_s, ACK | RST);
+                        else {
+                            socket s;
+                            sendTcpResponse(data, &s, ACK | RST);
+                        }
                     }
             	}
             }
         }
     }
 }
-

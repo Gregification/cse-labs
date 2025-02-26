@@ -20,6 +20,7 @@
 ethHandler ethernetHandlers[MAX_ETHH];
 
 void initEnv(){
+
     for(int i = 0; i < MAX_ETHH; i++){
         ethernetHandlers[i].resolve = NULL;
         ethernetHandlers[i].data[0] = NULL;

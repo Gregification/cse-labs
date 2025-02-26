@@ -51,7 +51,7 @@ bool isArpResponse(etherHeader *ether);
 void sendArpResponse(etherHeader *ether);
 void sendArpRequest(etherHeader *ether, uint8_t ipFrom[], uint8_t ipTo[]);
 
-MAC * ArpFind(uint8_t ip[IP_ADD_LENGTH]);
+MAC ArpFind(uint8_t ip[IP_ADD_LENGTH]);
 
 /*
  * @return : true if entry now exists. replaces a existing entry. a entry cannot

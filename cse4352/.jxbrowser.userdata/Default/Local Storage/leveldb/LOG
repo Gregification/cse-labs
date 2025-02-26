@@ -1,2 +1,3 @@
-2025/02/15-19:42:35.651 2c48 Creating DB D:\cse-labs\cse4352\.jxbrowser.userdata\Default\Local Storage\leveldb since it was missing.
-2025/02/15-19:42:35.657 2c48 Reusing MANIFEST D:\cse-labs\cse4352\.jxbrowser.userdata\Default\Local Storage\leveldb/MANIFEST-000001
+2025/02/25-14:16:32.055 2a80e Reusing MANIFEST /media/greg/Data1/UTAdir/cse-labs/cse4352/.jxbrowser.userdata/Default/Local Storage/leveldb/MANIFEST-000001
+2025/02/25-14:16:32.057 2a80e Recovering log #3
+2025/02/25-14:16:32.059 2a80e Reusing old log /media/greg/Data1/UTAdir/cse-labs/cse4352/.jxbrowser.userdata/Default/Local Storage/leveldb/000003.log 

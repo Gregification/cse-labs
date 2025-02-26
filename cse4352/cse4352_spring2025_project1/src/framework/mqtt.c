@@ -21,6 +21,8 @@
 #include "mqtt.h"
 #include "timer.h"
 
+#include "arp.h"
+#include "../env.h"
 #include "../ipHandlers.h"
 
 // ------------------------------------------------------------------------------
@@ -35,14 +37,32 @@
 // Subroutines
 //-----------------------------------------------------------------------------
 
-void connectMqtt()
+void connectMqtt(etherHeader * e)
 {
-//    if(mqtt_socket == NULL)
-//        if(!(mqtt_socket = newSocket()))
-//            return;
+    if(mqttsocket){
+        if(mqttsocket->state != TCP_CLOSED)
+            return;
 
-//    if(mqtt_socket->state == TCP_CLOSED)
-//        startTCPConnection(mqtt_socket);
+    } else {
+        mqttsocket = newSocket();
+        if(!mqttsocket)
+            return;
+    }
+
+    getIpMqttBrokerAddress(mqttsocket->remoteIpAddress);
+    *(MAC *)mqttsocket->remoteHwAddress = ArpFind(mqttsocket->remoteIpAddress);
+
+    if((*(MAC *)mqttsocket->remoteHwAddress).raw == 0){
+        IPv4 src, dest;
+        getIpMqttBrokerAddress(dest.bytes);
+        getIpAddress(src.bytes);
+        sendArpRequest(e, src.bytes, dest.bytes);
+        return;
+    }
+
+    mqttsocket->remotePort = htons(1883);
+
+    openTcpConn(mqttsocket, e, 0);
 
     // data to be sent : https://cedalo.com/blog/mqtt-connection-beginners-guide/
 }

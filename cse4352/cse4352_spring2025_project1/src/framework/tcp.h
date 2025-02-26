@@ -97,6 +97,8 @@ typedef struct _socketInfo {
 // Subroutines
 //-----------------------------------------------------------------------------
 
+void initTcp();
+
 //void setTcpState(uint8_t instance, uint8_t state);
 //uint8_t getTcpState(uint8_t instance);
 
@@ -113,7 +115,7 @@ void processTcpArpResponse(etherHeader *ether);
 /**
  * @return pointer to local open TCP socket
  */
-socketInfo * isTcpPortOpen(etherHeader const * ether);
+socketInfo * isTcpPortOpen(etherHeader * ether);
 void sendTcpResponse(etherHeader *ether, socket* s, uint16_t flags);
 void sendTcpMessage(etherHeader *ether, socket* s, uint16_t flags, void * data, uint16_t dataSize);
 
@@ -122,7 +124,9 @@ void processTcpResponse(socketInfo * si, etherHeader * e);
 /** retreives the matching socket info if of the given socket if it exists */
 socketInfo * tcpSocketInfoFind(socket * s);
 
-bool isSockInfoActive(socketInfo const * si);
+bool isSockInfoActive(socketInfo * si);
+
+void updateSocketInfos(etherHeader * e);
 
 /** evaluates a specific SI's timeout state and resends messages as needed */
 void updateSocketInfo(socketInfo * si, etherHeader * e);

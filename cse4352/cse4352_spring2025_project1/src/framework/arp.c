@@ -42,7 +42,7 @@ typedef struct _ARPEntry {
     IPv4 ipv4;
     MAC mac;
 
-    union __attribute__((__packed__)) {
+    struct __attribute__((__packed__)) {
         bool pending : 1;
         unsigned int priority : 7;
     };
@@ -61,7 +61,7 @@ void initArp(){
     }
 }
 
-MAC * ArpFind(uint8_t ip_arr[IP_ADD_LENGTH]){
+MAC ArpFind(uint8_t ip_arr[IP_ADD_LENGTH]){
     IPv4 * ip = (IPv4 *)ip_arr;
 
     uint8_t i;
@@ -70,7 +70,7 @@ MAC * ArpFind(uint8_t ip_arr[IP_ADD_LENGTH]){
 
             if(arpLot[i].pending){
                 // dont change priority in this case
-                return NULL;
+                return (MAC)(uint64_t)0;
             }
 
             arpLot[i].priority += arpLot[i].priority < ARP_ENTRY_PRIORITY_MAX;
@@ -90,12 +90,12 @@ MAC * ArpFind(uint8_t ip_arr[IP_ADD_LENGTH]){
                 }
             }
 
-            return &arpLot[i].mac;
+            return arpLot[i].mac;
         } else {
             arpLot[i].priority -= arpLot[i].priority > 0;
         }
 
-    return NULL;
+    return (MAC)(uint64_t)0;
 }
 
 bool addArpLOTEntry(MAC * hwip, IPv4 * ip, uint8_t priority){
@@ -114,8 +114,13 @@ bool addArpLOTEntry(MAC * hwip, IPv4 * ip, uint8_t priority){
 
     // replace
     if(ir != ARP_BUFFER_SIZE) {
-        arpLot[ir].ipv4.raw  = ip->raw;
-        arpLot[ir].mac.raw   = hwip->raw;
+        uint8_t i;
+        for(i = 0; i < IP_ADD_LENGTH; i++)
+            arpLot[ir].ipv4.bytes[i]= ip->bytes[i];
+
+        for(i = 0; i < HW_ADD_LENGTH; i++)
+            arpLot[ir].mac.bytes[i] = hwip->bytes[i];
+
         arpLot[ir].priority  = priority > arpLot[ir].priority ? priority : arpLot[ir].priority;
         return true;
     }

@@ -1,9 +1,1 @@
-2025/02/15-19:42:35.636 bf0 Log #3: 2 ops saved to Table #7 OK
-2025/02/15-19:42:35.637 bf0 Archiving D:\cse-labs\cse4352\.jxbrowser.userdata\Default\Site Characteristics Database/000003.log: OK
-2025/02/15-19:42:35.644 bf0 Log #6: 3 ops saved to Table #8 OK
-2025/02/15-19:42:35.644 bf0 Archiving D:\cse-labs\cse4352\.jxbrowser.userdata\Default\Site Characteristics Database/000006.log: OK
-2025/02/15-19:42:35.644 bf0 Table #4: 2 entries OK
-2025/02/15-19:42:35.644 bf0 Table #7: 2 entries OK
-2025/02/15-19:42:35.644 bf0 Table #8: 3 entries OK
-2025/02/15-19:42:35.648 bf0 Archiving D:\cse-labs\cse4352\.jxbrowser.userdata\Default\Site Characteristics Database/MANIFEST-000001: OK
-2025/02/15-19:42:35.651 bf0 **** Repaired leveldb D:\cse-labs\cse4352\.jxbrowser.userdata\Default\Site Characteristics Database; recovered 3 files; 600 bytes. Some data may have been lost. ****
+2025/02/15-19:42:35.657 bf0 Reusing MANIFEST D:\cse-labs\cse4352\.jxbrowser.userdata\Default\Site Characteristics Database/MANIFEST-000001

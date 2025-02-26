@@ -18,7 +18,7 @@
 #include "framework/eth0.h"
 #include "framework/timer.h"
 
-#define port uint8_t
+#define port uint16_t
 
 typedef union _IPv4 {
     uint8_t bytes[4];
@@ -26,7 +26,7 @@ typedef union _IPv4 {
 } IPv4;
 
 typedef union _MAC {
-    uint8_t bytes[8];
+    uint8_t bytes[6];
     uint64_t raw;
 } MAC;
 

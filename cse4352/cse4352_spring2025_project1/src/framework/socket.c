@@ -116,11 +116,11 @@ void getSocketInfoFromTcpPacket(etherHeader *ether, socket *s)
 }
 
 bool isSocketSame(socket const * a, socket const * b){
-    if(!(a && b))
+    if(!(a && b && a->remoteHwAddress && b->remoteHwAddress && a->remoteIpAddress && b->remoteIpAddress))
         return false;
 
     uint8_t i;
-    for(i = 0; i < sizeof(IPv4) + sizeof(MAC) + sizeof(port) * 2; i++)
+    for(i = 0; i < IP_ADD_LENGTH + HW_ADD_LENGTH + sizeof(port) * 2; i++)
         if(((uint8_t *)a)[i] != ((uint8_t *)b)[i])
             return false;
 

@@ -23,11 +23,13 @@
 #include <stdbool.h>
 #include "tcp.h"
 
+socket * mqttsocket;
+
 //-----------------------------------------------------------------------------
 // Subroutines
 //-----------------------------------------------------------------------------
 
-void connectMqtt();
+void connectMqtt(etherHeader * e);
 void disconnectMqtt();
 void publishMqtt(char strTopic[], char strData[]);
 void subscribeMqtt(char strTopic[]);
