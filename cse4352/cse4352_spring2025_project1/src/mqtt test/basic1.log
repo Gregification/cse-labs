@@ -1,18 +1,29 @@
-1739732189: mosquitto version 2.0.11 starting
-1739732189: Config loaded from ./basic1.conf.
-1739732189: Starting in local only mode. Connections will only be possible from clients running on this machine.
-1739732189: Create a configuration file which defines a listener to allow remote access.
-1739732189: For more details see https://mosquitto.org/documentation/authentication-methods/
-1739732189: Opening ipv4 listen socket on port 1883.
-1739732189: Error: Address already in use
-1739732189: Opening ipv6 listen socket on port 1883.
-1739732189: Error: Address already in use
-1739732252: mosquitto version 2.0.11 starting
-1739732252: Config loaded from ./basic1.conf.
-1739732252: Starting in local only mode. Connections will only be possible from clients running on this machine.
-1739732252: Create a configuration file which defines a listener to allow remote access.
-1739732252: For more details see https://mosquitto.org/documentation/authentication-methods/
-1739732252: Opening ipv4 listen socket on port 1883.
-1739732252: Error: Address already in use
-1739732252: Opening ipv6 listen socket on port 1883.
-1739732252: Error: Address already in use
+1740630387: mosquitto version 2.0.20 starting
+1740630387: Config loaded from .\basic1.conf.
+1740630387: Starting in local only mode. Connections will only be possible from clients running on this machine.
+1740630387: Create a configuration file which defines a listener to allow remote access.
+1740630387: For more details see https://mosquitto.org/documentation/authentication-methods/
+1740630387: Opening ipv4 listen socket on port 1883.
+1740630387: Error: Only one usage of each socket address (protocol/network address/port) is normally permitted.
+
+1740630387: Opening ipv6 listen socket on port 1883.
+1740630387: Error: Only one usage of each socket address (protocol/network address/port) is normally permitted.
+
+1740630537: mosquitto version 2.0.20 starting
+1740630537: Config loaded from .\basic1.conf.
+1740630537: Opening ipv6 listen socket on port 169.
+1740630537: Opening ipv4 listen socket on port 169.
+1740630537: mosquitto version 2.0.20 running
+1740667963: mosquitto version 2.0.20 starting
+1740667963: Config loaded from .\basic1.conf.
+1740667963: Opening ipv6 listen socket on port 169.
+1740667963: Opening ipv4 listen socket on port 169.
+1740667963: mosquitto version 2.0.20 running
+1740668494: mosquitto version 2.0.20 terminating
+1740668508: mosquitto version 2.0.20 starting
+1740668508: Config loaded from .\basic1.conf.
+1740668508: Opening ipv6 listen socket on port 1883.
+1740668508: Opening ipv4 listen socket on port 1883.
+1740668508: mosquitto version 2.0.20 running
+1740668513: New connection from 169.254.0.2:49000 on port 1883.
+1740668560: mosquitto version 2.0.20 terminating
