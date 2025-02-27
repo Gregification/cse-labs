@@ -276,7 +276,7 @@ void processShell(etherHeader * e)
                 }
                 if (strcmp(token, "disconnect") == 0)
                 {
-                    disconnectMqtt();
+                    disconnectMqtt(e);
                 }
                 if (strcmp(token, "publish") == 0)
                 {
@@ -552,6 +552,9 @@ int main(void)
             // Handle IP datagram
             if (isIp(data))
             {
+                ipHeader * ip = (ipHeader*)data->data;
+                tcpHeader * tcp = (tcpHeader*)((uint8_t*)ip + (ip->size * 4));
+
 //                handleEthernetHeader(data);
 
             	if (isIpUnicast(data))
@@ -573,8 +576,10 @@ int main(void)
                             processTcpResponse(si, data);
                         }
                         else {
-                            socket s;
-                            sendTcpResponse(data, &s, ACK | RST);
+                            if(!tcp->fRST){
+                                socket s;
+                                sendTcpResponseFromEther(data, &s, RST);
+                            }
                         }
                     }
             	}

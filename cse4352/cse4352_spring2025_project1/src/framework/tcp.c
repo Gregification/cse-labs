@@ -69,7 +69,7 @@ void initTcp(){
 }
 
 bool isSockInfoActive(socketInfo * si){
-    return si && si->probes_left != 0 && si->sock && si->sock->state != TCP_CLOSED;
+    return si && si->sock && si->sock->state != TCP_CLOSED;
 }
 
 socketInfo * tcpSocketInfoFind(socket * s){
@@ -258,13 +258,22 @@ void sendTcpPendingMessages(etherHeader *ether)
 // MOD
 void processTcpResponse(socketInfo * s, etherHeader * e)
 {
+    // i lied
+    if(!(s && s->sock)) // is not active
+        return;
+
     ipHeader * ip = (ipHeader*)e->data;
     tcpHeader * tcp = (tcpHeader*)((uint8_t*)ip + (ip->size * 4));
 
     if(tcp->fRST)
         s->sock->state = TCP_CLOSED;
 
+    // always reply that nothing was lost. trust-me-bro technology.
+    s->sock->acknowledgementNumber = ntohl(tcp->sequenceNumber) + 1;
+
     bool recalTimeout = false;
+
+//    s->sock->acknowledgementNumber += htonl();
 
     switch(s->sock->state){
         case TCP_LISTEN :
@@ -316,12 +325,13 @@ void processTcpResponse(socketInfo * s, etherHeader * e)
 
         case TCP_ESTABLISHED :
             s->sock->sequenceNumber += ip->length - (ip->size * 4) - sizeof(tcpHeader);
-            s->sock->acknowledgementNumber = s->sock->sequenceNumber + 1;
+//            s->sock->acknowledgementNumber = s->sock->sequenceNumber + htonl(1;
             if(tcp->fACK)
                 recalTimeout = true;
             if(tcp->fFIN){
                 recalTimeout = true;
-                sendTcpMessage(e, s->sock, FIN | ACK, NULL, 0);
+                sendTcpResponseFromEther(e, s->sock, FIN | ACK);
+//                sendTcpMessage(e, s->sock, FIN | ACK, NULL, 0);
 //                sendTcpResponse(e, s->sock, ACK | FIN);
             }
             break;
@@ -370,26 +380,30 @@ void updateSocketInfos(etherHeader * e){
 
 // assuming socket info is valid
 void updateSocketInfo(socketInfo * si, etherHeader * e){
-    if(!isSockInfoActive(si)){
-        return;
-    }
+    { // validity check
+        if(!si || (systick - si->start_time < si->timeout)) // is ptr valid and not timed out
+            return;
 
-    if(systick - si->start_time < si->timeout) // not timed out
-        return;
+        if(!isSockInfoActive(si)){
+            return;
+        }
 
-    if(si->probes_left == 0){ // anything at any point times out
-        // reset
-        sendTcpResponse(e, si->sock, RST);
-        si->sock->state = TCP_CLOSED;
-        si->sock = NULL;
+        if(si->sock && si->probes_left == 0){ // anything at any point times out
+            // reset
+            sendTcpResponseFromEther(e, si->sock, RST);
+            si->sock->state = TCP_CLOSED;
+            si->sock = NULL;
+            return;
+        }
     }
 
     si->probes_left--;
     si->start_time = systick;
 
     switch(si->sock->state){
-        case TCP_CLOSED:
         case TCP_LISTEN:
+            si->probes_left = SI_PROBES_CONN; // reset timeout (so it'll never timeout)
+        case TCP_CLOSED:
             return;
 
         case TCP_CLOSE_WAIT:
@@ -401,7 +415,7 @@ void updateSocketInfo(socketInfo * si, etherHeader * e){
         case TCP_CLOSING:
             // do
         case TCP_ESTABLISHED:
-            sendTcpMessage(e, si->sock, ACK, NULL, 0);
+//            sendTcpMessage(e, si->sock, ACK, NULL, 0);
             break;
 
         case TCP_FIN_WAIT_2:
@@ -429,10 +443,13 @@ void updateSocketInfo(socketInfo * si, etherHeader * e){
 }
 
 // MOD
-void sendTcpResponse(etherHeader * ether, socket* sock, uint16_t flags)
+void sendTcpResponseFromEther(etherHeader * ether, socket* sock, uint16_t flags)
 {
     getSocketInfoFromTcpPacket(ether, sock);
-    sendTcpMessage(ether, sock, flags, NULL, 0);
+    tcpHeader * tcp = (tcpHeader *)((ipHeader *)ether->data)->data;
+    sock->acknowledgementNumber = tcp->sequenceNumber + 1;
+    uint8_t dater[] = {1,2,3,4};
+    sendTcpMessage(ether, sock, flags, dater, sizeof(dater));
 }
 
 // Send TCP message
@@ -465,6 +482,7 @@ void sendTcpMessage(etherHeader *ether, socket *sock, uint16_t flags, void * dat
     tcpHeader * tcp     = (tcpHeader *)ip->data;
     tcp->sourcePort     = htons(sock->localPort);
     tcp->destPort       = htons(sock->remotePort);
+    sock->sequenceNumber+= dataSize;
     tcp->sequenceNumber = htonl(sock->sequenceNumber);
     tcp->acknowledgementNumber  = htonl(sock->acknowledgementNumber);
     tcp->offsetFields   = htons(flags);
@@ -486,7 +504,6 @@ void sendTcpMessage(etherHeader *ether, socket *sock, uint16_t flags, void * dat
     }
 
     putEtherPacket(ether, sizeof(etherHeader) + ntohs(ip->length));
-    sock->sequenceNumber += dataSize;
 }
 
 bool queueTcpData(socket * s, void * data,  uint16_t datasize){

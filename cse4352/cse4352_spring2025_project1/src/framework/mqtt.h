@@ -30,7 +30,7 @@ socket * mqttsocket;
 //-----------------------------------------------------------------------------
 
 void connectMqtt(etherHeader * e);
-void disconnectMqtt();
+void disconnectMqtt(etherHeader * e);
 void publishMqtt(char strTopic[], char strData[]);
 void subscribeMqtt(char strTopic[]);
 void unsubscribeMqtt(char strTopic[]);

@@ -116,7 +116,7 @@ void processTcpArpResponse(etherHeader *ether);
  * @return pointer to local open TCP socket
  */
 socketInfo * isTcpPortOpen(etherHeader * ether);
-void sendTcpResponse(etherHeader *ether, socket* s, uint16_t flags);
+void sendTcpResponseFromEther(etherHeader *ether, socket* s, uint16_t flags);
 void sendTcpMessage(etherHeader *ether, socket* s, uint16_t flags, void * data, uint16_t dataSize);
 
 void processTcpResponse(socketInfo * si, etherHeader * e);

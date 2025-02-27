@@ -20,7 +20,7 @@
 #include <string.h>
 #include "mqtt.h"
 #include "timer.h"
-
+#include "tcp.h"
 #include "arp.h"
 #include "../env.h"
 #include "../ipHandlers.h"
@@ -60,15 +60,17 @@ void connectMqtt(etherHeader * e)
         return;
     }
 
-    mqttsocket->remotePort = 1883;
+    mqttsocket->localPort   = 49000;
+    mqttsocket->remotePort  = 1883;
 
     openTcpConn(mqttsocket, e, 0);
 
     // data to be sent : https://cedalo.com/blog/mqtt-connection-beginners-guide/
 }
 
-void disconnectMqtt()
+void disconnectMqtt(etherHeader * e)
 {
+    closeTcpConnSoft(mqttsocket, e, 0);
 }
 
 void publishMqtt(char strTopic[], char strData[])
