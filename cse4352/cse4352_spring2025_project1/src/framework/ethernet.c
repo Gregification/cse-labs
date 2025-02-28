@@ -554,6 +554,7 @@ int main(void)
             {
                 ipHeader * ip = (ipHeader*)data->data;
                 tcpHeader * tcp = (tcpHeader*)((uint8_t*)ip + (ip->size * 4));
+                uint16_t tcp_datalen = ip->length - ip->size * 4 - sizeof(tcpHeader);
 
 //                handleEthernetHeader(data);
 

@@ -45,7 +45,7 @@
 uint16_t pendingMsgMemUsed = 0;
 
 typedef struct _pendingMsg {
-    uint8_t socketInfoIdx;
+    socket * socket;
     uint16_t datasize;
     uint8_t * data; // allocated memory
 } pendingMsg;
@@ -63,9 +63,9 @@ pendingMsg pendingMessages[TCP_PENQUE_MAX_MSG_COUNT];
 //-----------------------------------------------------------------------------
 
 void initTcp(){
-    uint8_t i;
-    for(i = 0; i < MAX_TCP_SOCKETS; i++)
-        sockets_tcp[i].sock = NULL;
+//    uint8_t i;
+//    for(i = 0; i < MAX_TCP_SOCKETS; i++)
+//        sockets_tcp[i].sock = NULL;
 }
 
 bool isSockInfoActive(socketInfo * si){
@@ -229,21 +229,18 @@ void sendTcpPendingMessages(etherHeader *ether)
 
     uint8_t i;
     for(i = 0; i < TCP_PENQUE_MAX_MSG_COUNT; i++){
-        socketInfo * si = &sockets_tcp[pendingMessages[i].socketInfoIdx];
-        pendingMsg * pm = &pendingMessages[i];
+        pendingMsg *    pm  = &pendingMessages[i];
 
         if(pm->datasize && pm->data) { // message exist
-            if(isSockInfoActive(si)) { // socket open
-                if(si->sock->state == TCP_ESTABLISHED){
-                    // send message
-                    sendTcpMessage(ether, si->sock, 0, pm->data, pm->datasize);
+            if(s->state == TCP_ESTABLISHED){
+                // send message
+                sendTcpMessage(ether, s, 0, pm->data, pm->datasize);
 
-                    free(pm->data);
-                    pendingMsgMemUsed -= pm->datasize;
-                    pm->datasize = 0;
-                }
+                free(pm->data);
+                pendingMsgMemUsed -= pm->datasize;
+                pm->datasize = 0;
             }
-            else {// socket is closed
+            else if(s->state == TCP_CLOSED){
                 free(pm->data);
                 pendingMsgMemUsed -= pm->datasize;
                 pm->datasize = 0;
@@ -330,8 +327,8 @@ void processTcpResponse(socketInfo * s, etherHeader * e)
                 recalTimeout = true;
             if(tcp->fFIN){
                 recalTimeout = true;
-                sendTcpResponseFromEther(e, s->sock, FIN | ACK);
-//                sendTcpMessage(e, s->sock, FIN | ACK, NULL, 0);
+//                sendTcpResponseFromEther(e, s->sock, FIN | ACK);
+                sendTcpMessage(e, s->sock, FIN | ACK, NULL, 0);
 //                sendTcpResponse(e, s->sock, ACK | FIN);
             }
             break;
@@ -390,7 +387,7 @@ void updateSocketInfo(socketInfo * si, etherHeader * e){
 
         if(si->sock && si->probes_left == 0){ // anything at any point times out
             // reset
-            sendTcpResponseFromEther(e, si->sock, RST);
+            sendTcpMessage(e, si->sock, RST, NULL, 0);
             si->sock->state = TCP_CLOSED;
             si->sock = NULL;
             return;
@@ -412,10 +409,10 @@ void updateSocketInfo(socketInfo * si, etherHeader * e){
             initSockInfoState(si);
             break;
 
-        case TCP_CLOSING:
-            // do
         case TCP_ESTABLISHED:
-//            sendTcpMessage(e, si->sock, ACK, NULL, 0);
+            initSockInfoState(si);
+        case TCP_CLOSING:
+            // do nothing
             break;
 
         case TCP_FIN_WAIT_2:
@@ -507,12 +504,25 @@ void sendTcpMessage(etherHeader *ether, socket *sock, uint16_t flags, void * dat
 }
 
 bool queueTcpData(socket * s, void * data,  uint16_t datasize){
-//    uint8_t i;
-//    for(i = 0; i < MAX_TCP_PORTS; i++){
-//        if(tcpState[i] == TCP_ESTABLISHED && *(uint32_t *)tcpPorts[i] == *(uint32_t *)sock->remoteIpAddress){
-//
-//        }
-//    }
+    if(TCP_PENQUE_MAX_TOTAL_MEM - pendingMsgMemUsed < datasize) // mem space exists
+        return false;
+
+    uint8_t i;
+    for(i = 0; i < TCP_PENQUE_MAX_MSG_COUNT; i++){  // search for array space
+        if(pendingMessages[i].data == NULL){
+            // use space
+            pendingMessages[i].socket = s;
+            pendingMessages[i].datasize = datasize;
+
+            pendingMsgMemUsed += datasize;
+            pendingMessages[i].data = malloc(datasize);
+
+            while(datasize-- > 0)
+                pendingMessages[i].data[datasize] = ((uint8_t *)data)[datasize];
+
+            return true;
+        }
+    }
 
     return false;
 }

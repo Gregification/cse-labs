@@ -60,11 +60,16 @@ void connectMqtt(etherHeader * e)
         return;
     }
 
-    mqttsocket->localPort   = 49000;
+//    mqttsocket->localPort   = 49000; // make random
+    mqttsocket->localPort   = random32();
     mqttsocket->remotePort  = 1883;
 
     openTcpConn(mqttsocket, e, 0);
 
+    mqttFixedHeader mqtth;
+    mqtth.ctrl.type = MQTT_CTRL_TYPE_CONNECT;
+
+    queueTcpData(mqttsocket, &mqtth, sizeof(mqttFixedHeader));
     // data to be sent : https://cedalo.com/blog/mqtt-connection-beginners-guide/
 }
 
@@ -75,6 +80,11 @@ void disconnectMqtt(etherHeader * e)
 
 void publishMqtt(char strTopic[], char strData[])
 {
+    mqttFixedHeader mq;
+    mq.ctrl.type = MQTT_CTRL_TYPE_PUBLISH;
+    mq.ctrl.flags = MQTT_CTRL_FLAG_PUB_QOS_M & (0x0 << MQTT_CTRL_FLAG_PUB_QOS_S);
+    //mqtt is not fixed TODO. make this workie :( . plz
+//    queueTcpData(mqttsocket, &mq, sizeof(mqttFixedHeader));
 }
 
 void subscribeMqtt(char strTopic[])

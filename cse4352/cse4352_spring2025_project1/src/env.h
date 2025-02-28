@@ -54,6 +54,7 @@ struct _ethHandler {
 
 #define SIZETO32(X) ( (X) / 4 + (((X) % 4) != 0))   // returns # of 32b units needed to store
 #define PRNTNEWLN putsUart0("\n\r");
+#define BV(X)   (1 << (X))
 
 void initEnv();
 void IPv4tostring(IPv4 * ip, char str[16]);
