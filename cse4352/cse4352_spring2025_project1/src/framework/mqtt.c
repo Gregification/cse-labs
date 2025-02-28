@@ -37,6 +37,28 @@
 // Subroutines
 //-----------------------------------------------------------------------------
 
+uint32_t getMqttFHLen(mqttFixedHeader * fh){
+    uint32_t ret = 0;
+
+    uint8_t i = 0;
+    do{
+        ret <<= 7;
+        ret |= fh->len[i] & 0x7f;   // all but MSb
+    }while(fh->len[i++] & 0x80);    // MSb exist
+
+    return ret;
+}
+
+void setMqttFHLen(mqttFixedHeader * fh, uint16_t len){
+    uint8_t i = 0;
+    do{
+        fh->len[i] = len & 0x7F;    // all but MSb
+        len >>= 7;
+        if(len)
+            fh->len[i++] |= 0x80;   // indicate extension
+    }while(len > 0);
+}
+
 void connectMqtt(etherHeader * e)
 {
     if(mqttsocket){
@@ -80,11 +102,14 @@ void disconnectMqtt(etherHeader * e)
 
 void publishMqtt(char strTopic[], char strData[])
 {
-    mqttFixedHeader mq;
-    mq.ctrl.type = MQTT_CTRL_TYPE_PUBLISH;
-    mq.ctrl.flags = MQTT_CTRL_FLAG_PUB_QOS_M & (0x0 << MQTT_CTRL_FLAG_PUB_QOS_S);
+//    uint16_t len;
+//    mqttFixedHeader mq;
+//    mq.ctrl.type = MQTT_CTRL_TYPE_PUBLISH;
+//    mq.ctrl.flags = MQTT_CTRL_FLAG_PUB_QOS_M & (0x0 << MQTT_CTRL_FLAG_PUB_QOS_S);
+
     //mqtt is not fixed TODO. make this workie :( . plz
-//    queueTcpData(mqttsocket, &mq, sizeof(mqttFixedHeader));
+    char content[] = "something something";
+    queueTcpData(mqttsocket, content, sizeof(content));
 }
 
 void subscribeMqtt(char strTopic[])

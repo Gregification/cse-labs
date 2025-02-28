@@ -29,17 +29,13 @@ typedef struct mqttFixedHeader {
         unsigned int flags: 4;
     } ctrl;
 
-    uint8_t len;
+    uint8_t len[4];
 
 } mqttFixedHeader;
 
 typedef struct mqttVariableHeader {
-    union __attribute__((__packed__)) {
-        uint8_t arr[6];
-        unsigned long raw : 48;
-    } protocol_name;
+    uint8_t protocol_name[6];
 
-//    uint8_t protocol_name[6];
     uint8_t protocol_level;
     uint8_t conn_flags;
 } mqttVariableHeader;
@@ -47,11 +43,21 @@ typedef struct mqttVariableHeader {
 #define MQTT_CTRL_TYPE_CONNECT      1
 #define MQTT_CTRL_TYPE_CONNACK      2
 #define MQTT_CTRL_TYPE_PUBLISH      3
+#define MQTT_CTRL_TYPE_PUBACK       4
+#define MQTT_CTRL_TYPE_PUBREC       5
+#define MQTT_CTRL_TYPE_PUBREL       6
+#define MQTT_CTRL_TYPE_PUBCOMP      7
+#define MQTT_CTRL_TYPE_SUBSCRIBE    8
+#define MQTT_CTRL_TYPE_SUBACK       9
+#define MQTT_CTRL_TYPE_UNSUBSCRIBE  10
+#define MQTT_CTRL_TYPE_UNSUBACK     11
+#define MQTT_CTRL_TYPE_PINGREQ      12
+#define MQTT_CTRL_TYPE_PINGRESP     13
 #define MQTT_CTRL_TYPE_DISCONNECT   14
 
 #define MQTT_CTRL_FLAG_PUB_DUP      0x8
-#define MQTT_CTRL_FLAG_PUB_QOS_M    (BV(4) | BV(2))
 #define MQTT_CTRL_FLAG_PUB_QOS_S    1
+#define MQTT_CTRL_FLAG_PUB_QOS_M    (0x3 << MQTT_CTRL_FLAG_PUB_QOS_S)
 #define MQTT_CTRL_FLAG_PUB_RETAIN   0x1
 
 /**
@@ -84,6 +90,11 @@ void disconnectMqtt(etherHeader * e);
 void publishMqtt(char strTopic[], char strData[]);
 void subscribeMqtt(char strTopic[]);
 void unsubscribeMqtt(char strTopic[]);
+
+uint32_t getMqttFHLen(mqttFixedHeader *);
+
+// artificially only support 16b. note that mqtt allows up to 32b lengths
+void setMqttFHLen(mqttFixedHeader *, uint16_t len);
 
 #endif
 

@@ -321,7 +321,7 @@ void processTcpResponse(socketInfo * s, etherHeader * e)
             break;
 
         case TCP_ESTABLISHED :
-            s->sock->sequenceNumber += ip->length - (ip->size * 4) - sizeof(tcpHeader);
+            s->sock->acknowledgementNumber = s->sock->sequenceNumber;// + ip->length - (ip->size * 4) - sizeof(tcpHeader);
 //            s->sock->acknowledgementNumber = s->sock->sequenceNumber + htonl(1;
             if(tcp->fACK)
                 recalTimeout = true;
@@ -480,7 +480,7 @@ void sendTcpMessage(etherHeader *ether, socket *sock, uint16_t flags, void * dat
     tcp->sourcePort     = htons(sock->localPort);
     tcp->destPort       = htons(sock->remotePort);
     sock->sequenceNumber+= dataSize;
-    tcp->sequenceNumber = htonl(sock->sequenceNumber);
+    tcp->sequenceNumber = htonl(++sock->sequenceNumber);
     tcp->acknowledgementNumber  = htonl(sock->acknowledgementNumber);
     tcp->offsetFields   = htons(flags);
     tcp->dataoffset     = SIZETO32(sizeof(tcpHeader));
@@ -504,7 +504,10 @@ void sendTcpMessage(etherHeader *ether, socket *sock, uint16_t flags, void * dat
 }
 
 bool queueTcpData(socket * s, void * data,  uint16_t datasize){
-    if(TCP_PENQUE_MAX_TOTAL_MEM - pendingMsgMemUsed < datasize) // mem space exists
+    if((TCP_PENQUE_MAX_TOTAL_MEM - pendingMsgMemUsed) < datasize) // mem space exists
+        return false;
+
+    if(!(datasize && data))
         return false;
 
     uint8_t i;
