@@ -141,14 +141,16 @@ socket * openTcpConn(socket * s, etherHeader * e, uint8_t attempts){
 
 void closeTcpConnSoft(socket * s, etherHeader * e, uint8_t attemps){
     socketInfo * si = tcpSocketInfoFind(s);
-    if(!si || !isSockInfoActive(si))
+    if(si && si->sock) // only check it exists, do not care if its a open port
         return;
-
-    si->sock->state = TCP_FIN_WAIT_1;
-    initSockInfoState(si);
 
     if(attemps)
         si->probes_left = attemps + 1;
+
+    si->sock->state = TCP_FIN_WAIT_1;
+
+    initSockInfoState(si);
+    updateSocketInfo(si, e);
 }
 
 void closeTcpConnHard(socket * s, etherHeader * e){
@@ -158,6 +160,8 @@ void closeTcpConnHard(socket * s, etherHeader * e){
 
     si->sock->state = TCP_CLOSED;
     si->sock = NULL;
+
+    initSockInfoState(si);
 }
 
 // Set TCP state
@@ -223,32 +227,29 @@ bool isTcpAck(etherHeader *ether)
 // MOD
 void sendTcpPendingMessages(etherHeader *ether)
 {
-    socket * s = newSocket();
-    if(!s) return;
-    getSocketInfoFromTcpPacket(ether, s);
+    socket s;
+    getSocketInfoFromTcpPacket(ether, &s);
 
     uint8_t i;
     for(i = 0; i < TCP_PENQUE_MAX_MSG_COUNT; i++){
         pendingMsg *    pm  = &pendingMessages[i];
 
         if(pm->datasize && pm->data) { // message exist
-            if(s->state == TCP_ESTABLISHED){
+            if(s.state == TCP_ESTABLISHED){
                 // send message
-                sendTcpMessage(ether, s, 0, pm->data, pm->datasize);
+                sendTcpMessage(ether, &s, 0, pm->data, pm->datasize);
 
                 free(pm->data);
                 pendingMsgMemUsed -= pm->datasize;
                 pm->datasize = 0;
             }
-            else if(s->state == TCP_CLOSED){
+            else if(s.state == TCP_CLOSED){
                 free(pm->data);
                 pendingMsgMemUsed -= pm->datasize;
                 pm->datasize = 0;
             }
         }
     }
-
-    deleteSocket(s);
 }
 
 // assume the socket from the ethernet packet is valid
@@ -266,7 +267,7 @@ void processTcpResponse(socketInfo * s, etherHeader * e)
         s->sock->state = TCP_CLOSED;
 
     // always reply that nothing was lost. trust-me-bro technology.
-    s->sock->acknowledgementNumber = ntohl(tcp->sequenceNumber) + 1;
+    s->sock->acknowledgementNumber = ntohl(tcp->sequenceNumber);// + ip->length - (ip->size * 4) - sizeof(tcpHeader);
 
     bool recalTimeout = false;
 
@@ -321,7 +322,7 @@ void processTcpResponse(socketInfo * s, etherHeader * e)
             break;
 
         case TCP_ESTABLISHED :
-            s->sock->acknowledgementNumber = 1 + ntohl(s->sock->sequenceNumber);// + ip->length - (ip->size * 4) - sizeof(tcpHeader));
+//            s->sock->acknowledgementNumber = 1 + ntohl(s->sock->sequenceNumber);// + ip->length - (ip->size * 4) - sizeof(tcpHeader));
 //            s->sock->acknowledgementNumber = s->sock->sequenceNumber + htonl(1;
             if(tcp->fACK)
                 recalTimeout = true;
@@ -520,8 +521,8 @@ bool queueTcpData(socket * s, void * data,  uint16_t datasize){
             pendingMsgMemUsed += datasize;
             pendingMessages[i].data = malloc(datasize);
 
-            while(datasize-- > 0)
-                pendingMessages[i].data[datasize] = ((uint8_t *)data)[datasize];
+            for(uint16_t i = 0; i < datasize; i++)
+                pendingMessages[i].data[i] = ((uint8_t *)data)[i];
 
             return true;
         }
