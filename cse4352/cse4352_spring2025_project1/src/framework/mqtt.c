@@ -82,7 +82,6 @@ void connectMqtt(etherHeader * e)
         return;
     }
 
-//    mqttsocket->localPort   = 49000; // make random
     mqttsocket->localPort   = random32();
     mqttsocket->remotePort  = 1883;
 

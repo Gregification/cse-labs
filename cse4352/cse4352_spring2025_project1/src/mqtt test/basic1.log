@@ -48,3 +48,60 @@
 1740756266: Client <unknown> has exceeded timeout, disconnecting.
 1740756376: New connection from 169.254.0.2:54881 on port 1883.
 1740756470: Client <unknown> has exceeded timeout, disconnecting.
+1740796186: mosquitto version 2.0.20 starting
+1740796186: Config loaded from .\basic1.conf.
+1740796186: Opening ipv6 listen socket on port 1883.
+1740796186: Opening ipv4 listen socket on port 1883.
+1740796186: mosquitto version 2.0.20 running
+1740796190: New connection from 169.254.0.2:52256 on port 1883.
+1740796281: Client <unknown> has exceeded timeout, disconnecting.
+1740796895: New connection from 169.254.0.2:417 on port 1883.
+1740796989: Client <unknown> has exceeded timeout, disconnecting.
+1740797535: mosquitto version 2.0.20 terminating
+1740797537: mosquitto version 2.0.20 starting
+1740797537: Config loaded from .\basic1.conf.
+1740797537: Opening ipv6 listen socket on port 1883.
+1740797537: Opening ipv4 listen socket on port 1883.
+1740797537: mosquitto version 2.0.20 running
+1740797614: New connection from 169.254.0.2:19144 on port 1883.
+1740797659: mosquitto version 2.0.20 terminating
+1740797660: mosquitto version 2.0.20 starting
+1740797660: Config loaded from .\basic1.conf.
+1740797660: Opening ipv6 listen socket on port 1883.
+1740797660: Opening ipv4 listen socket on port 1883.
+1740797660: mosquitto version 2.0.20 running
+1740798224: New connection from 169.254.0.2:55685 on port 1883.
+1740798319: Client <unknown> has exceeded timeout, disconnecting.
+1740798544: mosquitto version 2.0.20 terminating
+1740798545: mosquitto version 2.0.20 starting
+1740798545: Config loaded from .\basic1.conf.
+1740798545: Opening ipv6 listen socket on port 1883.
+1740798545: Opening ipv4 listen socket on port 1883.
+1740798545: mosquitto version 2.0.20 running
+1740798571: mosquitto version 2.0.20 terminating
+1740798585: mosquitto version 2.0.20 starting
+1740798585: Config loaded from .\basic1.conf.
+1740798585: Opening ipv6 listen socket on port 1883.
+1740798585: Opening ipv4 listen socket on port 1883.
+1740798585: mosquitto version 2.0.20 running
+1740798719: mosquitto version 2.0.20 terminating
+1740798849: mosquitto version 2.0.20 starting
+1740798849: Config loaded from .\basic1.conf.
+1740798849: Opening ipv6 listen socket on port 1883.
+1740798849: Opening ipv4 listen socket on port 1883.
+1740798849: mosquitto version 2.0.20 running
+1740798855: New connection from 169.254.0.2:33985 on port 1883.
+1740798950: Client <unknown> has exceeded timeout, disconnecting.
+1740799190: mosquitto version 2.0.20 terminating
+1740799193: mosquitto version 2.0.20 starting
+1740799193: Config loaded from .\basic1.conf.
+1740799193: Opening ipv6 listen socket on port 1883.
+1740799193: Opening ipv4 listen socket on port 1883.
+1740799193: mosquitto version 2.0.20 running
+1740799372: New connection from 169.254.0.105:52395 on port 1883.
+1740799463: Client <unknown> has exceeded timeout, disconnecting.
+1740799598: New connection from 169.254.0.105:2375 on port 1883.
+1740799690: Client <unknown> has exceeded timeout, disconnecting.
+1740799977: New connection from 169.254.0.105:17398 on port 1883.
+1740800068: Client <unknown> has exceeded timeout, disconnecting.
+1740805649: mosquitto version 2.0.20 terminating

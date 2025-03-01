@@ -321,7 +321,7 @@ void processTcpResponse(socketInfo * s, etherHeader * e)
             break;
 
         case TCP_ESTABLISHED :
-            s->sock->acknowledgementNumber = s->sock->sequenceNumber;// + ip->length - (ip->size * 4) - sizeof(tcpHeader);
+            s->sock->acknowledgementNumber = 1 + ntohl(s->sock->sequenceNumber);// + ip->length - (ip->size * 4) - sizeof(tcpHeader));
 //            s->sock->acknowledgementNumber = s->sock->sequenceNumber + htonl(1;
             if(tcp->fACK)
                 recalTimeout = true;
