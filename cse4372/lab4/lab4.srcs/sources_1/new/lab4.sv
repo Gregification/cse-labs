@@ -163,7 +163,7 @@ module lab4(
                 3'd1: targ  = i_rdata;
                 3'd2: targ  = d_addr;
                 3'd3: targ  = d_be;
-                3'd4: targ  = d_rdata;
+                //3'd4: targ  = d_rdata; // TODO bruh
                 3'd5: targ  = d_wdata;
             endcase
 

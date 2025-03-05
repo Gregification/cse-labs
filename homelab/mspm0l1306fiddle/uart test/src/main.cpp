@@ -21,6 +21,7 @@
  *      - "mcp.tech.a.b" references the mcu's technical data sheet section a.b
  */
 
+#define DeviceFamily_MSPM0L130X
 #include <ti/devices/msp/msp.h>
 #include <ti/driverlib/driverlib.h>
 
