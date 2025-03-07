@@ -149,6 +149,7 @@ module lab4(
         2'd1: LED_buffer[8:0]  = d_rdata[16:8];
         2'd2: LED_buffer[8:0]  = d_rdata[24:16];
         2'd3: LED_buffer[8:0]  = d_rdata[31:24];
+        default: LED_buffer[8:0] = 0;
     endcase
     assign LED[9] = d_be;
 
