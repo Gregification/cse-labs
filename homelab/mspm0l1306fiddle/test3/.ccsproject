@@ -6,7 +6,7 @@
 	<deviceVariant value="Cortex M.MSPM0L1306"/>
 	<deviceFamily value="TMS470"/>
 	<deviceEndianness value="little"/>
-	<codegenToolVersion value="TICLANG_3.2.2.LTS"/>
+	<codegenToolVersion value="TICLANG_4.0.0.LTS"/>
 	<isElfFormat value="true"/>
 	<connection value="common/targetdb/connections/TIXDS110_Connection.xml"/>
 	<linkerCommandFile value="mspm0l1306.cmd"/>

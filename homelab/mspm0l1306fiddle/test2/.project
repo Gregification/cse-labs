@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>uart test</name>
+	<name>test2</name>
 	<comment></comment>
 	<projects>
 	</projects>
@@ -24,10 +24,4 @@
 		<nature>org.eclipse.cdt.core.ccnature</nature>
 		<nature>org.eclipse.cdt.managedbuilder.core.ScannerConfigNature</nature>
 	</natures>
-	<variableList>
-		<variable>
-			<name>MSP0L_LIB</name>
-			<value>file:/home/greg/ti/mspm0_sdk_2_04_00_06/source</value>
-		</variable>
-	</variableList>
 </projectDescription>
