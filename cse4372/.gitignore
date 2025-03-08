@@ -109,3 +109,4 @@ ipshared
 
 # custom things
 *.runs
+#*/*/*/ip/
