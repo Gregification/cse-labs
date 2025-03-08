@@ -42,18 +42,10 @@ module dual_port_ram(
     
     // baselined from stack overflow : https://stackoverflow.com/questions/70151532/read-from-file-to-memory-in-verilog
     initial begin
-        for (integer i = 0; i < 2**`ADDR_WIDTH; i = i + 1) begin
+        for (integer i = 0; i < $size(mem); i = i + 1) begin
             mem[i] = 0;
         end
-        // $readmemh("dummyhex.hex", mem);
-        mem[0] = 32'h10000000;
-        mem[1] = 32'h02000000;
-        mem[2] = 32'h00300000;
-        mem[3] = 32'h00040000;
-        mem[4] = 32'h00005000;
-        mem[5] = 32'h00000600;
-        mem[6] = 32'h00000070;
-        mem[7] = 32'h00000008;
+        $readmemh("dummyhex.hex", mem);
     end
 
     always @(posedge clk)
