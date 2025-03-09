@@ -59,16 +59,16 @@ void setMqttFHLen(mqttFixedHeader * fh, uint16_t len){
     }while(len > 0);
 }
 
-void connectMqtt(etherHeader * e)
+bool connectMqtt(etherHeader * e)
 {
     if(mqttsocket){
         if(mqttsocket->state != TCP_CLOSED)
-            return;
+            return false;
 
     } else {
         mqttsocket = newSocket();
         if(!mqttsocket)
-            return;
+            return false;
     }
 
     getIpMqttBrokerAddress(mqttsocket->remoteIpAddress);
@@ -79,19 +79,25 @@ void connectMqtt(etherHeader * e)
         getIpMqttBrokerAddress(dest.bytes);
         getIpAddress(src.bytes);
         sendArpRequest(e, src.bytes, dest.bytes);
-        return;
+        deleteSocket(mqttsocket);
+        return false;
     }
 
     mqttsocket->localPort   = random32();
     mqttsocket->remotePort  = 1883;
 
-    openTcpConn(mqttsocket, e, 0);
+    if(openTcpConn(mqttsocket, e, 0)){
+        deleteSocket(mqttsocket);
+        return false;
+    }
 
     mqttFixedHeader mqtth;
     mqtth.ctrl.type = MQTT_CTRL_TYPE_CONNECT;
 
     queueTcpData(mqttsocket, &mqtth, sizeof(mqttFixedHeader));
     // data to be sent : https://cedalo.com/blog/mqtt-connection-beginners-guide/
+
+    return true;
 }
 
 void disconnectMqtt(etherHeader * e)

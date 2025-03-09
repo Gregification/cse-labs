@@ -108,7 +108,7 @@ void initSockInfoState(socketInfo * si){
             break;
     }
 
-    si->start_time = systick - si->timeout - 1; // force update on next pass
+    si->start_time = 0; // force update on next pass
 }
 
 socket * openTcpConn(socket * s, etherHeader * e, uint8_t attempts){
@@ -118,13 +118,15 @@ socket * openTcpConn(socket * s, etherHeader * e, uint8_t attempts){
 
     // find empty socket
     si = NULL;
-    uint8_t i;
-    for(i = 0; i < MAX_TCP_SOCKETS; i++)
+    for(uint8_t i = 0; i < MAX_TCP_SOCKETS; i++)
         if(!isSockInfoActive(&sockets_tcp[i])){
             si = &sockets_tcp[i];
+            break;
         }
     if(!si) // no socket space available
-        return NULL;
+        return sockets_tcp[0].sock;
+
+    deleteSocket(si->sock);
 
     // insert new socket
     si->sock = s;
@@ -141,15 +143,14 @@ socket * openTcpConn(socket * s, etherHeader * e, uint8_t attempts){
 
 void closeTcpConnSoft(socket * s, etherHeader * e, uint8_t attemps){
     socketInfo * si = tcpSocketInfoFind(s);
-    if(si && si->sock) // only check it exists, do not care if its a open port
+    if(!(si && si->sock)) // only check it exists, do not care if its a open port
         return;
 
+    si->sock->state = TCP_FIN_WAIT_1;
+    initSockInfoState(si);
     if(attemps)
         si->probes_left = attemps + 1;
 
-    si->sock->state = TCP_FIN_WAIT_1;
-
-    initSockInfoState(si);
     updateSocketInfo(si, e);
 }
 
@@ -263,22 +264,22 @@ void processTcpResponse(socketInfo * s, etherHeader * e)
     ipHeader * ip = (ipHeader*)e->data;
     tcpHeader * tcp = (tcpHeader*)((uint8_t*)ip + (ip->size * 4));
 
-    if(tcp->fRST)
-        s->sock->state = TCP_CLOSED;
-
     // always reply that nothing was lost. trust-me-bro technology.
-    s->sock->acknowledgementNumber = ntohl(tcp->sequenceNumber);// + ip->length - (ip->size * 4) - sizeof(tcpHeader);
+    s->sock->acknowledgementNumber = ntohl(tcp->sequenceNumber) + 1;// + ip->length - (ip->size * 4) - sizeof(tcpHeader);
+
+    if(tcp->fRST){
+        if(s->sock->state != TCP_CLOSED)
+            sendTcpMessage(e, s->sock, RST | ACK, NULL, 0);
+        if(s->sock->state != TCP_ESTABLISHED && s->sock->state != TCP_LISTEN)
+            s->sock->state = TCP_CLOSED;
+    }
 
     bool recalTimeout = false;
-
-//    s->sock->acknowledgementNumber += htonl();
 
     switch(s->sock->state){
         case TCP_LISTEN :
             if(tcp->fSYN) {
                 recalTimeout = true;
-                sendTcpMessage(e, s->sock, SYN | ACK, NULL, 0);
-//                sendTcpResponse(e, s->sock, SYN | ACK);
                 s->sock->state = TCP_SYN_RECEIVED;
             }
             break;
@@ -287,7 +288,7 @@ void processTcpResponse(socketInfo * s, etherHeader * e)
             if(tcp->fSYN && tcp->fACK) {
                 recalTimeout = true;
                 sendTcpMessage(e, s->sock, ACK, NULL, 0);
-//                sendTcpResponse(e, s->sock, ACK);
+                s->sock->sequenceNumber--;
                 s->sock->state = TCP_ESTABLISHED;
             }
             break;
@@ -302,14 +303,18 @@ void processTcpResponse(socketInfo * s, etherHeader * e)
         case TCP_FIN_WAIT_1 :
             if(tcp->fACK) {
                 recalTimeout = true;
-                s->sock->state = TCP_FIN_WAIT_2;
+
+                if(tcp->fFIN)
+                    s->sock->state = TCP_TIME_WAIT;
+                else
+                    s->sock->state = TCP_FIN_WAIT_2;
             }
 
         case TCP_FIN_WAIT_2 :
             if(tcp->fFIN) {
                 recalTimeout = true;
-                s->sock->state = TCP_TIME_WAIT;
                 sendTcpMessage(e, s->sock, ACK, NULL, 0);
+                s->sock->state = TCP_TIME_WAIT;
 //                sendTcpResponse(e, s->sock, ACK);
             }
             break;
@@ -324,20 +329,15 @@ void processTcpResponse(socketInfo * s, etherHeader * e)
         case TCP_ESTABLISHED :
 //            s->sock->acknowledgementNumber = 1 + ntohl(s->sock->sequenceNumber);// + ip->length - (ip->size * 4) - sizeof(tcpHeader));
 //            s->sock->acknowledgementNumber = s->sock->sequenceNumber + htonl(1;
-            if(tcp->fACK)
-                recalTimeout = true;
             if(tcp->fFIN){
                 recalTimeout = true;
-//                sendTcpResponseFromEther(e, s->sock, FIN | ACK);
-                sendTcpMessage(e, s->sock, FIN | ACK, NULL, 0);
-//                sendTcpResponse(e, s->sock, ACK | FIN);
+                s->sock->state = TCP_CLOSE_WAIT;
             }
             break;
 
         case TCP_CLOSING :
         case TCP_CLOSE_WAIT :
-            sendTcpMessage(e, s->sock, FIN | ACK, NULL, 0);
-//            sendTcpResponse(e, s->sock, ACK | FIN);
+            s->sock->state = TCP_CLOSED;
             break;
 
         case TCP_LAST_ACK :
@@ -345,10 +345,15 @@ void processTcpResponse(socketInfo * s, etherHeader * e)
                 recalTimeout = true;
                 s->sock->state = TCP_CLOSED;
             }
+            break;
+
+        default: ;
     }
 
-    if(recalTimeout)
+    if(recalTimeout){
+
         initSockInfoState(s);
+    }
 }
 
 // MOD
@@ -400,30 +405,25 @@ void updateSocketInfo(socketInfo * si, etherHeader * e){
 
     switch(si->sock->state){
         case TCP_LISTEN:
-            si->probes_left = SI_PROBES_CONN; // reset timeout (so it'll never timeout)
-        case TCP_CLOSED:
-            return;
-
-        case TCP_CLOSE_WAIT:
-            si->sock->state = TCP_LAST_ACK;
-            sendTcpMessage(e, si->sock, FIN | ACK, NULL, 0);
-            initSockInfoState(si);
+        case TCP_ESTABLISHED:
+            initSockInfoState(si); // reset timeout, to prevent timeout
             break;
 
-        case TCP_ESTABLISHED:
-            initSockInfoState(si);
         case TCP_CLOSING:
+        case TCP_CLOSE_WAIT:
+            sendTcpMessage(e, si->sock, FIN | ACK, NULL, 0);
+            si->sock->state = TCP_LAST_ACK;
+        case TCP_CLOSED:
             // do nothing
             break;
 
         case TCP_FIN_WAIT_2:
-            // do same as FIN_WAIT_1
         case TCP_FIN_WAIT_1:
             sendTcpMessage(e, si->sock, FIN, NULL, 0);
             break;
 
         case TCP_LAST_ACK:
-            sendTcpMessage(e, si->sock, FIN, NULL, 0);
+            // do nothing
             break;
 
         case TCP_SYN_RECEIVED:
@@ -481,11 +481,11 @@ void sendTcpMessage(etherHeader *ether, socket *sock, uint16_t flags, void * dat
     tcp->sourcePort     = htons(sock->localPort);
     tcp->destPort       = htons(sock->remotePort);
     sock->sequenceNumber+= dataSize;
-    tcp->sequenceNumber = htonl(++sock->sequenceNumber);
+    tcp->sequenceNumber = htonl(sock->sequenceNumber+=(dataSize+1));
     tcp->acknowledgementNumber  = htonl(sock->acknowledgementNumber);
     tcp->offsetFields   = htons(flags);
     tcp->dataoffset     = SIZETO32(sizeof(tcpHeader));
-    tcp->windowSize     = htons(MSS);
+    tcp->windowSize     = 1;//mqtthtons(MSS);
     tcp->checksum       = 0;
     tcp->urgentPointer  = 0;
     for(uint16_t i = 0; i < dataSize; i++)

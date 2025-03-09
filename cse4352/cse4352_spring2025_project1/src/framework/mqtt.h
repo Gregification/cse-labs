@@ -85,7 +85,7 @@ socket * mqttsocket;
 // Subroutines
 //-----------------------------------------------------------------------------
 
-void connectMqtt(etherHeader * e);
+bool connectMqtt(etherHeader * e);
 void disconnectMqtt(etherHeader * e);
 void publishMqtt(char strTopic[], char strData[]);
 void subscribeMqtt(char strTopic[]);

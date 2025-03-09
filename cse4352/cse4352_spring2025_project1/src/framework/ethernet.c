@@ -272,7 +272,8 @@ void processShell(etherHeader * e)
                 token = strtok(NULL, " ");
                 if (strcmp(token, "connect") == 0)
                 {
-                    connectMqtt(e);
+                    if(!connectMqtt(e))
+                        putsUart0("try again.\n\r");
                 }
                 if (strcmp(token, "disconnect") == 0)
                 {
@@ -471,23 +472,6 @@ int main(void)
     // init tcp sockets
     initTcp();
 
-    // Init handlers
-//    {
-//        if(
-//                addEthernetHandler((ethHandler){
-//                    .timeout_sec= ETHH_NO_TIMEOUT,
-//                    .resolve    = _ethH_general,
-//                    .onTimeout  = NULL
-//                })
-//          ){}
-//        else {
-//            putsUart0("failed to init packet handlers");
-//
-//            while(1)
-//                {}
-//        }
-//    }
-
     setPinValue(GREEN_LED, 1);
     waitMicrosecond(100000);
     setPinValue(GREEN_LED, 0);
@@ -526,9 +510,10 @@ int main(void)
         // Terminal processing here
         processShell(data);
 
-        // TCP pending messages
-//        sendTcpPendingMessages(data);
         updateSocketInfos(data);
+
+        // TCP pending messages
+        sendTcpPendingMessages(data);
 
         // Packet processing
         if (isEtherDataAvailable())
@@ -575,12 +560,6 @@ int main(void)
                         {
                             // updates tcp state machine
                             processTcpResponse(si, data);
-                        }
-                        else {
-                            if(!tcp->fRST){
-                                socket s;
-                                sendTcpResponseFromEther(data, &s, RST);
-                            }
                         }
                     }
             	}
