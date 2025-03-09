@@ -513,7 +513,7 @@ int main(void)
         updateSocketInfos(data);
 
         // TCP pending messages
-        sendTcpPendingMessages(data);
+//        sendTcpPendingMessages(data);
 
         // Packet processing
         if (isEtherDataAvailable())
@@ -560,6 +560,11 @@ int main(void)
                         {
                             // updates tcp state machine
                             processTcpResponse(si, data);
+                        } else {
+                            if(!tcp->fRST){
+                               socket s;
+                               sendTcpResponseFromEther(data, &s, RST | ACK);
+                           }
                         }
                     }
             	}

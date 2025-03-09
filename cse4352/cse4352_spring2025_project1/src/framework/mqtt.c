@@ -95,6 +95,9 @@ bool connectMqtt(etherHeader * e)
     mqtth.ctrl.type = MQTT_CTRL_TYPE_CONNECT;
 
     queueTcpData(mqttsocket, &mqtth, sizeof(mqttFixedHeader));
+
+//    char str[] = "i made my cat type this meow";
+//    queueTcpData(mqttsocket, &str[0], sizeof(str));
     // data to be sent : https://cedalo.com/blog/mqtt-connection-beginners-guide/
 
     return true;
