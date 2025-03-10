@@ -273,7 +273,7 @@ void processShell(etherHeader * e)
                 if (strcmp(token, "connect") == 0)
                 {
                     if(!connectMqtt(e))
-                        putsUart0("try again.\n\r");
+                        putsUart0(" (failed).\n\r");
                 }
                 if (strcmp(token, "disconnect") == 0)
                 {
@@ -309,20 +309,47 @@ void processShell(etherHeader * e)
             }
             if (strcmp(token, "status") == 0)
             {
-                char str[16];
+                char str[18];
                 IPv4 ip;
 
                 putsUart0("  IP: ");
                 getIpAddress(ip.bytes);
                     ip.raw = ntohl(ip.raw);
                 IPv4tostring(&ip, str);
+                str[sizeof(str)-1] = '\0';
                 putsUart0(str);
+
 
                 putsUart0("\n\r  MQTT broker: ");
                 getIpMqttBrokerAddress(ip.bytes);
                     ip.raw = ntohl(ip.raw);
                 IPv4tostring(&ip, str);
+                str[sizeof(str)-1] = '\0';
                 putsUart0(str);
+
+                putsUart0("\n\r  state: ");
+
+                if(!mqttsocket)
+                    putsUart0("socket DNE");
+                else {
+                    snprintf(str, sizeof(str)-1, "port: %1hhd\n\r  ", mqttsocket->localPort);
+                    str[sizeof(str)-1] = '\0';
+                    putsUart0(str);
+                    switch(mqttsocket->state){
+                        default:                putsUart0("unknown"); break;
+                        case TCP_CLOSED:        putsUart0("TCP_CLOSED"); break;
+                        case TCP_LISTEN:        putsUart0("TCP_LISTEN"); break;
+                        case TCP_SYN_RECEIVED:  putsUart0("TCP_SYN_RECEIVED"); break;
+                        case TCP_SYN_SENT:      putsUart0("TCP_SYN_SENT"); break;
+                        case TCP_ESTABLISHED:   putsUart0("TCP_ESTABLISHED"); break;
+                        case TCP_FIN_WAIT_1:    putsUart0("TCP_FIN_WAIT_1"); break;
+                        case TCP_FIN_WAIT_2:    putsUart0("TCP_FIN_WAIT_2"); break;
+                        case TCP_CLOSING:       putsUart0("TCP_CLOSING"); break;
+                        case TCP_CLOSE_WAIT:    putsUart0("TCP_CLOSE_WAIT"); break;
+                        case TCP_LAST_ACK:      putsUart0("TCP_LAST_ACK"); break;
+                        case TCP_TIME_WAIT:     putsUart0("TCP_TIME_WAIT"); break;
+                    }
+                }
             }
             if (strcmp(token, "set") == 0)
             {
@@ -455,7 +482,7 @@ int main(void)
     initSockets();
 
     // Init ethernet interface (eth0)
-    putsUart0("\n\rStarting eth0\n\r");
+    putsUart0("\n\rUTA cse4352 spring2025 project 1. #5713\n\r");
     initEther(ETHER_UNICAST | ETHER_BROADCAST | ETHER_HALFDUPLEX);
     setEtherMacAddress(2, 3, 4, 5, 6, 105);
 
@@ -473,9 +500,9 @@ int main(void)
     initTcp();
 
     setPinValue(GREEN_LED, 1);
-    waitMicrosecond(100000);
+    waitMicrosecond(1e6);
     setPinValue(GREEN_LED, 0);
-    waitMicrosecond(100000);
+    waitMicrosecond(1e6);
 
     {
         socket buff_s;
@@ -513,7 +540,7 @@ int main(void)
         updateSocketInfos(data);
 
         // TCP pending messages
-//        sendTcpPendingMessages(data);
+        sendTcpPendingMessages(data);
 
         // Packet processing
         if (isEtherDataAvailable())
@@ -521,7 +548,7 @@ int main(void)
             if (isEtherOverflow())
             {
                 setPinValue(RED_LED, 1);
-                waitMicrosecond(100000);
+                waitMicrosecond(1e6);
                 setPinValue(RED_LED, 0);
             }
 

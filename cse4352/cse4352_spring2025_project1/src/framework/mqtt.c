@@ -24,6 +24,7 @@
 #include "arp.h"
 #include "../env.h"
 #include "../ipHandlers.h"
+#include "uart0.h"
 
 // ------------------------------------------------------------------------------
 //  Globals
@@ -62,13 +63,17 @@ void setMqttFHLen(mqttFixedHeader * fh, uint16_t len){
 bool connectMqtt(etherHeader * e)
 {
     if(mqttsocket){
-        if(mqttsocket->state != TCP_CLOSED)
+        if(mqttsocket->state != TCP_CLOSED){
+            putsUart0("state pending");
             return false;
+        }
 
     } else {
         mqttsocket = newSocket();
-        if(!mqttsocket)
+        if(!mqttsocket){
+            putsUart0("ran out of sockets");
             return false;
+        }
     }
 
     getIpMqttBrokerAddress(mqttsocket->remoteIpAddress);
@@ -80,6 +85,7 @@ bool connectMqtt(etherHeader * e)
         getIpAddress(src.bytes);
         sendArpRequest(e, src.bytes, dest.bytes);
         deleteSocket(mqttsocket);
+        putsUart0("no ARP entry");
         return false;
     }
 
@@ -88,17 +94,17 @@ bool connectMqtt(etherHeader * e)
 
     if(openTcpConn(mqttsocket, e, 0)){
         deleteSocket(mqttsocket);
+        putsUart0("conflicting socket");
         return false;
     }
 
-    mqttFixedHeader mqtth;
-    mqtth.ctrl.type = MQTT_CTRL_TYPE_CONNECT;
-
-    queueTcpData(mqttsocket, &mqtth, sizeof(mqttFixedHeader));
+//    mqttFixedHeader mqtth;
+//    mqtth.ctrl.type = MQTT_CTRL_TYPE_CONNECT;
+//    queueTcpData(mqttsocket, &mqtth, sizeof(mqttFixedHeader));
 
 //    char str[] = "i made my cat type this meow";
-//    queueTcpData(mqttsocket, &str[0], sizeof(str));
-    // data to be sent : https://cedalo.com/blog/mqtt-connection-beginners-guide/
+//    queueTcpData(mqttsocket, str, sizeof(str));
+//     data to be sent : https://cedalo.com/blog/mqtt-connection-beginners-guide/
 
     return true;
 }

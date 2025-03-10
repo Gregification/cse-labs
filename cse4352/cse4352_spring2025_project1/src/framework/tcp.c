@@ -270,8 +270,8 @@ void processTcpResponse(socketInfo * s, etherHeader * e)
     if(tcp->fRST){
         if(s->sock->state != TCP_CLOSED)
             sendTcpMessage(e, s->sock, RST | ACK, NULL, 0);
-        if(s->sock->state != TCP_ESTABLISHED && s->sock->state != TCP_LISTEN)
-            s->sock->state = TCP_CLOSED;
+
+        s->sock->state = TCP_CLOSED;
     }
 
     bool recalTimeout = false;
@@ -393,7 +393,7 @@ void updateSocketInfo(socketInfo * si, etherHeader * e){
 
         if(si->sock && si->probes_left == 0){ // anything at any point times out
             // reset
-            sendTcpMessage(e, si->sock, RST, NULL, 0);
+            sendTcpMessage(e, si->sock, RST | ACK , NULL, 0);
             si->sock->state = TCP_CLOSED;
             si->sock = NULL;
             return;
@@ -445,7 +445,8 @@ void sendTcpResponseFromEther(etherHeader * ether, socket* sock, uint16_t flags)
 {
     getSocketInfoFromTcpPacket(ether, sock);
     tcpHeader * tcp = (tcpHeader *)((ipHeader *)ether->data)->data;
-    sock->acknowledgementNumber = tcp->sequenceNumber + 1;
+    sock->acknowledgementNumber = ntohl(tcp->sequenceNumber) + 1;
+    sock->sequenceNumber = ntohl(tcp->acknowledgementNumber);
     uint8_t dater[] = {1,2,3,4};
     sendTcpMessage(ether, sock, flags, dater, sizeof(dater));
 }
