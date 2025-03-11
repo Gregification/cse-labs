@@ -25,12 +25,6 @@
 #include "../env.h"
 
 #define MAX_TCP_SOCKETS 3
-#define TCP_PENQUE_MAX_MSG_COUNT 5
-#define TCP_PENQUE_MAX_TOTAL_MEM MSS
-
-// ------------------------------------------------------------------------------
-//  Structures
-// ------------------------------------------------------------------------------
 
 // probe count defaults
 #define SI_PROBES_CONN     3   // connecting
@@ -42,12 +36,18 @@
 #define SI_TO_KEPAL     10
 #define SI_TO_DCON      2
 
-uint16_t pendingMsgMemUsed = 0;
+// ------------------------------------------------------------------------------
+//  Structures
+// ------------------------------------------------------------------------------
+
+// i really dont like what happened here but I can't figure out why malloc fails
+#define TCP_PENQUE_MAX_MSG_COUNT 2
+#define TCP_PENQUE_ENTRY_MAX_MEM 100
 
 typedef struct _pendingMsg {
     socket * socket;
     uint16_t datasize;
-    uint8_t * data;
+    uint8_t data[TCP_PENQUE_ENTRY_MAX_MEM];
 } pendingMsg;
 
 // ------------------------------------------------------------------------------
@@ -228,28 +228,20 @@ bool isTcpAck(etherHeader *ether)
 // MOD
 void sendTcpPendingMessages(etherHeader *ether)
 {
-    socket s;
-    getSocketInfoFromTcpPacket(ether, &s);
-
     uint8_t i;
     for(i = 0; i < TCP_PENQUE_MAX_MSG_COUNT; i++){
         pendingMsg *    pm  = &pendingMessages[i];
 
-        if(!pm->socket || !isSocketSame(pm->socket, &s))
-            continue;
-
-        if(pm->datasize && pm->data) { // message exist
-            if(s.state == TCP_ESTABLISHED){
+        if(pm->socket && pm->datasize) { // message exist
+            if(pm->socket->state == TCP_ESTABLISHED){
                 // send message
-                sendTcpMessage(ether, &s, 0, pm->data, pm->datasize);
+                sendTcpMessage(ether, pm->socket, 0, pm->data, pm->datasize);
 
-                free(pm->data);
-                pendingMsgMemUsed -= pm->datasize;
+                pm->socket = NULL;
                 pm->datasize = 0;
             }
-            else if(s.state == TCP_CLOSED){
-                free(pm->data);
-                pendingMsgMemUsed -= pm->datasize;
+            else if(pm->socket->state == TCP_CLOSED){
+                pm->socket = NULL;
                 pm->datasize = 0;
             }
         }
@@ -318,7 +310,6 @@ void processTcpResponse(socketInfo * s, etherHeader * e)
                 recalTimeout = true;
                 sendTcpMessage(e, s->sock, ACK, NULL, 0);
                 s->sock->state = TCP_TIME_WAIT;
-//                sendTcpResponse(e, s->sock, ACK);
             }
             break;
 
@@ -512,20 +503,11 @@ bool queueTcpData(socket * s, void * data,  uint16_t datasize){
     if(!(datasize && data && s))
         return false;
 
-    if(datasize > TCP_PENQUE_MAX_TOTAL_MEM)
-        datasize = TCP_PENQUE_MAX_TOTAL_MEM;
-
-    if((TCP_PENQUE_MAX_TOTAL_MEM - pendingMsgMemUsed) < datasize) // if mem space DNE
-        return false;
+    if(datasize > TCP_PENQUE_ENTRY_MAX_MEM)
+        datasize = TCP_PENQUE_ENTRY_MAX_MEM;
 
     for(uint8_t i = 0; i < TCP_PENQUE_MAX_MSG_COUNT; i++){  // search for array space
-        if(pendingMessages[i].data == NULL){
-
-            pendingMessages[i].data = malloc(datasize);
-            if(pendingMessages[i].data == NULL)
-                return false;
-
-            pendingMsgMemUsed += datasize;
+        if(pendingMessages[i].datasize == 0){
             pendingMessages[i].socket = s;
             pendingMessages[i].datasize = datasize;
 
