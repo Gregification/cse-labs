@@ -40,6 +40,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+#include <stdlib.h>
 #include "tm4c123gh6pm.h"
 #include "clock.h"
 #include "eeprom.h"
@@ -444,25 +445,6 @@ void processShell(etherHeader * e)
 // Main
 //-----------------------------------------------------------------------------
 
-// i was going to do something with this before i fully understood how this framework was structured
-//      this is somewhat pointless now, but high effort to remove.
-//ethResolution _ethH_general(ethHandler * self, etherHeader * data){
-//    if (isIpUnicast(data))
-//    {
-//        // Handle ICMP ping request
-//        if (isPingRequest(data))
-//        {
-//            sendPingResponse(data);
-//        }
-//    }
-//
-//    return (ethResolution){
-//        .removeEth      = false,
-//        .removeResolver = false,
-//        .forceTimeout   = false
-//    };
-//}
-
 int main(void)
 {
     uint8_t buffer[MAX_PACKET_SIZE];
@@ -473,7 +455,7 @@ int main(void)
 
     // Setup UART0
     initUart0();
-    setUart0BaudRate(115200, F_CPU);
+    setUart0BaudRate(UART0_BAUD, F_CPU);
 
     // Init timer
     initTimer();
@@ -568,8 +550,6 @@ int main(void)
                 tcpHeader * tcp = (tcpHeader*)((uint8_t*)ip + (ip->size * 4));
                 uint16_t tcp_datalen = ip->length - ip->size * 4 - sizeof(tcpHeader);
 
-//                handleEthernetHeader(data);
-
             	if (isIpUnicast(data))
             	{
             	    // Handle ICMP ping request
@@ -590,7 +570,10 @@ int main(void)
                         } else {
                             if(!tcp->fRST){
                                socket s;
-                               sendTcpResponseFromEther(data, &s, RST | ACK);
+                                if(tcp->fFIN)
+                                    sendTcpResponseFromEther(data, &s, FIN | ACK);
+                                else
+                                    sendTcpResponseFromEther(data, &s, RST | ACK);
                            }
                         }
                     }

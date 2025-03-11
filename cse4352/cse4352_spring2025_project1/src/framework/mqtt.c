@@ -62,13 +62,7 @@ void setMqttFHLen(mqttFixedHeader * fh, uint16_t len){
 
 bool connectMqtt(etherHeader * e)
 {
-    if(mqttsocket){
-        if(mqttsocket->state != TCP_CLOSED){
-            putsUart0("state pending");
-            return false;
-        }
-
-    } else {
+    if(!mqttsocket){
         mqttsocket = newSocket();
         if(!mqttsocket){
             putsUart0("ran out of sockets");
@@ -76,37 +70,43 @@ bool connectMqtt(etherHeader * e)
         }
     }
 
-    getIpMqttBrokerAddress(mqttsocket->remoteIpAddress);
-    *(MAC *)mqttsocket->remoteHwAddress = ArpFind(mqttsocket->remoteIpAddress);
+    if(mqttsocket->state == TCP_CLOSED){
+        getIpMqttBrokerAddress(mqttsocket->remoteIpAddress);
+        *(MAC *)mqttsocket->remoteHwAddress = ArpFind(mqttsocket->remoteIpAddress);
 
-    if((*(MAC *)mqttsocket->remoteHwAddress).raw == 0){
-        IPv4 src, dest;
-        getIpMqttBrokerAddress(dest.bytes);
-        getIpAddress(src.bytes);
-        sendArpRequest(e, src.bytes, dest.bytes);
-        deleteSocket(mqttsocket);
-        putsUart0("no ARP entry");
-        return false;
+        if((*(MAC *)mqttsocket->remoteHwAddress).raw == 0){
+            IPv4 src, dest;
+            getIpMqttBrokerAddress(dest.bytes);
+            getIpAddress(src.bytes);
+            sendArpRequest(e, src.bytes, dest.bytes);
+            deleteSocket(mqttsocket);
+            putsUart0("no ARP entry");
+            return false;
+        }
+
+        mqttsocket->localPort   = random32();
+        mqttsocket->remotePort  = 1883;
+
+        if(openTcpConn(mqttsocket, e, 0)){
+            deleteSocket(mqttsocket);
+            putsUart0("conflicting socket");
+            return false;
+        }
     }
 
-    mqttsocket->localPort   = random32();
-    mqttsocket->remotePort  = 1883;
-
-    if(openTcpConn(mqttsocket, e, 0)){
-        deleteSocket(mqttsocket);
-        putsUart0("conflicting socket");
-        return false;
-    }
-
+    bool status;
 //    mqttFixedHeader mqtth;
 //    mqtth.ctrl.type = MQTT_CTRL_TYPE_CONNECT;
-//    queueTcpData(mqttsocket, &mqtth, sizeof(mqttFixedHeader));
+//  return queueTcpData(mqttsocket, &mqtth, sizeof(mqttFixedHeader));
 
-//    char str[] = "i made my cat type this meow";
-//    queueTcpData(mqttsocket, str, sizeof(str));
+    char str[] = "i made my cat type this meow";
+    status = queueTcpData(mqttsocket, str, sizeof(str));
 //     data to be sent : https://cedalo.com/blog/mqtt-connection-beginners-guide/
 
-    return true;
+    if(!status)
+        putsUart0("tcp initiated; but could not queue data");
+
+    return status;
 }
 
 void disconnectMqtt(etherHeader * e)

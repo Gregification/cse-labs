@@ -26,7 +26,7 @@
 
 #define MAX_TCP_SOCKETS 3
 #define TCP_PENQUE_MAX_MSG_COUNT 5
-#define TCP_PENQUE_MAX_TOTAL_MEM 1500
+#define TCP_PENQUE_MAX_TOTAL_MEM MSS
 
 // ------------------------------------------------------------------------------
 //  Structures
@@ -47,7 +47,7 @@ uint16_t pendingMsgMemUsed = 0;
 typedef struct _pendingMsg {
     socket * socket;
     uint16_t datasize;
-    uint8_t * data; // allocated memory
+    uint8_t * data;
 } pendingMsg;
 
 // ------------------------------------------------------------------------------
@@ -234,6 +234,9 @@ void sendTcpPendingMessages(etherHeader *ether)
     uint8_t i;
     for(i = 0; i < TCP_PENQUE_MAX_MSG_COUNT; i++){
         pendingMsg *    pm  = &pendingMessages[i];
+
+        if(!pm->socket || !isSocketSame(pm->socket, &s))
+            continue;
 
         if(pm->datasize && pm->data) { // message exist
             if(s.state == TCP_ESTABLISHED){
@@ -469,7 +472,7 @@ void sendTcpMessage(etherHeader *ether, socket *sock, uint16_t flags, void * dat
     ip->length          = htons((ip->size * 4) + dataSize + sizeof(tcpHeader));
     ip->id              = htons(0);
     ip->flagsAndOffset  = htons(0);
-    ip->ttl             = 100;
+    ip->ttl             = 50;
     ip->protocol        = PROTOCOL_TCP;
     ip->headerChecksum  = 0;
     getIpAddress(ip->sourceIp);
@@ -506,24 +509,28 @@ void sendTcpMessage(etherHeader *ether, socket *sock, uint16_t flags, void * dat
 }
 
 bool queueTcpData(socket * s, void * data,  uint16_t datasize){
-    if((TCP_PENQUE_MAX_TOTAL_MEM - pendingMsgMemUsed) < datasize) // mem space exists
+    if(!(datasize && data && s))
         return false;
 
-    if(!(datasize && data))
+    if(datasize > TCP_PENQUE_MAX_TOTAL_MEM)
+        datasize = TCP_PENQUE_MAX_TOTAL_MEM;
+
+    if((TCP_PENQUE_MAX_TOTAL_MEM - pendingMsgMemUsed) < datasize) // if mem space DNE
         return false;
 
-    uint8_t i;
-    for(i = 0; i < TCP_PENQUE_MAX_MSG_COUNT; i++){  // search for array space
+    for(uint8_t i = 0; i < TCP_PENQUE_MAX_MSG_COUNT; i++){  // search for array space
         if(pendingMessages[i].data == NULL){
-            // use space
+
+            pendingMessages[i].data = malloc(datasize);
+            if(pendingMessages[i].data == NULL)
+                return false;
+
+            pendingMsgMemUsed += datasize;
             pendingMessages[i].socket = s;
             pendingMessages[i].datasize = datasize;
 
-            pendingMsgMemUsed += datasize;
-            pendingMessages[i].data = malloc(datasize);
-
-            for(uint16_t i = 0; i < datasize; i++)
-                pendingMessages[i].data[i] = ((uint8_t *)data)[i];
+            for(uint16_t j = 0; j < datasize; j++)
+                pendingMessages[i].data[j] = ((uint8_t *)data)[j];
 
             return true;
         }
