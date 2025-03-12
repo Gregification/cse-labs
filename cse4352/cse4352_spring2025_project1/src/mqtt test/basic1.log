@@ -538,3 +538,82 @@
 1741808909: Client <unknown> has exceeded timeout, disconnecting.
 1741809011: New connection from 169.254.0.105:13245 on port 1883.
 1741809107: Client <unknown> has exceeded timeout, disconnecting.
+1741810209: New connection from 169.254.0.105:13245 on port 1883.
+1741810216: Client <unknown> closed its connection.
+1741810337: New connection from 169.254.0.105:13245 on port 1883.
+1741810405: Client <unknown> closed its connection.
+1741810414: New connection from 169.254.0.105:13245 on port 1883.
+1741810477: Client <unknown> closed its connection.
+1741810484: New connection from 169.254.0.105:13245 on port 1883.
+1741810571: Client <unknown> closed its connection.
+1741810838: New connection from 169.254.0.105:13245 on port 1883.
+1741810931: Client <unknown> has exceeded timeout, disconnecting.
+1741810992: New connection from 169.254.0.105:13245 on port 1883.
+1741811056: Client <unknown> closed its connection.
+1741811064: New connection from 169.254.0.105:13245 on port 1883.
+1741811158: Client <unknown> has exceeded timeout, disconnecting.
+1741811226: New connection from 169.254.0.105:13245 on port 1883.
+1741811296: Client <unknown> closed its connection.
+1741811305: New connection from 169.254.0.105:13245 on port 1883.
+1741811357: Client <unknown> closed its connection.
+1741811366: New connection from 169.254.0.105:13245 on port 1883.
+1741811396: Client <unknown> closed its connection.
+1741811405: New connection from 169.254.0.105:13245 on port 1883.
+1741811488: Client <unknown> closed its connection.
+1741811496: New connection from 169.254.0.105:13245 on port 1883.
+1741811583: Client <unknown> closed its connection.
+1741811588: New connection from 169.254.0.105:13245 on port 1883.
+1741811627: Client <unknown> closed its connection.
+1741811639: New connection from 169.254.0.105:13245 on port 1883.
+1741811671: Client <unknown> closed its connection.
+1741811680: New connection from 169.254.0.105:13245 on port 1883.
+1741811722: Client <unknown> closed its connection.
+1741811746: New connection from 169.254.0.105:13245 on port 1883.
+1741811831: Client <unknown> closed its connection.
+1741811859: New connection from 169.254.0.105:13245 on port 1883.
+1741811951: Client <unknown> has exceeded timeout, disconnecting.
+1741812011: New connection from 169.254.0.105:13245 on port 1883.
+1741812106: Client <unknown> has exceeded timeout, disconnecting.
+1741812491: New connection from 169.254.0.105:13245 on port 1883.
+1741812586: Client <unknown> has exceeded timeout, disconnecting.
+1741812652: New connection from 169.254.0.105:13245 on port 1883.
+1741812743: Client <unknown> has exceeded timeout, disconnecting.
+1741812908: New connection from 169.254.0.105:13245 on port 1883.
+1741812971: Client <unknown> closed its connection.
+1741812978: New connection from 169.254.0.105:13245 on port 1883.
+1741813020: Client <unknown> closed its connection.
+1741813080: New connection from 169.254.0.105:13245 on port 1883.
+1741813127: Client <unknown> closed its connection.
+1741813132: New connection from 169.254.0.105:13245 on port 1883.
+1741813223: Client <unknown> has exceeded timeout, disconnecting.
+1741813342: New connection from 169.254.0.105:13245 on port 1883.
+1741813372: Client <unknown> closed its connection.
+1741813388: New connection from 169.254.0.105:13245 on port 1883.
+1741813467: New connection from 127.0.0.1:6731 on port 1883.
+1741813467: New client connected from 127.0.0.1:6731 as auto-A967B6AC-D97A-38B6-3997-979063F01FB0 (p2, c1, k60).
+1741813467: No will message specified.
+1741813467: Sending CONNACK to auto-A967B6AC-D97A-38B6-3997-979063F01FB0 (0, 2)
+1741813467: Bad socket read/write on client auto-A967B6AC-D97A-38B6-3997-979063F01FB0: Invalid arguments provided.
+1741813481: Client <unknown> has exceeded timeout, disconnecting.
+1741813483: New connection from 127.0.0.1:6744 on port 1883.
+1741813483: New client connected from 127.0.0.1:6744 as auto-1671F4AC-A35C-13BE-C1B1-3FF1220F0E15 (p2, c1, k60).
+1741813483: No will message specified.
+1741813483: Sending CONNACK to auto-1671F4AC-A35C-13BE-C1B1-3FF1220F0E15 (0, 2)
+1741813483: Bad socket read/write on client auto-1671F4AC-A35C-13BE-C1B1-3FF1220F0E15: Invalid arguments provided.
+1741813491: New connection from ::1:6759 on port 1883.
+1741813491: New client connected from ::1:6759 as auto-27801144-FBD9-1E0F-497D-A3BD84E5E9A2 (p2, c1, k60).
+1741813491: No will message specified.
+1741813491: Sending CONNACK to auto-27801144-FBD9-1E0F-497D-A3BD84E5E9A2 (0, 2)
+1741813491: Bad socket read/write on client auto-27801144-FBD9-1E0F-497D-A3BD84E5E9A2: Invalid arguments provided.
+1741813515: New connection from ::1:6771 on port 1883.
+1741813515: New client connected from ::1:6771 as auto-90589221-28B7-A890-80E3-FE930ACB6DF0 (p2, c1, k60).
+1741813515: No will message specified.
+1741813515: Sending CONNACK to auto-90589221-28B7-A890-80E3-FE930ACB6DF0 (0, 2)
+1741813515: Bad socket read/write on client auto-90589221-28B7-A890-80E3-FE930ACB6DF0: Invalid arguments provided.
+1741813554: mosquitto version 2.0.20 terminating
+1741813562: mosquitto version 2.0.20 starting
+1741813562: Config loaded from ./basic1.conf.
+1741813562: Opening ipv6 listen socket on port 1883.
+1741813562: Opening ipv4 listen socket on port 1883.
+1741813562: mosquitto version 2.0.20 running
+1741813568: mosquitto version 2.0.20 terminating

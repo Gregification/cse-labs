@@ -252,8 +252,77 @@ void publishMqtt(char strTopic[], char strData[])
 
 void subscribeMqtt(char strTopic[])
 {
+    pendingMsg * msg = queueTcpData(mqttsocket);
+    if(msg){
+        uint8_t * data = msg->data;
+
+        uint8_t topic_len = 0;
+        while(strTopic[topic_len] != '\0')
+            topic_len++;
+
+        // mqtt init connection
+
+        { // fixed header
+            mqttFixedHeader fh;
+            fh.type = MQTT_FH_TYPE_SUBSCRIBE;
+            fh.fDUP = fh.fRETAIN = false;
+            fh.fQoS = 1;
+            setMqttFHLen(&fh, topic_len + 2 + 2 + 1); // +2 msg id, +1 qos
+
+            data = packMqttFH(&fh, data, TCP_PENQUE_ENTRY_MAX_MEM - (data - msg->data));
+        }
+
+        { // variable header
+            // message id
+            ((uint16_t *)data)[0] = random32();
+            data+=2;
+
+            // topic length and data
+            data = putMqttData((uint8_t *)strTopic, data, topic_len);
+
+            // topic qos
+            data++[0] = 0;
+        }
+
+        msg->datasize = data - msg->data;
+
+    } else
+        putsUart0("could not queue data");
 }
 
 void unsubscribeMqtt(char strTopic[])
 {
+    pendingMsg * msg = queueTcpData(mqttsocket);
+    if(msg){
+        uint8_t * data = msg->data;
+
+        uint8_t topic_len = 0;
+        while(strTopic[topic_len] != '\0')
+            topic_len++;
+
+        // mqtt init connection
+
+        { // fixed header
+            mqttFixedHeader fh;
+            fh.type = MQTT_FH_TYPE_UNSUBSCRIBE;
+            fh.fDUP = fh.fRETAIN = false;
+            fh.fQoS = 1;
+            setMqttFHLen(&fh, topic_len + 2 + 2); // +2 msg id, +2 topic length overhead
+
+            data = packMqttFH(&fh, data, TCP_PENQUE_ENTRY_MAX_MEM - (data - msg->data));
+        }
+
+        { // variable header
+            // message id
+            ((uint16_t *)data)[0] = random32();
+            data+=2;
+
+            // topic length and data
+            data = putMqttData((uint8_t *)strTopic, data, topic_len);
+        }
+
+        msg->datasize = data - msg->data;
+
+    } else
+        putsUart0("could not queue data");
 }
