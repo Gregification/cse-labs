@@ -617,3 +617,17 @@
 1741813562: Opening ipv4 listen socket on port 1883.
 1741813562: mosquitto version 2.0.20 running
 1741813568: mosquitto version 2.0.20 terminating
+1741813573: mosquitto version 2.0.20 starting
+1741813573: Config loaded from ./basic1.conf.
+1741813573: Opening ipv6 listen socket on port 1883.
+1741813573: Opening ipv4 listen socket on port 1883.
+1741813573: mosquitto version 2.0.20 running
+1741813575: New connection from ::1:6839 on port 1883.
+1741813575: New client connected from ::1:6839 as auto-2B55D808-2D90-5D27-940C-A080B78C343B (p2, c1, k60).
+1741813575: No will message specified.
+1741813575: Sending CONNACK to auto-2B55D808-2D90-5D27-940C-A080B78C343B (0, 2)
+1741813575: Bad socket read/write on client auto-2B55D808-2D90-5D27-940C-A080B78C343B: Invalid arguments provided.
+1741814187: mosquitto version 2.0.11 starting
+1741814187: Config loaded from ./basic1.conf.
+1741814187: Opening ipv4 listen socket on port 1883.
+1741814187: Error: Address already in use
