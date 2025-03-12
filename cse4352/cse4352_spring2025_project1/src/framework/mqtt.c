@@ -18,6 +18,8 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdbool.h>
+
 #include "mqtt.h"
 #include "timer.h"
 #include "tcp.h"
@@ -44,8 +46,8 @@ uint32_t getMqttFHLen(mqttFixedHeader * fh){
     uint8_t i = 0;
     do{
         ret <<= 7;
-        ret |= fh->len[i] & 0x7f;   // all but MSb
-    }while(fh->len[i++] & 0x80);    // MSb exist
+        ret |= fh->len_arr[i] & 0x7f;   // all but MSb
+    }while(fh->len_arr[i++] & 0x80);    // MSb exist
 
     return ret;
 }
@@ -53,11 +55,69 @@ uint32_t getMqttFHLen(mqttFixedHeader * fh){
 void setMqttFHLen(mqttFixedHeader * fh, uint16_t len){
     uint8_t i = 0;
     do{
-        fh->len[i] = len & 0x7F;    // all but MSb
+        fh->len_arr[i] = len & 0x7F;    // all but MSb
         len >>= 7;
         if(len)
-            fh->len[i++] |= 0x80;   // indicate extension
+            fh->len_arr[i++] |= 0x80;   // indicate extension
     }while(len > 0);
+}
+
+uint8_t * unpackMqttFH(mqttFixedHeader * dest, uint8_t * src, uint16_t srclen){
+    return packMqttFH((mqttFixedHeader const *)src, (uint8_t *)dest, srclen);
+}
+
+uint8_t * packMqttFH(mqttFixedHeader const * src, uint8_t * dest, uint16_t destlen){
+    uint8_t const * in = (uint8_t const *)src;
+
+    uint8_t i;
+    for(i = 0; (i + in) < src->len_arr && (i < destlen); i++)
+        dest[i] = in[i];
+
+    do {
+        dest[i] = in[i];
+        if(!(in[i++] & 0x8))
+            break;
+    } while((in + i) < (uint8_t *)(src + 1) && (i < destlen));
+
+    return dest + i;
+}
+
+uint8_t * packmqttVH_meta(mqttVariableHeader_meta const * src, uint8_t * dest, uint16_t destlen){
+    if(destlen < 2)
+        return dest;
+
+    ((uint16_t *)dest)[0] = src->protocol_name_len;
+
+    uint16_t i;
+    for(i = 2; i < src->protocol_name_len && (i < destlen); i++)
+        dest[i] = src->protocol_name[i-2];
+
+    dest[i++] = src->protocol_version;
+
+    dest[i++] = src->conn_flags;
+
+    ((uint16_t *)&dest[i])[0] = src->keepalive_timer;
+    i+=2;
+
+    return dest + i;
+}
+
+uint8_t * unpackmqttVH_meta(mqttVariableHeader_meta * dest, uint8_t * src, uint16_t srclen){
+    if(srclen < 2)
+        return src;
+
+    dest->protocol_name_len = ((uint16_t *)src)[0];
+    dest->protocol_name = (char *)&src[2];
+
+    uint16_t i = 2 + dest->protocol_name_len;
+
+    dest->protocol_version = src[i++];
+    dest->conn_flags = src[i++];
+
+    dest->keepalive_timer = ((uint16_t *)&src[i])[0];
+    i+=2;
+
+    return src + i;
 }
 
 bool connectMqtt(etherHeader * e)
@@ -84,7 +144,7 @@ bool connectMqtt(etherHeader * e)
             return false;
         }
 
-        mqttsocket->localPort   = random32();
+        mqttsocket->localPort   = 13245;//mqttrandom32();
         mqttsocket->remotePort  = 1883;
 
         if(openTcpConn(mqttsocket, e, 0)){
@@ -94,19 +154,42 @@ bool connectMqtt(etherHeader * e)
         }
     }
 
-    bool status;
-//    mqttFixedHeader mqtth;
-//    mqtth.ctrl.type = MQTT_CTRL_TYPE_CONNECT;
-//  return queueTcpData(mqttsocket, &mqtth, sizeof(mqttFixedHeader));
+    pendingMsg * msg = queueTcpData(mqttsocket);
+    if(msg){
+        uint8_t * data = msg->data;
 
-    char str[] = "i made my cat type this meow";
-    status = queueTcpData(mqttsocket, str, sizeof(str));
-//     data to be sent : https://cedalo.com/blog/mqtt-connection-beginners-guide/
+        // mqtt init connection
 
-    if(!status)
+        { // fixed header
+            mqttFixedHeader fh;
+            fh.type = MQTT_FH_TYPE_CONNECT;
+            setMqttFHLen(&fh, sizeof(mqttVariableHeader_meta) - 1 + 6); // -1 for pointer len, +6 for str len (see bellow)
+
+            data = packMqttFH(&fh, data, TCP_PENQUE_ENTRY_MAX_MEM - (msg->data - data));
+        }
+
+        { // variable length header
+            mqttVariableHeader_meta vh;
+            char str[] = "MQIsdp"; // 6
+
+            vh.protocol_name_len = sizeof(str);
+            vh.protocol_name = str;
+
+            vh.protocol_version = 3;
+            vh.fclean_session = true;
+            vh.keepalive_timer = 10;
+
+            data = packmqttVH_meta(&vh, data, TCP_PENQUE_ENTRY_MAX_MEM);// - (msg->data - data));
+        }
+
+        msg->datasize = data - msg->data;
+
+    } else
         putsUart0("tcp initiated; but could not queue data");
 
-    return status;
+//     data to be sent : https://public.dhe.ibm.com/software/dw/webservices/ws-mqtt/mqtt-v3r1.html
+
+    return msg;
 }
 
 void disconnectMqtt(etherHeader * e)
@@ -123,7 +206,7 @@ void publishMqtt(char strTopic[], char strData[])
 
     //mqtt is not fixed TODO. make this workie :( . plz
     char content[] = "something something";
-    queueTcpData(mqttsocket, content, sizeof(content));
+//    queueTcpData(mqttsocket, content, sizeof(content));
 }
 
 void subscribeMqtt(char strTopic[])

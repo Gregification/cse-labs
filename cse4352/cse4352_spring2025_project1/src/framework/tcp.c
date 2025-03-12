@@ -40,16 +40,6 @@
 //  Structures
 // ------------------------------------------------------------------------------
 
-// i really dont like what happened here but I can't figure out why malloc fails
-#define TCP_PENQUE_MAX_MSG_COUNT 2
-#define TCP_PENQUE_ENTRY_MAX_MEM 100
-
-typedef struct _pendingMsg {
-    socket * socket;
-    uint16_t datasize;
-    uint8_t data[TCP_PENQUE_ENTRY_MAX_MEM];
-} pendingMsg;
-
 // ------------------------------------------------------------------------------
 //  Globals
 // ------------------------------------------------------------------------------
@@ -475,8 +465,7 @@ void sendTcpMessage(etherHeader *ether, socket *sock, uint16_t flags, void * dat
     tcpHeader * tcp     = (tcpHeader *)ip->data;
     tcp->sourcePort     = htons(sock->localPort);
     tcp->destPort       = htons(sock->remotePort);
-    sock->sequenceNumber+= dataSize;
-    tcp->sequenceNumber = htonl(sock->sequenceNumber+=(dataSize+1));
+    tcp->sequenceNumber = htonl(++sock->sequenceNumber);
     tcp->acknowledgementNumber  = htonl(sock->acknowledgementNumber);
     tcp->offsetFields   = htons(flags);
     tcp->dataoffset     = SIZETO32(sizeof(tcpHeader));
@@ -497,26 +486,21 @@ void sendTcpMessage(etherHeader *ether, socket *sock, uint16_t flags, void * dat
     }
 
     putEtherPacket(ether, sizeof(etherHeader) + ntohs(ip->length));
+
+    if(dataSize)dataSize-=1;
+    sock->sequenceNumber += dataSize;
 }
 
-bool queueTcpData(socket * s, void * data,  uint16_t datasize){
-    if(!(datasize && data && s))
-        return false;
+pendingMsg * queueTcpData(socket * s){
 
-    if(datasize > TCP_PENQUE_ENTRY_MAX_MEM)
-        datasize = TCP_PENQUE_ENTRY_MAX_MEM;
-
+    if(s)
     for(uint8_t i = 0; i < TCP_PENQUE_MAX_MSG_COUNT; i++){  // search for array space
         if(pendingMessages[i].datasize == 0){
             pendingMessages[i].socket = s;
-            pendingMessages[i].datasize = datasize;
 
-            for(uint16_t j = 0; j < datasize; j++)
-                pendingMessages[i].data[j] = ((uint8_t *)data)[j];
-
-            return true;
+            return &pendingMessages[i];
         }
     }
 
-    return false;
+    return NULL;
 }

@@ -93,6 +93,16 @@ typedef struct _socketInfo {
     socket * sock;
 } socketInfo;
 
+// i really dont like what happened here but I can't figure out why malloc fails
+#define TCP_PENQUE_MAX_MSG_COUNT 2
+#define TCP_PENQUE_ENTRY_MAX_MEM 100
+
+typedef struct _pendingMsg {
+    socket * socket;
+    uint16_t datasize;
+    uint8_t data[TCP_PENQUE_ENTRY_MAX_MEM];
+} pendingMsg;
+
 //-----------------------------------------------------------------------------
 // Subroutines
 //-----------------------------------------------------------------------------
@@ -161,12 +171,9 @@ void closeTcpConnHard(socket * s, etherHeader * e);
  *      calling "sendTcpPendingMessages(...)"
  *
  * @param s must be available when ever the data is sent
- * @param data will be copied
- * @return true if the tx request has been queued or sent. fails if internal queue
- *      buffer overflows. messages larger than the buffer will still attempt to tx
- *      immediately.
+ * @return pointer to a empty pending message object.
  */
-bool queueTcpData(socket * s, void * data,  uint16_t datasize);
+pendingMsg * queueTcpData(socket * s);
 
 #endif
 

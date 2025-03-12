@@ -309,3 +309,88 @@
 1741642032: New connection from 169.254.0.105:25912 on port 1883.
 1741642127: Client <unknown> has exceeded timeout, disconnecting.
 1741651631: mosquitto version 2.0.20 terminating
+1741656019: mosquitto version 2.0.20 starting
+1741656019: Config loaded from ./basic1.conf.
+1741656019: Opening ipv6 listen socket on port 1883.
+1741656019: Opening ipv4 listen socket on port 1883.
+1741656019: mosquitto version 2.0.20 running
+1741656027: New connection from 169.254.0.105:348 on port 1883.
+1741656121: Client <unknown> has exceeded timeout, disconnecting.
+1741656132: New connection from 169.254.0.105:46351 on port 1883.
+1741656222: Client <unknown> has exceeded timeout, disconnecting.
+1741658911: New connection from 169.254.0.105:48501 on port 1883.
+1741659006: Client <unknown> has exceeded timeout, disconnecting.
+1741659449: New connection from 169.254.0.105:33988 on port 1883.
+1741659541: Client <unknown> has exceeded timeout, disconnecting.
+1741659889: New connection from 169.254.0.105:57636 on port 1883.
+1741659985: Client <unknown> has exceeded timeout, disconnecting.
+1741660045: mosquitto version 2.0.20 terminating
+1741722901: mosquitto version 2.0.20 starting
+1741722901: Config loaded from ./basic1.conf.
+1741722901: Opening ipv6 listen socket on port 1883.
+1741722901: Opening ipv4 listen socket on port 1883.
+1741722901: mosquitto version 2.0.20 running
+1741722906: New connection from 169.254.0.105:16069 on port 1883.
+1741722997: Client <unknown> has exceeded timeout, disconnecting.
+1741732831: New connection from 169.254.0.105:20196 on port 1883.
+1741732927: Client <unknown> has exceeded timeout, disconnecting.
+1741732975: New connection from 169.254.0.105:51418 on port 1883.
+1741733071: Client <unknown> has exceeded timeout, disconnecting.
+1741736476: New connection from 169.254.0.105:6141 on port 1883.
+1741736569: Client <unknown> has exceeded timeout, disconnecting.
+1741737482: New connection from 169.254.0.105:64624 on port 1883.
+1741737494: Client <unknown> closed its connection.
+1741737500: New connection from 169.254.0.105:28919 on port 1883.
+1741737594: Client <unknown> has exceeded timeout, disconnecting.
+1741737844: New connection from 169.254.0.105:18069 on port 1883.
+1741737937: Client <unknown> has exceeded timeout, disconnecting.
+1741738046: mosquitto version 2.0.20 terminating
+1741738052: mosquitto version 2.0.20 starting
+1741738052: Config loaded from ./basic1.conf.
+1741738052: Opening ipv6 listen socket on port 1883.
+1741738052: Opening ipv4 listen socket on port 1883.
+1741738052: mosquitto version 2.0.20 running
+1741738283: New connection from 169.254.0.105:13245 on port 1883.
+1741738376: Client <unknown> has exceeded timeout, disconnecting.
+1741738406: mosquitto version 2.0.20 starting
+1741738406: Config loaded from ./basic1.conf.
+1741738406: Opening ipv6 listen socket on port 1883.
+1741738406: Opening ipv4 listen socket on port 1883.
+1741738406: mosquitto version 2.0.20 running
+1741738556: New connection from 169.254.0.105:13245 on port 1883.
+1741738627: Client <unknown> closed its connection.
+1741738634: New connection from 169.254.0.105:13245 on port 1883.
+1741738689: Client <unknown> closed its connection.
+1741738701: New connection from 169.254.0.105:13245 on port 1883.
+1741738796: Client <unknown> has exceeded timeout, disconnecting.
+1741738820: New connection from 169.254.0.105:13245 on port 1883.
+1741738896: Client <unknown> closed its connection.
+1741738902: New connection from 169.254.0.105:13245 on port 1883.
+1741738946: Client <unknown> closed its connection.
+1741738954: New connection from 169.254.0.105:13245 on port 1883.
+1741739047: Client <unknown> has exceeded timeout, disconnecting.
+1741739074: New connection from 169.254.0.105:13245 on port 1883.
+1741739168: Client <unknown> has exceeded timeout, disconnecting.
+1741739246: New connection from 169.254.0.105:13245 on port 1883.
+1741739342: Client <unknown> has exceeded timeout, disconnecting.
+1741739418: New connection from 169.254.0.105:13245 on port 1883.
+1741739457: Client <unknown> closed its connection.
+1741739525: mosquitto version 2.0.20 starting
+1741739525: Config loaded from ./basic1.conf.
+1741739525: Opening ipv6 listen socket on port 1883.
+1741739525: Opening ipv4 listen socket on port 1883.
+1741739525: mosquitto version 2.0.20 running
+1741739545: New connection from 169.254.0.105:13245 on port 1883.
+1741739622: Client <unknown> closed its connection.
+1741739630: New connection from 169.254.0.105:13245 on port 1883.
+1741739666: Client <unknown> closed its connection.
+1741739674: New connection from 169.254.0.105:13245 on port 1883.
+1741739726: Client <unknown> closed its connection.
+1741739734: New connection from 169.254.0.105:13245 on port 1883.
+1741739807: Client <unknown> closed its connection.
+1741739816: New connection from 169.254.0.105:13245 on port 1883.
+1741739909: Client <unknown> has exceeded timeout, disconnecting.
+1741739928: New connection from 169.254.0.105:13245 on port 1883.
+1741739975: Client <unknown> closed its connection.
+1741740017: New connection from 169.254.0.105:13245 on port 1883.
+1741740113: Client <unknown> has exceeded timeout, disconnecting.

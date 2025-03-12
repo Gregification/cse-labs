@@ -567,6 +567,8 @@ int main(void)
                         {
                             // updates tcp state machine
                             processTcpResponse(si, data);
+
+
                         } else {
                             if(!tcp->fRST){
                                socket s;
