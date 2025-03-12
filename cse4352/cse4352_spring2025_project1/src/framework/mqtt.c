@@ -40,6 +40,16 @@
 // Subroutines
 //-----------------------------------------------------------------------------
 
+uint8_t * putMqttData(uint8_t * src, uint8_t * dest, uint16_t len){
+    ((uint16_t *)dest)[0] = htons(len);
+
+    uint16_t i;
+    for(i = 0; i < len; i++)
+        dest[i+2] = src[i];
+
+    return dest + len + 2;
+}
+
 uint32_t getMqttFHLen(mqttFixedHeader * fh){
     uint32_t ret = 0;
 
@@ -86,12 +96,9 @@ uint8_t * packmqttVH_meta(mqttVariableHeader_meta const * src, uint8_t * dest, u
     if(destlen < 2)
         return dest;
 
-    uint16_t i = 0;
-    ((uint16_t *)&dest[i])[0] = htons(src->protocol_name_len);
+    uint16_t i;
 
-    for(i = 0; i < src->protocol_name_len && (i < destlen); i++)
-        dest[i+2] = src->protocol_name[i];
-    i+=2;
+    i = putMqttData((uint8_t *)src->protocol_name, dest, src->protocol_name_len) - dest;
 
     dest[i++] = src->protocol_version;
 
@@ -185,11 +192,10 @@ bool connectMqtt(etherHeader * e)
         }
 
         { // stick on client id
+
             char cid[] = "testclient";
-            ((uint16_t *)data)[0] = htons(sizeof(cid));
-            data+=2;
-            for(uint8_t i = 0; i < sizeof(cid); i++)
-                data++[0] = cid[i];
+
+            data = putMqttData((uint8_t *)cid, data, sizeof(cid));
         }
 
         msg->datasize = data - msg->data;
@@ -209,14 +215,39 @@ void disconnectMqtt(etherHeader * e)
 
 void publishMqtt(char strTopic[], char strData[])
 {
-//    uint16_t len;
-//    mqttFixedHeader mq;
-//    mq.ctrl.type = MQTT_CTRL_TYPE_PUBLISH;
-//    mq.ctrl.flags = MQTT_CTRL_FLAG_PUB_QOS_M & (0x0 << MQTT_CTRL_FLAG_PUB_QOS_S);
+    pendingMsg * msg = queueTcpData(mqttsocket);
+    if(msg){
+        uint8_t * data = msg->data;
 
-    //mqtt is not fixed TODO. make this workie :( . plz
-    char content[] = "something something";
-//    queueTcpData(mqttsocket, content, sizeof(content));
+        uint8_t topic_len = 0, topic_data_len = 0;
+        while(strTopic[topic_len] != '\0')
+            topic_len++;
+        while(strData[topic_data_len] != '\0')
+            topic_data_len++;
+
+        // mqtt init connection
+
+        { // fixed header
+            mqttFixedHeader fh;
+            fh.type = MQTT_FH_TYPE_PUBLISH;
+            fh.fDUP = fh.fQoS = false;
+            fh.fRETAIN = true;
+            setMqttFHLen(&fh, topic_len + topic_data_len + 2);
+
+            data = packMqttFH(&fh, data, TCP_PENQUE_ENTRY_MAX_MEM - (data - msg->data));
+        }
+
+        { // data
+
+            data = putMqttData((uint8_t *)strTopic, data, topic_len);
+            for(uint16_t i = 0; i < topic_data_len; i++)
+                data++[0] = strData[i];
+        }
+
+        msg->datasize = data - msg->data;
+
+    } else
+        putsUart0("could not queue data");
 }
 
 void subscribeMqtt(char strTopic[])
