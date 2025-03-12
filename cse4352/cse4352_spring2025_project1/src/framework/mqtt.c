@@ -55,11 +55,11 @@ uint32_t getMqttFHLen(mqttFixedHeader * fh){
 void setMqttFHLen(mqttFixedHeader * fh, uint16_t len){
     uint8_t i = 0;
     do{
-        fh->len_arr[i] = len & 0x7F;    // all but MSb
+        fh->len_arr[i] = len & ~BV(7);  // all but MSb
         len >>= 7;
         if(len)
-            fh->len_arr[i++] |= 0x80;   // indicate extension
-    }while(len > 0);
+            fh->len_arr[i++] |= BV(7);   // indicate extension
+    }while(len);
 }
 
 uint8_t * unpackMqttFH(mqttFixedHeader * dest, uint8_t * src, uint16_t srclen){
@@ -75,9 +75,9 @@ uint8_t * packMqttFH(mqttFixedHeader const * src, uint8_t * dest, uint16_t destl
 
     do {
         dest[i] = in[i];
-        if(!(in[i++] & 0x8))
+        if(!(in[i++] & BV(7)))
             break;
-    } while((in + i) < (uint8_t *)(src + 1) && (i < destlen));
+    } while((in + i) <= (uint8_t *)(src + 1) && (i < destlen));
 
     return dest + i;
 }
@@ -86,17 +86,18 @@ uint8_t * packmqttVH_meta(mqttVariableHeader_meta const * src, uint8_t * dest, u
     if(destlen < 2)
         return dest;
 
-    ((uint16_t *)dest)[0] = src->protocol_name_len;
+    uint16_t i = 0;
+    ((uint16_t *)&dest[i])[0] = htons(src->protocol_name_len);
 
-    uint16_t i;
-    for(i = 2; i < src->protocol_name_len && (i < destlen); i++)
-        dest[i] = src->protocol_name[i-2];
+    for(i = 0; i < src->protocol_name_len && (i < destlen); i++)
+        dest[i+2] = src->protocol_name[i];
+    i+=2;
 
     dest[i++] = src->protocol_version;
 
     dest[i++] = src->conn_flags;
 
-    ((uint16_t *)&dest[i])[0] = src->keepalive_timer;
+    ((uint16_t *)&dest[i])[0] = htons(src->keepalive_timer);
     i+=2;
 
     return dest + i;
@@ -163,16 +164,17 @@ bool connectMqtt(etherHeader * e)
         { // fixed header
             mqttFixedHeader fh;
             fh.type = MQTT_FH_TYPE_CONNECT;
-            setMqttFHLen(&fh, sizeof(mqttVariableHeader_meta) - 1 + 6); // -1 for pointer len, +6 for str len (see bellow)
+            fh.fDUP = fh.fQoS = fh.fRETAIN = false;
+            setMqttFHLen(&fh, sizeof(mqttVariableHeader_meta) -1 + 12); // -1 for pointer, +12 for client id
 
-            data = packMqttFH(&fh, data, TCP_PENQUE_ENTRY_MAX_MEM - (msg->data - data));
+            data = packMqttFH(&fh, data, TCP_PENQUE_ENTRY_MAX_MEM - (data - msg->data));
         }
 
         { // variable length header
             mqttVariableHeader_meta vh;
-            char str[] = "MQIsdp"; // 6
+            char str[] = "MQTT"; // 4
 
-            vh.protocol_name_len = sizeof(str);
+            vh.protocol_name_len = 4;
             vh.protocol_name = str;
 
             vh.protocol_version = 3;
@@ -180,6 +182,14 @@ bool connectMqtt(etherHeader * e)
             vh.keepalive_timer = 10;
 
             data = packmqttVH_meta(&vh, data, TCP_PENQUE_ENTRY_MAX_MEM);// - (msg->data - data));
+        }
+
+        { // stick on client id
+            char cid[] = "testclient";
+            ((uint16_t *)data)[0] = htons(sizeof(cid));
+            data+=2;
+            for(uint8_t i = 0; i < sizeof(cid); i++)
+                data++[0] = cid[i];
         }
 
         msg->datasize = data - msg->data;

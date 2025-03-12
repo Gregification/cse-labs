@@ -469,7 +469,7 @@ void sendTcpMessage(etherHeader *ether, socket *sock, uint16_t flags, void * dat
     tcp->acknowledgementNumber  = htonl(sock->acknowledgementNumber);
     tcp->offsetFields   = htons(flags);
     tcp->dataoffset     = SIZETO32(sizeof(tcpHeader));
-    tcp->windowSize     = 1;//mqtthtons(MSS);
+    tcp->windowSize     = htons(MSS);
     tcp->checksum       = 0;
     tcp->urgentPointer  = 0;
     for(uint16_t i = 0; i < dataSize; i++)

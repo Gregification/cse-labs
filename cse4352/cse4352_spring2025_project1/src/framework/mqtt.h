@@ -59,11 +59,13 @@ typedef struct _mqttVariableHeader_meta {
 
         struct __attribute__((__packed__)) {
 
-            unsigned int fusername  : 1;
-            unsigned int fpassword  : 1;
-            unsigned int fwill_retain   : 1;
-            unsigned int fwill_qos  : 1;
+            unsigned int            : 1; // reserved
             unsigned int fclean_session : 1;
+            unsigned int fwill      : 1;
+            unsigned int fwill_qos  : 2;
+            unsigned int fwill_retain   : 1;
+            unsigned int fpassword  : 1;
+            unsigned int fusername  : 1;
         };
     };
 
