@@ -568,6 +568,27 @@ int main(void)
                             // updates tcp state machine
                             processTcpResponse(si, data);
 
+                            if(!tcp_datalen)
+                                continue;
+
+                            uint8_t * dater = tcp->data;
+
+                            mqttFixedHeader fh;
+                            dater = unpackMqttFH(&fh, dater, sizeof(mqttFixedHeader)+1);
+                            if(fh.type == MQTT_FH_TYPE_PUBLISH){
+                                uint8_t * packet_end = dater + getMqttFHLen(&fh);
+                                if(packet_end > sizeof(buffer)+buffer)
+                                    packet_end = sizeof(buffer)+buffer;
+
+                                uint16_t topic_len  = ((uint16_t*)dater)[0];
+                                dater+=2;
+
+                                for(; topic_len > 0; topic_len--)
+                                    putcUart0(dater++[0]);
+
+                                for(; dater < packet_end; dater++)
+                                    putcUart0(dater[0]);
+                            }
 
                         } else {
                             if(!tcp->fRST){
