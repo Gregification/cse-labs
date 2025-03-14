@@ -43,8 +43,7 @@ void _incrementTick(){
 
 void initTimer()
 {
-    systick = 0;
-    uint8_t i;
+    systick = 50;
 
     // Enable clocks
     SYSCTL_RCGCTIMER_R |= SYSCTL_RCGCTIMER_R4;
@@ -58,7 +57,7 @@ void initTimer()
     TIMER4_IMR_R |= TIMER_IMR_TATOIM;                // turn-on interrupt
     NVIC_EN2_R |= 1 << (INT_TIMER4A-80);             // turn-on interrupt 86 (TIMER4A)
 
-    for (i = 0; i < NUM_TIMERS; i++)
+    for (uint8_t i = 0; i < NUM_TIMERS; i++)
     {
         period[i] = 0;
         ticks[i] = 0;

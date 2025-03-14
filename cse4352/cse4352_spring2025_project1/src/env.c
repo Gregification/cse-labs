@@ -14,8 +14,8 @@
 
 //#define SIZE32OFNS SIZE32(NetworkSetting)                   // size32 each setting needs
 
-#define MAX_ETHH 12
-#define ETHH_TIMEOUT_PERIOD 1
+#define MAX_ETHH 0
+#define ETHH_TIMEOUT_PERIOD 0
 
 ethHandler ethernetHandlers[MAX_ETHH];
 

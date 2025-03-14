@@ -40,6 +40,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+#include <stdlib.h>
 #include "tm4c123gh6pm.h"
 #include "clock.h"
 #include "eeprom.h"
@@ -272,7 +273,8 @@ void processShell(etherHeader * e)
                 token = strtok(NULL, " ");
                 if (strcmp(token, "connect") == 0)
                 {
-                    connectMqtt(e);
+                    if(!connectMqtt(e))
+                        putsUart0(" (failed).\n\r");
                 }
                 if (strcmp(token, "disconnect") == 0)
                 {
@@ -308,20 +310,47 @@ void processShell(etherHeader * e)
             }
             if (strcmp(token, "status") == 0)
             {
-                char str[16];
+                char str[18];
                 IPv4 ip;
 
                 putsUart0("  IP: ");
                 getIpAddress(ip.bytes);
                     ip.raw = ntohl(ip.raw);
                 IPv4tostring(&ip, str);
+                str[sizeof(str)-1] = '\0';
                 putsUart0(str);
+
 
                 putsUart0("\n\r  MQTT broker: ");
                 getIpMqttBrokerAddress(ip.bytes);
                     ip.raw = ntohl(ip.raw);
                 IPv4tostring(&ip, str);
+                str[sizeof(str)-1] = '\0';
                 putsUart0(str);
+
+                putsUart0("\n\r  state: ");
+
+                if(!mqttsocket)
+                    putsUart0("socket DNE");
+                else {
+                    snprintf(str, sizeof(str)-1, "port: %1hhd\n\r  ", mqttsocket->localPort);
+                    str[sizeof(str)-1] = '\0';
+                    putsUart0(str);
+                    switch(mqttsocket->state){
+                        default:                putsUart0("unknown"); break;
+                        case TCP_CLOSED:        putsUart0("TCP_CLOSED"); break;
+                        case TCP_LISTEN:        putsUart0("TCP_LISTEN"); break;
+                        case TCP_SYN_RECEIVED:  putsUart0("TCP_SYN_RECEIVED"); break;
+                        case TCP_SYN_SENT:      putsUart0("TCP_SYN_SENT"); break;
+                        case TCP_ESTABLISHED:   putsUart0("TCP_ESTABLISHED"); break;
+                        case TCP_FIN_WAIT_1:    putsUart0("TCP_FIN_WAIT_1"); break;
+                        case TCP_FIN_WAIT_2:    putsUart0("TCP_FIN_WAIT_2"); break;
+                        case TCP_CLOSING:       putsUart0("TCP_CLOSING"); break;
+                        case TCP_CLOSE_WAIT:    putsUart0("TCP_CLOSE_WAIT"); break;
+                        case TCP_LAST_ACK:      putsUart0("TCP_LAST_ACK"); break;
+                        case TCP_TIME_WAIT:     putsUart0("TCP_TIME_WAIT"); break;
+                    }
+                }
             }
             if (strcmp(token, "set") == 0)
             {
@@ -416,25 +445,6 @@ void processShell(etherHeader * e)
 // Main
 //-----------------------------------------------------------------------------
 
-// i was going to do something with this before i fully understood how this framework was structured
-//      this is somewhat pointless now, but high effort to remove.
-//ethResolution _ethH_general(ethHandler * self, etherHeader * data){
-//    if (isIpUnicast(data))
-//    {
-//        // Handle ICMP ping request
-//        if (isPingRequest(data))
-//        {
-//            sendPingResponse(data);
-//        }
-//    }
-//
-//    return (ethResolution){
-//        .removeEth      = false,
-//        .removeResolver = false,
-//        .forceTimeout   = false
-//    };
-//}
-
 int main(void)
 {
     uint8_t buffer[MAX_PACKET_SIZE];
@@ -445,7 +455,7 @@ int main(void)
 
     // Setup UART0
     initUart0();
-    setUart0BaudRate(115200, F_CPU);
+    setUart0BaudRate(UART0_BAUD, F_CPU);
 
     // Init timer
     initTimer();
@@ -454,7 +464,7 @@ int main(void)
     initSockets();
 
     // Init ethernet interface (eth0)
-    putsUart0("\n\rStarting eth0\n\r");
+    putsUart0("\n\rUTA cse4352 spring2025 project 1. #5713\n\r");
     initEther(ETHER_UNICAST | ETHER_BROADCAST | ETHER_HALFDUPLEX);
     setEtherMacAddress(2, 3, 4, 5, 6, 105);
 
@@ -471,27 +481,10 @@ int main(void)
     // init tcp sockets
     initTcp();
 
-    // Init handlers
-//    {
-//        if(
-//                addEthernetHandler((ethHandler){
-//                    .timeout_sec= ETHH_NO_TIMEOUT,
-//                    .resolve    = _ethH_general,
-//                    .onTimeout  = NULL
-//                })
-//          ){}
-//        else {
-//            putsUart0("failed to init packet handlers");
-//
-//            while(1)
-//                {}
-//        }
-//    }
-
     setPinValue(GREEN_LED, 1);
-    waitMicrosecond(100000);
+    waitMicrosecond(1e6);
     setPinValue(GREEN_LED, 0);
-    waitMicrosecond(100000);
+    waitMicrosecond(1e6);
 
     {
         socket buff_s;
@@ -526,9 +519,10 @@ int main(void)
         // Terminal processing here
         processShell(data);
 
-        // TCP pending messages
-//        sendTcpPendingMessages(data);
         updateSocketInfos(data);
+
+        // TCP pending messages
+        sendTcpPendingMessages(data);
 
         // Packet processing
         if (isEtherDataAvailable())
@@ -536,7 +530,7 @@ int main(void)
             if (isEtherOverflow())
             {
                 setPinValue(RED_LED, 1);
-                waitMicrosecond(100000);
+                waitMicrosecond(1e6);
                 setPinValue(RED_LED, 0);
             }
 
@@ -556,8 +550,6 @@ int main(void)
                 tcpHeader * tcp = (tcpHeader*)((uint8_t*)ip + (ip->size * 4));
                 uint16_t tcp_datalen = ip->length - ip->size * 4 - sizeof(tcpHeader);
 
-//                handleEthernetHeader(data);
-
             	if (isIpUnicast(data))
             	{
             	    // Handle ICMP ping request
@@ -575,12 +567,37 @@ int main(void)
                         {
                             // updates tcp state machine
                             processTcpResponse(si, data);
-                        }
-                        else {
-                            if(!tcp->fRST){
-                                socket s;
-                                sendTcpResponseFromEther(data, &s, RST);
+
+                            if(!tcp_datalen)
+                                continue;
+
+                            uint8_t * dater = tcp->data;
+
+                            mqttFixedHeader fh;
+                            dater = unpackMqttFH(&fh, dater, sizeof(mqttFixedHeader)+1);
+                            if(fh.type == MQTT_FH_TYPE_PUBLISH){
+                                uint8_t * packet_end = dater + getMqttFHLen(&fh);
+                                if(packet_end > sizeof(buffer)+buffer)
+                                    packet_end = sizeof(buffer)+buffer;
+
+                                uint16_t topic_len  = ((uint16_t*)dater)[0];
+                                dater+=2;
+
+                                for(; topic_len > 0; topic_len--)
+                                    putcUart0(dater++[0]);
+
+                                for(; dater < packet_end; dater++)
+                                    putcUart0(dater[0]);
                             }
+
+                        } else {
+                            if(!tcp->fRST){
+                               socket s;
+                                if(tcp->fFIN)
+                                    sendTcpResponseFromEther(data, &s, FIN | ACK);
+                                else
+                                    sendTcpResponseFromEther(data, &s, RST | ACK);
+                           }
                         }
                     }
             	}

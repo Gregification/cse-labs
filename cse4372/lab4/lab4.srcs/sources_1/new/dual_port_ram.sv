@@ -19,7 +19,7 @@
 // 
 //////////////////////////////////////////////////////////////////////////////////
 
-`define ADDR_WIDTH 15
+`define ADDR_WIDTH 12
 
 
 module dual_port_ram(
@@ -40,6 +40,14 @@ module dual_port_ram(
     
     reg [31:0] mem [2**`ADDR_WIDTH-1:0];
     
+    // baselined from stack overflow : https://stackoverflow.com/questions/70151532/read-from-file-to-memory-in-verilog
+    initial begin
+        for (integer i = 0; i < $size(mem); i = i + 1) begin
+            mem[i] = 0;
+        end
+        $readmemh("dummyhex.hex", mem);
+    end
+
     always @(posedge clk)
         i_rdata <= mem[i_addr];
         

@@ -122,6 +122,9 @@ bool addArpLOTEntry(MAC * hwip, IPv4 * ip, uint8_t priority){
             arpLot[ir].mac.bytes[i] = hwip->bytes[i];
 
         arpLot[ir].priority  = priority > arpLot[ir].priority ? priority : arpLot[ir].priority;
+
+        arpLot[ir].pending = false;
+
         return true;
     }
 

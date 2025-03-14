@@ -52,8 +52,8 @@ module lab4(
     // assign LED = 10'b0000000000;
     assign RGB0 = 3'b000;
     assign RGB1 = 3'b000;
-    // assign SS_ANODE = 4'b0000;
-    // assign SS_CATHODE = 8'b11111111;
+    assign SS_ANODE = 4'b0000;
+    assign SS_CATHODE = 8'b11111111;
     assign GPIO = 24'bzzzzzzzzzzzzzzzzzzzzzzzz;
     assign SERVO = 4'b0000;
     assign PDM_SPEAKER = 1'b0;
@@ -69,15 +69,15 @@ module lab4(
     
     wire            clk = CLK100;
     reg     [31:0]  clk_ladder = 0;
-        `define CLK_IO clk_ladder[10]
-        `define CLK_TESTING CLK100
-        `define CLK_HEX_DISPLAY clk_ladder[12]
-    wire            reset;
+        `define CLK_ILA clk
+        `define CLK_TESTING clk_ladder[1]
+        `define CLK_IO clk_ladder[15]
+
+    always_ff @ (posedge clk)
+        clk_ladder <= clk_ladder + 1;
+
     reg     [3:0]   btns;
     reg     [11:0]  sws;
-
-    assign reset = btns[0];
-    // assign LED[9:0] = sws[9:0];
 
     always_ff @ (posedge clk)
         clk_ladder <= clk_ladder + 1;
@@ -100,159 +100,154 @@ module lab4(
 
     //---actual lab4 stuff--------------------------------------------------
     
-    // inputs
-    reg [31:2]  i_addr;     // 0
-    reg [31:0]  i_rdata;    // 1
-    reg [31:2]  d_addr;     // 2
-    reg         d_we;       // 3
-    reg [31:0]  d_wdata;    // 4
-    reg [3:0]   d_be;       // 5
+    reg trigger;
+    reg  [15:0] test_index;        // hex immideate display, the 16bits currently shown. also acts as test case index
 
-    //outputs
-    reg [31:0]  d_rdata;    // 6
+    // test cases
+    reg     [9:0][67:0] test_cases; // [entries][entry size]
+
+    // dual port ram
+    reg [31:2]  i_addr;     // i
+    reg [31:0]  i_rdata;    // o
+    reg [31:2]  d_addr;     // i
+    reg         d_we;       // i
+    reg [31:0]  d_wdata;    // i
+    reg [3:0]   d_be;       // i
+    reg [31:0]  d_rdata;    // o
+
+    // mem shifter , inputs are buffered to simulate pipeline
+    reg [31:0]  ms_d_rdata_shifted;
+    reg         ms_unsigned;
+    reg [3:0]   ms_d_be;
 
     dual_port_ram _dual_port_ram (
-         .clk(`CLK_TESTING),
+        .clk(`CLK_TESTING),
 
-         // instr port (ro)
-         .i_addr(i_addr),
-         .i_rdata(i_rdata),
+        // instr port (ro)
+        .i_addr(i_addr),
+        .i_rdata(i_rdata),
 
-         // data port (rw)
-         .d_addr(d_addr),
-         .d_we(d_we),
-         .d_wdata(d_wdata),
-         .d_be(d_be),
-         .d_rdata(d_rdata)
+        // data port (rw)
+        .d_addr(d_addr),
+        .d_we(d_we),
+        .d_wdata(d_wdata),
+        .d_be(d_be),
+        .d_rdata(d_rdata)
+    );
+
+    mem_shifter_post _mem_shifter_post (
+        .clk(`CLK_TESTING),
+
+        .d_rdata(d_rdata),
+        .d_rdata_shifted(ms_d_rdata_shifted),
+
+        .isUnsigned(ms_unsigned),
+        .d_be(ms_d_be)
+    );
+
+    ila_0 your_instance_name (
+        .clk(`CLK_ILA), // input wire clk
+
+        .probe0(i_addr),    // input wire [29:0]  probe0  
+        .probe1(i_rdata),   // input wire [31:0]  probe1 
+        .probe2(d_addr),    // input wire [29:0]  probe2 
+        .probe3(d_rdata),   // input wire [31:0]  probe3 
+        .probe4(d_wdata),   // input wire [31:0]  probe4 
+        .probe5(d_be),      // input wire [3:0]  probe5 
+        .probe6(d_we),      // input wire [0:0]  probe6
+        .probe7(`CLK_TESTING),  // input wire [0:0]  probe7
+        .probe8(trigger),   // input wire [0:0]  probe8
+        .probe9(test_index),// input wire [15:0]  probe9
+        .probe10(ms_d_rdata_shifted),   // input wire [31:0]  probe10
+        .probe11(ms_d_be),  // input wire [3:0]  probe11 
+	    .probe12(d_be)      // input wire [3:0]  probe12
     );
 
     //---display values-----------------------------------------------------
 
-    reg [31:0]  hex_display;            // the 32bit value displayed
-    wire        hex_toggle_show_upper;  // toggles showing upper/lower 16bits of the display value; 
+    initial test_index = 0;
 
-    assign hex_display = d_rdata;
+    assign LED[9:0] = sws[9:0];
 
-    //---UI control---------------------------------------------------------
+    //------control---------------------------------------------------------
 
-    wire [2:0]  op_sel  = sws[11:9];
-    wire [2:0]  byte_sel= sws[8:6];     // byte index
-    wire [3:0]  byte_val= sws[3:0];     // byte value
-    wire [1:0]  led_disp= sws[5:4];
+    assign trigger = btns[3];
 
-    assign hex_toggle_show_upper = |led_disp;
+    reg [1:0] test_width;
 
-    reg [9:0]   LED_buffer;
-    assign LED = LED_buffer;
-    always case(led_disp)
-        2'd0: LED_buffer[8:0]  = d_rdata[8:0];
-        2'd1: LED_buffer[8:0]  = d_rdata[16:8];
-        2'd2: LED_buffer[8:0]  = d_rdata[24:16];
-        2'd3: LED_buffer[8:0]  = d_rdata[31:24];
-    endcase
-    assign LED[9] = d_be;
+    always_ff @ (posedge(`CLK_TESTING)) begin
+        if(! trigger)  begin
+            i_addr  <= 0;
+            d_addr  <= 0;
+            d_be    <= 0;
+            d_wdata <= 0;
+            d_we    <= 0;
+            test_index <= 0;
+        end else begin
+            test_index <= (test_index + 1) % $size(test_cases);
 
-    always_ff @ (posedge `CLK_TESTING) begin
+            // dump memory
+            if(sws[0]) begin
+                i_addr   <= test_index;
+                d_addr   <= test_index;
+                d_be     <= 4'b1111;
+                d_wdata  <= 0;
+                d_we     <= 0;
+            end 
 
-        if(btns[3]) begin
-            reg [31:0] targ;
+            // run test cases 
+            else if(sws[1]) begin
+                i_addr[31:2] <= $size(test_cases) - 1 - test_index;
 
-            case(op_sel)
-                default: targ   = i_addr;
-                3'd0: targ  = i_addr;
-                3'd1: targ  = i_rdata;
-                3'd2: targ  = d_addr;
-                3'd3: targ  = d_be;
-                //3'd4: targ  = d_rdata; // TODO bruh
-                3'd5: targ  = d_wdata;
-            endcase
+                // 'pipeline' values to memory shifter
+                if(test_index > 0)
+                    ms_unsigned <= test_cases[test_index - 1][0];
+                else
+                    ms_unsigned <= test_cases[$size(test_cases) - 1][0];
+                ms_d_be <= d_be;
 
-            case(byte_sel)
-                default: targ[3:0]  = byte_val;
-                3'd0: targ[3:0]     = byte_val;
-                3'd1: targ[7:4]     = byte_val;
-                3'd2: targ[11:8]    = byte_val;
-                3'd3: targ[15:12]   = byte_val;
-                3'd4: targ[19:16]   = byte_val;
-                3'd5: targ[23:20]   = byte_val;
-                3'd6: targ[27:24]   = byte_val;
-                3'd7: targ[31:28]   = byte_val;
-            endcase
+                // new test case
+                {d_wdata, d_addr, test_width, d_we} = test_cases[test_index][67:1];
+                // d_we        <= test_cases[test_index][0];
+                // test_width  <= test_cases[test_index][3:2];
+                // d_wdata     <= test_cases[test_index][35:4];
 
-            case(op_sel)
-                default: i_addr = targ;
-                3'd0: i_addr    = targ;
-                3'd1: i_rdata   = targ;
-                3'd2: d_addr    = targ;
-                3'd3: d_be      = targ;
-                3'd4: d_rdata   = targ;
-                3'd5: d_wdata   = targ;
-            endcase
+                case (test_width)
+                    2'h0: d_be      <= 4'b0001;
+                    2'h1: d_be      <= 4'b0011;
+                    2'h2: d_be      <= 4'b1111;
+                    default: d_be   <= 4'b1111;
+                endcase
+
+            end
+
+            // write & read test
+            else if (sws[2]) begin
+                d_we     <= test_index[2]+1;
+                i_addr   <= test_index;
+                d_addr   <= test_index+1;
+                d_be     <= 4'b1111;
+                d_wdata  <= test_index;
+            end
         end
     end
 
-    //---display drive logic------------------------------------------------
+    // for lab document step 9
+    assign test_cases           = {
+        // test 1 : 32b address for r/w operations
+        //  {d_wdata 32b    , d_addr 32b        , width 2b  , write 1b , unsign 1b  }
+            {32'h1          , {30'h1    , 2'b0} , 2'h1      , 1'b0      , 1'b1      },
+            {32'h2          , {30'h2    , 2'b0} , 2'h1      , 1'b0      , 1'b1      },
+            {32'h3          , {30'h3    , 2'b0} , 2'h1      , 1'b0      , 1'b0      },
+            {32'h4          , {30'h4    , 2'b0} , 2'h1      , 1'b0      , 1'b0      },
+            {32'h5          , {30'h5    , 2'b0} , 2'h1      , 1'b0      , 1'b1      },
 
-    reg  [15:0] hex_imm_display;        // hex immideate display, the 16bits currently shown
-    reg [3:0] anode_b;
-    reg [7:0] cathode_b;
-    reg [3:0] bin;                      // value of the current refreshing hex digit
-
-    assign SS_ANODE = anode_b;
-    assign SS_CATHODE = cathode_b;
-    assign hex_imm_display = hex_toggle_show_upper ? hex_display[31:16] : hex_display[15:0];
-
-    initial begin
-        anode_b <= 4'b1110;
-        cathode_b <= 8'b11000000;
-        bin <= 4'b0000;
-    end
-
-    always_ff @ (posedge(`CLK_HEX_DISPLAY)) begin
-        case(anode_b)
-            4'b0111 : begin 
-                anode_b <= 4'b1110;
-                bin <= hex_imm_display[3:0];
-            end
-            4'b1110 : begin 
-                anode_b <= 4'b1101;
-                bin <= hex_imm_display[7:4];
-            end
-            4'b1101 : begin 
-                anode_b <= 4'b1011;
-                bin <= hex_imm_display[11:8];
-            end
-            4'b1011 : begin 
-                anode_b <= 4'b0111;
-                bin <= hex_imm_display[15:12];
-            end
-            default : begin 
-                anode_b <= 4'b1110;
-                bin <= hex_imm_display[3:0];
-            end
-        endcase
-    end
-
-    always_comb begin
-        case(bin)
-            4'b0000 : cathode_b <= 8'b11000000;
-            4'b0001 : cathode_b <= 8'b11111001;
-            4'b0010 : cathode_b <= 8'b10100100;
-            4'b0011 : cathode_b <= 8'b10110000;
-            4'b0100 : cathode_b <= 8'b10011001;
-            4'b0101 : cathode_b <= 8'b10010010;
-            4'b0110 : cathode_b <= 8'b10000010;
-            4'b0111 : cathode_b <= 8'b11111000;
-            4'b1000 : cathode_b <= 8'b10000000;
-            4'b1001 : cathode_b <= 8'b10011000;
-            4'b1010 : cathode_b <= 8'b10001000;
-            4'b1011 : cathode_b <= 8'b10000011;
-            4'b1100 : cathode_b <= 8'b11000110;
-            4'b1101 : cathode_b <= 8'b10100001;
-            4'b1110 : cathode_b <= 8'b10000110;
-            4'b1111 : cathode_b <= 8'b10001110;
-            default : cathode_b <= 8'b11000010;
-        endcase
-    end
+        //  {d_wdata 32b    , d_addr 32b        , width 2b  , write 1b , unsign 1b  }
+            {32'h6          , {30'h6    , 2'b0} , 2'h1      , 1'b0      , 1'b1      },
+            {32'h7          , {30'h7    , 2'b0} , 2'h1      , 1'b0      , 1'b0      },
+            {32'h8          , {30'h8    , 2'b0} , 2'h1      , 1'b0      , 1'b0      },
+            {32'h9          , {30'h9    , 2'b0} , 2'h1      , 1'b0      , 1'b1      },
+            {32'h10         , {30'hA    , 2'b0} , 2'h1      , 1'b0      , 1'b1      }
+    };
 
 endmodule
