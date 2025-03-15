@@ -36,6 +36,8 @@
 //  Structures
 // ------------------------------------------------------------------------------
 
+uint16_t cid = 123;
+
 //-----------------------------------------------------------------------------
 // Subroutines
 //-----------------------------------------------------------------------------
@@ -152,7 +154,7 @@ bool connectMqtt(etherHeader * e)
             return false;
         }
 
-        mqttsocket->localPort   = 13245;//mqttrandom32();
+        mqttsocket->localPort   = random32();
         mqttsocket->remotePort  = 1883;
 
         if(openTcpConn(mqttsocket, e, 0)){
@@ -167,12 +169,14 @@ bool connectMqtt(etherHeader * e)
         uint8_t * data = msg->data;
 
         // mqtt init connection
+        char cid[8] = "clientID";
 
         { // fixed header
             mqttFixedHeader fh;
             fh.type = MQTT_FH_TYPE_CONNECT;
-            fh.fDUP = fh.fQoS = fh.fRETAIN = false;
-            setMqttFHLen(&fh, sizeof(mqttVariableHeader_meta) -1 + 12); // -1 for pointer, +12 for client id
+            fh.fDUP = fh.fRETAIN = false;
+            fh.fQoS = 0;
+            setMqttFHLen(&fh, sizeof(mqttVariableHeader_meta) -1 + sizeof(cid) + 1); // -1 for pointer, +12 for client id
 
             data = packMqttFH(&fh, data, TCP_PENQUE_ENTRY_MAX_MEM - (data - msg->data));
         }
@@ -184,21 +188,19 @@ bool connectMqtt(etherHeader * e)
             vh.protocol_name_len = 4;
             vh.protocol_name = str;
 
-            vh.protocol_version = 3;
+            vh.protocol_version = 4;
             vh.fclean_session = true;
-            vh.keepalive_timer = 10;
+            vh.keepalive_timer = 45;
 
             data = packmqttVH_meta(&vh, data, TCP_PENQUE_ENTRY_MAX_MEM);// - (msg->data - data));
         }
 
         { // stick on client id
-
-            char cid[] = "testclient";
-
             data = putMqttData((uint8_t *)cid, data, sizeof(cid));
         }
 
         msg->datasize = data - msg->data;
+        mqttstate = MQTT_SENT_CONN;
 
     } else
         putsUart0("tcp initiated; but could not queue data");
@@ -210,6 +212,26 @@ bool connectMqtt(etherHeader * e)
 
 void disconnectMqtt(etherHeader * e)
 {
+    pendingMsg * msg = queueTcpData(mqttsocket);
+        if(msg){
+            uint8_t * data = msg->data;
+
+            // mqtt init connection
+
+            { // fixed header
+                mqttFixedHeader fh;
+                fh.type = MQTT_FH_TYPE_DISCONNECT;
+                fh.fDUP = fh.fQoS = fh.fRETAIN = false;
+                setMqttFHLen(&fh, sizeof(mqttVariableHeader_meta) -1); // -1 for pointer, +12 for client id
+
+                data = packMqttFH(&fh, data, TCP_PENQUE_ENTRY_MAX_MEM - (data - msg->data));
+            }
+
+            msg->datasize = data - msg->data;
+
+        } else
+            putsUart0("tcp disconnect started; but could not queue data");
+
     closeTcpConnSoft(mqttsocket, e, 0);
 }
 

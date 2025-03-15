@@ -225,7 +225,7 @@ void sendTcpPendingMessages(etherHeader *ether)
         if(pm->socket && pm->datasize) { // message exist
             if(pm->socket->state == TCP_ESTABLISHED){
                 // send message
-                sendTcpMessage(ether, pm->socket, 0, pm->data, pm->datasize);
+                sendTcpMessage(ether, pm->socket, ACK, pm->data, pm->datasize);
 
                 pm->socket = NULL;
                 pm->datasize = 0;
@@ -306,16 +306,15 @@ void processTcpResponse(socketInfo * s, etherHeader * e)
         case TCP_TIME_WAIT :
             recalTimeout = true;
             sendTcpMessage(e, s->sock, FIN, NULL, 0);
-//            sendTcpResponse(e, s->sock, FIN);
             s->sock->state = TCP_FIN_WAIT_1;
             break;
 
         case TCP_ESTABLISHED :
-//            s->sock->acknowledgementNumber = 1 + ntohl(s->sock->sequenceNumber);// + ip->length - (ip->size * 4) - sizeof(tcpHeader));
-//            s->sock->acknowledgementNumber = s->sock->sequenceNumber + htonl(1;
             if(tcp->fFIN){
                 recalTimeout = true;
                 s->sock->state = TCP_CLOSE_WAIT;
+            } else if(tcp->fACK){
+                sendTcpMessage(e, s->sock, ACK, NULL, 0);
             }
             break;
 
@@ -335,7 +334,6 @@ void processTcpResponse(socketInfo * s, etherHeader * e)
     }
 
     if(recalTimeout){
-
         initSockInfoState(s);
     }
 }

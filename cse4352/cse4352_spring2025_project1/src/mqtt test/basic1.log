@@ -1,696 +1,401 @@
-1740630387: mosquitto version 2.0.20 starting
-1740630387: Config loaded from .\basic1.conf.
-1740630387: Starting in local only mode. Connections will only be possible from clients running on this machine.
-1740630387: Create a configuration file which defines a listener to allow remote access.
-1740630387: For more details see https://mosquitto.org/documentation/authentication-methods/
-1740630387: Opening ipv4 listen socket on port 1883.
-1740630387: Error: Only one usage of each socket address (protocol/network address/port) is normally permitted.
-
-1740630387: Opening ipv6 listen socket on port 1883.
-1740630387: Error: Only one usage of each socket address (protocol/network address/port) is normally permitted.
-
-1740630537: mosquitto version 2.0.20 starting
-1740630537: Config loaded from .\basic1.conf.
-1740630537: Opening ipv6 listen socket on port 169.
-1740630537: Opening ipv4 listen socket on port 169.
-1740630537: mosquitto version 2.0.20 running
-1740667963: mosquitto version 2.0.20 starting
-1740667963: Config loaded from .\basic1.conf.
-1740667963: Opening ipv6 listen socket on port 169.
-1740667963: Opening ipv4 listen socket on port 169.
-1740667963: mosquitto version 2.0.20 running
-1740668494: mosquitto version 2.0.20 terminating
-1740668508: mosquitto version 2.0.20 starting
-1740668508: Config loaded from .\basic1.conf.
-1740668508: Opening ipv6 listen socket on port 1883.
-1740668508: Opening ipv4 listen socket on port 1883.
-1740668508: mosquitto version 2.0.20 running
-1740668513: New connection from 169.254.0.2:49000 on port 1883.
-1740668560: mosquitto version 2.0.20 terminating
-1740748436: mosquitto version 2.0.20 starting
-1740748436: Config loaded from .\basic1.conf.
-1740748436: Opening ipv6 listen socket on port 1883.
-1740748436: Opening ipv4 listen socket on port 1883.
-1740748436: mosquitto version 2.0.20 running
-1740748498: New connection from 169.254.0.2:49000 on port 1883.
-1740748592: Client <unknown> has exceeded timeout, disconnecting.
-1740755141: New connection from 169.254.0.2:45478 on port 1883.
-1740755234: Client <unknown> has exceeded timeout, disconnecting.
-1740755380: New connection from 169.254.0.2:28227 on port 1883.
-1740755474: Client <unknown> has exceeded timeout, disconnecting.
-1740755677: New connection from 169.254.0.2:58113 on port 1883.
-1740755768: Client <unknown> has exceeded timeout, disconnecting.
-1740755925: New connection from 169.254.0.2:64056 on port 1883.
-1740756020: Client <unknown> has exceeded timeout, disconnecting.
-1740756134: New connection from 169.254.0.2:36018 on port 1883.
-1740756176: New connection from 169.254.0.2:13004 on port 1883.
-1740756224: Client <unknown> has exceeded timeout, disconnecting.
-1740756266: Client <unknown> has exceeded timeout, disconnecting.
-1740756376: New connection from 169.254.0.2:54881 on port 1883.
-1740756470: Client <unknown> has exceeded timeout, disconnecting.
-1740796186: mosquitto version 2.0.20 starting
-1740796186: Config loaded from .\basic1.conf.
-1740796186: Opening ipv6 listen socket on port 1883.
-1740796186: Opening ipv4 listen socket on port 1883.
-1740796186: mosquitto version 2.0.20 running
-1740796190: New connection from 169.254.0.2:52256 on port 1883.
-1740796281: Client <unknown> has exceeded timeout, disconnecting.
-1740796895: New connection from 169.254.0.2:417 on port 1883.
-1740796989: Client <unknown> has exceeded timeout, disconnecting.
-1740797535: mosquitto version 2.0.20 terminating
-1740797537: mosquitto version 2.0.20 starting
-1740797537: Config loaded from .\basic1.conf.
-1740797537: Opening ipv6 listen socket on port 1883.
-1740797537: Opening ipv4 listen socket on port 1883.
-1740797537: mosquitto version 2.0.20 running
-1740797614: New connection from 169.254.0.2:19144 on port 1883.
-1740797659: mosquitto version 2.0.20 terminating
-1740797660: mosquitto version 2.0.20 starting
-1740797660: Config loaded from .\basic1.conf.
-1740797660: Opening ipv6 listen socket on port 1883.
-1740797660: Opening ipv4 listen socket on port 1883.
-1740797660: mosquitto version 2.0.20 running
-1740798224: New connection from 169.254.0.2:55685 on port 1883.
-1740798319: Client <unknown> has exceeded timeout, disconnecting.
-1740798544: mosquitto version 2.0.20 terminating
-1740798545: mosquitto version 2.0.20 starting
-1740798545: Config loaded from .\basic1.conf.
-1740798545: Opening ipv6 listen socket on port 1883.
-1740798545: Opening ipv4 listen socket on port 1883.
-1740798545: mosquitto version 2.0.20 running
-1740798571: mosquitto version 2.0.20 terminating
-1740798585: mosquitto version 2.0.20 starting
-1740798585: Config loaded from .\basic1.conf.
-1740798585: Opening ipv6 listen socket on port 1883.
-1740798585: Opening ipv4 listen socket on port 1883.
-1740798585: mosquitto version 2.0.20 running
-1740798719: mosquitto version 2.0.20 terminating
-1740798849: mosquitto version 2.0.20 starting
-1740798849: Config loaded from .\basic1.conf.
-1740798849: Opening ipv6 listen socket on port 1883.
-1740798849: Opening ipv4 listen socket on port 1883.
-1740798849: mosquitto version 2.0.20 running
-1740798855: New connection from 169.254.0.2:33985 on port 1883.
-1740798950: Client <unknown> has exceeded timeout, disconnecting.
-1740799190: mosquitto version 2.0.20 terminating
-1740799193: mosquitto version 2.0.20 starting
-1740799193: Config loaded from .\basic1.conf.
-1740799193: Opening ipv6 listen socket on port 1883.
-1740799193: Opening ipv4 listen socket on port 1883.
-1740799193: mosquitto version 2.0.20 running
-1740799372: New connection from 169.254.0.105:52395 on port 1883.
-1740799463: Client <unknown> has exceeded timeout, disconnecting.
-1740799598: New connection from 169.254.0.105:2375 on port 1883.
-1740799690: Client <unknown> has exceeded timeout, disconnecting.
-1740799977: New connection from 169.254.0.105:17398 on port 1883.
-1740800068: Client <unknown> has exceeded timeout, disconnecting.
-1740805649: mosquitto version 2.0.20 terminating
-1740842585: mosquitto version 2.0.20 starting
-1740842585: Config loaded from .\basic1.conf.
-1740842585: Opening ipv6 listen socket on port 1883.
-1740842585: Opening ipv4 listen socket on port 1883.
-1740842585: mosquitto version 2.0.20 running
-1740842601: New connection from 169.254.0.105:39075 on port 1883.
-1740842692: Client <unknown> has exceeded timeout, disconnecting.
-1740845005: New connection from 169.254.0.105:41035 on port 1883.
-1740845099: Client <unknown> has exceeded timeout, disconnecting.
-1740845239: New connection from 169.254.0.105:16693 on port 1883.
-1740845333: Client <unknown> has exceeded timeout, disconnecting.
-1740845706: New connection from 169.254.0.105:34453 on port 1883.
-1740845801: Client <unknown> has exceeded timeout, disconnecting.
-1740847045: mosquitto version 2.0.20 terminating
-1740847205: mosquitto version 2.0.20 starting
-1740847205: Config loaded from .\basic1.conf.
-1740847205: Opening ipv6 listen socket on port 1883.
-1740847205: Opening ipv4 listen socket on port 1883.
-1740847205: mosquitto version 2.0.20 running
-1740847254: New connection from 169.254.0.105:33531 on port 1883.
-1740847348: Client <unknown> has exceeded timeout, disconnecting.
-1740848068: New connection from 169.254.0.105:35050 on port 1883.
-1740848158: Client <unknown> has exceeded timeout, disconnecting.
-1740848176: New connection from 169.254.0.105:22021 on port 1883.
-1740848266: Client <unknown> has exceeded timeout, disconnecting.
-1740848326: New connection from 169.254.0.105:32334 on port 1883.
-1740848416: Client <unknown> has exceeded timeout, disconnecting.
-1740850336: mosquitto version 2.0.20 terminating
-1741483440: mosquitto version 2.0.20 starting
-1741483440: Config loaded from ./basic1.conf.
-1741483440: Opening ipv6 listen socket on port 1883.
-1741483440: Opening ipv4 listen socket on port 1883.
-1741483440: mosquitto version 2.0.20 running
-1741487256: mosquitto version 2.0.20 terminating
-1741487257: mosquitto version 2.0.20 starting
-1741487257: Config loaded from ./basic1.conf.
-1741487257: Opening ipv6 listen socket on port 1883.
-1741487257: Opening ipv4 listen socket on port 1883.
-1741487257: mosquitto version 2.0.20 running
-1741488147: New connection from 169.254.0.105:13803 on port 1883.
-1741488241: Client <unknown> has exceeded timeout, disconnecting.
-1741488303: mosquitto version 2.0.20 terminating
-1741488343: mosquitto version 2.0.20 starting
-1741488343: Config loaded from ./basic1.conf.
-1741488343: Opening ipv6 listen socket on port 1883.
-1741488343: Opening ipv4 listen socket on port 1883.
-1741488343: mosquitto version 2.0.20 running
-1741488348: New connection from 169.254.0.105:63225 on port 1883.
-1741488438: Client <unknown> has exceeded timeout, disconnecting.
-1741488768: New connection from 169.254.0.105:3148 on port 1883.
-1741488858: Client <unknown> has exceeded timeout, disconnecting.
-1741489061: New connection from 169.254.0.105:33920 on port 1883.
-1741489152: Client <unknown> has exceeded timeout, disconnecting.
-1741489360: New connection from 169.254.0.105:3245 on port 1883.
-1741489453: Client <unknown> has exceeded timeout, disconnecting.
-1741490468: New connection from 169.254.0.105:43080 on port 1883.
-1741490563: Client <unknown> has exceeded timeout, disconnecting.
-1741491178: New connection from 169.254.0.105:27538 on port 1883.
-1741491271: Client <unknown> has exceeded timeout, disconnecting.
-1741491673: New connection from 169.254.0.105:15095 on port 1883.
-1741491769: Client <unknown> has exceeded timeout, disconnecting.
-1741492839: New connection from 169.254.0.105:18099 on port 1883.
-1741492933: Client <unknown> has exceeded timeout, disconnecting.
-1741493339: New connection from 169.254.0.105:41132 on port 1883.
-1741493431: Client <unknown> has exceeded timeout, disconnecting.
-1741493508: New connection from 169.254.0.105:54846 on port 1883.
-1741493530: Client <unknown> closed its connection.
-1741493622: New connection from 169.254.0.105:14055 on port 1883.
-1741493630: Client <unknown> closed its connection.
-1741493675: New connection from 169.254.0.105:27196 on port 1883.
-1741493680: Client <unknown> closed its connection.
-1741493785: New connection from 169.254.0.105:10128 on port 1883.
-1741493792: Client <unknown> closed its connection.
-1741493806: New connection from 169.254.0.105:35186 on port 1883.
-1741493899: Client <unknown> has exceeded timeout, disconnecting.
-1741494239: New connection from 169.254.0.105:45059 on port 1883.
-1741494330: Client <unknown> has exceeded timeout, disconnecting.
-1741494638: New connection from 169.254.0.105:18488 on port 1883.
-1741494668: Client <unknown> closed its connection.
-1741494739: New connection from 169.254.0.105:45349 on port 1883.
-1741494745: Client <unknown> closed its connection.
-1741494753: New connection from 169.254.0.105:50573 on port 1883.
-1741494847: Client <unknown> has exceeded timeout, disconnecting.
-1741495011: mosquitto version 2.0.20 starting
-1741495011: Config loaded from ./basic1.conf.
-1741495011: Opening ipv6 listen socket on port 1883.
-1741495011: Opening ipv4 listen socket on port 1883.
-1741495011: mosquitto version 2.0.20 running
-1741495288: New connection from 169.254.0.105:22625 on port 1883.
-1741495383: Client <unknown> has exceeded timeout, disconnecting.
-1741495614: New connection from 169.254.0.105:31195 on port 1883.
-1741495706: Client <unknown> has exceeded timeout, disconnecting.
-1741495832: New connection from 169.254.0.105:47070 on port 1883.
-1741495923: Client <unknown> has exceeded timeout, disconnecting.
-1741496075: New connection from 169.254.0.105:61203 on port 1883.
-1741496142: Client <unknown> closed its connection.
-1741496286: New connection from 169.254.0.105:44746 on port 1883.
-1741496379: Client <unknown> has exceeded timeout, disconnecting.
-1741496396: New connection from 169.254.0.105:18414 on port 1883.
-1741496407: Client <unknown> closed its connection.
-1741496419: New connection from 169.254.0.105:27749 on port 1883.
-1741496430: Client <unknown> closed its connection.
-1741496643: New connection from 169.254.0.105:42673 on port 1883.
-1741496739: Client <unknown> has exceeded timeout, disconnecting.
-1741496924: New connection from 169.254.0.105:24383 on port 1883.
-1741497014: Client <unknown> has exceeded timeout, disconnecting.
-1741497345: New connection from 169.254.0.105:13821 on port 1883.
-1741497429: New connection from 169.254.0.105:61661 on port 1883.
-1741497441: Client <unknown> has exceeded timeout, disconnecting.
-1741497525: Client <unknown> has exceeded timeout, disconnecting.
-1741497539: New connection from 169.254.0.105:25844 on port 1883.
-1741497560: New connection from 169.254.0.105:30327 on port 1883.
-1741497618: New connection from 169.254.0.105:1695 on port 1883.
-1741497629: Client <unknown> closed its connection.
-1741497633: Client <unknown> has exceeded timeout, disconnecting.
-1741497651: Client <unknown> has exceeded timeout, disconnecting.
-1741497718: New connection from 169.254.0.105:27108 on port 1883.
-1741497813: Client <unknown> has exceeded timeout, disconnecting.
-1741498051: New connection from 169.254.0.105:11357 on port 1883.
-1741498060: Client <unknown> closed its connection.
-1741498092: New connection from 169.254.0.105:60335 on port 1883.
-1741498185: Client <unknown> has exceeded timeout, disconnecting.
-1741498213: New connection from 169.254.0.105:28369 on port 1883.
-1741498305: Client <unknown> has exceeded timeout, disconnecting.
-1741498357: New connection from 169.254.0.105:44069 on port 1883.
-1741498410: New connection from 169.254.0.105:15234 on port 1883.
-1741498431: New connection from 169.254.0.105:35463 on port 1883.
-1741498449: Client <unknown> has exceeded timeout, disconnecting.
-1741498503: Client <unknown> has exceeded timeout, disconnecting.
-1741498527: Client <unknown> has exceeded timeout, disconnecting.
-1741498655: New connection from 169.254.0.105:39216 on port 1883.
-1741498748: Client <unknown> has exceeded timeout, disconnecting.
-1741498919: New connection from 169.254.0.105:6497 on port 1883.
-1741498975: New connection from 169.254.0.105:2940 on port 1883.
-1741499013: Client <unknown> has exceeded timeout, disconnecting.
-1741499067: Client <unknown> has exceeded timeout, disconnecting.
-1741499163: New connection from 169.254.0.105:60830 on port 1883.
-1741499259: Client <unknown> has exceeded timeout, disconnecting.
-1741499367: New connection from 169.254.0.105:27764 on port 1883.
-1741499462: Client <unknown> has exceeded timeout, disconnecting.
-1741499593: New connection from 169.254.0.105:23311 on port 1883.
-1741499685: Client <unknown> has exceeded timeout, disconnecting.
-1741500220: New connection from 169.254.0.105:9222 on port 1883.
-1741500315: Client <unknown> has exceeded timeout, disconnecting.
-1741500466: New connection from 169.254.0.105:23012 on port 1883.
-1741500504: New connection from 169.254.0.105:36885 on port 1883.
-1741500510: Client <unknown> closed its connection.
-1741500512: Client <unknown> closed its connection.
-1741550519: mosquitto version 2.0.20 starting
-1741550519: Config loaded from ./basic1.conf.
-1741550519: Opening ipv6 listen socket on port 1883.
-1741550519: Opening ipv4 listen socket on port 1883.
-1741550519: mosquitto version 2.0.20 running
-1741550528: New connection from 169.254.0.105:16628 on port 1883.
-1741550621: Client <unknown> has exceeded timeout, disconnecting.
-1741551779: New connection from 169.254.0.105:54891 on port 1883.
-1741551875: Client <unknown> has exceeded timeout, disconnecting.
-1741552432: New connection from 169.254.0.105:39606 on port 1883.
-1741552478: Client <unknown> closed its connection.
-1741552509: New connection from 169.254.0.105:65155 on port 1883.
-1741552600: Client <unknown> has exceeded timeout, disconnecting.
-1741629274: mosquitto version 2.0.20 starting
-1741629274: Config loaded from ./basic1.conf.
-1741629274: Opening ipv6 listen socket on port 1883.
-1741629274: Opening ipv4 listen socket on port 1883.
-1741629274: mosquitto version 2.0.20 running
-1741629286: New connection from 169.254.0.105:6361 on port 1883.
-1741629381: Client <unknown> has exceeded timeout, disconnecting.
-1741633449: New connection from 169.254.0.105:49727 on port 1883.
-1741633540: Client <unknown> has exceeded timeout, disconnecting.
-1741633727: New connection from 169.254.0.105:43551 on port 1883.
-1741633766: New connection from 169.254.0.105:43035 on port 1883.
-1741633821: Client <unknown> has exceeded timeout, disconnecting.
-1741633858: Client <unknown> has exceeded timeout, disconnecting.
-1741635114: New connection from 169.254.0.105:7082 on port 1883.
-1741635199: New connection from 169.254.0.105:23942 on port 1883.
-1741635208: Client <unknown> has exceeded timeout, disconnecting.
-1741635237: Client <unknown> closed its connection.
-1741635249: New connection from 169.254.0.105:2136 on port 1883.
-1741635281: mosquitto version 2.0.20 terminating
-1741638323: mosquitto version 2.0.20 starting
-1741638323: Config loaded from ./basic1.conf.
-1741638323: Opening ipv6 listen socket on port 1883.
-1741638323: Opening ipv4 listen socket on port 1883.
-1741638323: mosquitto version 2.0.20 running
-1741638329: New connection from 169.254.0.105:4595 on port 1883.
-1741638424: Client <unknown> has exceeded timeout, disconnecting.
-1741638735: New connection from 169.254.0.105:9637 on port 1883.
-1741638827: Client <unknown> has exceeded timeout, disconnecting.
-1741638930: New connection from 169.254.0.105:49869 on port 1883.
-1741639025: Client <unknown> has exceeded timeout, disconnecting.
-1741639058: New connection from 169.254.0.105:38600 on port 1883.
-1741639150: Client <unknown> has exceeded timeout, disconnecting.
-1741639225: New connection from 169.254.0.105:25655 on port 1883.
-1741639319: Client <unknown> has exceeded timeout, disconnecting.
-1741639456: New connection from 169.254.0.105:12518 on port 1883.
-1741639539: New connection from 169.254.0.105:159 on port 1883.
-1741639547: Client <unknown> has exceeded timeout, disconnecting.
-1741639631: Client <unknown> has exceeded timeout, disconnecting.
-1741641379: New connection from 169.254.0.105:54431 on port 1883.
-1741641472: Client <unknown> has exceeded timeout, disconnecting.
-1741642032: New connection from 169.254.0.105:25912 on port 1883.
-1741642127: Client <unknown> has exceeded timeout, disconnecting.
-1741651631: mosquitto version 2.0.20 terminating
-1741656019: mosquitto version 2.0.20 starting
-1741656019: Config loaded from ./basic1.conf.
-1741656019: Opening ipv6 listen socket on port 1883.
-1741656019: Opening ipv4 listen socket on port 1883.
-1741656019: mosquitto version 2.0.20 running
-1741656027: New connection from 169.254.0.105:348 on port 1883.
-1741656121: Client <unknown> has exceeded timeout, disconnecting.
-1741656132: New connection from 169.254.0.105:46351 on port 1883.
-1741656222: Client <unknown> has exceeded timeout, disconnecting.
-1741658911: New connection from 169.254.0.105:48501 on port 1883.
-1741659006: Client <unknown> has exceeded timeout, disconnecting.
-1741659449: New connection from 169.254.0.105:33988 on port 1883.
-1741659541: Client <unknown> has exceeded timeout, disconnecting.
-1741659889: New connection from 169.254.0.105:57636 on port 1883.
-1741659985: Client <unknown> has exceeded timeout, disconnecting.
-1741660045: mosquitto version 2.0.20 terminating
-1741722901: mosquitto version 2.0.20 starting
-1741722901: Config loaded from ./basic1.conf.
-1741722901: Opening ipv6 listen socket on port 1883.
-1741722901: Opening ipv4 listen socket on port 1883.
-1741722901: mosquitto version 2.0.20 running
-1741722906: New connection from 169.254.0.105:16069 on port 1883.
-1741722997: Client <unknown> has exceeded timeout, disconnecting.
-1741732831: New connection from 169.254.0.105:20196 on port 1883.
-1741732927: Client <unknown> has exceeded timeout, disconnecting.
-1741732975: New connection from 169.254.0.105:51418 on port 1883.
-1741733071: Client <unknown> has exceeded timeout, disconnecting.
-1741736476: New connection from 169.254.0.105:6141 on port 1883.
-1741736569: Client <unknown> has exceeded timeout, disconnecting.
-1741737482: New connection from 169.254.0.105:64624 on port 1883.
-1741737494: Client <unknown> closed its connection.
-1741737500: New connection from 169.254.0.105:28919 on port 1883.
-1741737594: Client <unknown> has exceeded timeout, disconnecting.
-1741737844: New connection from 169.254.0.105:18069 on port 1883.
-1741737937: Client <unknown> has exceeded timeout, disconnecting.
-1741738046: mosquitto version 2.0.20 terminating
-1741738052: mosquitto version 2.0.20 starting
-1741738052: Config loaded from ./basic1.conf.
-1741738052: Opening ipv6 listen socket on port 1883.
-1741738052: Opening ipv4 listen socket on port 1883.
-1741738052: mosquitto version 2.0.20 running
-1741738283: New connection from 169.254.0.105:13245 on port 1883.
-1741738376: Client <unknown> has exceeded timeout, disconnecting.
-1741738406: mosquitto version 2.0.20 starting
-1741738406: Config loaded from ./basic1.conf.
-1741738406: Opening ipv6 listen socket on port 1883.
-1741738406: Opening ipv4 listen socket on port 1883.
-1741738406: mosquitto version 2.0.20 running
-1741738556: New connection from 169.254.0.105:13245 on port 1883.
-1741738627: Client <unknown> closed its connection.
-1741738634: New connection from 169.254.0.105:13245 on port 1883.
-1741738689: Client <unknown> closed its connection.
-1741738701: New connection from 169.254.0.105:13245 on port 1883.
-1741738796: Client <unknown> has exceeded timeout, disconnecting.
-1741738820: New connection from 169.254.0.105:13245 on port 1883.
-1741738896: Client <unknown> closed its connection.
-1741738902: New connection from 169.254.0.105:13245 on port 1883.
-1741738946: Client <unknown> closed its connection.
-1741738954: New connection from 169.254.0.105:13245 on port 1883.
-1741739047: Client <unknown> has exceeded timeout, disconnecting.
-1741739074: New connection from 169.254.0.105:13245 on port 1883.
-1741739168: Client <unknown> has exceeded timeout, disconnecting.
-1741739246: New connection from 169.254.0.105:13245 on port 1883.
-1741739342: Client <unknown> has exceeded timeout, disconnecting.
-1741739418: New connection from 169.254.0.105:13245 on port 1883.
-1741739457: Client <unknown> closed its connection.
-1741739525: mosquitto version 2.0.20 starting
-1741739525: Config loaded from ./basic1.conf.
-1741739525: Opening ipv6 listen socket on port 1883.
-1741739525: Opening ipv4 listen socket on port 1883.
-1741739525: mosquitto version 2.0.20 running
-1741739545: New connection from 169.254.0.105:13245 on port 1883.
-1741739622: Client <unknown> closed its connection.
-1741739630: New connection from 169.254.0.105:13245 on port 1883.
-1741739666: Client <unknown> closed its connection.
-1741739674: New connection from 169.254.0.105:13245 on port 1883.
-1741739726: Client <unknown> closed its connection.
-1741739734: New connection from 169.254.0.105:13245 on port 1883.
-1741739807: Client <unknown> closed its connection.
-1741739816: New connection from 169.254.0.105:13245 on port 1883.
-1741739909: Client <unknown> has exceeded timeout, disconnecting.
-1741739928: New connection from 169.254.0.105:13245 on port 1883.
-1741739975: Client <unknown> closed its connection.
-1741740017: New connection from 169.254.0.105:13245 on port 1883.
-1741740113: Client <unknown> has exceeded timeout, disconnecting.
-1741795684: mosquitto version 2.0.20 starting
-1741795684: Config loaded from ./basic1.conf.
-1741795684: Opening ipv6 listen socket on port 1883.
-1741795684: Opening ipv4 listen socket on port 1883.
-1741795684: mosquitto version 2.0.20 running
-1741795833: New connection from 169.254.0.105:13245 on port 1883.
-1741795924: Client <unknown> has exceeded timeout, disconnecting.
-1741796098: New connection from 169.254.0.105:13245 on port 1883.
-1741796133: Client <unknown> closed its connection.
-1741796160: New connection from 169.254.0.105:13245 on port 1883.
-1741796254: Client <unknown> has exceeded timeout, disconnecting.
-1741798272: New connection from 169.254.0.105:13245 on port 1883.
-1741798362: Client <unknown> has exceeded timeout, disconnecting.
-1741798610: New connection from 169.254.0.105:13245 on port 1883.
-1741798704: Client <unknown> has exceeded timeout, disconnecting.
-1741798751: New connection from 169.254.0.105:13245 on port 1883.
-1741798843: Client <unknown> has exceeded timeout, disconnecting.
-1741800323: New connection from 169.254.0.105:13245 on port 1883.
-1741800415: Client <unknown> has exceeded timeout, disconnecting.
-1741800454: New connection from 169.254.0.105:13245 on port 1883.
-1741800547: Client <unknown> has exceeded timeout, disconnecting.
-1741800737: New connection from 169.254.0.105:13245 on port 1883.
-1741800829: Client <unknown> has exceeded timeout, disconnecting.
-1741801121: New connection from 169.254.0.105:13245 on port 1883.
-1741801160: Client <unknown> closed its connection.
-1741801186: New connection from 169.254.0.105:13245 on port 1883.
-1741801199: Client <unknown> closed its connection.
-1741801424: New connection from 169.254.0.105:13245 on port 1883.
-1741801496: Client <unknown> closed its connection.
-1741801603: New connection from 169.254.0.105:13245 on port 1883.
-1741801687: Client <unknown> closed its connection.
-1741801687: New connection from 169.254.0.105:13245 on port 1883.
-1741801782: Client <unknown> has exceeded timeout, disconnecting.
-1741802484: New connection from 169.254.0.105:13245 on port 1883.
-1741802574: Client <unknown> has exceeded timeout, disconnecting.
-1741802716: New connection from 169.254.0.105:13245 on port 1883.
-1741802809: Client <unknown> has exceeded timeout, disconnecting.
-1741802873: New connection from 169.254.0.105:13245 on port 1883.
-1741802883: Client <unknown> closed its connection.
-1741803045: New connection from 169.254.0.105:13245 on port 1883.
-1741803110: Client <unknown> closed its connection.
-1741803110: New connection from 169.254.0.105:13245 on port 1883.
-1741803169: Client <unknown> closed its connection.
-1741803176: New connection from 169.254.0.105:13245 on port 1883.
-1741803271: Client <unknown> has exceeded timeout, disconnecting.
-1741803317: New connection from 169.254.0.105:13245 on port 1883.
-1741803409: Client <unknown> has exceeded timeout, disconnecting.
-1741803488: New connection from 169.254.0.105:13245 on port 1883.
-1741803552: Client <unknown> closed its connection.
-1741803561: New connection from 169.254.0.105:13245 on port 1883.
-1741803655: Client <unknown> has exceeded timeout, disconnecting.
-1741803701: New connection from 169.254.0.105:13245 on port 1883.
-1741803793: Client <unknown> has exceeded timeout, disconnecting.
-1741803861: New connection from 169.254.0.105:13245 on port 1883.
-1741803955: Client <unknown> has exceeded timeout, disconnecting.
-1741804125: New connection from 169.254.0.105:13245 on port 1883.
-1741804219: Client <unknown> has exceeded timeout, disconnecting.
-1741804246: New connection from 169.254.0.105:13245 on port 1883.
-1741804336: Client <unknown> closed its connection.
-1741804345: New connection from 169.254.0.105:13245 on port 1883.
-1741804391: Client <unknown> closed its connection.
-1741804528: New connection from 169.254.0.105:13245 on port 1883.
-1741804599: Client <unknown> closed its connection.
-1741804626: New connection from 169.254.0.105:13245 on port 1883.
-1741804716: Client <unknown> has exceeded timeout, disconnecting.
-1741804789: mosquitto version 2.0.20 terminating
-1741804814: mosquitto version 2.0.20 starting
-1741804814: Config loaded from ./basic1.conf.
-1741804814: Opening ipv6 listen socket on port 1883.
-1741804814: Opening ipv4 listen socket on port 1883.
-1741804814: mosquitto version 2.0.20 running
-1741804824: New connection from 169.254.0.105:13245 on port 1883.
-1741804916: Client <unknown> has exceeded timeout, disconnecting.
-1741804951: mosquitto version 2.0.20 terminating
-1741804952: mosquitto version 2.0.20 starting
-1741804952: Config loaded from ./basic1.conf.
-1741804952: Opening ipv6 listen socket on port 1883.
-1741804952: Opening ipv4 listen socket on port 1883.
-1741804952: mosquitto version 2.0.20 running
-1741804976: mosquitto version 2.0.20 terminating
-1741804977: mosquitto version 2.0.20 starting
-1741804977: Config loaded from ./basic1.conf.
-1741804977: Opening ipv6 listen socket on port 1883.
-1741804977: Opening ipv4 listen socket on port 1883.
-1741804977: mosquitto version 2.0.20 running
-1741804997: New connection from 169.254.0.105:13245 on port 1883.
-1741805018: mosquitto version 2.0.20 terminating
-1741805153: mosquitto version 2.0.20 starting
-1741805153: Config loaded from ./basic1.conf.
-1741805153: Opening ipv6 listen socket on port 1883.
-1741805153: Opening ipv4 listen socket on port 1883.
-1741805153: mosquitto version 2.0.20 running
-1741805158: New connection from 169.254.0.105:13245 on port 1883.
-1741805249: Client <unknown> has exceeded timeout, disconnecting.
-1741805288: New connection from 169.254.0.105:13245 on port 1883.
-1741805359: Client <unknown> closed its connection.
-1741805362: New connection from 169.254.0.105:13245 on port 1883.
-1741805442: Client <unknown> closed its connection.
-1741805630: New connection from 169.254.0.105:13245 on port 1883.
-1741805716: Client <unknown> closed its connection.
-1741805897: New connection from 169.254.0.105:13245 on port 1883.
-1741805917: Client <unknown> closed its connection.
-1741805944: New connection from 169.254.0.105:13245 on port 1883.
-1741806041: Client <unknown> has exceeded timeout, disconnecting.
-1741806288: New connection from 169.254.0.105:13245 on port 1883.
-1741806383: Client <unknown> has exceeded timeout, disconnecting.
-1741806423: New connection from 169.254.0.105:13245 on port 1883.
-1741806464: Client <unknown> closed its connection.
-1741806482: New connection from 169.254.0.105:13245 on port 1883.
-1741806544: Client <unknown> closed its connection.
-1741806552: New connection from 169.254.0.105:13245 on port 1883.
-1741806646: Client <unknown> has exceeded timeout, disconnecting.
-1741807066: New connection from 169.254.0.105:13245 on port 1883.
-1741807117: Client <unknown> closed its connection.
-1741807143: New connection from 169.254.0.105:13245 on port 1883.
-1741807235: Client <unknown> has exceeded timeout, disconnecting.
-1741807408: New connection from 169.254.0.105:13245 on port 1883.
-1741807499: Client <unknown> has exceeded timeout, disconnecting.
-1741807622: New connection from 169.254.0.105:13245 on port 1883.
-1741807647: Client <unknown> closed its connection.
-1741807671: New connection from 169.254.0.105:13245 on port 1883.
-1741807763: Client <unknown> has exceeded timeout, disconnecting.
-1741807863: New connection from 169.254.0.105:13245 on port 1883.
-1741807954: Client <unknown> has exceeded timeout, disconnecting.
-1741807978: New connection from 169.254.0.105:13245 on port 1883.
-1741808068: Client <unknown> has exceeded timeout, disconnecting.
-1741808229: New connection from 169.254.0.105:13245 on port 1883.
-1741808321: Client <unknown> has exceeded timeout, disconnecting.
-1741808410: New connection from 169.254.0.105:13245 on port 1883.
-1741808501: Client <unknown> has exceeded timeout, disconnecting.
-1741808544: New connection from 169.254.0.105:13245 on port 1883.
-1741808582: Client <unknown> closed its connection.
-1741808592: New connection from 169.254.0.105:13245 on port 1883.
-1741808619: Client <unknown> closed its connection.
-1741808625: New connection from 169.254.0.105:13245 on port 1883.
-1741808682: Client <unknown> closed its connection.
-1741808685: New connection from 169.254.0.105:13245 on port 1883.
-1741808762: Client <unknown> closed its connection.
-1741808780: New connection from 169.254.0.105:13245 on port 1883.
-1741808804: Client <unknown> closed its connection.
-1741808814: New connection from 169.254.0.105:13245 on port 1883.
-1741808909: Client <unknown> has exceeded timeout, disconnecting.
-1741809011: New connection from 169.254.0.105:13245 on port 1883.
-1741809107: Client <unknown> has exceeded timeout, disconnecting.
-1741810209: New connection from 169.254.0.105:13245 on port 1883.
-1741810216: Client <unknown> closed its connection.
-1741810337: New connection from 169.254.0.105:13245 on port 1883.
-1741810405: Client <unknown> closed its connection.
-1741810414: New connection from 169.254.0.105:13245 on port 1883.
-1741810477: Client <unknown> closed its connection.
-1741810484: New connection from 169.254.0.105:13245 on port 1883.
-1741810571: Client <unknown> closed its connection.
-1741810838: New connection from 169.254.0.105:13245 on port 1883.
-1741810931: Client <unknown> has exceeded timeout, disconnecting.
-1741810992: New connection from 169.254.0.105:13245 on port 1883.
-1741811056: Client <unknown> closed its connection.
-1741811064: New connection from 169.254.0.105:13245 on port 1883.
-1741811158: Client <unknown> has exceeded timeout, disconnecting.
-1741811226: New connection from 169.254.0.105:13245 on port 1883.
-1741811296: Client <unknown> closed its connection.
-1741811305: New connection from 169.254.0.105:13245 on port 1883.
-1741811357: Client <unknown> closed its connection.
-1741811366: New connection from 169.254.0.105:13245 on port 1883.
-1741811396: Client <unknown> closed its connection.
-1741811405: New connection from 169.254.0.105:13245 on port 1883.
-1741811488: Client <unknown> closed its connection.
-1741811496: New connection from 169.254.0.105:13245 on port 1883.
-1741811583: Client <unknown> closed its connection.
-1741811588: New connection from 169.254.0.105:13245 on port 1883.
-1741811627: Client <unknown> closed its connection.
-1741811639: New connection from 169.254.0.105:13245 on port 1883.
-1741811671: Client <unknown> closed its connection.
-1741811680: New connection from 169.254.0.105:13245 on port 1883.
-1741811722: Client <unknown> closed its connection.
-1741811746: New connection from 169.254.0.105:13245 on port 1883.
-1741811831: Client <unknown> closed its connection.
-1741811859: New connection from 169.254.0.105:13245 on port 1883.
-1741811951: Client <unknown> has exceeded timeout, disconnecting.
-1741812011: New connection from 169.254.0.105:13245 on port 1883.
-1741812106: Client <unknown> has exceeded timeout, disconnecting.
-1741812491: New connection from 169.254.0.105:13245 on port 1883.
-1741812586: Client <unknown> has exceeded timeout, disconnecting.
-1741812652: New connection from 169.254.0.105:13245 on port 1883.
-1741812743: Client <unknown> has exceeded timeout, disconnecting.
-1741812908: New connection from 169.254.0.105:13245 on port 1883.
-1741812971: Client <unknown> closed its connection.
-1741812978: New connection from 169.254.0.105:13245 on port 1883.
-1741813020: Client <unknown> closed its connection.
-1741813080: New connection from 169.254.0.105:13245 on port 1883.
-1741813127: Client <unknown> closed its connection.
-1741813132: New connection from 169.254.0.105:13245 on port 1883.
-1741813223: Client <unknown> has exceeded timeout, disconnecting.
-1741813342: New connection from 169.254.0.105:13245 on port 1883.
-1741813372: Client <unknown> closed its connection.
-1741813388: New connection from 169.254.0.105:13245 on port 1883.
-1741813467: New connection from 127.0.0.1:6731 on port 1883.
-1741813467: New client connected from 127.0.0.1:6731 as auto-A967B6AC-D97A-38B6-3997-979063F01FB0 (p2, c1, k60).
-1741813467: No will message specified.
-1741813467: Sending CONNACK to auto-A967B6AC-D97A-38B6-3997-979063F01FB0 (0, 2)
-1741813467: Bad socket read/write on client auto-A967B6AC-D97A-38B6-3997-979063F01FB0: Invalid arguments provided.
-1741813481: Client <unknown> has exceeded timeout, disconnecting.
-1741813483: New connection from 127.0.0.1:6744 on port 1883.
-1741813483: New client connected from 127.0.0.1:6744 as auto-1671F4AC-A35C-13BE-C1B1-3FF1220F0E15 (p2, c1, k60).
-1741813483: No will message specified.
-1741813483: Sending CONNACK to auto-1671F4AC-A35C-13BE-C1B1-3FF1220F0E15 (0, 2)
-1741813483: Bad socket read/write on client auto-1671F4AC-A35C-13BE-C1B1-3FF1220F0E15: Invalid arguments provided.
-1741813491: New connection from ::1:6759 on port 1883.
-1741813491: New client connected from ::1:6759 as auto-27801144-FBD9-1E0F-497D-A3BD84E5E9A2 (p2, c1, k60).
-1741813491: No will message specified.
-1741813491: Sending CONNACK to auto-27801144-FBD9-1E0F-497D-A3BD84E5E9A2 (0, 2)
-1741813491: Bad socket read/write on client auto-27801144-FBD9-1E0F-497D-A3BD84E5E9A2: Invalid arguments provided.
-1741813515: New connection from ::1:6771 on port 1883.
-1741813515: New client connected from ::1:6771 as auto-90589221-28B7-A890-80E3-FE930ACB6DF0 (p2, c1, k60).
-1741813515: No will message specified.
-1741813515: Sending CONNACK to auto-90589221-28B7-A890-80E3-FE930ACB6DF0 (0, 2)
-1741813515: Bad socket read/write on client auto-90589221-28B7-A890-80E3-FE930ACB6DF0: Invalid arguments provided.
-1741813554: mosquitto version 2.0.20 terminating
-1741813562: mosquitto version 2.0.20 starting
-1741813562: Config loaded from ./basic1.conf.
-1741813562: Opening ipv6 listen socket on port 1883.
-1741813562: Opening ipv4 listen socket on port 1883.
-1741813562: mosquitto version 2.0.20 running
-1741813568: mosquitto version 2.0.20 terminating
-1741813573: mosquitto version 2.0.20 starting
-1741813573: Config loaded from ./basic1.conf.
-1741813573: Opening ipv6 listen socket on port 1883.
-1741813573: Opening ipv4 listen socket on port 1883.
-1741813573: mosquitto version 2.0.20 running
-1741813575: New connection from ::1:6839 on port 1883.
-1741813575: New client connected from ::1:6839 as auto-2B55D808-2D90-5D27-940C-A080B78C343B (p2, c1, k60).
-1741813575: No will message specified.
-1741813575: Sending CONNACK to auto-2B55D808-2D90-5D27-940C-A080B78C343B (0, 2)
-1741813575: Bad socket read/write on client auto-2B55D808-2D90-5D27-940C-A080B78C343B: Invalid arguments provided.
-1741814187: mosquitto version 2.0.11 starting
-1741814187: Config loaded from ./basic1.conf.
-1741814187: Opening ipv4 listen socket on port 1883.
-1741814187: Error: Address already in use
-1741814269: mosquitto version 2.0.20 starting
-1741814269: Config loaded from ./basic1.conf.
-1741814269: Opening ipv6 listen socket on port 1883.
-1741814269: Opening ipv4 listen socket on port 1883.
-1741814269: mosquitto version 2.0.20 running
-1741814277: New connection from ::1:47248 on port 1883.
-1741814277: New client connected from ::1:47248 as auto-B96E7441-7589-1F40-081F-1143EA06556B (p2, c1, k60).
-1741814277: No will message specified.
-1741814277: Sending CONNACK to auto-B96E7441-7589-1F40-081F-1143EA06556B (0, 0)
-1741814277: Received SUBSCRIBE from auto-B96E7441-7589-1F40-081F-1143EA06556B
-1741814277: 	cat (QoS 0)
-1741814277: auto-B96E7441-7589-1F40-081F-1143EA06556B 0 cat
-1741814277: Sending SUBACK to auto-B96E7441-7589-1F40-081F-1143EA06556B
-1741814312: New connection from ::1:47270 on port 1883.
-1741814312: New client connected from ::1:47270 as auto-4A6DABE4-281C-3282-9511-3197E6528CE7 (p2, c1, k60).
-1741814312: No will message specified.
-1741814312: Sending CONNACK to auto-4A6DABE4-281C-3282-9511-3197E6528CE7 (0, 0)
-1741814312: Received PUBLISH from auto-4A6DABE4-281C-3282-9511-3197E6528CE7 (d0, q0, r0, m0, 'cat', ... (11 bytes))
-1741814312: Sending PUBLISH to auto-B96E7441-7589-1F40-081F-1143EA06556B (d0, q0, r0, m0, 'cat', ... (11 bytes))
-1741814312: Received DISCONNECT from auto-4A6DABE4-281C-3282-9511-3197E6528CE7
-1741814312: Client auto-4A6DABE4-281C-3282-9511-3197E6528CE7 disconnected.
-1741814314: New connection from ::1:47273 on port 1883.
-1741814314: New client connected from ::1:47273 as auto-4BD4B555-4ACA-32EA-1375-35EF527D59EB (p2, c1, k60).
-1741814314: No will message specified.
-1741814314: Sending CONNACK to auto-4BD4B555-4ACA-32EA-1375-35EF527D59EB (0, 0)
-1741814314: Received PUBLISH from auto-4BD4B555-4ACA-32EA-1375-35EF527D59EB (d0, q0, r0, m0, 'cat', ... (11 bytes))
-1741814314: Sending PUBLISH to auto-B96E7441-7589-1F40-081F-1143EA06556B (d0, q0, r0, m0, 'cat', ... (11 bytes))
-1741814314: Received DISCONNECT from auto-4BD4B555-4ACA-32EA-1375-35EF527D59EB
-1741814314: Client auto-4BD4B555-4ACA-32EA-1375-35EF527D59EB disconnected.
-1741814319: New connection from ::1:47278 on port 1883.
-1741814319: New client connected from ::1:47278 as auto-4EF57159-B31E-6921-C359-48D4728D9E5D (p2, c1, k60).
-1741814319: No will message specified.
-1741814319: Sending CONNACK to auto-4EF57159-B31E-6921-C359-48D4728D9E5D (0, 0)
-1741814319: Received PUBLISH from auto-4EF57159-B31E-6921-C359-48D4728D9E5D (d0, q0, r0, m0, 'cat', ... (11 bytes))
-1741814319: Sending PUBLISH to auto-B96E7441-7589-1F40-081F-1143EA06556B (d0, q0, r0, m0, 'cat', ... (11 bytes))
-1741814319: Received DISCONNECT from auto-4EF57159-B31E-6921-C359-48D4728D9E5D
-1741814319: Client auto-4EF57159-B31E-6921-C359-48D4728D9E5D disconnected.
-1741814332: New connection from 169.254.0.105:13245 on port 1883.
-1741814337: Received PINGREQ from auto-B96E7441-7589-1F40-081F-1143EA06556B
-1741814337: Sending PINGRESP to auto-B96E7441-7589-1F40-081F-1143EA06556B
-1741814345: New connection from ::1:47303 on port 1883.
-1741814345: New client connected from ::1:47303 as auto-AFB926D5-E001-194E-0698-D1E817F19268 (p2, c1, k60).
-1741814345: No will message specified.
-1741814345: Sending CONNACK to auto-AFB926D5-E001-194E-0698-D1E817F19268 (0, 0)
-1741814345: Received PUBLISH from auto-AFB926D5-E001-194E-0698-D1E817F19268 (d0, q0, r0, m0, 'cat', ... (11 bytes))
-1741814345: Sending PUBLISH to auto-B96E7441-7589-1F40-081F-1143EA06556B (d0, q0, r0, m0, 'cat', ... (11 bytes))
-1741814345: Received DISCONNECT from auto-AFB926D5-E001-194E-0698-D1E817F19268
-1741814345: Client auto-AFB926D5-E001-194E-0698-D1E817F19268 disconnected.
-1741814397: Received PINGREQ from auto-B96E7441-7589-1F40-081F-1143EA06556B
-1741814397: Sending PINGRESP to auto-B96E7441-7589-1F40-081F-1143EA06556B
-1741814424: Client <unknown> has exceeded timeout, disconnecting.
-1741814457: Received PINGREQ from auto-B96E7441-7589-1F40-081F-1143EA06556B
-1741814457: Sending PINGRESP to auto-B96E7441-7589-1F40-081F-1143EA06556B
-1741814517: Received PINGREQ from auto-B96E7441-7589-1F40-081F-1143EA06556B
-1741814517: Sending PINGRESP to auto-B96E7441-7589-1F40-081F-1143EA06556B
-1741814577: Received PINGREQ from auto-B96E7441-7589-1F40-081F-1143EA06556B
-1741814577: Sending PINGRESP to auto-B96E7441-7589-1F40-081F-1143EA06556B
-1741814637: Received PINGREQ from auto-B96E7441-7589-1F40-081F-1143EA06556B
-1741814637: Sending PINGRESP to auto-B96E7441-7589-1F40-081F-1143EA06556B
-1741814697: Received PINGREQ from auto-B96E7441-7589-1F40-081F-1143EA06556B
-1741814697: Sending PINGRESP to auto-B96E7441-7589-1F40-081F-1143EA06556B
-1741814757: Received PINGREQ from auto-B96E7441-7589-1F40-081F-1143EA06556B
-1741814757: Sending PINGRESP to auto-B96E7441-7589-1F40-081F-1143EA06556B
+1741997242: mosquitto version 2.0.18 starting
+1741997242: Config loaded from ./basic1.conf.
+1741997242: Opening ipv4 listen socket on port 1883.
+1741997242: mosquitto version 2.0.18 running
+1741997247: New connection from 192.168.2.127:46374 on port 1883.
+1741997247: New client connected from 192.168.2.127:46374 as auto-ACA1D60F-3333-F9CB-2AC9-1D68D8F0B856 (p2, c1, k60).
+1741997247: No will message specified.
+1741997247: Sending CONNACK to auto-ACA1D60F-3333-F9CB-2AC9-1D68D8F0B856 (0, 0)
+1741997247: Received SUBSCRIBE from auto-ACA1D60F-3333-F9CB-2AC9-1D68D8F0B856
+1741997247: 	cow (QoS 0)
+1741997247: auto-ACA1D60F-3333-F9CB-2AC9-1D68D8F0B856 0 cow
+1741997247: Sending SUBACK to auto-ACA1D60F-3333-F9CB-2AC9-1D68D8F0B856
+1741997253: New connection from 192.168.2.1:48467 on port 1883.
+1741997253: New client connected from 192.168.2.1:48467 as clientID (p2, c1, k500).
+1741997253: No will message specified.
+1741997253: Sending CONNACK to clientID (0, 0)
+1741997307: Received PINGREQ from auto-ACA1D60F-3333-F9CB-2AC9-1D68D8F0B856
+1741997307: Sending PINGRESP to auto-ACA1D60F-3333-F9CB-2AC9-1D68D8F0B856
+1741997367: Received PINGREQ from auto-ACA1D60F-3333-F9CB-2AC9-1D68D8F0B856
+1741997367: Sending PINGRESP to auto-ACA1D60F-3333-F9CB-2AC9-1D68D8F0B856
+1741997383: New connection from 192.168.2.1:20266 on port 1883.
+1741997383: Client clientID already connected, closing old connection.
+1741997383: New client connected from 192.168.2.1:20266 as clientID (p2, c1, k500).
+1741997383: No will message specified.
+1741997383: Sending CONNACK to clientID (0, 0)
+1741997427: Received PINGREQ from auto-ACA1D60F-3333-F9CB-2AC9-1D68D8F0B856
+1741997427: Sending PINGRESP to auto-ACA1D60F-3333-F9CB-2AC9-1D68D8F0B856
+1741997452: New connection from 192.168.2.1:5278 on port 1883.
+1741997452: Client clientID already connected, closing old connection.
+1741997452: New client connected from 192.168.2.1:5278 as clientID (p2, c1, k500).
+1741997452: No will message specified.
+1741997452: Sending CONNACK to clientID (0, 0)
+1741997487: Received PINGREQ from auto-ACA1D60F-3333-F9CB-2AC9-1D68D8F0B856
+1741997487: Sending PINGRESP to auto-ACA1D60F-3333-F9CB-2AC9-1D68D8F0B856
+1741997547: Received PINGREQ from auto-ACA1D60F-3333-F9CB-2AC9-1D68D8F0B856
+1741997547: Sending PINGRESP to auto-ACA1D60F-3333-F9CB-2AC9-1D68D8F0B856
+1741997607: Received PINGREQ from auto-ACA1D60F-3333-F9CB-2AC9-1D68D8F0B856
+1741997607: Sending PINGRESP to auto-ACA1D60F-3333-F9CB-2AC9-1D68D8F0B856
+1741997666: Received PINGREQ from auto-ACA1D60F-3333-F9CB-2AC9-1D68D8F0B856
+1741997666: Sending PINGRESP to auto-ACA1D60F-3333-F9CB-2AC9-1D68D8F0B856
+1741997726: Received PINGREQ from auto-ACA1D60F-3333-F9CB-2AC9-1D68D8F0B856
+1741997726: Sending PINGRESP to auto-ACA1D60F-3333-F9CB-2AC9-1D68D8F0B856
+1741997781: New connection from 192.168.2.1:58649 on port 1883.
+1741997781: Client clientID already connected, closing old connection.
+1741997781: New client connected from 192.168.2.1:58649 as clientID (p2, c1, k500).
+1741997781: No will message specified.
+1741997781: Sending CONNACK to clientID (0, 0)
+1741997786: Received PINGREQ from auto-ACA1D60F-3333-F9CB-2AC9-1D68D8F0B856
+1741997786: Sending PINGRESP to auto-ACA1D60F-3333-F9CB-2AC9-1D68D8F0B856
+1741997846: Received PINGREQ from auto-ACA1D60F-3333-F9CB-2AC9-1D68D8F0B856
+1741997846: Sending PINGRESP to auto-ACA1D60F-3333-F9CB-2AC9-1D68D8F0B856
+1741997906: Received PINGREQ from auto-ACA1D60F-3333-F9CB-2AC9-1D68D8F0B856
+1741997906: Sending PINGRESP to auto-ACA1D60F-3333-F9CB-2AC9-1D68D8F0B856
+1741997966: Received PINGREQ from auto-ACA1D60F-3333-F9CB-2AC9-1D68D8F0B856
+1741997966: Sending PINGRESP to auto-ACA1D60F-3333-F9CB-2AC9-1D68D8F0B856
+1741998003: New connection from 192.168.2.1:61351 on port 1883.
+1741998010: Client clientID already connected, closing old connection.
+1741998010: New client connected from 192.168.2.1:61351 as clientID (p2, c1, k500).
+1741998010: No will message specified.
+1741998010: Sending CONNACK to clientID (0, 0)
+1741998026: Received PINGREQ from auto-ACA1D60F-3333-F9CB-2AC9-1D68D8F0B856
+1741998026: Sending PINGRESP to auto-ACA1D60F-3333-F9CB-2AC9-1D68D8F0B856
+1741998063: New connection from 192.168.2.1:2045 on port 1883.
+1741998063: Client clientID already connected, closing old connection.
+1741998063: New client connected from 192.168.2.1:2045 as clientID (p2, c1, k500).
+1741998063: No will message specified.
+1741998063: Sending CONNACK to clientID (0, 0)
+1741998086: Received PINGREQ from auto-ACA1D60F-3333-F9CB-2AC9-1D68D8F0B856
+1741998086: Sending PINGRESP to auto-ACA1D60F-3333-F9CB-2AC9-1D68D8F0B856
+1741998146: Received PINGREQ from auto-ACA1D60F-3333-F9CB-2AC9-1D68D8F0B856
+1741998146: Sending PINGRESP to auto-ACA1D60F-3333-F9CB-2AC9-1D68D8F0B856
+1741998207: Received PINGREQ from auto-ACA1D60F-3333-F9CB-2AC9-1D68D8F0B856
+1741998207: Sending PINGRESP to auto-ACA1D60F-3333-F9CB-2AC9-1D68D8F0B856
+1741998267: Received PINGREQ from auto-ACA1D60F-3333-F9CB-2AC9-1D68D8F0B856
+1741998267: Sending PINGRESP to auto-ACA1D60F-3333-F9CB-2AC9-1D68D8F0B856
+1741998327: Received PINGREQ from auto-ACA1D60F-3333-F9CB-2AC9-1D68D8F0B856
+1741998327: Sending PINGRESP to auto-ACA1D60F-3333-F9CB-2AC9-1D68D8F0B856
+1741998336: mosquitto version 2.0.18 terminating
+1741998337: mosquitto version 2.0.18 starting
+1741998337: Config loaded from ./basic1.conf.
+1741998337: Opening ipv4 listen socket on port 1883.
+1741998337: mosquitto version 2.0.18 running
+1741998338: New connection from 192.168.2.127:42506 on port 1883.
+1741998338: New client connected from 192.168.2.127:42506 as auto-5F4EC321-FBD2-9890-1D4F-E7EC289E87BA (p2, c1, k60).
+1741998338: No will message specified.
+1741998338: Sending CONNACK to auto-5F4EC321-FBD2-9890-1D4F-E7EC289E87BA (0, 0)
+1741998338: Received SUBSCRIBE from auto-5F4EC321-FBD2-9890-1D4F-E7EC289E87BA
+1741998338: 	cow (QoS 0)
+1741998338: auto-5F4EC321-FBD2-9890-1D4F-E7EC289E87BA 0 cow
+1741998338: Sending SUBACK to auto-5F4EC321-FBD2-9890-1D4F-E7EC289E87BA
+1741998398: Received PINGREQ from auto-5F4EC321-FBD2-9890-1D4F-E7EC289E87BA
+1741998398: Sending PINGRESP to auto-5F4EC321-FBD2-9890-1D4F-E7EC289E87BA
+1741998438: New connection from 192.168.2.1:22574 on port 1883.
+1741998438: New client connected from 192.168.2.1:22574 as clientID (p2, c1, k500).
+1741998438: No will message specified.
+1741998438: Sending CONNACK to clientID (0, 0)
+1741998458: Received PINGREQ from auto-5F4EC321-FBD2-9890-1D4F-E7EC289E87BA
+1741998458: Sending PINGRESP to auto-5F4EC321-FBD2-9890-1D4F-E7EC289E87BA
+1741998518: Received PINGREQ from auto-5F4EC321-FBD2-9890-1D4F-E7EC289E87BA
+1741998518: Sending PINGRESP to auto-5F4EC321-FBD2-9890-1D4F-E7EC289E87BA
+1741998542: Received DISCONNECT from auto-5F4EC321-FBD2-9890-1D4F-E7EC289E87BA
+1741998542: Client auto-5F4EC321-FBD2-9890-1D4F-E7EC289E87BA disconnected.
+1741998545: New connection from 192.168.2.127:48814 on port 1883.
+1741998545: New client connected from 192.168.2.127:48814 as auto-76C51489-8E74-894B-38A8-5595DD19CF7E (p2, c1, k60).
+1741998545: No will message specified.
+1741998545: Sending CONNACK to auto-76C51489-8E74-894B-38A8-5595DD19CF7E (0, 0)
+1741998545: Received SUBSCRIBE from auto-76C51489-8E74-894B-38A8-5595DD19CF7E
+1741998545: 	cow (QoS 0)
+1741998545: auto-76C51489-8E74-894B-38A8-5595DD19CF7E 0 cow
+1741998545: Sending SUBACK to auto-76C51489-8E74-894B-38A8-5595DD19CF7E
+1741998558: mosquitto version 2.0.18 terminating
+1741998574: mosquitto version 2.0.18 starting
+1741998574: Config loaded from ./basic1.conf.
+1741998574: Opening ipv4 listen socket on port 1883.
+1741998574: mosquitto version 2.0.18 running
+1741998575: New connection from 192.168.2.127:39058 on port 1883.
+1741998575: New client connected from 192.168.2.127:39058 as auto-E58DF8B0-26DF-304E-9AE5-69788D68E722 (p2, c1, k60).
+1741998575: No will message specified.
+1741998575: Sending CONNACK to auto-E58DF8B0-26DF-304E-9AE5-69788D68E722 (0, 0)
+1741998575: Received SUBSCRIBE from auto-E58DF8B0-26DF-304E-9AE5-69788D68E722
+1741998575: 	cow (QoS 0)
+1741998575: auto-E58DF8B0-26DF-304E-9AE5-69788D68E722 0 cow
+1741998575: Sending SUBACK to auto-E58DF8B0-26DF-304E-9AE5-69788D68E722
+1741998578: New connection from 192.168.2.1:56388 on port 1883.
+1741998578: New client connected from 192.168.2.1:56388 as clientID (p2, c1, k500).
+1741998578: No will message specified.
+1741998578: Sending CONNACK to clientID (0, 0)
+1741998635: Received PINGREQ from auto-E58DF8B0-26DF-304E-9AE5-69788D68E722
+1741998635: Sending PINGRESP to auto-E58DF8B0-26DF-304E-9AE5-69788D68E722
+1741998695: Received PINGREQ from auto-E58DF8B0-26DF-304E-9AE5-69788D68E722
+1741998695: Sending PINGRESP to auto-E58DF8B0-26DF-304E-9AE5-69788D68E722
+1741998755: Received PINGREQ from auto-E58DF8B0-26DF-304E-9AE5-69788D68E722
+1741998755: Sending PINGRESP to auto-E58DF8B0-26DF-304E-9AE5-69788D68E722
+1741998814: Received PINGREQ from auto-E58DF8B0-26DF-304E-9AE5-69788D68E722
+1741998814: Sending PINGRESP to auto-E58DF8B0-26DF-304E-9AE5-69788D68E722
+1741998874: Received PINGREQ from auto-E58DF8B0-26DF-304E-9AE5-69788D68E722
+1741998874: Sending PINGRESP to auto-E58DF8B0-26DF-304E-9AE5-69788D68E722
+1741998917: New connection from 192.168.2.1:63906 on port 1883.
+1741998917: Client clientID already connected, closing old connection.
+1741998917: New client connected from 192.168.2.1:63906 as clientID (p2, c1, k500).
+1741998917: No will message specified.
+1741998917: Sending CONNACK to clientID (0, 0)
+1741998934: Received PINGREQ from auto-E58DF8B0-26DF-304E-9AE5-69788D68E722
+1741998934: Sending PINGRESP to auto-E58DF8B0-26DF-304E-9AE5-69788D68E722
+1741998994: Received PINGREQ from auto-E58DF8B0-26DF-304E-9AE5-69788D68E722
+1741998994: Sending PINGRESP to auto-E58DF8B0-26DF-304E-9AE5-69788D68E722
+1741999054: Received PINGREQ from auto-E58DF8B0-26DF-304E-9AE5-69788D68E722
+1741999054: Sending PINGRESP to auto-E58DF8B0-26DF-304E-9AE5-69788D68E722
+1741999114: Received PINGREQ from auto-E58DF8B0-26DF-304E-9AE5-69788D68E722
+1741999114: Sending PINGRESP to auto-E58DF8B0-26DF-304E-9AE5-69788D68E722
+1741999174: Received PINGREQ from auto-E58DF8B0-26DF-304E-9AE5-69788D68E722
+1741999174: Sending PINGRESP to auto-E58DF8B0-26DF-304E-9AE5-69788D68E722
+1741999234: Received PINGREQ from auto-E58DF8B0-26DF-304E-9AE5-69788D68E722
+1741999234: Sending PINGRESP to auto-E58DF8B0-26DF-304E-9AE5-69788D68E722
+1741999294: Received PINGREQ from auto-E58DF8B0-26DF-304E-9AE5-69788D68E722
+1741999294: Sending PINGRESP to auto-E58DF8B0-26DF-304E-9AE5-69788D68E722
+1741999354: Received PINGREQ from auto-E58DF8B0-26DF-304E-9AE5-69788D68E722
+1741999354: Sending PINGRESP to auto-E58DF8B0-26DF-304E-9AE5-69788D68E722
+1741999415: Received PINGREQ from auto-E58DF8B0-26DF-304E-9AE5-69788D68E722
+1741999415: Sending PINGRESP to auto-E58DF8B0-26DF-304E-9AE5-69788D68E722
+1741999475: Received PINGREQ from auto-E58DF8B0-26DF-304E-9AE5-69788D68E722
+1741999475: Sending PINGRESP to auto-E58DF8B0-26DF-304E-9AE5-69788D68E722
+1741999507: New connection from 192.168.2.1:54684 on port 1883.
+1741999507: Client clientID already connected, closing old connection.
+1741999507: New client connected from 192.168.2.1:54684 as clientID (p2, c1, k500).
+1741999507: No will message specified.
+1741999507: Sending CONNACK to clientID (0, 0)
+1741999535: Received PINGREQ from auto-E58DF8B0-26DF-304E-9AE5-69788D68E722
+1741999535: Sending PINGRESP to auto-E58DF8B0-26DF-304E-9AE5-69788D68E722
+1741999576: mosquitto version 2.0.18 terminating
+1741999577: mosquitto version 2.0.18 starting
+1741999577: Config loaded from ./basic1.conf.
+1741999577: Opening ipv4 listen socket on port 1883.
+1741999577: mosquitto version 2.0.18 running
+1741999578: New connection from 192.168.2.127:54436 on port 1883.
+1741999578: New client connected from 192.168.2.127:54436 as auto-16ABA998-9E34-3C78-9334-BF8815198D87 (p2, c1, k60).
+1741999578: No will message specified.
+1741999578: Sending CONNACK to auto-16ABA998-9E34-3C78-9334-BF8815198D87 (0, 0)
+1741999578: Received SUBSCRIBE from auto-16ABA998-9E34-3C78-9334-BF8815198D87
+1741999578: 	cow (QoS 0)
+1741999578: auto-16ABA998-9E34-3C78-9334-BF8815198D87 0 cow
+1741999578: Sending SUBACK to auto-16ABA998-9E34-3C78-9334-BF8815198D87
+1741999593: New connection from 192.168.2.1:4602 on port 1883.
+1741999593: New client connected from 192.168.2.1:4602 as clientID (p2, c1, k500).
+1741999593: No will message specified.
+1741999593: Sending CONNACK to clientID (0, 0)
+1741999638: Received PINGREQ from auto-16ABA998-9E34-3C78-9334-BF8815198D87
+1741999638: Sending PINGRESP to auto-16ABA998-9E34-3C78-9334-BF8815198D87
+1741999698: Received PINGREQ from auto-16ABA998-9E34-3C78-9334-BF8815198D87
+1741999698: Sending PINGRESP to auto-16ABA998-9E34-3C78-9334-BF8815198D87
+1741999758: Received PINGREQ from auto-16ABA998-9E34-3C78-9334-BF8815198D87
+1741999758: Sending PINGRESP to auto-16ABA998-9E34-3C78-9334-BF8815198D87
+1741999777: New connection from 192.168.2.127:58028 on port 1883.
+1741999777: New client connected from 192.168.2.127:58028 as auto-319DEB91-87AB-ECEF-A7A6-C55358C08239 (p2, c1, k60).
+1741999777: No will message specified.
+1741999777: Sending CONNACK to auto-319DEB91-87AB-ECEF-A7A6-C55358C08239 (0, 0)
+1741999777: Received PUBLISH from auto-319DEB91-87AB-ECEF-A7A6-C55358C08239 (d0, q0, r0, m0, 'cow', ... (3 bytes))
+1741999777: Sending PUBLISH to auto-16ABA998-9E34-3C78-9334-BF8815198D87 (d0, q0, r0, m0, 'cow', ... (3 bytes))
+1741999777: Received DISCONNECT from auto-319DEB91-87AB-ECEF-A7A6-C55358C08239
+1741999777: Client auto-319DEB91-87AB-ECEF-A7A6-C55358C08239 disconnected.
+1741999784: New connection from 192.168.2.127:46864 on port 1883.
+1741999784: New client connected from 192.168.2.127:46864 as auto-BD881D59-BD3D-6FC4-9C3F-AEE6F7FA51FB (p2, c1, k60).
+1741999784: No will message specified.
+1741999784: Sending CONNACK to auto-BD881D59-BD3D-6FC4-9C3F-AEE6F7FA51FB (0, 0)
+1741999784: Received PUBLISH from auto-BD881D59-BD3D-6FC4-9C3F-AEE6F7FA51FB (d0, q0, r0, m0, 'cow', ... (3 bytes))
+1741999784: Sending PUBLISH to auto-16ABA998-9E34-3C78-9334-BF8815198D87 (d0, q0, r0, m0, 'cow', ... (3 bytes))
+1741999784: Received DISCONNECT from auto-BD881D59-BD3D-6FC4-9C3F-AEE6F7FA51FB
+1741999784: Client auto-BD881D59-BD3D-6FC4-9C3F-AEE6F7FA51FB disconnected.
+1741999789: New connection from 192.168.2.127:46872 on port 1883.
+1741999789: New client connected from 192.168.2.127:46872 as auto-16EE3BBC-055E-963A-1C31-1782F8D5DADF (p2, c1, k60).
+1741999789: No will message specified.
+1741999789: Sending CONNACK to auto-16EE3BBC-055E-963A-1C31-1782F8D5DADF (0, 0)
+1741999789: Received PUBLISH from auto-16EE3BBC-055E-963A-1C31-1782F8D5DADF (d0, q0, r0, m0, 'mow', ... (3 bytes))
+1741999789: Received DISCONNECT from auto-16EE3BBC-055E-963A-1C31-1782F8D5DADF
+1741999789: Client auto-16EE3BBC-055E-963A-1C31-1782F8D5DADF disconnected.
+1741999818: Received PINGREQ from auto-16ABA998-9E34-3C78-9334-BF8815198D87
+1741999818: Sending PINGRESP to auto-16ABA998-9E34-3C78-9334-BF8815198D87
+1741999878: Received PINGREQ from auto-16ABA998-9E34-3C78-9334-BF8815198D87
+1741999878: Sending PINGRESP to auto-16ABA998-9E34-3C78-9334-BF8815198D87
+1741999938: Received PINGREQ from auto-16ABA998-9E34-3C78-9334-BF8815198D87
+1741999938: Sending PINGRESP to auto-16ABA998-9E34-3C78-9334-BF8815198D87
+1741999998: Received PINGREQ from auto-16ABA998-9E34-3C78-9334-BF8815198D87
+1741999998: Sending PINGRESP to auto-16ABA998-9E34-3C78-9334-BF8815198D87
+1742000058: Received PINGREQ from auto-16ABA998-9E34-3C78-9334-BF8815198D87
+1742000058: Sending PINGRESP to auto-16ABA998-9E34-3C78-9334-BF8815198D87
+1742000118: Received PINGREQ from auto-16ABA998-9E34-3C78-9334-BF8815198D87
+1742000118: Sending PINGRESP to auto-16ABA998-9E34-3C78-9334-BF8815198D87
+1742000178: Received PINGREQ from auto-16ABA998-9E34-3C78-9334-BF8815198D87
+1742000178: Sending PINGRESP to auto-16ABA998-9E34-3C78-9334-BF8815198D87
+1742000221: mosquitto version 2.0.18 terminating
+1742000222: mosquitto version 2.0.18 starting
+1742000222: Config loaded from ./basic1.conf.
+1742000222: Opening ipv4 listen socket on port 1883.
+1742000222: mosquitto version 2.0.18 running
+1742000223: New connection from 192.168.2.127:50548 on port 1883.
+1742000223: New client connected from 192.168.2.127:50548 as auto-F6EACAD0-6B77-1D4C-8386-2793397C5B0E (p2, c1, k60).
+1742000223: No will message specified.
+1742000223: Sending CONNACK to auto-F6EACAD0-6B77-1D4C-8386-2793397C5B0E (0, 0)
+1742000223: Received SUBSCRIBE from auto-F6EACAD0-6B77-1D4C-8386-2793397C5B0E
+1742000223: 	cow (QoS 0)
+1742000223: auto-F6EACAD0-6B77-1D4C-8386-2793397C5B0E 0 cow
+1742000223: Sending SUBACK to auto-F6EACAD0-6B77-1D4C-8386-2793397C5B0E
+1742000230: New connection from 192.168.2.1:63849 on port 1883.
+1742000230: New client connected from 192.168.2.1:63849 as clientID (p2, c1, k45).
+1742000230: No will message specified.
+1742000230: Sending CONNACK to clientID (0, 0)
+1742000283: Received PINGREQ from auto-F6EACAD0-6B77-1D4C-8386-2793397C5B0E
+1742000283: Sending PINGRESP to auto-F6EACAD0-6B77-1D4C-8386-2793397C5B0E
+1742000300: Client clientID has exceeded timeout, disconnecting.
+1742000304: mosquitto version 2.0.18 terminating
+1742000305: mosquitto version 2.0.18 starting
+1742000305: Config loaded from ./basic1.conf.
+1742000305: Opening ipv4 listen socket on port 1883.
+1742000305: mosquitto version 2.0.18 running
+1742000305: New connection from 192.168.2.127:33566 on port 1883.
+1742000305: New client connected from 192.168.2.127:33566 as auto-9D300538-535B-C505-1555-3355897CEB43 (p2, c1, k60).
+1742000305: No will message specified.
+1742000305: Sending CONNACK to auto-9D300538-535B-C505-1555-3355897CEB43 (0, 0)
+1742000305: Received SUBSCRIBE from auto-9D300538-535B-C505-1555-3355897CEB43
+1742000305: 	cow (QoS 0)
+1742000305: auto-9D300538-535B-C505-1555-3355897CEB43 0 cow
+1742000305: Sending SUBACK to auto-9D300538-535B-C505-1555-3355897CEB43
+1742000311: New connection from 192.168.2.1:36645 on port 1883.
+1742000311: New client connected from 192.168.2.1:36645 as clientID (p2, c1, k45).
+1742000311: No will message specified.
+1742000311: Sending CONNACK to clientID (0, 0)
+1742000365: Received PINGREQ from auto-9D300538-535B-C505-1555-3355897CEB43
+1742000365: Sending PINGRESP to auto-9D300538-535B-C505-1555-3355897CEB43
+1742000382: Client clientID has exceeded timeout, disconnecting.
+1742000425: Received PINGREQ from auto-9D300538-535B-C505-1555-3355897CEB43
+1742000425: Sending PINGRESP to auto-9D300538-535B-C505-1555-3355897CEB43
+1742000476: New connection from 192.168.2.1:55434 on port 1883.
+1742000476: New client connected from 192.168.2.1:55434 as clientID (p2, c1, k45).
+1742000476: No will message specified.
+1742000476: Sending CONNACK to clientID (0, 0)
+1742000485: Received PINGREQ from auto-9D300538-535B-C505-1555-3355897CEB43
+1742000485: Sending PINGRESP to auto-9D300538-535B-C505-1555-3355897CEB43
+1742000515: mosquitto version 2.0.18 terminating
+1742000538: mosquitto version 2.0.18 starting
+1742000538: Config loaded from ./basic1.conf.
+1742000538: Opening ipv4 listen socket on port 1883.
+1742000538: mosquitto version 2.0.18 running
+1742000539: New connection from 192.168.2.127:45400 on port 1883.
+1742000539: New client connected from 192.168.2.127:45400 as auto-520775DB-E936-6313-C9DA-D1FE724812D9 (p2, c1, k60).
+1742000539: No will message specified.
+1742000539: Sending CONNACK to auto-520775DB-E936-6313-C9DA-D1FE724812D9 (0, 0)
+1742000539: Received SUBSCRIBE from auto-520775DB-E936-6313-C9DA-D1FE724812D9
+1742000539: 	cow (QoS 0)
+1742000539: auto-520775DB-E936-6313-C9DA-D1FE724812D9 0 cow
+1742000539: Sending SUBACK to auto-520775DB-E936-6313-C9DA-D1FE724812D9
+1742000541: New connection from 192.168.2.1:26747 on port 1883.
+1742000541: New client connected from 192.168.2.1:26747 as clientID (p2, c1, k45).
+1742000541: No will message specified.
+1742000541: Sending CONNACK to clientID (0, 0)
+1742000599: Received PINGREQ from auto-520775DB-E936-6313-C9DA-D1FE724812D9
+1742000599: Sending PINGRESP to auto-520775DB-E936-6313-C9DA-D1FE724812D9
+1742000609: Client clientID has exceeded timeout, disconnecting.
+1742000659: Received PINGREQ from auto-520775DB-E936-6313-C9DA-D1FE724812D9
+1742000659: Sending PINGRESP to auto-520775DB-E936-6313-C9DA-D1FE724812D9
+1742000698: New connection from 192.168.2.1:2116 on port 1883.
+1742000698: New client connected from 192.168.2.1:2116 as clientID (p2, c1, k45).
+1742000698: No will message specified.
+1742000698: Sending CONNACK to clientID (0, 0)
+1742000719: Received PINGREQ from auto-520775DB-E936-6313-C9DA-D1FE724812D9
+1742000719: Sending PINGRESP to auto-520775DB-E936-6313-C9DA-D1FE724812D9
+1742000754: New connection from 192.168.2.1:47855 on port 1883.
+1742000754: Client clientID already connected, closing old connection.
+1742000754: New client connected from 192.168.2.1:47855 as clientID (p2, c1, k45).
+1742000754: No will message specified.
+1742000754: Sending CONNACK to clientID (0, 0)
+1742000779: Received PINGREQ from auto-520775DB-E936-6313-C9DA-D1FE724812D9
+1742000779: Sending PINGRESP to auto-520775DB-E936-6313-C9DA-D1FE724812D9
+1742000818: mosquitto version 2.0.18 terminating
+1742000821: mosquitto version 2.0.18 starting
+1742000821: Config loaded from ./basic1.conf.
+1742000821: Opening ipv4 listen socket on port 1883.
+1742000821: mosquitto version 2.0.18 running
+1742000822: New connection from 192.168.2.127:58534 on port 1883.
+1742000822: New client connected from 192.168.2.127:58534 as auto-AAD7BF78-F2AD-F4BF-EAFA-93DA23BAAA21 (p2, c1, k60).
+1742000822: No will message specified.
+1742000822: Sending CONNACK to auto-AAD7BF78-F2AD-F4BF-EAFA-93DA23BAAA21 (0, 0)
+1742000822: Received SUBSCRIBE from auto-AAD7BF78-F2AD-F4BF-EAFA-93DA23BAAA21
+1742000822: 	cow (QoS 0)
+1742000822: auto-AAD7BF78-F2AD-F4BF-EAFA-93DA23BAAA21 0 cow
+1742000822: Sending SUBACK to auto-AAD7BF78-F2AD-F4BF-EAFA-93DA23BAAA21
+1742000825: Received DISCONNECT from auto-AAD7BF78-F2AD-F4BF-EAFA-93DA23BAAA21
+1742000825: Client auto-AAD7BF78-F2AD-F4BF-EAFA-93DA23BAAA21 disconnected.
+1742000829: New connection from 192.168.2.127:58540 on port 1883.
+1742000829: New client connected from 192.168.2.127:58540 as auto-094B4483-F6AE-319C-4C37-C4F30268AEB8 (p2, c1, k60).
+1742000829: No will message specified.
+1742000829: Sending CONNACK to auto-094B4483-F6AE-319C-4C37-C4F30268AEB8 (0, 0)
+1742000829: Received SUBSCRIBE from auto-094B4483-F6AE-319C-4C37-C4F30268AEB8
+1742000829: 	test (QoS 0)
+1742000829: auto-094B4483-F6AE-319C-4C37-C4F30268AEB8 0 test
+1742000829: Sending SUBACK to auto-094B4483-F6AE-319C-4C37-C4F30268AEB8
+1742000836: New connection from 192.168.2.127:49256 on port 1883.
+1742000836: New client connected from 192.168.2.127:49256 as auto-351C11EB-62A5-22B1-6D58-1DE79DD9EBE3 (p2, c1, k60).
+1742000836: No will message specified.
+1742000836: Sending CONNACK to auto-351C11EB-62A5-22B1-6D58-1DE79DD9EBE3 (0, 0)
+1742000836: Received PUBLISH from auto-351C11EB-62A5-22B1-6D58-1DE79DD9EBE3 (d0, q0, r0, m0, 'test', ... (3 bytes))
+1742000836: Sending PUBLISH to auto-094B4483-F6AE-319C-4C37-C4F30268AEB8 (d0, q0, r0, m0, 'test', ... (3 bytes))
+1742000836: Received DISCONNECT from auto-351C11EB-62A5-22B1-6D58-1DE79DD9EBE3
+1742000836: Client auto-351C11EB-62A5-22B1-6D58-1DE79DD9EBE3 disconnected.
+1742000845: New connection from 192.168.2.1:48429 on port 1883.
+1742000845: New client connected from 192.168.2.1:48429 as clientID (p2, c1, k45).
+1742000845: No will message specified.
+1742000845: Sending CONNACK to clientID (0, 0)
+1742000888: Received PINGREQ from auto-094B4483-F6AE-319C-4C37-C4F30268AEB8
+1742000888: Sending PINGRESP to auto-094B4483-F6AE-319C-4C37-C4F30268AEB8
+1742000917: Client clientID has exceeded timeout, disconnecting.
+1742000948: Received PINGREQ from auto-094B4483-F6AE-319C-4C37-C4F30268AEB8
+1742000948: Sending PINGRESP to auto-094B4483-F6AE-319C-4C37-C4F30268AEB8
+1742001009: Received PINGREQ from auto-094B4483-F6AE-319C-4C37-C4F30268AEB8
+1742001009: Sending PINGRESP to auto-094B4483-F6AE-319C-4C37-C4F30268AEB8
+1742001069: Received PINGREQ from auto-094B4483-F6AE-319C-4C37-C4F30268AEB8
+1742001069: Sending PINGRESP to auto-094B4483-F6AE-319C-4C37-C4F30268AEB8
+1742001077: New connection from 192.168.2.1:25490 on port 1883.
+1742001077: New client connected from 192.168.2.1:25490 as clientID (p2, c1, k45).
+1742001077: No will message specified.
+1742001077: Sending CONNACK to clientID (0, 0)
+1742001129: Received PINGREQ from auto-094B4483-F6AE-319C-4C37-C4F30268AEB8
+1742001129: Sending PINGRESP to auto-094B4483-F6AE-319C-4C37-C4F30268AEB8
+1742001145: Client clientID has exceeded timeout, disconnecting.
+1742001178: mosquitto version 2.0.18 terminating
+1742001179: mosquitto version 2.0.18 starting
+1742001179: Config loaded from ./basic1.conf.
+1742001179: Opening ipv4 listen socket on port 1883.
+1742001179: mosquitto version 2.0.18 running
+1742001180: New connection from 192.168.2.127:47818 on port 1883.
+1742001180: New client connected from 192.168.2.127:47818 as auto-82CCEAE0-1BB2-1068-3CC8-AAF19521259A (p2, c1, k60).
+1742001180: No will message specified.
+1742001180: Sending CONNACK to auto-82CCEAE0-1BB2-1068-3CC8-AAF19521259A (0, 0)
+1742001180: Received SUBSCRIBE from auto-82CCEAE0-1BB2-1068-3CC8-AAF19521259A
+1742001180: 	test (QoS 0)
+1742001180: auto-82CCEAE0-1BB2-1068-3CC8-AAF19521259A 0 test
+1742001180: Sending SUBACK to auto-82CCEAE0-1BB2-1068-3CC8-AAF19521259A
+1742001199: New connection from 192.168.2.1:17298 on port 1883.
+1742001199: New client connected from 192.168.2.1:17298 as clientID (p2, c1, k45).
+1742001199: No will message specified.
+1742001199: Sending CONNACK to clientID (0, 0)
+1742001224: mosquitto version 2.0.18 terminating
+1742001225: mosquitto version 2.0.18 starting
+1742001225: Config loaded from ./basic1.conf.
+1742001225: Opening ipv4 listen socket on port 1883.
+1742001225: mosquitto version 2.0.18 running
+1742001225: New connection from 192.168.2.127:57324 on port 1883.
+1742001225: New client connected from 192.168.2.127:57324 as auto-FCD333E1-DD54-870F-22D9-5CCE7CFF755C (p2, c1, k60).
+1742001225: No will message specified.
+1742001225: Sending CONNACK to auto-FCD333E1-DD54-870F-22D9-5CCE7CFF755C (0, 0)
+1742001225: Received SUBSCRIBE from auto-FCD333E1-DD54-870F-22D9-5CCE7CFF755C
+1742001225: 	test (QoS 0)
+1742001225: auto-FCD333E1-DD54-870F-22D9-5CCE7CFF755C 0 test
+1742001225: Sending SUBACK to auto-FCD333E1-DD54-870F-22D9-5CCE7CFF755C
+1742001231: New connection from 192.168.2.1:34374 on port 1883.
+1742001231: New client connected from 192.168.2.1:34374 as clientID (p2, c1, k45).
+1742001231: No will message specified.
+1742001231: Sending CONNACK to clientID (0, 0)
+1742001285: Received PINGREQ from auto-FCD333E1-DD54-870F-22D9-5CCE7CFF755C
+1742001285: Sending PINGRESP to auto-FCD333E1-DD54-870F-22D9-5CCE7CFF755C
+1742001302: Client clientID has exceeded timeout, disconnecting.
+1742001311: mosquitto version 2.0.18 terminating

@@ -337,7 +337,6 @@ void processShell(etherHeader * e)
                     str[sizeof(str)-1] = '\0';
                     putsUart0(str);
                     switch(mqttsocket->state){
-                        default:                putsUart0("unknown"); break;
                         case TCP_CLOSED:        putsUart0("TCP_CLOSED"); break;
                         case TCP_LISTEN:        putsUart0("TCP_LISTEN"); break;
                         case TCP_SYN_RECEIVED:  putsUart0("TCP_SYN_RECEIVED"); break;
@@ -349,7 +348,18 @@ void processShell(etherHeader * e)
                         case TCP_CLOSE_WAIT:    putsUart0("TCP_CLOSE_WAIT"); break;
                         case TCP_LAST_ACK:      putsUart0("TCP_LAST_ACK"); break;
                         case TCP_TIME_WAIT:     putsUart0("TCP_TIME_WAIT"); break;
+                        default:                putsUart0("unknown TCP state"); break;
                     }
+                    putsUart0("\n\r  ");
+                    if(mqttsocket->state == TCP_ESTABLISHED){
+                        switch(mqttstate){
+                            case MQTT_CONNECTED:    putsUart0("MQTT_CONNECTED"); break;
+                            case MQTT_DISCONNECTED: putsUart0("MQTT_DISCONNECTED"); break;
+                            case MQTT_SENT_CONN:    putsUart0("MQTT_SENT_CONN"); break;
+                            default:                putsUart0("unknown MQTT state"); break;
+                        }
+                    } else
+                        putsUart0("MQTT not established");
                 }
             }
             if (strcmp(token, "set") == 0)
@@ -568,36 +578,40 @@ int main(void)
                             // updates tcp state machine
                             processTcpResponse(si, data);
 
-                            if(!tcp_datalen)
-                                continue;
+                            if(tcp_datalen){
+                                uint8_t * dater = tcp->data;
 
-                            uint8_t * dater = tcp->data;
+                                mqttFixedHeader fh;
+                                dater = unpackMqttFH(&fh, dater, sizeof(mqttFixedHeader)+1);
+                                if(fh.type == MQTT_FH_TYPE_PUBLISH){
+                                    uint8_t * packet_end = dater + getMqttFHLen(&fh);
+                                    if(packet_end > sizeof(buffer)+buffer)
+                                        packet_end = sizeof(buffer)+buffer;
 
-                            mqttFixedHeader fh;
-                            dater = unpackMqttFH(&fh, dater, sizeof(mqttFixedHeader)+1);
-                            if(fh.type == MQTT_FH_TYPE_PUBLISH){
-                                uint8_t * packet_end = dater + getMqttFHLen(&fh);
-                                if(packet_end > sizeof(buffer)+buffer)
-                                    packet_end = sizeof(buffer)+buffer;
+                                    uint16_t topic_len  = ((uint16_t*)dater)[0];
+                                    dater+=2;
 
-                                uint16_t topic_len  = ((uint16_t*)dater)[0];
-                                dater+=2;
+                                    for(; topic_len > 0; topic_len--)
+                                        putcUart0(dater++[0]);
 
-                                for(; topic_len > 0; topic_len--)
-                                    putcUart0(dater++[0]);
-
-                                for(; dater < packet_end; dater++)
-                                    putcUart0(dater[0]);
+                                    for(; dater < packet_end; dater++)
+                                        putcUart0(dater[0]);
+                                } else
+                                if(fh.type == MQTT_FH_TYPE_PINGREQ){
+                                    fh.type = MQTT_FH_TYPE_PINGRESP;
+                                    packMqttFH(&fh, dater, tcp_datalen + 1);
+                                    sendTcpMessage(data, mqttsocket, ACK, dater, tcp_datalen);
+                                }
                             }
 
                         } else {
                             if(!tcp->fRST){
-                               socket s;
+                                socket s;
                                 if(tcp->fFIN)
                                     sendTcpResponseFromEther(data, &s, FIN | ACK);
                                 else
                                     sendTcpResponseFromEther(data, &s, RST | ACK);
-                           }
+                            }
                         }
                     }
             	}
