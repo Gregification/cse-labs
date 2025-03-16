@@ -598,12 +598,9 @@ int main(void)
                                     case MQTT_FH_TYPE_PUBLISH: {
 
                                         // dump data
-                                        uint8_t * packet_end = dater + getMqttFHLen(&fh);
-                                        if(packet_end > sizeof(buffer)+buffer)
-                                            packet_end = sizeof(buffer)+buffer;
 
-                                        uint16_t topic_len  = dater[0];
-                                        dater+=2;
+                                        uint16_t topic_len  = ((uint16_t *)(dater+2))[0];
+//                                        dater+=2;
                                         {
                                             char str[20];
                                             snprintf(str, sizeof(str)-1, "datalen: %1hhd\n\r  ", datalen);
@@ -620,17 +617,30 @@ int main(void)
                                         }
 
                                         {
-                                            char str[20];
+                                            char str[40];
                                             uint16_t i;
-                                            dater = tcp->data;
                                             for(i = 0; i < datalen; i++){
-                                                if(!(i % 16))
+                                                if(!(i % 6))
                                                     putsUart0("\n\r");
-                                                else if(!(i % 8))
+                                                else if(!(i % 3))
                                                     putsUart0(" ");
 
-                                                i++;
-                                                snprintf(str, sizeof(str)-1, "%03hhd ", dater++[0]);
+                                                snprintf(str, sizeof(str)-1, "%03hhd ", tcp->data[i]);
+                                                str[sizeof(str)-1] = '\0';
+                                                putsUart0(str);
+                                            }
+
+                                            snprintf(str, sizeof(str)-1, "\n\rdater - tcp->data : %03hhd \n\r", (uint8_t)(dater - tcp->data));
+                                            str[sizeof(str)-1] = '\0';
+                                            putsUart0(str);
+
+                                            for(i = 0; i < datalen; i++){
+                                                if(!(i % 6))
+                                                    putsUart0("\n\r");
+                                                else if(!(i % 3))
+                                                    putsUart0(" ");
+
+                                                snprintf(str, sizeof(str)-1, "%03hhd ", dater[i]);
                                                 str[sizeof(str)-1] = '\0';
                                                 putsUart0(str);
                                             }
