@@ -312,6 +312,9 @@ void processTcpResponse(socketInfo * s, etherHeader * e)
             break;
 
         case TCP_ESTABLISHED :
+            initSockInfoState(s);
+            s->start_time = systick; // reset timeout
+
             if(tcp->fFIN){
                 recalTimeout = true;
                 s->sock->state = TCP_CLOSE_WAIT;
@@ -395,8 +398,6 @@ void updateSocketInfo(socketInfo * si, etherHeader * e){
         case TCP_ESTABLISHED:
             si->sock->sequenceNumber--;
             sendTcpMessage(e, si->sock, ACK, NULL, 0);
-            initSockInfoState(si);
-            si->start_time = systick; // do not immediately reset
             break;
 
         case TCP_LISTEN:
