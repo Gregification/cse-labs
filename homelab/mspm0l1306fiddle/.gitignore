@@ -1,0 +1,7 @@
+Release/*
+.xdchelp
+config/*
+.launches/*
+*Debug*
+/.metadata/
+*.jx*

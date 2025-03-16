@@ -1,0 +1,142 @@
+# -------------------------------------------------------------------------- #
+#
+# Copyright (C) 2020  Intel Corporation. All rights reserved.
+# Your use of Intel Corporation's design tools, logic functions 
+# and other software and tools, and any partner logic 
+# functions, and any output files from any of the foregoing 
+# (including device programming or simulation files), and any 
+# associated documentation or information are expressly subject 
+# to the terms and conditions of the Intel Program License 
+# Subscription Agreement, the Intel Quartus Prime License Agreement,
+# the Intel FPGA IP License Agreement, or other applicable license
+# agreement, including, without limitation, that your use is for
+# the sole purpose of programming logic devices manufactured by
+# Intel and sold by Intel or its authorized distributors.  Please
+# refer to the applicable agreement for further details, at
+# https://fpgasoftware.intel.com/eula.
+#
+# -------------------------------------------------------------------------- #
+#
+# Quartus Prime
+# Version 20.1.1 Build 720 11/11/2020 SJ Lite Edition
+# Date created = 12:22:45  November 28, 2024
+#
+# -------------------------------------------------------------------------- #
+#
+# Notes:
+#
+# 1) The default values for assignments are stored in the file:
+#		dld2_termProject_assignment_defaults.qdf
+#    If this file doesn't exist, see file:
+#		assignment_defaults.qdf
+#
+# 2) Altera recommends that you do not modify this file. This
+#    file is updated automatically by the Quartus Prime software
+#    and any changes you make may be lost or overwritten.
+#
+# -------------------------------------------------------------------------- #
+
+
+set_global_assignment -name FAMILY "MAX 10"
+set_global_assignment -name DEVICE 10M50DAF484C7G
+set_global_assignment -name TOP_LEVEL_ENTITY dld2_termProject
+set_global_assignment -name ORIGINAL_QUARTUS_VERSION 20.1.1
+set_global_assignment -name PROJECT_CREATION_TIME_DATE "12:22:45  NOVEMBER 28, 2024"
+set_global_assignment -name LAST_QUARTUS_VERSION "20.1.1 Lite Edition"
+set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files
+set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
+set_global_assignment -name MAX_CORE_JUNCTION_TEMP 85
+set_global_assignment -name ERROR_CHECK_FREQUENCY_DIVISOR 256
+set_global_assignment -name POWER_PRESET_COOLING_SOLUTION "23 MM HEAT SINK WITH 200 LFPM AIRFLOW"
+set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
+set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
+set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
+set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
+set_location_assignment PIN_A7 -to DEVBOARD_BTN[1]
+set_location_assignment PIN_B8 -to DEVBOARD_BTN[0]
+set_location_assignment PIN_C11 -to DEVBOARD_SWS[1]
+set_location_assignment PIN_D12 -to DEVBOARD_SWS[2]
+set_location_assignment PIN_C12 -to DEVBOARD_SWS[3]
+set_location_assignment PIN_A12 -to DEVBOARD_SWS[4]
+set_location_assignment PIN_B12 -to DEVBOARD_SWS[5]
+set_location_assignment PIN_A13 -to DEVBOARD_SWS[6]
+set_location_assignment PIN_A14 -to DEVBOARD_SWS[7]
+set_location_assignment PIN_B14 -to DEVBOARD_SWS[8]
+set_location_assignment PIN_F15 -to DEVBOARD_SWS[9]
+set_location_assignment PIN_C10 -to DEVBOARD_SWS[0]
+set_location_assignment PIN_W5 -to lcd_rs
+set_location_assignment PIN_AA15 -to lcd_rw
+set_location_assignment PIN_AA14 -to lcd_e
+set_location_assignment PIN_AA8 -to lcd_data[7]
+set_location_assignment PIN_AA9 -to lcd_data[6]
+set_location_assignment PIN_AB10 -to lcd_data[5]
+set_location_assignment PIN_AB11 -to lcd_data[4]
+set_location_assignment PIN_AB12 -to lcd_data[3]
+set_location_assignment PIN_AB13 -to lcd_data[2]
+set_location_assignment PIN_W12 -to lcd_data[1]
+set_location_assignment PIN_W13 -to lcd_data[0]
+set_location_assignment PIN_P11 -to CLK
+set_location_assignment PIN_A8 -to DE10_LED[0]
+set_location_assignment PIN_A9 -to DE10_LED[1]
+set_location_assignment PIN_A10 -to DE10_LED[2]
+set_location_assignment PIN_B10 -to DE10_LED[3]
+set_location_assignment PIN_D13 -to DE10_LED[4]
+set_location_assignment PIN_C13 -to DE10_LED[5]
+set_location_assignment PIN_E14 -to DE10_LED[6]
+set_location_assignment PIN_D14 -to DE10_LED[7]
+set_location_assignment PIN_A11 -to DE10_LED[8]
+set_location_assignment PIN_B11 -to DE10_LED[9]
+set_location_assignment PIN_Y5 -to LCD_Board_LED[0]
+set_location_assignment PIN_AA6 -to LCD_Board_LED[1]
+set_location_assignment PIN_Y6 -to LCD_Board_LED[2]
+set_location_assignment PIN_AA7 -to LCD_Board_LED[3]
+set_location_assignment PIN_V5 -to LCD_Board_LED[4]
+set_location_assignment PIN_W6 -to LCD_Board_LED[5]
+set_location_assignment PIN_W7 -to LCD_Board_LED[6]
+set_location_assignment PIN_V7 -to LCD_Board_LED[7]
+set_location_assignment PIN_V8 -to LCD_Board_PB[0] -comment "UP_L - D4    - L0"
+set_location_assignment PIN_W10 -to LCD_Board_PB[1] -comment "LEFT_L - D1  - L1"
+set_location_assignment PIN_V10 -to LCD_Board_PB[2] -comment "RIGHT_L - D0 - L2"
+set_location_assignment PIN_W8 -to LCD_Board_PB[3] -comment "DOWN_L - D5 - L3"
+set_location_assignment PIN_W9 -to LCD_Board_PB[4] -comment "B2_L-D3  - L4"
+set_location_assignment PIN_V9 -to LCD_Board_PB[5] -comment "B1_L-D2  - L 5"
+set_location_assignment PIN_AA5 -to LCD_Board_PB[6] -comment "UP_R- D30  - R0"
+set_location_assignment PIN_AB2 -to LCD_Board_PB[7] -comment "LEFT_R- D34 - R1"
+set_location_assignment PIN_AA2 -to LCD_Board_PB[8] -comment "RIGHT_R - D35 - R2"
+set_location_assignment PIN_Y4 -to LCD_Board_PB[9] -comment "DOWN_R - D31 - R3"
+set_location_assignment PIN_Y7 -to LCD_Board_SW[0] -comment D25
+set_location_assignment PIN_Y8 -to LCD_Board_SW[1] -comment D23
+set_location_assignment PIN_AA10 -to LCD_Board_SW[2] -comment D21
+set_location_assignment PIN_W11 -to LCD_Board_SW[3] -comment D19
+set_location_assignment PIN_Y11 -to LCD_Board_SW[4] -comment D17
+set_location_assignment PIN_AB3 -to LCD_Board_PB[10] -comment "B1_R-D33 - R5"
+set_location_assignment PIN_Y3 -to LCD_Board_PB[11] -comment "B2_R-D32  - R4"
+set_location_assignment PIN_AB7 -to KEYPAD_ROWS[1]
+set_location_assignment PIN_AB6 -to KEYPAD_ROWS[2]
+set_location_assignment PIN_AB5 -to KEYPAD_ROWS[3]
+set_location_assignment PIN_AB8 -to KEYPAD_ROWS[0]
+set_location_assignment PIN_AA11 -to KEYPAD_COLS[1]
+set_location_assignment PIN_Y10 -to KEYPAD_COLS[2]
+set_location_assignment PIN_AB9 -to KEYPAD_COLS[3]
+set_location_assignment PIN_AA12 -to KEYPAD_COLS[0]
+set_global_assignment -name SYSTEMVERILOG_FILE BudgetTetris.sv
+set_global_assignment -name SYSTEMVERILOG_FILE BarrelShifter.sv
+set_global_assignment -name SYSTEMVERILOG_FILE dld2_termProject.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ShiftRegister.sv
+set_global_assignment -name SYSTEMVERILOG_FILE KeyPad.sv
+set_global_assignment -name SYSTEMVERILOG_FILE LCD.sv
+set_global_assignment -name SYSTEMVERILOG_FILE bcd2disp.sv
+set_global_assignment -name SYSTEMVERILOG_FILE TEST_LCD.sv
+set_global_assignment -name SYSTEMVERILOG_FILE SharedMacros.sv
+set_global_assignment -name SYSTEMVERILOG_FILE Initilizer.sv
+set_global_assignment -name SYSTEMVERILOG_FILE Driver.sv
+set_global_assignment -name SYSTEMVERILOG_FILE Characters.sv
+set_global_assignment -name SYSTEMVERILOG_FILE bin2bcd.sv
+set_global_assignment -name SYSTEMVERILOG_FILE bin2binbcd.sv
+set_global_assignment -name SYSTEMVERILOG_FILE f322bcd.sv
+set_global_assignment -name SYSTEMVERILOG_FILE F32AdderSubtractor.sv
+set_global_assignment -name SYSTEMVERILOG_FILE Mux2t1.sv
+set_global_assignment -name SYSTEMVERILOG_FILE CLA.sv
+set_global_assignment -name SYSTEMVERILOG_FILE FullAdder.sv
+set_global_assignment -name SYSTEMVERILOG_FILE CLADiff.sv
+set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

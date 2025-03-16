@@ -1,0 +1,93 @@
+# -------------------------------------------------------------------------- #
+#
+# Copyright (C) 2020  Intel Corporation. All rights reserved.
+# Your use of Intel Corporation's design tools, logic functions 
+# and other software and tools, and any partner logic 
+# functions, and any output files from any of the foregoing 
+# (including device programming or simulation files), and any 
+# associated documentation or information are expressly subject 
+# to the terms and conditions of the Intel Program License 
+# Subscription Agreement, the Intel Quartus Prime License Agreement,
+# the Intel FPGA IP License Agreement, or other applicable license
+# agreement, including, without limitation, that your use is for
+# the sole purpose of programming logic devices manufactured by
+# Intel and sold by Intel or its authorized distributors.  Please
+# refer to the applicable agreement for further details, at
+# https://fpgasoftware.intel.com/eula.
+#
+# -------------------------------------------------------------------------- #
+#
+# Quartus Prime
+# Version 20.1.1 Build 720 11/11/2020 SJ Lite Edition
+# Date created = 14:12:11  April 05, 2024
+#
+# -------------------------------------------------------------------------- #
+#
+# Notes:
+#
+# 1) The default values for assignments are stored in the file:
+#		OU_assignment_defaults.qdf
+#    If this file doesn't exist, see file:
+#		assignment_defaults.qdf
+#
+# 2) Altera recommends that you do not modify this file. This
+#    file is updated automatically by the Quartus Prime software
+#    and any changes you make may be lost or overwritten.
+#
+# -------------------------------------------------------------------------- #
+
+
+set_global_assignment -name FAMILY "MAX 10"
+set_global_assignment -name DEVICE 10M50DAF484C7G
+set_global_assignment -name TOP_LEVEL_ENTITY OU
+set_global_assignment -name ORIGINAL_QUARTUS_VERSION 20.1.1
+set_global_assignment -name PROJECT_CREATION_TIME_DATE "14:12:11  APRIL 05, 2024"
+set_global_assignment -name LAST_QUARTUS_VERSION "20.1.1 Lite Edition"
+set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files
+set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
+set_global_assignment -name MAX_CORE_JUNCTION_TEMP 85
+set_global_assignment -name ERROR_CHECK_FREQUENCY_DIVISOR 256
+set_global_assignment -name VERILOG_FILE OU.v
+set_global_assignment -name VERILOG_FILE twoSIGN.v
+set_global_assignment -name VERILOG_FILE binary2bcd.v
+set_global_assignment -name VERILOG_FILE bcd2seven.v
+set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
+set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
+set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
+set_location_assignment PIN_C11 -to TC_in[1]
+set_location_assignment PIN_D12 -to TC_in[2]
+set_location_assignment PIN_C12 -to TC_in[3]
+set_location_assignment PIN_A12 -to TC_in[4]
+set_location_assignment PIN_B12 -to TC_in[5]
+set_location_assignment PIN_A13 -to TC_in[6]
+set_location_assignment PIN_A14 -to TC_in[7]
+set_location_assignment PIN_C10 -to TC_in[0]
+set_location_assignment PIN_E15 -to SEVSEG_ONES[1]
+set_location_assignment PIN_C15 -to SEVSEG_ONES[2]
+set_location_assignment PIN_C16 -to SEVSEG_ONES[3]
+set_location_assignment PIN_E16 -to SEVSEG_ONES[4]
+set_location_assignment PIN_D17 -to SEVSEG_ONES[5]
+set_location_assignment PIN_C17 -to SEVSEG_ONES[6]
+set_location_assignment PIN_C14 -to SEVSEG_ONES[0]
+set_location_assignment PIN_D18 -to SEVSEG_TENS[1]
+set_location_assignment PIN_E18 -to SEVSEG_TENS[2]
+set_location_assignment PIN_B16 -to SEVSEG_TENS[3]
+set_location_assignment PIN_A17 -to SEVSEG_TENS[4]
+set_location_assignment PIN_A18 -to SEVSEG_TENS[5]
+set_location_assignment PIN_B17 -to SEVSEG_TENS[6]
+set_location_assignment PIN_C18 -to SEVSEG_TENS[0]
+set_location_assignment PIN_A20 -to SEVSEG_HUNDREDS[1]
+set_location_assignment PIN_B19 -to SEVSEG_HUNDREDS[2]
+set_location_assignment PIN_A21 -to SEVSEG_HUNDREDS[3]
+set_location_assignment PIN_B21 -to SEVSEG_HUNDREDS[4]
+set_location_assignment PIN_C22 -to SEVSEG_HUNDREDS[5]
+set_location_assignment PIN_B22 -to SEVSEG_HUNDREDS[6]
+set_location_assignment PIN_B20 -to SEVSEG_HUNDREDS[0]
+set_location_assignment PIN_E22 -to SEVSEG_SIGN[1]
+set_location_assignment PIN_E21 -to SEVSEG_SIGN[2]
+set_location_assignment PIN_C19 -to SEVSEG_SIGN[3]
+set_location_assignment PIN_C20 -to SEVSEG_SIGN[4]
+set_location_assignment PIN_D19 -to SEVSEG_SIGN[5]
+set_location_assignment PIN_E17 -to SEVSEG_SIGN[6]
+set_location_assignment PIN_F21 -to SEVSEG_SIGN[0]
+set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

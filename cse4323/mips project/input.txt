@@ -1,0 +1,13 @@
+add $t1 $t2 $t3
+sub $t4 $t1 $t2
+sw $t4 100
+lw $t5 100
+beq $t5 $t4 loop
+add $t6 $t5 $t3
+
+loop:
+sub $t7 $t5 $t3
+bgt $t7 $t2 end
+add $t6 $t7 $t4
+
+end:

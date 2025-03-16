@@ -1,0 +1,80 @@
+m255
+K4
+z2
+!s11f vlog 2020.1 2020.02, Feb 28 2020
+13
+!s112 1.1
+!i10d 8192
+!i10e 25
+!i10f 100
+cModel Technology
+Z0 dD:/uta_stuff/cse2441/cse2441_labs/lab7/question3/simulation/qsim
+vfigure7
+Z1 !s110 1709933338
+!i10b 1
+!s100 Y>Q?;o8AQ9QTm7nJNGK=Y3
+Z2 !s11b Dg1SIo80bB@j0V0VzS_@n1
+Il`MRiBZB4dkBi8ACJf4U53
+Z3 VDg1SIo80bB@j0V0VzS_@n1
+R0
+Z4 w1709933337
+Z5 8figure7.vo
+Z6 Ffigure7.vo
+!i122 6
+L0 32 359
+Z7 OV;L;2020.1;71
+r1
+!s85 0
+31
+Z8 !s108 1709933338.000000
+Z9 !s107 figure7.vo|
+Z10 !s90 -work|work|figure7.vo|
+!i113 1
+Z11 o-work work
+Z12 tCvgOpt 0
+vfigure7_vlg_vec_tst
+R1
+!i10b 1
+!s100 n7^A0L1o0@IMTd?_LWWCO3
+R2
+ICK3ogVdGERBmVkWTiGgFG1
+R3
+R0
+w1709933336
+8Waveform.vwf.vt
+FWaveform.vwf.vt
+!i122 7
+L0 30 38
+R7
+r1
+!s85 0
+31
+R8
+!s107 Waveform.vwf.vt|
+!s90 -work|work|Waveform.vwf.vt|
+!i113 1
+R11
+R12
+vhard_block
+R1
+!i10b 1
+!s100 :6DUg136ZUGkW`L6Uz;ae1
+R2
+I@[>kl6Nh;^cEC[g6Rdb>S1
+R3
+R0
+R4
+R5
+R6
+!i122 6
+L0 392 45
+R7
+r1
+!s85 0
+31
+R8
+R9
+R10
+!i113 1
+R11
+R12
