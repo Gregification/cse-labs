@@ -579,10 +579,15 @@ int main(void)
                             processTcpResponse(si, data);
 
                             if(datalen){
-                                uint8_t * dater = tcp->data;
+                                uint8_t * packet_end = tcp->data + datalen;
 
                                 mqttFixedHeader fh;
-                                dater = unpackMqttFH(&fh, dater, sizeof(mqttFixedHeader)+1);
+                                unpackMqttFH(&fh, tcp->data, sizeof(mqttFixedHeader)+1);
+                                // manually adjust pointer since unpackMqttFH is giving some crazy results
+                                uint8_t * dater = tcp->data+1;
+                                while(dater++[0] & BV(7))
+                                    ;
+
                                 switch(fh.type){
                                     default: break;
 
@@ -598,61 +603,16 @@ int main(void)
                                     case MQTT_FH_TYPE_PUBLISH: {
 
                                         // dump data
+                                        uint16_t topic_len  = ntohs(((uint16_t *)(dater))[0]);
+                                        dater += 2;
 
-                                        uint16_t topic_len  = ((uint16_t *)(dater+2))[0];
-//                                        dater+=2;
-                                        {
-                                            char str[20];
-                                            snprintf(str, sizeof(str)-1, "datalen: %1hhd\n\r  ", datalen);
-                                            str[sizeof(str)-1] = '\0';
-                                            putsUart0(str);
+                                        putsUart0("\n\r topic: ");
+                                        for(; topic_len > 0; topic_len--)
+                                            putcUart0(dater++[0]);
 
-                                            snprintf(str, sizeof(str)-1, "mqtt fh len: %1hhd\n\r  ", getMqttFHLen(&fh));
-                                            str[sizeof(str)-1] = '\0';
-                                            putsUart0(str);
-
-                                            snprintf(str, sizeof(str)-1, "topic_len: %1hhd\n\r  ", topic_len);
-                                            str[sizeof(str)-1] = '\0';
-                                            putsUart0(str);
-                                        }
-
-                                        {
-                                            char str[40];
-                                            uint16_t i;
-                                            for(i = 0; i < datalen; i++){
-                                                if(!(i % 6))
-                                                    putsUart0("\n\r");
-                                                else if(!(i % 3))
-                                                    putsUart0(" ");
-
-                                                snprintf(str, sizeof(str)-1, "%03hhd ", tcp->data[i]);
-                                                str[sizeof(str)-1] = '\0';
-                                                putsUart0(str);
-                                            }
-
-                                            snprintf(str, sizeof(str)-1, "\n\rdater - tcp->data : %03hhd \n\r", (uint8_t)(dater - tcp->data));
-                                            str[sizeof(str)-1] = '\0';
-                                            putsUart0(str);
-
-                                            for(i = 0; i < datalen; i++){
-                                                if(!(i % 6))
-                                                    putsUart0("\n\r");
-                                                else if(!(i % 3))
-                                                    putsUart0(" ");
-
-                                                snprintf(str, sizeof(str)-1, "%03hhd ", dater[i]);
-                                                str[sizeof(str)-1] = '\0';
-                                                putsUart0(str);
-                                            }
-                                        }
-
-    //                                    putsUart0("\n\r topic: ");
-    //                                    for(; topic_len > 0; topic_len--)
-    //                                        putcUart0(dater++[0]);
-    //
-    //                                    putsUart0("\n\r message: ");
-    //                                    for(; dater < packet_end; dater++)
-    //                                        putcUart0(dater[0]);
+                                        putsUart0("\n\r message: ");
+                                        while(dater < packet_end)
+                                            putcUart0(dater++[0]);
 
                                         putsUart0("\n\r");
                                     }

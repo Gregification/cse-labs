@@ -82,7 +82,7 @@ uint8_t * packMqttFH(mqttFixedHeader const * src, uint8_t * dest, uint16_t destl
     uint8_t const * in = (uint8_t const *)src;
 
     uint8_t i;
-    for(i = 0; (i + in) < src->len_arr && (i < destlen); i++)
+    for(i = 0; (in + i) < src->len_arr && (i < destlen); i++)
         dest[i] = in[i];
 
     do {
