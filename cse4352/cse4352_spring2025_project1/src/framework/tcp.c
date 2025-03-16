@@ -23,6 +23,7 @@
 #include "tcp.h"
 #include "timer.h"
 #include "../env.h"
+#include "mqtt.h"
 
 #define MAX_TCP_SOCKETS 3
 
@@ -398,6 +399,17 @@ void updateSocketInfo(socketInfo * si, etherHeader * e){
         case TCP_ESTABLISHED:
             si->sock->sequenceNumber--;
             sendTcpMessage(e, si->sock, ACK, NULL, 0);
+
+//            if(mqttstate == MQTT_CONNECTED)
+//            { // fixed header
+//                mqttFixedHeader fh;
+//                fh.type = MQTT_FH_TYPE_PINGREQ;
+//                fh.fDUP = fh.fRETAIN = false;
+//                fh.fQoS = 0;
+//                setMqttFHLen(&fh, 0);
+//
+//                sendTcpMessage(e, si->sock, NULL, &fh, 2);
+//            }
             break;
 
         case TCP_LISTEN:
