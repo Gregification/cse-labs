@@ -290,7 +290,7 @@ void subscribeMqtt(char strTopic[])
             mqttFixedHeader fh;
             fh.type = MQTT_FH_TYPE_SUBSCRIBE;
             fh.fDUP = fh.fRETAIN = false;
-            fh.fQoS = 0;
+            fh.fQoS = 1;
             setMqttFHLen(&fh, topic_len + 2 + 2 + 1); // +2 msg id, +1 qos
 
             data = packMqttFH(&fh, data, TCP_PENQUE_ENTRY_MAX_MEM - (data - msg->data));
@@ -298,7 +298,7 @@ void subscribeMqtt(char strTopic[])
 
         { // variable header
             // message id
-            ((uint16_t *)data)[0] = random32();
+            ((uint16_t *)data)[0] = htons(1);
             data+=2;
 
             // topic length and data
