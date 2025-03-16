@@ -1,1 +1,0 @@
-/usr/bin/c++ CMakeFiles/Assignemnt3.dir/src/FAT.cpp.o CMakeFiles/Assignemnt3.dir/src/main.cpp.o -o Assignemnt3 

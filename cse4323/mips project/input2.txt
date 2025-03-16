@@ -1,6 +1,0 @@
-lw $t1 10
-lw $t3 1
-lw $t7 0
-loop:
-add $t0 $t0 $t3
-bgt $t1 $t0 loop

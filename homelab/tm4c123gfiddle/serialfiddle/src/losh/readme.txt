@@ -1,1 +1,0 @@
-everything(excluding this file) in the "losh" folder is made by Jason Losh

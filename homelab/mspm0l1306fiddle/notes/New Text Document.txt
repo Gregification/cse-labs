@@ -1,2 +1,0 @@
-when using a css project not based on sysconfig. make sure the compiler has these options to properly build.
-	-march=thumbv6m -mcpu=cortex-m0plus -mfloat-abi=soft -mlittle-endian -D__MSPM0L1306__ -gdwarf-3
