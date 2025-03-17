@@ -101,7 +101,7 @@ module lab4(
     //---actual lab4 stuff--------------------------------------------------
     
     reg trigger;
-    reg  [15:0] test_index;        // hex immideate display, the 16bits currently shown. also acts as test case index
+    reg  [27:0] test_index;        // hex immideate display, the 16bits currently shown. also acts as test case index
 
     // test cases
     reg     [9:0][67:0] test_cases; // [entries][entry size]
@@ -184,19 +184,49 @@ module lab4(
             d_we    <= 0;
             test_index <= 0;
         end else begin
-            test_index <= (test_index + 1) % $size(test_cases);
-
-            // dump memory
+            // dump memory from i_addr
             if(sws[0]) begin
+                test_index <= test_index + 1;
+
                 i_addr   <= test_index;
-                d_addr   <= test_index;
+                d_addr   <= 0;
                 d_be     <= 4'b1111;
                 d_wdata  <= 0;
                 d_we     <= 0;
             end 
 
-            // run test cases 
+            // dump memory from d_addr
             else if(sws[1]) begin
+                test_index <= test_index + 1;
+
+                i_addr   <= 0;
+                d_addr   <= test_index;
+                d_be     <= test_index[3:0];
+                d_wdata  <= 0;
+                d_we     <= 0;
+
+                if(sws[11])
+                    ms_unsigned <= !test_index[0];
+                else
+                    ms_unsigned <= test_index[0];
+                ms_d_be  <= test_index[3:0];
+            end 
+
+            // write then read
+            else if(sws[2]) begin
+                test_index <= test_index + 1;
+
+                i_addr   <= test_index-1;
+                d_addr   <= test_index;
+                d_be     <= 4'b1111;
+                d_wdata  <= test_index + 5;
+                d_we     <= 1;
+            end
+
+            // run test cases 
+            else if(sws[3]) begin
+                test_index <= (test_index + 1) % $size(test_cases);
+
                 i_addr[31:2] <= $size(test_cases) - 1 - test_index;
 
                 // 'pipeline' values to memory shifter
@@ -208,9 +238,6 @@ module lab4(
 
                 // new test case
                 {d_wdata, d_addr, test_width, d_we} = test_cases[test_index][67:1];
-                // d_we        <= test_cases[test_index][0];
-                // test_width  <= test_cases[test_index][3:2];
-                // d_wdata     <= test_cases[test_index][35:4];
 
                 case (test_width)
                     2'h0: d_be      <= 4'b0001;
@@ -220,34 +247,51 @@ module lab4(
                 endcase
 
             end
-
-            // write & read test
-            else if (sws[2]) begin
-                d_we     <= test_index[2]+1;
-                i_addr   <= test_index;
-                d_addr   <= test_index+1;
-                d_be     <= 4'b1111;
-                d_wdata  <= test_index;
-            end
         end
     end
 
     // for lab document step 9
     assign test_cases           = {
-        // test 1 : 32b address for r/w operations
+        // test write byte unsigned
         //  {d_wdata 32b    , d_addr 32b        , width 2b  , write 1b , unsign 1b  }
-            {32'h1          , {30'h1    , 2'b0} , 2'h1      , 1'b0      , 1'b1      },
-            {32'h2          , {30'h2    , 2'b0} , 2'h1      , 1'b0      , 1'b1      },
-            {32'h3          , {30'h3    , 2'b0} , 2'h1      , 1'b0      , 1'b0      },
-            {32'h4          , {30'h4    , 2'b0} , 2'h1      , 1'b0      , 1'b0      },
-            {32'h5          , {30'h5    , 2'b0} , 2'h1      , 1'b0      , 1'b1      },
+            {32'b1010       , {30'd1    , 2'b0} , 2'h0      , 1'b1      , 1'b1      }, // w byte 0b1010 as unsigned
+            {32'b1010       , {30'd1    , 2'b0} , 2'h0      , 1'b0      , 1'b0      }, // r byte as signed
+            {32'b1010       , {30'd1    , 2'b0} , 2'h0      , 1'b0      , 1'b1      }, // r byte as unsigned
+            {32'b1010       , {30'd1    , 2'b0} , 2'h1      , 1'b0      , 1'b0      }, // r half word as signed
+            {32'b1010       , {30'd1    , 2'b0} , 2'h1      , 1'b0      , 1'b1      }, // r half word as unsigned
+            {32'b1010       , {30'd1    , 2'b0} , 2'h2      , 1'b0      , 1'b0      }, // r word as signed
+            {32'b1010       , {30'd1    , 2'b0} , 2'h2      , 1'b0      , 1'b1      }, // r word as unsigned
+        
+        // test write byte signed
+        //  {d_wdata 32b    , d_addr 32b        , width 2b  , write 1b , unsign 1b  }
+            {32'b1010       , {30'd2    , 2'b0} , 2'h0      , 1'b1      , 1'b0      }, // w byte 0b1010 as signed
+            {32'b1010       , {30'd2    , 2'b0} , 2'h0      , 1'b0      , 1'b0      }, // r byte as signed
+            {32'b1010       , {30'd2    , 2'b0} , 2'h0      , 1'b0      , 1'b1      }, // r byte as unsigned
+            {32'b1010       , {30'd2    , 2'b0} , 2'h1      , 1'b0      , 1'b0      }, // r half word as signed
+            {32'b1010       , {30'd2    , 2'b0} , 2'h1      , 1'b0      , 1'b1      }, // r half word as unsigned
+            {32'b1010       , {30'd2    , 2'b0} , 2'h2      , 1'b0      , 1'b0      }, // r word as signed
+            {32'b1010       , {30'd2    , 2'b0} , 2'h2      , 1'b0      , 1'b1      }, // r word as unsigned
 
+
+        // test write half word unsigned
         //  {d_wdata 32b    , d_addr 32b        , width 2b  , write 1b , unsign 1b  }
-            {32'h6          , {30'h6    , 2'b0} , 2'h1      , 1'b0      , 1'b1      },
-            {32'h7          , {30'h7    , 2'b0} , 2'h1      , 1'b0      , 1'b0      },
-            {32'h8          , {30'h8    , 2'b0} , 2'h1      , 1'b0      , 1'b0      },
-            {32'h9          , {30'h9    , 2'b0} , 2'h1      , 1'b0      , 1'b1      },
-            {32'h10         , {30'hA    , 2'b0} , 2'h1      , 1'b0      , 1'b1      }
+            {32'h9A         , {30'd3    , 2'b0} , 2'h1      , 1'b1      , 1'b1      }, // w half word 0b1001_1010 as unsigned
+            {32'h9A         , {30'd3    , 2'b0} , 2'h0      , 1'b0      , 1'b0      }, // r byte as signed
+            {32'h9A         , {30'd3    , 2'b0} , 2'h0      , 1'b0      , 1'b1      }, // r byte as unsigned
+            {32'h9A         , {30'd3    , 2'b0} , 2'h1      , 1'b0      , 1'b0      }, // r half word as signed
+            {32'h9A         , {30'd3    , 2'b0} , 2'h1      , 1'b0      , 1'b1      }, // r half word as unsigned
+            {32'h9A         , {30'd3    , 2'b0} , 2'h2      , 1'b0      , 1'b0      }, // r word as signed
+            {32'h9A         , {30'd3    , 2'b0} , 2'h2      , 1'b0      , 1'b1      }, // r word as unsigned
+
+        // test write half word signed
+        //  {d_wdata 32b    , d_addr 32b        , width 2b  , write 1b , unsign 1b  }
+            {32'h9A         , {30'd4    , 2'b0} , 2'h1      , 1'b1      , 1'b0      }, // w half word 0b1001_1010 as signed
+            {32'h9A         , {30'd4    , 2'b0} , 2'h0      , 1'b0      , 1'b0      }, // r byte as signed
+            {32'h9A         , {30'd4    , 2'b0} , 2'h0      , 1'b0      , 1'b1      }, // r byte as unsigned
+            {32'h9A         , {30'd4    , 2'b0} , 2'h1      , 1'b0      , 1'b0      }, // r half word as signed
+            {32'h9A         , {30'd4    , 2'b0} , 2'h1      , 1'b0      , 1'b1      }, // r half word as unsigned
+            {32'h9A         , {30'd4    , 2'b0} , 2'h2      , 1'b0      , 1'b0      }, // r word as signed
+            {32'h9A         , {30'd4    , 2'b0} , 2'h2      , 1'b0      , 1'b1      }  // r word as unsigned
     };
 
 endmodule

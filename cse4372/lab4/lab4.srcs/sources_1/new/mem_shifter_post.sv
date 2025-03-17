@@ -44,7 +44,9 @@ module mem_shifter_post(
                 d_rdata_shifted <= {{8{d_rdata[15]}}, d_rdata[15:0]};
         end else if(d_be[0]) begin
             if(isUnsigned)
-                d_rdata_shifted <= {{24{d_rdata[8]}}, d_rdata[8:0]};
+                d_rdata_shifted <= {{24'b0}         , d_rdata[7:0]};
+            else
+                d_rdata_shifted <= {{24{d_rdata[7]}}, d_rdata[7:0]};
         end else begin
             d_rdata_shifted <= d_rdata[31:0];
         end

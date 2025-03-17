@@ -3,7 +3,7 @@
 // Company: 
 // Engineer: 
 // 
-// Create Date: 03/01/2025 05:23:07 PM
+// Create Date: 03/16/2025 04:56:13 PM
 // Design Name: 
 // Module Name: dual_port_ram
 // Project Name: 
@@ -44,7 +44,7 @@ module dual_port_ram(
         for (integer i = 0; i < $size(mem); i = i + 1) begin
             mem[i] = 0;
         end
-        $readmemh("dummyhex.hex", mem);
+        $readmemh("ram.hex", mem);
     end
 
     always @(posedge clk)
