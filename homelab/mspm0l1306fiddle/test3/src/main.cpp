@@ -22,8 +22,8 @@ int main(void)
 
     //---examples---------------------------------------------------
 
-    ex_gpio();
-//    ex_uart();
+//    ex_gpio();
+    ex_uart();
 }
 
 void ex_gpio(){
@@ -58,7 +58,7 @@ void ex_uart(){
 
     // init gpio alt function
     //      - IOMUX values can be found on table 6-1. pg.8 of family documentation
-    DL_GPIO_initPeripheralOutputFunction(IOMUX_PINCM::IOMUX_PINCM10, IOMUX_PINCM10_PF_UART0_RX);
+    DL_GPIO_initPeripheralInputFunction(IOMUX_PINCM::IOMUX_PINCM10, IOMUX_PINCM10_PF_UART0_RX);
     DL_GPIO_initPeripheralOutputFunction(IOMUX_PINCM::IOMUX_PINCM9, IOMUX_PINCM9_PF_UART0_TX);
 
     // init uart0
@@ -83,10 +83,11 @@ void ex_uart(){
     DL_UART_enableMajorityVoting(UART0);
 
     // apparently the FIFOS have to be enabled separately
-//    DL_UART_enableFIFOs(UART0);
-//    DL_UART_setRXFIFOThreshold(UART0, DL_UART_RX_FIFO_LEVEL::DL_UART_RX_FIFO_LEVEL_1_2_FULL);
-//    DL_UART_setTXFIFOThreshold(UART0, DL_UART_TX_FIFO_LEVEL::DL_UART_TX_FIFO_LEVEL_1_2_EMPTY);
+    DL_UART_enableFIFOs(UART0);
+    DL_UART_setRXFIFOThreshold(UART0, DL_UART_RX_FIFO_LEVEL::DL_UART_RX_FIFO_LEVEL_1_2_FULL);
+    DL_UART_setTXFIFOThreshold(UART0, DL_UART_TX_FIFO_LEVEL::DL_UART_TX_FIFO_LEVEL_1_2_EMPTY);
 
+//    DL_UART_enableLoopbackMode(UART0);
     DL_UART_enable(UART0);
 
     // usage
@@ -105,17 +106,14 @@ void ex_uart(){
     delay_cycles(18e6);
     DL_GPIO_clearPins(GPIOA, BV(0));
 
-    DL_UART_transmitDataBlocking(UART0, 'K');
+    DL_UART_transmitDataBlocking(UART0, 'T');
     while(true){
-        // transmit data of arbitrary size.
-//        DL_UART_fillTXFIFO(UART0, (uint8_t *)str, sizeof(str));
-        // wait for transmission to finish
-//        while(DL_UART_isBusy(UART0))
-//            ;
-
-        DL_GPIO_togglePins(GPIOA, BV(0));
         uint8_t c;
         c = DL_UART_receiveDataBlocking(UART0);
         DL_UART_transmitDataBlocking(UART0, c);
+
+        DL_GPIO_clearPins(GPIOA, BV(0));
+        delay_cycles(1e6);
+        DL_GPIO_setPins(GPIOA, BV(0));
     }
 }
