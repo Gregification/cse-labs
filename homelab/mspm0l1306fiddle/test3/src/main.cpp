@@ -22,8 +22,8 @@ int main(void)
 
     //---examples---------------------------------------------------
 
-//    ex_gpio();
-    ex_uart();
+    ex_gpio();
+//    ex_uart();
 }
 
 void ex_gpio(){

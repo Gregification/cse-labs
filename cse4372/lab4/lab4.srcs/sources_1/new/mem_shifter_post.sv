@@ -30,13 +30,8 @@ module mem_shifter_post(
     );
 
     always_ff @ (posedge clk) begin
-        if(d_be[3]) begin 
+        if(d_be[3] || d_be[2]) begin 
             d_rdata_shifted <= d_rdata[31:0];
-        end else if(d_be[2]) begin
-            if(isUnsigned)
-                d_rdata_shifted <= {8'b0            , d_rdata[23:0]};
-            else
-                d_rdata_shifted <= {{8{d_rdata[23]}}, d_rdata[23:0]};
         end else if(d_be[1]) begin
             if(isUnsigned)
                 d_rdata_shifted <= {16'b0           , d_rdata[15:0]};

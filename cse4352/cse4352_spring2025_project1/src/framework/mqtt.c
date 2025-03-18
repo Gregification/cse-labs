@@ -351,15 +351,12 @@ void unsubscribeMqtt(char strTopic[])
         putsUart0("could not queue data");
 }
 
-void processMqttResponse(socketInfo * s, etherHeader * e){
-    if(!(s && s->sock)) // is not active
-        return;
+void pingMqtt(socket * s, etherHeader * e){
+    mqttFixedHeader fh;
+    fh.type = MQTT_FH_TYPE_PINGREQ;
+    fh.fDUP = fh.fRETAIN = false;
+    fh.fQoS = 0;
+    setMqttFHLen(&fh, 0);
 
-    ipHeader * ip = (ipHeader*)e->data;
-    tcpHeader * tcp = (tcpHeader*)((uint8_t*)ip + (ip->size * 4));
-
-    uint8_t * data = tcp->data;
-    uint16_t datalen = ntohs(ip->length) - ip->size * 4 - sizeof(tcpHeader);
-
-
+    sendTcpMessage(e, s, ACK | PSH, &fh, 2);
 }

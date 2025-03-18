@@ -299,6 +299,11 @@ void processShell(etherHeader * e)
                     if (topic != NULL)
                         unsubscribeMqtt(topic);
                 }
+                if (strcmp(token, "ping") == 0)
+                {
+                    if(mqttstate == MQTT_CONNECTED && mqttsocket)
+                        pingMqtt(mqttsocket, e);
+                }
             }
             if (strcmp(token, "ip") == 0)
             {

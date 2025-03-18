@@ -108,10 +108,7 @@ void publishMqtt(char strTopic[], char strData[]);
 void subscribeMqtt(char strTopic[]);
 void unsubscribeMqtt(char strTopic[]);
 
-/*
- * assuming etherHeader is tcp
- */
-void processMqttResponse(socketInfo * s, etherHeader * e);
+void pingMqtt(socket * s, etherHeader * e);
 
 uint32_t getMqttFHLen(mqttFixedHeader *);
 

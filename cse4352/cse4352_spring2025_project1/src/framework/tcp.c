@@ -319,7 +319,9 @@ void processTcpResponse(socketInfo * s, etherHeader * e)
             if(tcp->fFIN){
                 recalTimeout = true;
                 s->sock->state = TCP_CLOSE_WAIT;
-            } else if(tcp->fACK){
+            }
+
+            if(tcp->fACK){
                 if(datalen) {// if is not a keep alive ack
                     s->sock->acknowledgementNumber += datalen;
                     sendTcpMessage(e, s->sock, ACK, NULL, 0);
