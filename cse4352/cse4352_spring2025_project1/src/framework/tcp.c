@@ -319,6 +319,9 @@ void processTcpResponse(socketInfo * s, etherHeader * e)
             if(tcp->fFIN){
                 recalTimeout = true;
                 s->sock->state = TCP_CLOSE_WAIT;
+                s->sock->acknowledgementNumber += 1;
+                sendTcpMessage(e, s->sock, ACK, NULL, 0);
+                s->sock->sequenceNumber--;
             }
 
             if(tcp->fACK){

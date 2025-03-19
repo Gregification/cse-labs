@@ -1,3 +1,6 @@
+/*
+ * VQFN / 32-pin RHB
+ */
 
 #include <ti/devices/msp/msp.h>
 #include <ti/driverlib/driverlib.h>
@@ -8,6 +11,10 @@ void ex_gpio();
 void ex_uart();
 void ex_spi();
 
+/*
+ * about data sheet pin <-> peripheral lookup
+ *  - steps for reading the data sheet values, peripheral <-> pin number <-> port id <-> pin CM
+ */
 int main(void)
 {
     //---init-------------------------------------------------------
@@ -23,7 +30,8 @@ int main(void)
     //---examples---------------------------------------------------
 
 //    ex_gpio();
-    ex_uart();
+//    ex_uart();
+    ex_spi();
 }
 
 void ex_gpio(){
@@ -82,7 +90,7 @@ void ex_uart(){
 
     DL_UART_enableMajorityVoting(UART0);
 
-    // apparently the FIFOS have to be enabled separately
+    // apparently the FIFOS have to be enabled separately, the FIFOS arn't necessary for operation
     DL_UART_enableFIFOs(UART0);
     DL_UART_setRXFIFOThreshold(UART0, DL_UART_RX_FIFO_LEVEL::DL_UART_RX_FIFO_LEVEL_1_2_FULL);
     DL_UART_setTXFIFOThreshold(UART0, DL_UART_TX_FIFO_LEVEL::DL_UART_TX_FIFO_LEVEL_1_2_EMPTY);
@@ -115,5 +123,54 @@ void ex_uart(){
         DL_GPIO_clearPins(GPIOA, BV(0));
         delay_cycles(1e6);
         DL_GPIO_setPins(GPIOA, BV(0));
+    }
+}
+
+void ex_spi(){
+    // init peripheral power
+    DL_GPIO_reset(GPIOA);
+    DL_SPI_reset(SPI0);
+    DL_GPIO_enablePower(GPIOA);
+    DL_SPI_enable(SPI0);
+    delay_cycles(16);
+
+    // CS : PA3 .
+    DL_GPIO_initPeripheralInputFunction(IOMUX_PINCM::IOMUX_PINCM4, IOMUX_PINCM4_PF_SPI0_CS1_POCI1);
+    // CLK : PA6 .
+    DL_GPIO_initPeripheralInputFunction(IOMUX_PINCM::IOMUX_PINCM7, IOMUX_PINCM7_PF_SPI0_SCLK);
+    // MISO / POCI : PA4 .
+    DL_GPIO_initPeripheralInputFunction(IOMUX_PINCM::IOMUX_PINCM5, IOMUX_PINCM5_PF_SPI0_POCI);
+    // MOSI / PICO : PA5 .
+    DL_GPIO_initPeripheralInputFunction(IOMUX_PINCM::IOMUX_PINCM6, IOMUX_PINCM6_PF_SPI0_PICO);
+
+    /*
+     *  note : depending on the SPI config.mode (controller/peripheral) filling the FIFO does different things
+     *      - DL doesn't have a transfer function like every other sane library has.
+     *      - e.g : controller -> tx when ever somethings in the tx FIFO
+     *      - e.g : peripheral -> tx FIFO can be filled but that will only be tranmitted on rx
+     */
+    DL_SPI_Config config = {
+        .mode           = DL_SPI_MODE_CONTROLLER,
+        .frameFormat    = DL_SPI_FRAME_FORMAT_MOTO3_POL0_PHA0, // POLarity, PHase
+        .parity         = DL_SPI_PARITY_NONE,
+        .dataSize       = DL_SPI_DATA_SIZE_8,
+        .bitOrder       = DL_SPI_BIT_ORDER_MSB_FIRST,
+        .chipSelectPin  = DL_SPI_CHIP_SELECT_1
+    };
+    DL_SPI_ClockConfig clkconfig = {
+        .clockSel       = DL_SPI_CLOCK_BUSCLK,
+        .divideRatio    = DL_SPI_CLOCK_DIVIDE_RATIO_1
+    };
+
+    DL_SPI_setClockConfig(SPI0, &clkconfig);
+    DL_SPI_init(SPI0, &config);
+
+    uint8_t data[] = {1,2,3,4,5,6,7,8,9,BV(0),BV(1),BV(2),BV(3),BV(4),BV(5),BV(6),BV(7)};
+
+    // depending on the spi m/s mode, this either transmits or just fills the fifo
+    for(uint32_t i = 0; i < sizeof(data); i++){
+        i += DL_SPI_fillTXFIFO8(SPI0, data + i, sizeof(data) - i);
+        while(!DL_SPI_isTXFIFOEmpty(SPI0));
+            ;
     }
 }
