@@ -43,7 +43,7 @@ module dual_port_ram(
         for (integer i = 0; i < $size(mem); i = i + 1) begin
             mem[i] = 0;
         end
-        $readmemh("program.hex", mem);
+        $readmemh("ram.hex", mem);
     end
 
     always @(posedge clk)

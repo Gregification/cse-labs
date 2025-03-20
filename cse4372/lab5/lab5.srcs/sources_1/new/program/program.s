@@ -2,8 +2,7 @@
 # 1. assemble to elf : 		riscv32-unknown-elf-gcc -o program program.s -march=rv32i -mabi=ilp32 -nostdlib -Tcse4372_riscv.ld
 # 2. extract bin :			riscv32-unknown-elf-objcopy program -O binary program.bin
 # 3. convert to hex : 		hexdump program.bin > ram.hex
-# convert to intel hex : 	riscv32-unknown-elf-objcopy -O ihex program output.hex
-# disassemble :				riscv32-unknown-elf-objdump -dr program
+# dump assembly : 			riscv32-unknown-elf-objdump -dr program > program.asm_dump
 
 .globl	_start
 

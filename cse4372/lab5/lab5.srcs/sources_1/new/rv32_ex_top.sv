@@ -19,6 +19,7 @@
 // 
 //////////////////////////////////////////////////////////////////////////////////
 
+`include "defines.vh"
 
 module rv32_ex_top(
         // system clock and synchronous reset
@@ -40,22 +41,28 @@ module rv32_ex_top(
         output reg [3:0] wb_reg_out,
         output reg wb_enable_out
     );
-    
-    always_ff @ (posedge clk) begin
-        pc_out <= pc_in;
-        iw_out <= iw_in;
-    end
 
-    reg [31:0] alu_out_buffer;
     always_ff @ (posedge(clk)) begin
         if(reset) begin
+            pc_out <= `PC_RESET;
+            iw_out <= `IW_RESET;
+
             alu_out <= 0;
+
+            wb_reg_out      <= 0;
+            wb_enable_out   <= 0;
         end else begin
-            alu_out <= alu_out_buffer;
+            pc_out <= pc_in;
+            iw_out <= iw_in;
+
+            alu_out <= _alu32.alu_out;
+
+            wb_reg_out      <= wb_reg_in;
+            wb_enable_out   <= wb_enable_in;
         end
     end
     
-    rv32_ex_alu32 alu32 (
+    rv32_ex_alu32 _alu32 (
         // from id
         .pc_in(pc_in),
         .iw_in(iw_in),
@@ -63,6 +70,6 @@ module rv32_ex_top(
         .rs2_data_in(rs2_data_in),
         
         // to mem
-        .alu_out(alu_out_buffer)
+        .alu_out(alu_cacl)
     );
 endmodule

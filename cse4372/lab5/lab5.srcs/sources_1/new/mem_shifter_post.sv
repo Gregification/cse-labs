@@ -22,7 +22,7 @@
 module mem_shifter_post(
         input clk,
         input [31:0] d_rdata,
-        output reg [31:0] d_rdata_shifted,
+        output [31:0] d_rdata_shifted,
 
         input isUnsigned,
         input [3:0] d_be

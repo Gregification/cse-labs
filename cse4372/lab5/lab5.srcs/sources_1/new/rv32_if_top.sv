@@ -19,8 +19,7 @@
 // 
 //////////////////////////////////////////////////////////////////////////////////
 
-// PC address when in reset condition
-`define PC_RESET 0
+`include "defines.vh"
 
 // instruction fetch
 /**
