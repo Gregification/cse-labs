@@ -26,6 +26,8 @@ module rv32_id_top(
         input reset,
 
         // from if
+        input [31:0] pc_in,
+        input [31:0] iw_in,
         output [4:0] regif_rs1_reg,
         output [4:0] regif_rs2_reg,
         input [31:0] regif_rs1_data,
@@ -37,4 +39,10 @@ module rv32_id_top(
         output reg [4:0] wb_reg_out,
         output reg wb_enable_out
     );
+
+    always_ff @ (posedge clk) begin
+        pc_out <= pc_in;
+        iw_out <= iw_in;
+    end
+
 endmodule

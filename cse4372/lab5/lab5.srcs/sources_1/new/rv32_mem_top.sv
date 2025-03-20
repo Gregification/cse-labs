@@ -33,7 +33,14 @@ module rv32_mem_top(
         // to wb
         output reg [31:0] pc_out,
         output reg [31:0] iw_out,
+        output reg [31:0] alu_out,
         output reg [4:0] wb_reg_out,
         output reg wb_enable_out
     );
+
+    always_ff @ (posedge clk) begin
+        pc_out <= pc_in;
+//        iw_out <= iw_in;
+    end
+    
 endmodule

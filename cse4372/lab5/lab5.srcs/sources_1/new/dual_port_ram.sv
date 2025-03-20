@@ -21,7 +21,6 @@
 
 `define ADDR_WIDTH 12
 
-
 module dual_port_ram(
         // Clock
         input clk,
@@ -44,7 +43,7 @@ module dual_port_ram(
         for (integer i = 0; i < $size(mem); i = i + 1) begin
             mem[i] = 0;
         end
-        $readmemh("ram.hex", mem);
+        $readmemh("program.hex", mem);
     end
 
     always @(posedge clk)

@@ -33,17 +33,17 @@ module rv32i_regs(
         input [31:0] wb_data,
 
         // outputs
-        output [31:0] rs1_data,
-        output [31:0] rs2_data
+        output reg [31:0] rs1_data,
+        output reg [31:0] rs2_data
     );
     
-    reg     [31:0][31:0] registers;
+    reg     [31:0] registers [31:0];
 
     always_ff @ (posedge(clk)) begin
         if (reset) begin
 
             registers <= '{default : '0};
-
+            
         end else begin
 
             if (wb_enable) begin

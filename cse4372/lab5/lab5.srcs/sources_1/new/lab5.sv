@@ -75,7 +75,7 @@ module lab5(
     wire            clk = CLK100;
     reg     [31:0]  clk_ladder = 0;
         `define CLK_ILA clk
-        `define CLK_TESTING clk_ladder[1]
+        `define CLK_PIPELINE clk_ladder[0]
         `define CLK_IO clk_ladder[15]
 
     always_ff @ (posedge clk)
@@ -101,22 +101,156 @@ module lab5(
 
     assign reset = btns[0];
 
-    //---pipeline-----------------------------------------------------------
+    //---dual port memory---------------------------------------------------
     
-
     dual_port_ram _dual_port_ram (
-        .clk(`CLK_TESTING),
+        .clk(`CLK_PIPELINE),
 
-        // instr port (ro)
-        .i_addr(i_addr),
-        .i_rdata(i_rdata),
+        // Instruction port (RO)
+        .i_addr(_rv32_if_top.memif_addr),   // if : pc
+        .i_rdata(_rv32_if_top.memif_data)   // if : new iw
+        
+        // Data port (RW)
+        // input [31:2] d_addr,
+        // output reg [31:0] d_rdata,
+        // input d_we,
+        // input [3:0] d_be,
+        // input [31:0] d_wdata
+    );
 
-        // data port (rw)
-        .d_addr(d_addr),
-        .d_we(d_we),
-        .d_wdata(d_wdata),
-        .d_be(d_be),
-        .d_rdata(d_rdata)
+
+    //---registers----------------------------------------------------------
+
+    rv32i_regs _rv32i_regs (
+        .clk(`CLK_PIPELINE),
+        .reset(reset)
+
+        // inputs
+        // input [4:0] rs1_reg,
+        // input [4:0] rs2_reg,
+        // input wb_enable,
+        // input [4:0] wb_reg,
+        // input [31:0] wb_data,
+
+        // outputs
+        // output [31:0] rs1_data,
+        // output [31:0] rs2_data
+    );
+
+
+    //---pipeline-----------------------------------------------------------
+    // if -> id -> ex -> mem -> wb
+    //      ... mem reaches all over the pipeline though
+
+    // TODO : double check # 9,10
+    rv32_if_top _rv32_if_top (
+        .clk(`CLK_PIPELINE),
+        .reset(reset),
+
+        // memory interface
+        .memif_addr(_dual_port_ram.i_addr), // out
+        .memif_data(_dual_port_ram.i_rdata) // in
+
+        // to id
+        // output reg [31:0] pc_out,
+        // output [31:0] iw_out
+    );
+
+    // TODO
+    rv32_id_top _rv32_id_top (
+        .clk(`CLK_PIPELINE),
+        .reset(reset),
+
+        // from if
+        .pc_in(_rv32_if_top.pc_out),
+        .iw_in(_rv32_if_top.iw_out)
+        // output [4:0] regif_rs1_reg,
+        // output [4:0] regif_rs2_reg,
+        // input [31:0] regif_rs1_data,
+        // input [31:0] regif_rs2_data,
+
+        // // to ex
+        // output reg [31:0] pc_out,
+        // output reg [31:0] iw_out,
+        // output reg [4:0] wb_reg_out,
+        // output reg wb_enable_out
+    );
+
+    // TODO
+    rv32_ex_top _rv32_ex_top (
+        .clk(`CLK_PIPELINE),
+        .reset(reset),
+
+        // from id
+        .pc_in(_rv32_id_top.pc_out),
+        .iw_in(_rv32_id_top.iw_out)
+        // input [31:0] rs1_data_in,
+        // input [31:0] rs2_data_in,
+        // input [4:0] wb_reg_in,
+        // input wb_enable_in,
+
+        // to mem
+        // output reg [31:0] pc_out,
+        // output reg [31:0] iw_out,
+        // output reg [31:0] alu_out,
+        // output reg [3:0] wb_reg_out,
+        // output reg wb_enable_out
+    );
+
+    // TODO
+    rv32_mem_top _rv32_mem_top (
+        .clk(`CLK_PIPELINE),
+        .reset(reset),
+
+        // from ex
+        .pc_in(_rv32_ex_top.pc_out)
+        // .wb_reg_in(_rv32_ex_top.wb_reg_out),
+        // input wb_enable_in,
+
+        // to wb
+        // output reg [31:0] pc_out,
+        // output reg [31:0] iw_out,
+        // output reg [31:0] alu_out,
+        // output reg [4:0] wb_reg_out,
+        // output reg wb_enable_out
+    );
+
+    // TODO
+    rv32_wb_top _rv32_wb_top (
+        .clk(`CLK_PIPELINE),
+        .reset(reset),
+
+        // from mem
+        .pc_in(_rv32_mem_top.pc_out),
+        .iw_in(_rv32_mem_top.iw_out)
+        // input [31:0] alu_in,
+        // input [4:0] wb_reg_in,
+        // input wb_enable_in,
+
+        // register interface
+        // output regif_wb_enable,
+        // output [4:0] regif_wb_reg,
+        // output [31:0] regif_wb_data
+    );
+
+    //---ILA----------------------------------------------------------------
+
+    ila_0 your_instance_name (
+        .clk(`CLK_ILA), // input wire clk
+
+        // reset <1->0> used as trigger 
+        .probe0(`CLK_PIPELINE), // input wire [0:0]  probe0  
+        .probe1(reset), // input wire [0:0]  probe1 
+        .probe2(_rv32_if_top.memif_addr), // input wire [31:0]  probe2 
+        .probe3(_rv32_if_top.memif_data), // input wire [31:0]  probe3 
+        .probe4(_rv32_id_top.pc_in), // input wire [31:0]  probe4 
+        .probe5(_rv32_id_top.iw_in), // input wire [31:0]  probe5 
+        .probe6(_rv32_ex_top.pc_in), // input wire [31:0]  probe6 
+        .probe7(_rv32_ex_top.iw_in), // input wire [31:0]  probe7 
+        .probe8(_rv32_mem_top.pc_in), // input wire [31:0]  probe8 
+        .probe9(_rv32_wb_top.pc_in), // input wire [31:0]  probe9 
+        .probe10(_rv32_wb_top.iw_in), // input wire [31:0]  probe10 
+        .probe11(0) // input wire [31:0]  probe11 
     );
 
 endmodule

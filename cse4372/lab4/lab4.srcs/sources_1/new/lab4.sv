@@ -70,7 +70,7 @@ module lab4(
     wire            clk = CLK100;
     reg     [31:0]  clk_ladder = 0;
         `define CLK_ILA clk
-        `define CLK_TESTING clk_ladder[1]
+        `define CLK_TESTING clk
         `define CLK_IO clk_ladder[15]
 
     always_ff @ (posedge clk)
