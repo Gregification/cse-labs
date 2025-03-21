@@ -152,7 +152,7 @@ void ex_spi(){
      */
     DL_SPI_Config config = {
         .mode           = DL_SPI_MODE_CONTROLLER,
-        .frameFormat    = DL_SPI_FRAME_FORMAT_MOTO4_POL0_PHA0, // POLarity, PHase , if using the peripheral for CS must use MOTO4
+        .frameFormat    = DL_SPI_FRAME_FORMAT_MOTO3_POL0_PHA0, // POLarity, PHase , if using the peripheral for CS must use MOTO4
         .parity         = DL_SPI_PARITY_NONE,
         .dataSize       = DL_SPI_DATA_SIZE_8,
         .bitOrder       = DL_SPI_BIT_ORDER_MSB_FIRST,
@@ -163,21 +163,12 @@ void ex_spi(){
         .divideRatio    = DL_SPI_CLOCK_DIVIDE_RATIO_3
     };
 
-    DL_SPI_enable(SPI0);
+    DL_SPI_disable(SPI0);
 
     DL_SPI_setClockConfig(SPI0, &clkconfig);
     DL_SPI_init(SPI0, &config);
 
-    // SPI software reset is required when switching SPI protocol format
-    DL_SPI_reset(SPI0);
-
     DL_SPI_enable(SPI0);
-
-    {// enable gpio for led blinking
-        DL_GPIO_initDigitalOutput(IOMUX_PINCM::IOMUX_PINCM1);
-        DL_GPIO_clearPins(GPIOA, BV(0));
-        DL_GPIO_enableOutput(GPIOA, BV(0));
-    }
 
     uint8_t data[] = {1,2,3,4,5,6,7,8,9,BV(0),BV(1),BV(2),BV(3),BV(4),BV(5),BV(6),BV(7)};
 
