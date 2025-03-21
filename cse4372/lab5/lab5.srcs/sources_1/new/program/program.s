@@ -1,7 +1,7 @@
 # the hex output needs to be moved to the parent folder afterwards
 # 1. assemble to elf : 		riscv32-unknown-elf-gcc -o program program.s -march=rv32i -mabi=ilp32 -nostdlib -Tcse4372_riscv.ld
 # 2. extract bin :			riscv32-unknown-elf-objcopy program -O binary program.bin
-# 3. convert to hex : 		hexdump program.bin > ram.hex
+# 3. convert to hex : 		hexdump -v -e '1/4 "%08x" "\n"' program.bin > ram.hex
 # dump assembly : 			riscv32-unknown-elf-objdump -dr program > program.asm_dump
 
 .globl	_start
@@ -10,13 +10,13 @@
 
 _start:
 	
-	andi t0, t0, 0
+	addi t0, t0, 6
 
 	nop
 	nop
 	nop
 
-	or t0, t0, 2
+	or t0, t0, 3
  
 	nop
 	nop

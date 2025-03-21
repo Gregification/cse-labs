@@ -29,7 +29,8 @@ module rv32_mem_top(
         // from ex
         input [31:0] pc_in,
         input [31:0] iw_in,
-        input [3:0] wb_reg_in,
+        input [31:0] alu_in,
+        input [4:0] wb_reg_in,
         input wb_enable_in,
 
         // to wb
@@ -52,6 +53,8 @@ module rv32_mem_top(
         end else begin
             pc_out <= pc_in;
             iw_out <= iw_in;
+
+            alu_out <= alu_in;
 
             wb_reg_out      <= wb_reg_in;
             wb_enable_out   <= wb_enable_in;

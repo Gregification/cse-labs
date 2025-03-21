@@ -49,7 +49,7 @@ module lab5(
     );
      
     // Terminate all of the unused outputs or i/o's
-    // assign LED = 10'b0000000000;
+    assign LED = 10'b0000000000;
     assign RGB0 = 3'b000;
     assign RGB1 = 3'b000;
     assign SS_ANODE = 4'b0000;
@@ -109,28 +109,42 @@ module lab5(
         // reset <1->0> used as trigger 
         .probe0(`CLK_PIPELINE), // input wire [0:0]  probe0  
         .probe1(reset), // input wire [0:0]  probe1 
-        .probe2(_rv32_if_top.memif_addr), // input wire [31:0]  probe2 
-        .probe3(_rv32_if_top.memif_data), // input wire [31:0]  probe3 
-        .probe4(_rv32_id_top.pc_in), // input wire [31:0]  probe4 
-        .probe5(_rv32_id_top.iw_in), // input wire [31:0]  probe5 
-        .probe6(_rv32_ex_top.pc_in), // input wire [31:0]  probe6 
-        .probe7(_rv32_ex_top.iw_in), // input wire [31:0]  probe7 
-        .probe8(_rv32_mem_top.pc_in), // input wire [31:0]  probe8 
-        .probe9(_rv32_mem_top.iw_in), // input wire [31:0]  probe9 
-        .probe10(_rv32_wb_top.pc_in), // input wire [31:0]  probe10 
-        .probe11(_rv32_wb_top.iw_in) // input wire [31:0]  probe11 
-        // .probe12(0), // input wire [31:0]  probe12 
-        // .probe13(0), // input wire [31:0]  probe13 
-        // .probe14(0), // input wire [31:0]  probe14 
-        // .probe15(0), // input wire [31:0]  probe15 
-        // .probe16(0), // input wire [31:0]  probe16 
-        // .probe17(0), // input wire [31:0]  probe17 
-        // .probe18(0), // input wire [31:0]  probe18 
-        // .probe19(0), // input wire [31:0]  probe19 
-        // .probe20(0), // input wire [31:0]  probe20 
-        // .probe21(0), // input wire [31:0]  probe21 
-        // .probe22(0), // input wire [31:0]  probe22 
-        // .probe23(0) // input wire [31:0]  probe23
+        
+        // if_top
+        .probe2(_rv32_if_top.memif_data), // input wire [31:0]  probe2 
+
+        // id_top
+        .probe3(_rv32_id_top.pc_in), // input wire [31:0]  probe3 
+        .probe4(_rv32_id_top.iw_in), // input wire [31:0]  probe4 
+        .probe5(_rv32_id_top.regif_rs1_reg), // input wire [5:0]  probe5 
+	    .probe6(_rv32_id_top.regif_rs2_reg), // input wire [5:0]  probe6 
+
+        // ex_top
+        .probe7(_rv32_ex_top.pc_in), // input wire [31:0]  probe7 
+        .probe8(_rv32_ex_top.iw_in), // input wire [31:0]  probe8 
+        .probe9(_rv32_ex_top.rs1_data_in), // input wire [31:0]  probe9 
+        .probe10(_rv32_ex_top.rs2_data_in), // input wire [31:0]  probe10 
+        .probe11(_rv32_ex_top.wb_reg_in), // input wire [4::0]  probe11 
+        .probe12(_rv32_ex_top.wb_enable_in), // input wire [0:0]  probe12 
+
+        // mem_top
+        .probe13(_rv32_mem_top.pc_in), // input wire [31:0]  probe13 
+        .probe14(_rv32_mem_top.iw_in), // input wire [31:0]  probe14 
+        .probe15(_rv32_mem_top.alu_in), // input wire [31:0]  probe15 
+        .probe16(_rv32_mem_top.wb_reg_in), // input wire [4:0]  probe16 
+        .probe17(_rv32_mem_top.wb_enable_in), // input wire [0:0]  probe17 
+
+        // wb_top
+        .probe18(_rv32_wb_top.pc_in), // input wire [31:0]  probe18 
+        .probe19(_rv32_wb_top.iw_in), // input wire [31:0]  probe19 
+        .probe20(_rv32_wb_top.alu_in), // input wire [31:0]  probe20 
+        .probe21(_rv32_wb_top.wb_reg_in), // input wire [4:0]  probe21 
+        .probe22(_rv32_wb_top.wb_enable_in), // input wire [0:0]  probe22
+
+        // wb output
+        .probe23(_rv32_wb_top.regif_wb_enable), // input wire [0:0]  probe23
+        .probe24(_rv32_wb_top.regif_wb_reg), // input wire [4:0]  probe24
+        .probe25(_rv32_wb_top.regif_wb_data) // input wire [31:0]  probe25
     );
 
     //---dual port memory---------------------------------------------------
@@ -139,8 +153,8 @@ module lab5(
         .clk(`CLK_PIPELINE),
 
         // Instruction port (RO)
-        .i_addr(_rv32_if_top.memif_addr),   // if : pc
-        .i_rdata(_rv32_if_top.memif_data)   // if : new iw
+        .i_addr(_rv32_if_top.memif_addr)
+        // output reg [31:0] i_rdata,
         
         // Data port (RW)
         // input [31:2] d_addr,
@@ -179,7 +193,7 @@ module lab5(
         .reset(reset),
 
         // memory interface
-        .memif_addr(_dual_port_ram.i_addr), // out
+        // output [31:2] memif_addr,
         .memif_data(_dual_port_ram.i_rdata) // in
 
         // to id
@@ -193,13 +207,11 @@ module lab5(
 
         // from if
         .pc_in(_rv32_if_top.pc_out),
-        .iw_in(_rv32_if_top.iw_out),
+        .iw_in(_rv32_if_top.iw_out)
 
         // register interface
         // output [4:0] regif_rs1_reg,
         // output [4:0] regif_rs2_reg,
-        .regif_rs1_data(_rv32i_regs.rs1_data),
-        .regif_rs2_data(_rv32i_regs.rs2_data)
 
         // // to ex
         // output reg [31:0] pc_out,
@@ -215,8 +227,8 @@ module lab5(
         // from id
         .pc_in(_rv32_id_top.pc_out),
         .iw_in(_rv32_id_top.iw_out),
-        .rs1_data_in(_rv32_id_top.regif_rs1_data),
-        .rs2_data_in(_rv32_id_top.regif_rs2_data),
+        .rs1_data_in(_rv32i_regs.rs1_data),
+        .rs2_data_in(_rv32i_regs.rs2_data),
         .wb_reg_in(_rv32_id_top.wb_reg_out),
         .wb_enable_in(_rv32_id_top.wb_enable_out)
 
@@ -235,6 +247,7 @@ module lab5(
         // from ex
         .pc_in(_rv32_ex_top.pc_out),
         .iw_in(_rv32_ex_top.iw_out),
+        .alu_in(_rv32_ex_top.alu_out),
         .wb_reg_in(_rv32_ex_top.wb_reg_out),
         .wb_enable_in(_rv32_ex_top.wb_enable_out)
 

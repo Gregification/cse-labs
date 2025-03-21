@@ -34,8 +34,6 @@ module rv32_id_top(
         // register interface
         output [4:0] regif_rs1_reg,
         output [4:0] regif_rs2_reg,
-        input [31:0] regif_rs1_data,
-        input [31:0] regif_rs2_data,
 
         // to ex
         output reg [31:0] pc_out,

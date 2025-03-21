@@ -67,9 +67,9 @@ module rv32_ex_top(
         .pc_in(pc_in),
         .iw_in(iw_in),
         .rs1_data_in(rs1_data_in),
-        .rs2_data_in(rs2_data_in),
+        .rs2_data_in(rs2_data_in)
         
         // to mem
-        .alu_out(alu_cacl)
+        // output reg [31:0] alu_out
     );
 endmodule
