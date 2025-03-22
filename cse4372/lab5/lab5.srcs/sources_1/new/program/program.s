@@ -49,6 +49,20 @@ _start:
 	add t3, t0, t1
 
 	nop
+	nop
+	nop
+
+	ebreak
+
+	nop
+	nop
+	nop
+
+	add t3, t0, t1
+
+	nop
+	nop
+	nop
 
 	ebreak
 

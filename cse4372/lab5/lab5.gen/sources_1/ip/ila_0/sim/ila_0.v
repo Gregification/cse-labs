@@ -75,7 +75,8 @@ probe21,
 probe22,
 probe23,
 probe24,
-probe25
+probe25,
+probe26
 );
 
 input clk;
@@ -107,6 +108,7 @@ input [0 : 0] probe22;
 input [0 : 0] probe23;
 input [4 : 0] probe24;
 input [31 : 0] probe25;
+input [0 : 0] probe26;
 
 
 endmodule

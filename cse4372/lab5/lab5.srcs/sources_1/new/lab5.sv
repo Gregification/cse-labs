@@ -103,6 +103,8 @@ module lab5(
 
     //---ILA----------------------------------------------------------------
 
+    reg is_ebreak;
+
     ila_0 your_instance_name (
         .clk(`CLK_ILA), // input wire clk
 
@@ -144,7 +146,8 @@ module lab5(
         // wb output
         .probe23(_rv32_wb_top.regif_wb_enable), // input wire [0:0]  probe23
         .probe24(_rv32_wb_top.regif_wb_reg), // input wire [4:0]  probe24
-        .probe25(_rv32_wb_top.regif_wb_data) // input wire [31:0]  probe25
+        .probe25(_rv32_wb_top.regif_wb_data), // input wire [31:0]  probe25
+        .probe26(0) // input wire [0:0]  probe26
     );
 
     //---dual port memory---------------------------------------------------
@@ -190,7 +193,7 @@ module lab5(
 
     rv32_if_top _rv32_if_top (
         .clk(`CLK_PIPELINE),
-        .reset(reset),
+        .reset(is_ebreak),
 
         // memory interface
         // output [31:2] memif_addr,
@@ -219,7 +222,7 @@ module lab5(
         // output reg [4:0] wb_reg_out,
         // output reg wb_enable_out
     );
-
+    
     rv32_ex_top _rv32_ex_top (
         .clk(`CLK_PIPELINE),
         .reset(reset),

@@ -29,8 +29,8 @@ module rv32_ex_top(
         // from id
         input [31:0] pc_in,
         input [31:0] iw_in,
-        input [31:0] rs1_data_in,
-        input [31:0] rs2_data_in,
+        input reg [31:0] rs1_data_in,
+        input reg [31:0] rs2_data_in,
         input [4:0] wb_reg_in,
         input wb_enable_in,
 

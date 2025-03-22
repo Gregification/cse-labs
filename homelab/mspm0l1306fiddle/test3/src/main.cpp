@@ -174,13 +174,15 @@ void ex_spi(){
 
     // depending on the spi m/s mode, this either transmits or just fills the fifo
 
-    while(DL_SPI_isBusy(SPI0))
-            ;
-    for(uint32_t i = 0; i < sizeof(data);){
-        while(!DL_SPI_isTXFIFOEmpty(SPI0))
-            ;
-        i += DL_SPI_fillTXFIFO8(SPI0, data + i, sizeof(data) - i);
-    }
+    DL_SPI_transmitData8(SPI0, 1);
+
+//    while(DL_SPI_isBusy(SPI0))
+//            ;
+//    for(uint32_t i = 0; i < sizeof(data);){
+//        while(!DL_SPI_isTXFIFOEmpty(SPI0))
+//            ;
+//        i += DL_SPI_fillTXFIFO8(SPI0, data + i, sizeof(data) - i);
+//    }
 
 //    DL_SPI_enablePacking(spi)(spi, buffer, maxCount)
 
