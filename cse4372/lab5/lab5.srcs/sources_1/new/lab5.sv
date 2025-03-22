@@ -147,8 +147,20 @@ module lab5(
         .probe23(_rv32_wb_top.regif_wb_enable), // input wire [0:0]  probe23
         .probe24(_rv32_wb_top.regif_wb_reg), // input wire [4:0]  probe24
         .probe25(_rv32_wb_top.regif_wb_data), // input wire [31:0]  probe25
-        .probe26(0) // input wire [0:0]  probe26
+        .probe26(reset), // input wire [0:0]  probe26
+        .probe27(_rv32_if_top.reset) // input wire [0:0]  probe27
     );
+
+    assign is_ebreak = _rv32_if_top.memif_data == 32'h00100073;
+    reg ebreak_latch;
+    initial ebreak_latch = 0;
+
+    always @(posedge `CLK_PIPELINE) begin
+        if(reset)
+            ebreak_latch <= 0;
+        if(is_ebreak)
+            ebreak_latch <= 1;
+    end
 
     //---dual port memory---------------------------------------------------
     
@@ -193,7 +205,7 @@ module lab5(
 
     rv32_if_top _rv32_if_top (
         .clk(`CLK_PIPELINE),
-        .reset(is_ebreak),
+        .reset(reset || ebreak_latch),
 
         // memory interface
         // output [31:2] memif_addr,

@@ -42,27 +42,16 @@ module rv32_if_top(
     reg [31:0] pc;
     assign memif_addr = pc[31:2];
 
-    reg e_break;
-    initial e_break = 0;
-
     assign iw_out = memif_data; // memif_data is already registered comming out of memory
 
     always_ff @ (posedge clk) begin
-        if(memif_data == 32'h00100073)
-            e_break <= 1;
-
         pc_out <= pc; // pc_out gets former pc value, since pc is registered
 
         // itterate pc
         if(reset) begin
             pc <= `PC_RESET;
-            e_break <= 0;
         end else begin
-
-            // if(e_break == 0)
-            //     pc <= 0;
-            // else
-                pc <= pc + 4;
+            pc <= pc + 4;
         end
     end
 
