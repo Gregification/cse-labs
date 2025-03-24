@@ -218,7 +218,7 @@ module lab5(
 
     rv32_id_top _rv32_id_top (
         .clk(`CLK_PIPELINE),
-        .reset(reset),
+        .reset(reset || ebreak_latch),
 
         // from if
         .pc_in(_rv32_if_top.pc_out),
