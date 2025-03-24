@@ -233,6 +233,7 @@ void ex_adc_to_uart(){
     }
 
     {// ADC init
+
         DL_ADC12_ClockConfig clkconf = {
             .clockSel       = DL_ADC12_CLOCK_SYSOSC,
             .freqRange      = DL_ADC12_CLOCK_FREQ_RANGE_24_TO_32,    // expected ADC clock input range
@@ -242,6 +243,7 @@ void ex_adc_to_uart(){
         DL_ADC12_setClockConfig(ADC0, &clkconf);
 
         //IMPORTANT : SEE 14.2.5 clocking requirements, certain clock speeds must ONLY be used with certain sources/input-channels, ... etc
+        //IMPORTATN : there is a entirely seperate perpherial you have to enable for voltage reference
         DL_ADC12_configConversionMem(
                 ADC0,
                 DL_ADC12_MEM_IDX_0,
@@ -256,7 +258,14 @@ void ex_adc_to_uart(){
         DL_ADC12_enableConversions(ADC0);
     }
 
+    // use PA27's analog function : ADC-channel-0
+    DL_GPIO_initPeripheralAnalogFunction(IOMUX_PINCM::IOMUX_PINCM28);
+
+    uint8_t a;
     while(true){
+        a++;
+
+        DL_ADC12_startConversion(ADC0);
         delay_cycles(5e6);
 
         uint16_t val = DL_ADC12_getMemResult(ADC0, DL_ADC12_MEM_IDX_0);
@@ -264,7 +273,7 @@ void ex_adc_to_uart(){
         char its[6];
         snprintf(its, sizeof(its), "%" PRIu16, val);
         char str[18];
-        snprintf(str, sizeof(str), "ADC:PA27:%s\n\r", its);
+        snprintf(str, sizeof(str), "%3d|ADC:PA27:%s\n\r", a, its);
 
         for(uint8_t i = 0; i < sizeof(str) && str[i] != '\0'; i++){
             while(DL_UART_isBusy(UART0))
