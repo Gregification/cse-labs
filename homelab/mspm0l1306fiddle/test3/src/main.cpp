@@ -34,7 +34,7 @@ int main(void)
 
 //    ex_gpio();
 //    ex_uart();
-    ex_spi(); // add bias resistor?
+//    ex_spi(); // add bias resistor?
     ex_adc_to_uart();
 
 }
@@ -249,12 +249,13 @@ void ex_adc_to_uart(){
                 DL_ADC12_MEM_IDX_0,
                 DL_ADC12_INPUT_CHAN_0,                  // a.k.a input pin
                 DL_ADC12_REFERENCE_VOLTAGE_VDDA,        // INTREF configurable 1.4V to 2.5V but limited clock speed, EXTERN uses VREF+- pins, VDD uses mcu supply voltage
-                DL_ADC12_SAMPLE_TIMER_SOURCE_SCOMP0,    // idk
+                DL_ADC12_SAMPLING_SOURCE_MANUAL,        // sample trigger
                 DL_ADC12_AVERAGING_MODE_DISABLED,
                 DL_ADC12_BURN_OUT_SOURCE_DISABLED,      // ADC peripheral integrity checker
                 DL_ADC12_TRIGGER_MODE_AUTO_NEXT,        // idk
                 DL_ADC12_WINDOWS_COMP_MODE_DISABLED     // idk
             );
+        DL_ADC12_setSampleTime0(ADC0, 500);
         DL_ADC12_enableConversions(ADC0);
     }
 
@@ -270,9 +271,9 @@ void ex_adc_to_uart(){
 
         uint16_t val = DL_ADC12_getMemResult(ADC0, DL_ADC12_MEM_IDX_0);
 
-        char its[6];
+        char its[7];
         snprintf(its, sizeof(its), "%" PRIu16, val);
-        char str[18];
+        char str[20];
         snprintf(str, sizeof(str), "%3d|ADC:PA27:%s\n\r", a, its);
 
         for(uint8_t i = 0; i < sizeof(str) && str[i] != '\0'; i++){
