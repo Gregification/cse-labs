@@ -34,9 +34,8 @@ int main(void)
 
 //    ex_gpio();
 //    ex_uart();
-//    ex_spi(); // add bias resistor?
-    ex_adc_to_uart();
-
+    ex_spi();
+//    ex_adc_to_uart(); // funny thing, on the LP ADC channel 0 (PA27) is tied to a LED, you can see the ADC respond to changing brightness levels exposed to the unpowered LED.
 }
 
 void ex_gpio(){
@@ -139,7 +138,9 @@ void ex_spi(){
     DL_SPI_enablePower(SPI0);
     delay_cycles(16);
 
-    // CS : PA3 .
+    // CS 3 : PA27 .
+    DL_GPIO_initPeripheralOutputFunction(IOMUX_PINCM::IOMUX_PINCM28, IOMUX_PINCM28_PF_SPI0_CS3_CD_POCI3);
+    // CS 1 : PA3 .
     DL_GPIO_initPeripheralOutputFunction(IOMUX_PINCM::IOMUX_PINCM4, IOMUX_PINCM4_PF_SPI0_CS1_POCI1);
     // CLK : PA6 .
     DL_GPIO_initPeripheralOutputFunction(IOMUX_PINCM::IOMUX_PINCM7, IOMUX_PINCM7_PF_SPI0_SCLK);
@@ -156,7 +157,7 @@ void ex_spi(){
      */
     DL_SPI_Config config = {
         .mode           = DL_SPI_MODE_CONTROLLER,
-        .frameFormat    = DL_SPI_FRAME_FORMAT_MOTO3_POL0_PHA0, // POLarity, PHase , if using the peripheral for CS must use MOTO4
+        .frameFormat    = DL_SPI_FRAME_FORMAT_MOTO4_POL1_PHA1, // POLarity, PHase , if using the peripheral for CS must use MOTO4
         .parity         = DL_SPI_PARITY_NONE,
         .dataSize       = DL_SPI_DATA_SIZE_8,
         .bitOrder       = DL_SPI_BIT_ORDER_MSB_FIRST,
@@ -164,7 +165,7 @@ void ex_spi(){
     };
     DL_SPI_ClockConfig clkconfig = {
         .clockSel       = DL_SPI_CLOCK_BUSCLK,
-        .divideRatio    = DL_SPI_CLOCK_DIVIDE_RATIO_3
+        .divideRatio    = DL_SPI_CLOCK_DIVIDE_RATIO_2
     };
 
     DL_SPI_disable(SPI0);
@@ -174,18 +175,21 @@ void ex_spi(){
 
     DL_SPI_enable(SPI0);
 
-    uint8_t data[] = {1,2,3,4,5,6,7,8,9,BV(0),BV(1),BV(2),BV(3),BV(4),BV(5),BV(6),BV(7)};
+    DL_SPI_setBitRateSerialClockDivider(SPI0, 1);
 
+    uint8_t data[] = {BV(0),BV(1),BV(2)};
 
-    while(DL_SPI_isBusy(SPI0))
-            ;
     for(uint32_t i = 0; i < sizeof(data);){
-        while(!DL_SPI_isTXFIFOEmpty(SPI0))
-            ;
         // depending on the spi m/s mode, this either transmits or just fills the fifo
+        // assuming controller mode: the CS will remain active until FIFO is emptied,
+        //      or maybe it wont. for the love of god see the wave form on the scope, its like a 50/50 chance CS resets itself
+        // if PH is 1 then CS wont toggle between bytes
         i += DL_SPI_fillTXFIFO8(SPI0, data + i, sizeof(data) - i);
     }
 
+    // empty RX FIFO
+    for(uint8_t buff;DL_SPI_drainRXFIFO8(SPI0, &buff, 1);)
+        ;
 }
 
 void ex_adc_to_uart(){
@@ -244,6 +248,7 @@ void ex_adc_to_uart(){
 
         //IMPORTANT : SEE 14.2.5 clocking requirements, certain clock speeds must ONLY be used with certain sources/input-channels, ... etc
         //IMPORTATN : there is a entirely seperate perpherial you have to enable for voltage reference
+        // conversion modes : see 14.2.10
         DL_ADC12_configConversionMem(
                 ADC0,
                 DL_ADC12_MEM_IDX_0,
@@ -273,10 +278,14 @@ void ex_adc_to_uart(){
 
         uint16_t val = DL_ADC12_getMemResult(ADC0, DL_ADC12_MEM_IDX_0);
 
+        // convert to voltage. see 14.2.1 for formula, tldr: its linear
+        static float const lsb_mv =  3300.0f / 4095.0f;
+        val = (float)val * lsb_mv;
+
         char its[7];
         snprintf(its, sizeof(its), "%" PRIu16, val);
-        char str[20];
-        snprintf(str, sizeof(str), "%3d|ADC:PA27:%s\n\r", a, its);
+        char str[22];
+        snprintf(str, sizeof(str), "%3d|ADC:PA27:%smV\n\r", a, its);
 
         for(uint8_t i = 0; i < sizeof(str) && str[i] != '\0'; i++){
             while(DL_UART_isBusy(UART0))
