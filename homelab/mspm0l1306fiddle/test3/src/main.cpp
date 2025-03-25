@@ -256,7 +256,6 @@ void ex_adc_to_uart(){
                 DL_ADC12_WINDOWS_COMP_MODE_DISABLED     // idk
             );
         DL_ADC12_setSampleTime0(ADC0, 500);
-        DL_ADC12_enableConversions(ADC0);
     }
 
     // use PA27's analog function : ADC-channel-0
@@ -266,8 +265,11 @@ void ex_adc_to_uart(){
     while(true){
         a++;
 
+        // conversions disable themselves after a cycle
+        DL_ADC12_enableConversions(ADC0);
         DL_ADC12_startConversion(ADC0);
-        delay_cycles(5e6);
+        while(DL_ADC12_isConversionsEnabled(ADC0)) // wait for conversion to finish
+            ;
 
         uint16_t val = DL_ADC12_getMemResult(ADC0, DL_ADC12_MEM_IDX_0);
 
