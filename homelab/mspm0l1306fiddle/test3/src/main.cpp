@@ -12,7 +12,8 @@
 void ex_gpio();
 void ex_uart();
 void ex_spi();
-void ex_adc_to_uart();
+void ex_single_adc_to_uart();
+void ex_multi_adc_to_uart();
 
 /*
  * about data sheet pin <-> peripheral lookup
@@ -27,15 +28,16 @@ int main(void)
     DL_SYSCTL_setMCLKDivider(DL_SYSCTL_MCLK_DIVIDER_DISABLE); // no divider, divider dosen't work for non 4Mhz SYSCLK anyways
 
     // brown-out level settings
-    //  0:1.62V , idk what the other levels mean, data sheet dosen't seem to say. (m.t: 2.2.3.2 , 2.2.3.3)
+    // max vals: 0:1.62V, 1:2.23V, 2:2.82, 3:3.04 (see 7.6.1)
     DL_SYSCTL_setBORThreshold(DL_SYSCTL_BOR_THRESHOLD_LEVEL_0);
 
     //---examples---------------------------------------------------
 
 //    ex_gpio();
 //    ex_uart();
-    ex_spi();
-//    ex_adc_to_uart(); // funny thing, on the LP ADC channel 0 (PA27) is tied to a LED, you can see the ADC respond to changing brightness levels exposed to the unpowered LED.
+//    ex_spi();
+//    ex_single_adc_to_uart(); // funny thing, on the LP ADC channel 0 (PA27) is tied to a LED, you can see the ADC respond to changing brightness levels exposed to the unpowered LED.
+    ex_multi_adc_to_uart();
 }
 
 void ex_gpio(){
@@ -192,7 +194,7 @@ void ex_spi(){
         ;
 }
 
-void ex_adc_to_uart(){
+void ex_single_adc_to_uart(){
     DL_GPIO_reset(GPIOA);
     DL_ADC12_reset(ADC0);
     DL_UART_reset(UART0);
@@ -246,8 +248,9 @@ void ex_adc_to_uart(){
 
         DL_ADC12_setClockConfig(ADC0, &clkconf);
 
+
         //IMPORTANT : SEE 14.2.5 clocking requirements, certain clock speeds must ONLY be used with certain sources/input-channels, ... etc
-        //IMPORTATN : there is a entirely seperate perpherial you have to enable for voltage reference
+        //IMPORTANT : there is a entirely seperate perpherial you have to enable for voltage reference
         // conversion modes : see 14.2.10
         DL_ADC12_configConversionMem(
                 ADC0,
@@ -260,11 +263,12 @@ void ex_adc_to_uart(){
                 DL_ADC12_TRIGGER_MODE_AUTO_NEXT,        // idk
                 DL_ADC12_WINDOWS_COMP_MODE_DISABLED     // idk
             );
+
         DL_ADC12_setSampleTime0(ADC0, 500);
     }
 
-    // use PA27's analog function : ADC-channel-0
-    DL_GPIO_initPeripheralAnalogFunction(IOMUX_PINCM::IOMUX_PINCM28);
+    // enable analog function of ADC inputs                                pin: port : ADC-channel
+    DL_GPIO_initPeripheralAnalogFunction(IOMUX_PINCM::IOMUX_PINCM28);   // 31 : PA27 : 0
 
     uint8_t a;
     while(true){
@@ -291,6 +295,161 @@ void ex_adc_to_uart(){
             while(DL_UART_isBusy(UART0))
                 ;
             DL_UART_transmitDataBlocking(UART0, str[i]);
+        }
+    }
+}
+
+void ex_multi_adc_to_uart(){
+    DL_GPIO_reset(GPIOA);
+    DL_ADC12_reset(ADC0);
+    DL_UART_reset(UART0);
+    DL_GPIO_enablePower(GPIOA);
+    DL_ADC12_enablePower(ADC0);
+    DL_UART_enablePower(UART0);
+    delay_cycles(16);
+
+    { // UART init
+        // init gpio alt function
+        //      - IOMUX values can be found on table 6-1. pg.8 of family documentation
+        DL_GPIO_initPeripheralInputFunction(IOMUX_PINCM::IOMUX_PINCM10, IOMUX_PINCM10_PF_UART0_RX);
+        DL_GPIO_initPeripheralOutputFunction(IOMUX_PINCM::IOMUX_PINCM9, IOMUX_PINCM9_PF_UART0_TX);
+
+        // init uart0
+        DL_UART_ClockConfig clkconf = {
+            .clockSel    = DL_UART_CLOCK::DL_UART_CLOCK_BUSCLK,
+            .divideRatio = DL_UART_CLOCK_DIVIDE_RATIO::DL_UART_CLOCK_DIVIDE_RATIO_1,     // do not divide clock source
+        };
+        DL_UART_Config config = {
+           .mode        = DL_UART_MODE::DL_UART_MODE_NORMAL,
+           .direction   = DL_UART_DIRECTION::DL_UART_DIRECTION_TX_RX,
+           .flowControl = DL_UART_FLOW_CONTROL::DL_UART_FLOW_CONTROL_NONE,
+           .parity      = DL_UART_PARITY::DL_UART_PARITY_NONE,
+           .wordLength  = DL_UART_WORD_LENGTH::DL_UART_WORD_LENGTH_8_BITS,
+           .stopBits    = DL_UART_STOP_BITS::DL_UART_STOP_BITS_ONE
+        };
+
+        DL_UART_setClockConfig(UART0, &clkconf);
+        DL_UART_init(UART0, &config);
+        DL_UART_setOversampling(UART0, DL_UART_OVERSAMPLING_RATE::DL_UART_OVERSAMPLING_RATE_16X);
+        DL_UART_setBaudRateDivisor(UART0, 208, 21);                 // 9600 baud @ 32Mhz & 16x sampling. see mcu.tech.19.2.3.4 for calculation. note a latch register must also be written to, DL handles that.
+
+        DL_UART_enableMajorityVoting(UART0);
+
+        // apparently the FIFOS have to be enabled separately, the FIFOS arn't necessary for operation
+        DL_UART_enableFIFOs(UART0);
+        DL_UART_setRXFIFOThreshold(UART0, DL_UART_RX_FIFO_LEVEL::DL_UART_RX_FIFO_LEVEL_1_2_FULL);
+        DL_UART_setTXFIFOThreshold(UART0, DL_UART_TX_FIFO_LEVEL::DL_UART_TX_FIFO_LEVEL_1_2_EMPTY);
+
+        DL_UART_enable(UART0);
+    }
+
+    uint32_t ADC_input_channels[] = {
+             DL_ADC12_INPUT_CHAN_0,
+             DL_ADC12_INPUT_CHAN_1,
+             DL_ADC12_INPUT_CHAN_2,
+             DL_ADC12_INPUT_CHAN_3,
+             DL_ADC12_INPUT_CHAN_4,
+             DL_ADC12_INPUT_CHAN_5,
+//             DL_ADC12_INPUT_CHAN_6, // conflicts with SWDIO
+             DL_ADC12_INPUT_CHAN_7,
+             DL_ADC12_INPUT_CHAN_8,
+             DL_ADC12_INPUT_CHAN_9
+        };
+    DL_ADC12_MEM_IDX ADC_mem_idxes[] = {
+            DL_ADC12_MEM_IDX::DL_ADC12_MEM_IDX_0,
+            DL_ADC12_MEM_IDX::DL_ADC12_MEM_IDX_1,
+            DL_ADC12_MEM_IDX::DL_ADC12_MEM_IDX_2,
+            DL_ADC12_MEM_IDX::DL_ADC12_MEM_IDX_3,
+            DL_ADC12_MEM_IDX::DL_ADC12_MEM_IDX_4,
+            DL_ADC12_MEM_IDX::DL_ADC12_MEM_IDX_5,
+//            DL_ADC12_MEM_IDX::DL_ADC12_MEM_IDX_6, // conflicts with SWDIO
+            DL_ADC12_MEM_IDX::DL_ADC12_MEM_IDX_7,
+            DL_ADC12_MEM_IDX::DL_ADC12_MEM_IDX_8,
+            DL_ADC12_MEM_IDX::DL_ADC12_MEM_IDX_9
+        };
+    uint8_t len;
+    {
+        uint8_t len_input_channels  = sizeof(ADC_input_channels)/sizeof(ADC_input_channels[0]);
+        uint8_t len_mem_indexes     = sizeof(ADC_mem_idxes)/sizeof(ADC_mem_idxes[0]);
+        if(len_mem_indexes > len_input_channels)
+            len = len_input_channels;
+        else
+            len = len_mem_indexes;
+    }
+
+    {// ADC init
+
+        DL_ADC12_ClockConfig clkconf = {
+            .clockSel       = DL_ADC12_CLOCK_SYSOSC,
+            .freqRange      = DL_ADC12_CLOCK_FREQ_RANGE_24_TO_32,    // expected ADC clock input range
+            .divideRatio    = DL_ADC12_CLOCK_DIVIDE_1,
+        };
+
+        DL_ADC12_setClockConfig(ADC0, &clkconf);
+
+        for(uint8_t i = 0; i < len; i++){
+            //IMPORTANT : SEE 14.2.5 clocking requirements, certain clock speeds must ONLY be used with certain sources/input-channels, ... etc
+            //IMPORTANT : there is a entirely seperate perpherial you have to enable for voltage reference
+            // conversion modes : see 14.2.10
+            DL_ADC12_configConversionMem(
+                    ADC0,
+                    ADC_mem_idxes[i],
+                    ADC_input_channels[i],                  // a.k.a input pin
+                    DL_ADC12_REFERENCE_VOLTAGE_VDDA,        // INTREF configurable 1.4V to 2.5V but limited clock speed, EXTERN uses VREF+- pins, VDD uses mcu supply voltage
+                    DL_ADC12_SAMPLING_SOURCE_MANUAL,        // sample trigger
+                    DL_ADC12_AVERAGING_MODE_DISABLED,
+                    DL_ADC12_BURN_OUT_SOURCE_DISABLED,      // ADC peripheral integrity checker
+                    DL_ADC12_TRIGGER_MODE_AUTO_NEXT,        // idk
+                    DL_ADC12_WINDOWS_COMP_MODE_DISABLED     // idk
+                );
+        }
+
+        DL_ADC12_setSampleTime0(ADC0, 500);
+    }
+
+    // enable analog function of ADC inputs                                pin: port : ADC-channel
+    DL_GPIO_initPeripheralAnalogFunction(IOMUX_PINCM::IOMUX_PINCM28);   // 31 : PA27 : 0
+    DL_GPIO_initPeripheralAnalogFunction(IOMUX_PINCM::IOMUX_PINCM27);   // 30 : PA26 : 1
+    DL_GPIO_initPeripheralAnalogFunction(IOMUX_PINCM::IOMUX_PINCM26);   // 29 : PA25 : 2
+    DL_GPIO_initPeripheralAnalogFunction(IOMUX_PINCM::IOMUX_PINCM25);   // 28 : PA24 : 3
+    DL_GPIO_initPeripheralAnalogFunction(IOMUX_PINCM::IOMUX_PINCM23);   // 26 : PA22 : 4
+    DL_GPIO_initPeripheralAnalogFunction(IOMUX_PINCM::IOMUX_PINCM22);   // 25 : PA21 : 5
+//    DL_GPIO_initPeripheralAnalogFunction(IOMUX_PINCM::IOMUX_PINCM21);   // 24 : PA20 : 6 // conflicts with SWDIO
+    DL_GPIO_initPeripheralAnalogFunction(IOMUX_PINCM::IOMUX_PINCM19);   // 22 : PA18 : 7
+    DL_GPIO_initPeripheralAnalogFunction(IOMUX_PINCM::IOMUX_PINCM17);   // 20 : PA16 : 8
+    DL_GPIO_initPeripheralAnalogFunction(IOMUX_PINCM::IOMUX_PINCM16);   // 19 : PA15 : 9
+
+    uint8_t a;
+    while(true){
+        a++;
+
+        // conversions disable themselves after a cycle
+        DL_ADC12_enableConversions(ADC0);
+        DL_ADC12_startConversion(ADC0);
+        while(DL_ADC12_isConversionsEnabled(ADC0)) // wait for conversion to finish
+            ;
+
+        {
+            char str[22];
+            snprintf(str, sizeof(str), "\n\r%3d| ", a);
+            for(uint8_t i = 0; i < sizeof(str) && str[i] != '\0'; i++)
+                DL_UART_transmitDataBlocking(UART0, str[i]);
+        }
+
+        for(uint8_t i = 0; i < len; i++){
+            uint16_t val = DL_ADC12_getMemResult(ADC0, ADC_mem_idxes[i]);
+
+            // convert to voltage. see 14.2.1 for formula, tldr: its linear
+            static float const lsb_mv =  3300.0f / 4095.0f;
+            val = (float)val * lsb_mv;
+
+            char its[7];
+            snprintf(its, sizeof(its), "%" PRIu16, val);
+            char str[22];
+            snprintf(str, sizeof(str), "%2d: %6s , ", i, its);
+
+            for(uint8_t i = 0; i < sizeof(str) && str[i] != '\0'; i++)
+                DL_UART_transmitDataBlocking(UART0, str[i]);
         }
     }
 }
