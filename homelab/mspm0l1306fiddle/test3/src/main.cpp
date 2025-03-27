@@ -36,8 +36,8 @@ int main(void)
 //    ex_gpio();
 //    ex_uart();
 //    ex_spi();
-//    ex_single_adc_to_uart(); // funny thing, on the LP ADC channel 0 (PA27) is tied to a LED, you can see the ADC respond to changing brightness levels exposed to the unpowered LED.
-    ex_multi_adc_to_uart();
+    ex_single_adc_to_uart(); // funny thing, on the LP ADC channel 0 (PA27) is tied to a LED, you can see the ADC respond to changing brightness levels exposed to the unpowered LED.
+//    ex_multi_adc_to_uart();
 }
 
 void ex_gpio(){
@@ -373,6 +373,12 @@ void ex_multi_adc_to_uart(){
                 DL_ADC12_MEM_IDX::DL_ADC12_MEM_IDX_1,
                 DL_ADC12_MEM_IDX::DL_ADC12_MEM_IDX_2,
                 DL_ADC12_MEM_IDX::DL_ADC12_MEM_IDX_3,
+//                DL_ADC12_MEM_IDX::DL_ADC12_MEM_IDX_4,
+//                DL_ADC12_MEM_IDX::DL_ADC12_MEM_IDX_5,
+//                DL_ADC12_MEM_IDX::DL_ADC12_MEM_IDX_6,
+//                DL_ADC12_MEM_IDX::DL_ADC12_MEM_IDX_7,
+//                DL_ADC12_MEM_IDX::DL_ADC12_MEM_IDX_8,
+//                DL_ADC12_MEM_IDX::DL_ADC12_MEM_IDX_9,
             };
 
         for(uint8_t i = 0; i < adc_channel_count; i++){
@@ -390,20 +396,9 @@ void ex_multi_adc_to_uart(){
                     DL_ADC12_TRIGGER_MODE_AUTO_NEXT,
                     DL_ADC12_WINDOWS_COMP_MODE_DISABLED
                 );
+            // the last confic conversion mem overrides the mem index, so instead of doing this only once, do this every time you want to read the io
+            //      to the mem idx, though im not sure the point of the sequence sampler now...
         }
-
-        DL_ADC12_configConversionMem(
-                ADC0,
-                DL_ADC12_MEM_IDX::DL_ADC12_MEM_IDX_0,
-                DL_ADC12_INPUT_CHAN_4,                  // a.k.a input pin
-                DL_ADC12_REFERENCE_VOLTAGE_VDDA,        // INTREF configurable 1.4V to 2.5V but limited clock speed, EXTERN uses VREF+- pins, VDD uses mcu supply voltage
-                DL_ADC12_SAMPLE_TIMER_SOURCE_SCOMP0,    // sample source
-                DL_ADC12_AVERAGING_MODE_DISABLED,
-                DL_ADC12_BURN_OUT_SOURCE_DISABLED,      // ADC peripheral integrity checker
-                DL_ADC12_TRIGGER_MODE_AUTO_NEXT,
-                DL_ADC12_WINDOWS_COMP_MODE_DISABLED
-            );
-
 //        DL_ADC12_setPowerDownMode(ADC0, DL_ADC12_POWER_DOWN_MODE_AUTO);
 
         // 14.2.8.1
@@ -428,7 +423,7 @@ void ex_multi_adc_to_uart(){
             DL_ADC12_SAMPLING_SOURCE::DL_ADC12_SAMPLING_SOURCE_AUTO,
             DL_ADC12_TRIG_SRC::DL_ADC12_TRIG_SRC_SOFTWARE,
             DL_ADC12_SEQ_START_ADDR_00,
-            DL_ADC12_SEQ_END_ADDR_04,
+            DL_ADC12_SEQ_END_ADDR_03,
             DL_ADC12_SAMP_CONV_RES::DL_ADC12_SAMP_CONV_RES_12_BIT,
             DL_ADC12_SAMP_CONV_DATA_FORMAT::DL_ADC12_SAMP_CONV_DATA_FORMAT_UNSIGNED
         );
@@ -438,35 +433,35 @@ void ex_multi_adc_to_uart(){
         delay_cycles(5e6);
         a++;
 
-        for(uint8_t i = 0; i < 1; i++){
+        for(uint8_t i = 0; i < 4; i++){
             uint32_t seq_start, seq_end;
             switch(i){
                 default:
                 case 0:
 //                case 1:
                     seq_start   = DL_ADC12_SEQ_START_ADDR_00;
-                    seq_end     = DL_ADC12_SEQ_END_ADDR_04;
+                    seq_end     = DL_ADC12_SEQ_END_ADDR_03;
                     break;
                 case 1:
 //                case 0:
                     seq_start   = DL_ADC12_SEQ_START_ADDR_04;
-                    seq_end     = DL_ADC12_SEQ_END_ADDR_08;
+                    seq_end     = DL_ADC12_SEQ_END_ADDR_07;
                     break;
                 case 2:
                     seq_start   = DL_ADC12_SEQ_START_ADDR_08;
-                    seq_end     = DL_ADC12_SEQ_END_ADDR_10;
+                    seq_end     = DL_ADC12_SEQ_END_ADDR_09;
                     break;
             }
 
+            DL_ADC12_enableConversions(ADC0);
             DL_ADC12_setStartAddress(ADC0, seq_start);
             DL_ADC12_setEndAddress(ADC0, seq_end);
 
-            DL_ADC12_enableConversions(ADC0);
             DL_ADC12_startConversion(ADC0);
             while(DL_ADC12_isConversionStarted(ADC0) && DL_ADC12_isConversionsEnabled(ADC0)) // wait for conversion to finish
                 ;
 
-            for(uint8_t j = 0; j < 4; j++)
+            for(uint8_t j = 0; (j < 4) && ((i * 4 + j) < adc_channel_count); j++)
                 adcResults[i * 4 + j] = DL_ADC12_getMemResult(ADC0, (DL_ADC12_MEM_IDX)(DL_ADC12_MEM_IDX::DL_ADC12_MEM_IDX_0 + j));
         }
 

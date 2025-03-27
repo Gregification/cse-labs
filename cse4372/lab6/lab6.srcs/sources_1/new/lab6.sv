@@ -228,13 +228,28 @@ module lab6(
         // output [4:0] regif_rs1_reg,
         // output [4:0] regif_rs2_reg,
         .regif_rs1_data_in(_rv32i_regs.rs1_data),
-        .regif_rs2_data_in(_rv32i_regs.rs2_data)
+        .regif_rs2_data_in(_rv32i_regs.rs2_data),
 
         // // to ex
         // output reg [31:0] pc_out,
         // output reg [31:0] iw_out,
         // output reg [4:0] wb_reg_out,
         // output reg wb_enable_out,
+
+        // df from ex
+        .df_ex_wb_reg(_rv32_ex_top.wb_reg_out),
+        .df_ex_wb_data(_rv32_ex_top.alu_out),
+        .df_ex_wb_enable(_rv32_ex_top.wb_enable_out),
+        
+        // df from mem
+        .df_mem_wb_reg(_rv32_mem_top.wb_reg_out),
+        .df_mem_wb_data(_rv32_mem_top.alu_out),
+        .df_mem_wb_enable(_rv32_mem_top.wb_enable_out),
+
+        // df from wb
+        .df_wb_wb_reg(_rv32_wb_top.regif_wb_reg),
+        .df_wb_wb_data(_rv32_wb_top.regif_wb_data),
+        .df_wb_wb_enable(_rv32_wb_top.regif_wb_enable)
     );
     
     rv32_ex_top _rv32_ex_top (

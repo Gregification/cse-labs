@@ -31,16 +31,22 @@ module rv32_id_top(
         input [31:0] pc_in,
         input [31:0] iw_in,
 
-        // dataforwarding for hazard resolution
         // df from ex
-        input [31:0] df_ex_wb_reg,
+        input [3:0] df_ex_wb_reg,
+        input [31:0] df_ex_wb_data,
         input df_ex_wb_enable,
         // df from mem
+        input [3:0] df_mem_wb_reg,
+        input [31:0] df_mem_wb_data,
+        input df_mem_wb_enable,
         // df from wb
+        input [3:0] df_wb_wb_reg,
+        input [31:0] df_wb_wb_data,
+        input df_wb_wb_enable,
 
         // register interface
-        output reg [4:0] regif_rs1_reg,
-        output reg [4:0] regif_rs2_reg,
+        output [4:0] regif_rs1_reg,
+        output [4:0] regif_rs2_reg,
         input [31:0] regif_rs1_data_in,
         input [31:0] regif_rs2_data_in,
 
@@ -56,6 +62,10 @@ module rv32_id_top(
     wire [6:0] opcode;
     assign opcode   = iw_in[6:0];
 
+    assign regif_rs1_reg = iw_in[19:15];
+    assign regif_rs2_reg = iw_in[24:20];
+    
+
     always_ff @ (posedge clk) begin
         if(reset) begin
             pc_out <= `PC_RESET;
@@ -64,8 +74,9 @@ module rv32_id_top(
             wb_reg_out      <= 0;
             wb_enable_out   <= 0;
 
-            regif_rs1_reg <= 0;
-            regif_rs2_reg <= 0;
+            regif_rs1_data_out <= 0;
+            regif_rs2_data_out <= 0;
+
         end else begin
             pc_out <= pc_in;
             iw_out <= iw_in;
@@ -79,14 +90,24 @@ module rv32_id_top(
                     ||  opcode == 7'b0010111    // U type : dark green
                 ;
 
-            regif_rs1_reg <= iw_in[19:15];
-            regif_rs2_reg <= iw_in[24:20];
-        end
-    end
+            // if(df_ex_wb_enable && (df_ex_wb_reg == regif_rs1_reg))
+            //     regif_rs1_data_out <= df_ex_wb_data;
+            // else if(df_mem_wb_enable && (df_mem_wb_reg == regif_rs1_reg))
+            //     regif_rs1_data_out <= df_mem_wb_data;
+            // else if(df_wb_wb_enable && (df_wb_wb_reg == regif_rs1_reg))
+            //     regif_rs1_data_out <= df_wb_wb_data;
+            // else 
+                regif_rs1_data_out <= regif_rs1_data_in;
 
-    always_comb begin
-        regif_rs1_data_out = regif_rs1_data_in;
-        regif_rs2_data_out = regif_rs2_data_in;
+            // if(df_ex_wb_enable && (df_ex_wb_reg == regif_rs2_reg))
+            //     regif_rs2_data_out <= df_ex_wb_data;
+            // else if(df_mem_wb_enable && (df_mem_wb_reg == regif_rs2_reg))
+            //     regif_rs2_data_out <= df_mem_wb_data;
+            // else if(df_wb_wb_enable && (df_wb_wb_reg == regif_rs2_reg))
+            //     regif_rs2_data_out <= df_wb_wb_data;
+            // else 
+                regif_rs2_data_out <= regif_rs2_data_in;
+        end
     end
 
 endmodule
