@@ -90,22 +90,22 @@ module rv32_id_top(
                     ||  opcode == 7'b0010111    // U type : dark green
                 ;
 
-            // if(df_ex_wb_enable && (df_ex_wb_reg == regif_rs1_reg))
-            //     regif_rs1_data_out <= df_ex_wb_data;
-            // else if(df_mem_wb_enable && (df_mem_wb_reg == regif_rs1_reg))
-            //     regif_rs1_data_out <= df_mem_wb_data;
-            // else if(df_wb_wb_enable && (df_wb_wb_reg == regif_rs1_reg))
-            //     regif_rs1_data_out <= df_wb_wb_data;
-            // else 
+            if(df_ex_wb_enable && (df_ex_wb_reg == regif_rs1_reg))
+                regif_rs1_data_out <= df_ex_wb_data;
+            else if(df_mem_wb_enable && (df_mem_wb_reg == regif_rs1_reg))
+                regif_rs1_data_out <= df_mem_wb_data;
+            else if(df_wb_wb_enable && (df_wb_wb_reg == regif_rs1_reg))
+                regif_rs1_data_out <= df_wb_wb_data;
+            else 
                 regif_rs1_data_out <= regif_rs1_data_in;
 
-            // if(df_ex_wb_enable && (df_ex_wb_reg == regif_rs2_reg))
-            //     regif_rs2_data_out <= df_ex_wb_data;
-            // else if(df_mem_wb_enable && (df_mem_wb_reg == regif_rs2_reg))
-            //     regif_rs2_data_out <= df_mem_wb_data;
-            // else if(df_wb_wb_enable && (df_wb_wb_reg == regif_rs2_reg))
-            //     regif_rs2_data_out <= df_wb_wb_data;
-            // else 
+            if(df_ex_wb_enable && (df_ex_wb_reg == regif_rs2_reg))
+                regif_rs2_data_out <= df_ex_wb_data;
+            else if(df_mem_wb_enable && (df_mem_wb_reg == regif_rs2_reg))
+                regif_rs2_data_out <= df_mem_wb_data;
+            else if(df_wb_wb_enable && (df_wb_wb_reg == regif_rs2_reg))
+                regif_rs2_data_out <= df_wb_wb_data;
+            else 
                 regif_rs2_data_out <= regif_rs2_data_in;
         end
     end

@@ -36,8 +36,8 @@ int main(void)
 //    ex_gpio();
 //    ex_uart();
 //    ex_spi();
-    ex_single_adc_to_uart(); // funny thing, on the LP ADC channel 0 (PA27) is tied to a LED, you can see the ADC respond to changing brightness levels exposed to the unpowered LED.
-//    ex_multi_adc_to_uart();
+//    ex_single_adc_to_uart(); // funny thing, on the LP ADC channel 0 (PA27) is tied to a LED, you can see the ADC respond to changing brightness levels exposed to the unpowered LED.
+    ex_multi_adc_to_uart();
 }
 
 void ex_gpio(){
@@ -257,7 +257,7 @@ void ex_single_adc_to_uart(){
                 DL_ADC12_MEM_IDX_0,
                 DL_ADC12_INPUT_CHAN_0,                  // a.k.a input pin
                 DL_ADC12_REFERENCE_VOLTAGE_VDDA,        // INTREF configurable 1.4V to 2.5V but limited clock speed, EXTERN uses VREF+- pins, VDD uses mcu supply voltage
-                DL_ADC12_SAMPLING_SOURCE_MANUAL,        // sample trigger
+                DL_ADC12_SAMPLE_TIMER_SOURCE_SCOMP0,    // sample trigger
                 DL_ADC12_AVERAGING_MODE_DISABLED,
                 DL_ADC12_BURN_OUT_SOURCE_DISABLED,      // ADC peripheral integrity checker
                 DL_ADC12_TRIGGER_MODE_AUTO_NEXT,        // idk
@@ -268,7 +268,7 @@ void ex_single_adc_to_uart(){
     }
 
     // enable analog function of ADC inputs                                pin: port : ADC-channel
-    DL_GPIO_initPeripheralAnalogFunction(IOMUX_PINCM::IOMUX_PINCM28);   // 31 : PA27 : 0
+//    DL_GPIO_initPeripheralAnalogFunction(IOMUX_PINCM::IOMUX_PINCM28);   // 31 : PA27 : 0
 
     uint8_t a;
     while(true){
@@ -346,7 +346,7 @@ void ex_multi_adc_to_uart(){
     uint8_t const adc_channel_count = 10;
     uint16_t adcResults[adc_channel_count];
     for(uint8_t i = 0; i < adc_channel_count; i++)
-        adcResults[i] = 3210;
+        adcResults[i] = 0;
     {// ADC init
 
         DL_ADC12_ClockConfig clkconf = {
@@ -356,113 +356,60 @@ void ex_multi_adc_to_uart(){
         };
         DL_ADC12_setClockConfig(ADC0, &clkconf);
 
-        uint32_t const ADC_input_channels[] = {
-                     DL_ADC12_INPUT_CHAN_0,
-                     DL_ADC12_INPUT_CHAN_1,
-                     DL_ADC12_INPUT_CHAN_2,
-                     DL_ADC12_INPUT_CHAN_3,
-                     DL_ADC12_INPUT_CHAN_4,
-                     DL_ADC12_INPUT_CHAN_5,
-                     DL_ADC12_INPUT_CHAN_6,
-                     DL_ADC12_INPUT_CHAN_7,
-                     DL_ADC12_INPUT_CHAN_8,
-                     DL_ADC12_INPUT_CHAN_9,
-            };
-        DL_ADC12_MEM_IDX const ADC_mem_idxes[] = {
-                DL_ADC12_MEM_IDX::DL_ADC12_MEM_IDX_0,
-                DL_ADC12_MEM_IDX::DL_ADC12_MEM_IDX_1,
-                DL_ADC12_MEM_IDX::DL_ADC12_MEM_IDX_2,
-                DL_ADC12_MEM_IDX::DL_ADC12_MEM_IDX_3,
-//                DL_ADC12_MEM_IDX::DL_ADC12_MEM_IDX_4,
-//                DL_ADC12_MEM_IDX::DL_ADC12_MEM_IDX_5,
-//                DL_ADC12_MEM_IDX::DL_ADC12_MEM_IDX_6,
-//                DL_ADC12_MEM_IDX::DL_ADC12_MEM_IDX_7,
-//                DL_ADC12_MEM_IDX::DL_ADC12_MEM_IDX_8,
-//                DL_ADC12_MEM_IDX::DL_ADC12_MEM_IDX_9,
-            };
-
-        for(uint8_t i = 0; i < adc_channel_count; i++){
-            //IMPORTANT : SEE 14.2.5 clocking requirements, certain clock speeds must ONLY be used with certain sources/input-channels, ... etc
-            //IMPORTANT : there is a entirely seperate perpherial you have to enable for voltage reference
-            // conversion modes : see 14.2.10
-            DL_ADC12_configConversionMem(
-                    ADC0,
-                    ADC_mem_idxes[i%4],
-                    ADC_input_channels[i],                  // a.k.a input pin
-                    DL_ADC12_REFERENCE_VOLTAGE_VDDA,        // INTREF configurable 1.4V to 2.5V but limited clock speed, EXTERN uses VREF+- pins, VDD uses mcu supply voltage
-                    DL_ADC12_SAMPLE_TIMER_SOURCE_SCOMP0,    // sample source
-                    DL_ADC12_AVERAGING_MODE_DISABLED,
-                    DL_ADC12_BURN_OUT_SOURCE_DISABLED,      // ADC peripheral integrity checker
-                    DL_ADC12_TRIGGER_MODE_AUTO_NEXT,
-                    DL_ADC12_WINDOWS_COMP_MODE_DISABLED
-                );
-            // the last confic conversion mem overrides the mem index, so instead of doing this only once, do this every time you want to read the io
-            //      to the mem idx, though im not sure the point of the sequence sampler now...
-        }
-//        DL_ADC12_setPowerDownMode(ADC0, DL_ADC12_POWER_DOWN_MODE_AUTO);
+        DL_ADC12_setPowerDownMode(ADC0, DL_ADC12_POWER_DOWN_MODE_MANUAL);
 
         // 14.2.8.1
         DL_ADC12_setSampleTime0(ADC0, 32*10);
     }
 
-    // enable analog function of ADC inputs                                pin: port : ADC-channel
-//    DL_GPIO_initPeripheralAnalogFunction(IOMUX_PINCM::IOMUX_PINCM28);   // 31 : PA27 : 0
-//    DL_GPIO_initPeripheralAnalogFunction(IOMUX_PINCM::IOMUX_PINCM27);   // 30 : PA26 : 1
-//    DL_GPIO_initPeripheralAnalogFunction(IOMUX_PINCM::IOMUX_PINCM26);   // 29 : PA25 : 2
-//    DL_GPIO_initPeripheralAnalogFunction(IOMUX_PINCM::IOMUX_PINCM25);   // 28 : PA24 : 3
-//    DL_GPIO_initPeripheralAnalogFunction(IOMUX_PINCM::IOMUX_PINCM23);   // 26 : PA22 : 4
-//    DL_GPIO_initPeripheralAnalogFunction(IOMUX_PINCM::IOMUX_PINCM22);   // 25 : PA21 : 5
-//    DL_GPIO_initPeripheralAnalogFunction(IOMUX_PINCM::IOMUX_PINCM21);   // 24 : PA20 : 6 // conflicts with SWDIO
-//    DL_GPIO_initPeripheralAnalogFunction(IOMUX_PINCM::IOMUX_PINCM19);   // 22 : PA18 : 7
-//    DL_GPIO_initPeripheralAnalogFunction(IOMUX_PINCM::IOMUX_PINCM17);   // 20 : PA16 : 8
-//    DL_GPIO_initPeripheralAnalogFunction(IOMUX_PINCM::IOMUX_PINCM16);   // 19 : PA15 : 9
-
-    DL_ADC12_initSeqSample(
-            ADC0,
-            DL_ADC12_REPEAT_MODE::DL_ADC12_REPEAT_MODE_DISABLED,
-            DL_ADC12_SAMPLING_SOURCE::DL_ADC12_SAMPLING_SOURCE_AUTO,
-            DL_ADC12_TRIG_SRC::DL_ADC12_TRIG_SRC_SOFTWARE,
-            DL_ADC12_SEQ_START_ADDR_00,
-            DL_ADC12_SEQ_END_ADDR_03,
-            DL_ADC12_SAMP_CONV_RES::DL_ADC12_SAMP_CONV_RES_12_BIT,
-            DL_ADC12_SAMP_CONV_DATA_FORMAT::DL_ADC12_SAMP_CONV_DATA_FORMAT_UNSIGNED
-        );
+    // pin: port : ADC-channel
+    // 31 : PA27 : 0
+    // 30 : PA26 : 1
+    // 29 : PA25 : 2
+    // 28 : PA24 : 3
+    // 26 : PA22 : 4
+    // 25 : PA21 : 5
+    // 24 : PA20 : 6 // conflicts with SWDIO
+    // 22 : PA18 : 7
+    // 20 : PA16 : 8
+    // 19 : PA15 : 9
 
     uint8_t a;
     while(true){
-        delay_cycles(5e6);
         a++;
+        delay_cycles(5e6);
 
-        for(uint8_t i = 0; i < 4; i++){
-            uint32_t seq_start, seq_end;
-            switch(i){
-                default:
-                case 0:
-//                case 1:
-                    seq_start   = DL_ADC12_SEQ_START_ADDR_00;
-                    seq_end     = DL_ADC12_SEQ_END_ADDR_03;
-                    break;
-                case 1:
-//                case 0:
-                    seq_start   = DL_ADC12_SEQ_START_ADDR_04;
-                    seq_end     = DL_ADC12_SEQ_END_ADDR_07;
-                    break;
-                case 2:
-                    seq_start   = DL_ADC12_SEQ_START_ADDR_08;
-                    seq_end     = DL_ADC12_SEQ_END_ADDR_09;
-                    break;
-            }
+        /**
+         * forced to use manual mode. one by one channel conversion because the only to determine if a auto sampler is done is by IRQ, so would require some work to synchronize the code
+         */
+        for(uint8_t i = 0; i < 10; i++){     // <num channels>
+            static DL_ADC12_MEM_IDX const bufferReg = DL_ADC12_MEM_IDX::DL_ADC12_MEM_IDX_0;
 
+            // assign channel to output to buffer reg
+            // IMPORTANT : SEE 14.2.5 clocking requirements, certain clock speeds must ONLY be used with certain sources/input-channels, ... etc
+            // IMPORTANT : there is a entirely seperate perpherial you have to enable for voltage reference
+            // conversion modes : see 14.2.10
+            DL_ADC12_configConversionMem(
+                    ADC0,
+                    bufferReg,                              // output register
+                    i,                                      // input channel
+                    DL_ADC12_REFERENCE_VOLTAGE_VDDA,        // INTREF configurable 1.4V to 2.5V but limited clock speed, EXTERN uses VREF+- pins, VDD uses mcu supply voltage
+                    DL_ADC12_SAMPLE_TIMER_SOURCE_SCOMP0,    // sample source
+                    DL_ADC12_AVERAGING_MODE_ENABLED,
+                    DL_ADC12_BURN_OUT_SOURCE_DISABLED,      // ADC peripheral integrity checker
+                    DL_ADC12_TRIGGER_MODE_AUTO_NEXT,
+                    DL_ADC12_WINDOWS_COMP_MODE_DISABLED
+                );
+
+            // convert channel (sampling is done as part of this)
+            DL_ADC12_setStartAddress(ADC0, bufferReg);
             DL_ADC12_enableConversions(ADC0);
-            DL_ADC12_setStartAddress(ADC0, seq_start);
-            DL_ADC12_setEndAddress(ADC0, seq_end);
-
             DL_ADC12_startConversion(ADC0);
-            while(DL_ADC12_isConversionStarted(ADC0) && DL_ADC12_isConversionsEnabled(ADC0)) // wait for conversion to finish
+            delay_cycles(1e3); // sampling time
+            DL_ADC12_stopConversion(ADC0);
+            while(DL_ADC12_isConversionsEnabled(ADC0)) // wait for conversion to finish
                 ;
-
-            for(uint8_t j = 0; (j < 4) && ((i * 4 + j) < adc_channel_count); j++)
-                adcResults[i * 4 + j] = DL_ADC12_getMemResult(ADC0, (DL_ADC12_MEM_IDX)(DL_ADC12_MEM_IDX::DL_ADC12_MEM_IDX_0 + j));
+            adcResults[i] = DL_ADC12_getMemResult(ADC0, bufferReg);
         }
 
         {
@@ -476,8 +423,8 @@ void ex_multi_adc_to_uart(){
             uint16_t val = adcResults[i];
 
             // convert to voltage. see 14.2.1 for formula, tldr: its linear
-//            static float const lsb_mv =  3300.0f / 4095.0f;
-//            val = (float)val * lsb_mv;
+            static float const lsb_mv =  3000.0f / 4095.0f;
+            val = (float)val * lsb_mv;
 
             char its[7];
             snprintf(its, sizeof(its), "%" PRIu16, val);
