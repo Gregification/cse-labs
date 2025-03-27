@@ -12,31 +12,31 @@ _start:
 	
 	addi t0, x0, 1
 
-	nop
+	# nop
 	nop
 	nop
 
 	addi t0, x0, 2
 
-	nop
+	# nop
 	nop
 	nop
 
 	addi t0, x0, 3
 
-	nop
+	# nop
 	nop
 	nop
 
 	addi t0, x0, 4
 
-	nop
+	# nop
 	nop
 	nop
 
 	addi t0, x0, 5
 
-	nop
+	# nop
 	nop
 	nop
 
