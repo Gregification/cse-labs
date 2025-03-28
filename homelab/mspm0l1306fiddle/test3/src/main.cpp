@@ -11,7 +11,6 @@
 
 void ex_gpio();
 void ex_uart();
-void ex_spi();
 void ex_single_adc_to_uart();
 void ex_multi_adc_to_uart();
 
@@ -357,9 +356,6 @@ void ex_multi_adc_to_uart(){
         DL_ADC12_setClockConfig(ADC0, &clkconf);
 
         DL_ADC12_setPowerDownMode(ADC0, DL_ADC12_POWER_DOWN_MODE_MANUAL);
-
-        // 14.2.8.1
-        DL_ADC12_setSampleTime0(ADC0, 32*10);
     }
 
     // pin: port : ADC-channel
