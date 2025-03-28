@@ -12,6 +12,8 @@
 #include <ti/driverlib/driverlib.h>
 #include <stdint.h>
 
+#include "common.hpp"
+
 /**
  * SD Card SPI interface.
  *

@@ -238,7 +238,7 @@ module lab6(
 
         // df from ex
         .df_ex_wb_reg(_rv32_ex_top.wb_reg_out),
-        .df_ex_wb_data(_rv32_ex_top.alu_out),
+        .df_ex_wb_data(_rv32_ex_top.alu_raw),
         .df_ex_wb_enable(_rv32_ex_top.wb_enable_out),
         
         // df from mem
@@ -263,6 +263,9 @@ module lab6(
         .rs2_data_in(_rv32_id_top.regif_rs2_data_out),
         .wb_reg_in(_rv32_id_top.wb_reg_out),
         .wb_enable_in(_rv32_id_top.wb_enable_out)
+
+        //to id
+        // output [31:0] alu_raw,
 
         // to mem
         // output reg [31:0] pc_out,

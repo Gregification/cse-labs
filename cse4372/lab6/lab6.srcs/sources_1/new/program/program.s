@@ -9,84 +9,31 @@
 .text
 
 _start:
+	and t1, t1, 0
 	
-	addi t0, x0, 1
-
-	# nop
-	# nop
-	# nop
-
-	addi t0, x0, 2
-
-	# nop
-	# nop
-	# nop
-
-	addi t0, x0, 3
-
-	# nop
-	# nop
-	# nop
-
+	or t1, t1, 6
+	
 	addi t0, x0, 4
-
-	# nop
-	# nop
-	# nop
 
 	addi t0, x0, 5
 
-	# nop
-	# nop
-	# nop
+	addi t0, x0, 6
+
+	addi t0, x0, 7
+
+	addi t0, x0, 8
 
 	or t0, t0, 3
- 
-	# nop
-	# nop
-	# nop
-
-	and t1, t1, 0
-
-	# nop
-	# nop
-	# nop
-
-	or t1, t1, 4
-
-	# nop
-	# nop
-	# nop
 
 	add t2, t1, t0
 
-	# nop
-	# nop
-	# nop
-
 	slli t0, t0, 3
 
-	# nop
-	# nop
-	# nop
-
 	add t3, t0, t1
-
-	# nop
-	# nop
-	# nop
 
 	ebreak
 
-	nop
-	# nop
-	# nop
-
 	add t3, t0, t1
-
-	nop
-	# nop
-	# nop
 
 	ebreak
 

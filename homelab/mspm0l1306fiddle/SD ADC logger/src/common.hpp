@@ -10,7 +10,6 @@
 
 #include <stdint.h>
 
-#define BV(X) (1 << (X))
 
 // something something common defines something
 
@@ -21,11 +20,38 @@
 #define PROJECT_VERSION (0)
 
 #define F_CPU (32e6)
-#define NEWLINE "\n\r"
 
-namespace CRCcommon {
-    uint8_t calc0x89(uint8_t * data, uint32_t len);
-    uint16_t calc0x1021(uint8_t * data, uint32_t len);
+#define BV(X) (1 << (X))
+
+#define NEWLINE "\n\r"
+#define POWER_STARTUP_DELAY 16
+
+namespace common {
+
+    /**
+     * general purpose initialization
+     */
+    void init();
+
+    namespace crc {
+        // online calculator -> https://www.ghsi.de/pages/subpages/Online%20CRC%20Calculation/
+
+        /**
+         * initialize hardware
+         */
+        void initCRC();
+
+        /** TODO
+         * x^8,5,4,0
+         */
+        uint8_t calcCRC7(uint8_t seed, uint8_t * data, uint32_t len);
+
+        /*
+         * x^16,12,5 + 1
+         */
+        uint16_t calcCRC16_CCITT(uint8_t seed, uint8_t * data, uint32_t len);
+    };
+
 };
 
 #endif /* SRC_COMMON_HPP_ */

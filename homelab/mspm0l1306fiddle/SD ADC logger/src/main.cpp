@@ -12,26 +12,15 @@
 #include <inttypes.h>   // for print macros
 #include <src/common.hpp>
 
+#include "common.hpp"
 #include "ADC10C.hpp"
 #include "UART_WRP.hpp"
 #include "SDCardIF.hpp"
 
 int main(void) {
 
-    //---SYS--------------------------------------------------------
-
-    // clocking
-    DL_SYSCTL_setSYSOSCFreq(DL_SYSCTL_SYSOSC_FREQ_BASE);
-    DL_SYSCTL_setMCLKDivider(DL_SYSCTL_MCLK_DIVIDER_DISABLE);
-
-    // brown-out level settings
-    // vals: 0:1.62V, 1:2.23V, 2:2.82, 3:3.04 (see 7.6.1)
-    DL_SYSCTL_setBORThreshold(DL_SYSCTL_BOR_THRESHOLD_LEVEL_0);
-
-    // enable GPIOA
-    DL_GPIO_reset(GPIOA);
-    DL_GPIO_enablePower(GPIOA);
-    delay_cycles(16);
+    // initialize clock & ports
+    common::init();
 
     //---program----------------------------------------------------
 

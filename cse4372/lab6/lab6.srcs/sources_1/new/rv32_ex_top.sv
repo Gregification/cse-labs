@@ -34,6 +34,9 @@ module rv32_ex_top(
         input [4:0] wb_reg_in,
         input wb_enable_in,
 
+        //to id
+        output [31:0] alu_raw,
+
         // to mem
         output reg [31:0] pc_out,
         output reg [31:0] iw_out,
@@ -72,4 +75,6 @@ module rv32_ex_top(
         // to mem
         // output reg [31:0] alu_out
     );
+
+    assign alu_raw = _alu32.alu_out;
 endmodule
