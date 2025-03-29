@@ -44,7 +44,6 @@
 #include "tm4c123gh6pm.h"
 #include "clock.h"
 #include "gpio.h"
-#include "spi0.h"
 #include "uart0.h"
 #include "wait.h"
 #include "timer.h"
@@ -153,6 +152,8 @@ int main(void)
 
     initHw();
 
+    initNrf();
+
     putsUart0("\n\rCSE4352 spring2025 project 2 team 14. N24L01+ RF transceiver demo\n\r");
 
     setPinValue(GREEN_LED, 1);
@@ -160,8 +161,7 @@ int main(void)
     setPinValue(GREEN_LED, 0);
     waitMicrosecond(1e6);
 
-
-    //---main logic----------------------------------------------------------------
+    //---main----------------------------------------------------------------------
 
     uint8_t rx_buffer[WIRELESS_RX_BUFFER_SIZE]; // no need for a TX buffer if we just do blocking calls
 
