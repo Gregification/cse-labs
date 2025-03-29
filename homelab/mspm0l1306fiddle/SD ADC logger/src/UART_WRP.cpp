@@ -15,21 +15,19 @@ UART_WRP::UART_WRP(UART_Regs * reg) : uart_reg(reg) {
 }
 
 void UART_WRP::init(){
-    if(DL_UART_isEnabled(uart_reg))
-        DL_UART_disable(uart_reg);
-
-    if(DL_UART_isPowerEnabled(uart_reg)){
-        DL_UART_disablePower(uart_reg);
-        delay_cycles(16);
-    }
-
     DL_UART_reset(uart_reg);
     DL_UART_enablePower(uart_reg);
     delay_cycles(16);
 
+    // init gpio alt function
+    //      - IOMUX values can be found on table 6-1. pg.8 of family documentation
+    DL_GPIO_initPeripheralInputFunction(IOMUX_PINCM::IOMUX_PINCM10, IOMUX_PINCM10_PF_UART0_RX);
+    DL_GPIO_initPeripheralOutputFunction(IOMUX_PINCM::IOMUX_PINCM9, IOMUX_PINCM9_PF_UART0_TX);
+
+    // init uart0
     DL_UART_ClockConfig clkconf = {
-        .clockSel    = DL_UART_CLOCK::DL_UART_CLOCK_LFCLK,      // 2.3.1.1 : internal factory trimmed 32.768kHz
-        .divideRatio = DL_UART_CLOCK_DIVIDE_RATIO::DL_UART_CLOCK_DIVIDE_RATIO_1,
+        .clockSel    = DL_UART_CLOCK::DL_UART_CLOCK_BUSCLK,
+        .divideRatio = DL_UART_CLOCK_DIVIDE_RATIO::DL_UART_CLOCK_DIVIDE_RATIO_1,     // do not divide clock source
     };
     DL_UART_Config config = {
        .mode        = DL_UART_MODE::DL_UART_MODE_NORMAL,
@@ -43,15 +41,19 @@ void UART_WRP::init(){
     DL_UART_setClockConfig(uart_reg, &clkconf);
     DL_UART_init(uart_reg, &config);
     DL_UART_setOversampling(uart_reg, DL_UART_OVERSAMPLING_RATE::DL_UART_OVERSAMPLING_RATE_16X);
+
     DL_UART_enableMajorityVoting(uart_reg);
 
-    DL_UART_enableFIFOs(UART0);
+    // apparently the FIFOS have to be enabled separately, the FIFOS arn't necessary for operation
+    DL_UART_enableFIFOs(uart_reg);
+    DL_UART_setRXFIFOThreshold(uart_reg, DL_UART_RX_FIFO_LEVEL::DL_UART_RX_FIFO_LEVEL_1_2_FULL);
+    DL_UART_setTXFIFOThreshold(uart_reg, DL_UART_TX_FIFO_LEVEL::DL_UART_TX_FIFO_LEVEL_1_2_EMPTY);
 
     DL_UART_enable(uart_reg);
 }
 
 void UART_WRP::setBaud(uint32_t baud, uint32_t clock_freq){
-    uint32_t mbaud = baud;
+    uint64_t mbaud = baud;
     switch(DL_UART_getOversampling(uart_reg)){
         default :
             DL_UART_setOversampling(uart_reg, DL_UART_OVERSAMPLING_RATE::DL_UART_OVERSAMPLING_RATE_16X);
@@ -69,7 +71,7 @@ void UART_WRP::setBaud(uint32_t baud, uint32_t clock_freq){
             break;
     }
 
-    uint32_t di = baud / mbaud;
+    uint32_t di = clock_freq / mbaud;
     uint32_t df = (float)(baud - (mbaud * di)) / (float)mbaud * 64.0f + 0.5f;
 
     DL_UART_setBaudRateDivisor(uart_reg, di, df);

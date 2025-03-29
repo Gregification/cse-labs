@@ -17,7 +17,8 @@
  * version  : details
  *      0   : yippie
  */
-#define PROJECT_VERSION (0)
+#define PROJECT_NAME "ADC to SD Card logger, 9 channel. https://github.com/Gregification/cse-labs/tree/main/homelab/mspm0l1306fiddle/SD%20ADC%20logger"
+#define PROJECT_VERSION "0"
 
 #define F_CPU (32e6)
 
@@ -45,11 +46,6 @@ namespace common {
          * x^8,5,4,0
          */
         uint8_t calcCRC7(uint8_t seed, uint8_t * data, uint32_t len);
-
-        /*
-         * x^16,12,5 + 1
-         */
-        uint16_t calcCRC16_CCITT(uint8_t seed, uint8_t * data, uint32_t len);
     };
 
 };

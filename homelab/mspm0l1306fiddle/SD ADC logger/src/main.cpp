@@ -19,20 +19,35 @@
 
 int main(void) {
 
-    // initialize clock & ports
+    //---initialize-------------------------------------------------
+
+    // clock to 32MHz, and GPIOA
     common::init();
 
-    //---program----------------------------------------------------
-
+    // UART
     UART_WRP uart(UART0);
-    DL_GPIO_initPeripheralInputFunction(IOMUX_PINCM::IOMUX_PINCM10, IOMUX_PINCM10_PF_UART0_RX);
-    DL_GPIO_initPeripheralOutputFunction(IOMUX_PINCM::IOMUX_PINCM9, IOMUX_PINCM9_PF_UART0_TX);
+    uart.init();
     uart.setBaud(9600, F_CPU);
 
     // display program version
     {
-        char str[5 + sizeof(NEWLINE)];
-        snprintf(str, sizeof(str), "%" PRIu16 NEWLINE, (uint16_t)PROJECT_VERSION);
-        uart.transmit(str, sizeof(str));
+        uart.puts(NEWLINE PROJECT_NAME NEWLINE "\t" PROJECT_VERSION NEWLINE);
+
+        while(true){
+            static uint32_t i = 0;
+
+            if(i == 0 || (i % 10 && i > 10))
+                i = 1;
+            else
+                i *= 10;
+
+            char its[20];
+            snprintf(its, sizeof(its), "%010" PRIu32 NEWLINE, i);
+            uart.puts(its);
+
+            delay_cycles(5e6);
+        }
     }
+
+
 }

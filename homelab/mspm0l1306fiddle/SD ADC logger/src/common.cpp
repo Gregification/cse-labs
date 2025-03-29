@@ -17,13 +17,13 @@ void common::init(){
 
     // brown-out settings
     // level meanings: 0:1V62, 1:2V23, 2:2V82, 3:2V95 . (see 7.6.1 of )
-    DL_SYSCTL_setBORThreshold(DL_SYSCTL_BOR_THRESHOLD_LEVEL_3);
-    DL_SYSCTL_activateBORThreshold();
+    DL_SYSCTL_setBORThreshold(DL_SYSCTL_BOR_THRESHOLD_LEVEL_0);
+//    DL_SYSCTL_activateBORThreshold();
 
     // enable GPIOA
-    DL_GPIO_reset(GPIOA);
-    DL_GPIO_enablePower(GPIOA);
-    delay_cycles(16);
+//    DL_GPIO_reset(GPIOA);
+//    DL_GPIO_enablePower(GPIOA);
+//    delay_cycles(16);
 }
 
 void common::crc::initCRC(){
@@ -47,9 +47,5 @@ uint8_t common::crc::calcCRC7(uint8_t seed, uint8_t * data, uint32_t len){
             seed ^= poly << 1;
     }
 
-    return 0;
-}
-
-uint16_t common::crc::calcCRC16_CCITT(uint8_t seed, uint8_t * data, uint32_t len){
     return 0;
 }
