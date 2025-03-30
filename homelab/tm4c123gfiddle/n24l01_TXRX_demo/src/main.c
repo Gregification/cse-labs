@@ -47,6 +47,7 @@
 #include "uart0.h"
 #include "wait.h"
 #include "timer.h"
+#include "nrfModule.h"
 
 // Pins
 #define RED_LED PORTF,1
@@ -71,13 +72,6 @@ void initHw()
     // Enable clocks
     enablePort(PORTF);
     _delay_cycles(3);
-
-    // Setup UART0
-    initUart0();
-    setUart0BaudRate(UART0_BAUD, F_CPU);
-
-    // Init timer
-    initTimer();
 
     // Configure LED and pushbutton pins
     selectPinPushPullOutput(RED_LED);
@@ -127,14 +121,43 @@ void processShell()
             count = 0;
             token = strtok(strInput, " ");
 
-            if (strcmp(token, "tx") == 0){
+            if (strcmp(token, "rx") == 0){
                 putsUart0("womp");
+            }
+
+            if (strcmp(token, "tx") == 0){
+                nrfSetMode(NRF_MODE_TX);
+            }
+
+            if (strcmp(token, "status") == 0){
+                switch(nrfGetMode()){
+                    case NRF_MODE_POWER_DOWN:
+                        putsUart0("NRF_MODE_POWER_DOWN");
+                        break;
+                    case NRF_MODE_RX:
+                        putsUart0("NRF_MODE_RX");
+                        break;
+                    case NRF_MODE_STANDBY_1:
+                        putsUart0("NRF_MODE_STANDBY_1");
+                        break;
+                    case NRF_MODE_STANDBY_2:
+                        putsUart0("NRF_MODE_STANDBY_2");
+                        break;
+                    case NRF_MODE_TX:
+                        putsUart0("NRF_MODE_TX");
+                        break;
+                    default:
+                        putsUart0("unknown state");
+                        break;
+                }
             }
 
             if (strcmp(token, "help") == 0)
             {
                 putsUart0("Commands:\n\r");
                 putsUart0("  tx [data]\n\r");
+                putsUart0("  rx\n\r");
+                putsUart0("  status\n\r");
             }
 
             putsUart0("\n\r> ");
@@ -152,14 +175,23 @@ int main(void)
 
     initHw();
 
+    // Setup UART0
+    initUart0();
+    setUart0BaudRate(UART0_BAUD, F_CPU);
+
+    // Init timer
+    initTimer();
+
     initNrf();
 
     putsUart0("\n\rCSE4352 spring2025 project 2 team 14. N24L01+ RF transceiver demo\n\r");
 
+    setPinValue(RED_LED, 1);
     setPinValue(GREEN_LED, 1);
-    waitMicrosecond(1e6);
+    waitMicrosecond(100e3);
+    setPinValue(RED_LED, 0);
     setPinValue(GREEN_LED, 0);
-    waitMicrosecond(1e6);
+    waitMicrosecond(100e3);
 
     //---main----------------------------------------------------------------------
 
@@ -168,6 +200,12 @@ int main(void)
     while (true) {
         processShell();
 
-
+        if(nrfIsIRQing()){
+            if(getPinValue(GREEN_LED) == 0){
+                setPinValue(GREEN_LED, 1);
+                putsUart0("irq pin is high");
+            }
+        } else
+            setPinValue(GREEN_LED, 0);
     }
 }
