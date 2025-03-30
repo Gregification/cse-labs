@@ -11,10 +11,12 @@
  *      - using SPI0
  *      - assumes the SPI peripheral is set to transmit 8b at a time
  *      - the module supports SPI up to 8Mhz (though the IC itself can handle 10Mhz)
- *          - if using speeds >5Mhz, consider enabling other GPIO functions (drive strength, biasing, etc
+ *          - if using speeds >5Mhz, consider enabling other GPIO functions (drive strength, biasing, etc)
+ *          - you can almost double the SPI throughput if you use the TX FIFO but that would mean changing Losh's lib
  *      - IRQ pin is checked manually, no interrupt is used
- *      - I manually drive CS because idk how to otherwise keep it from toggling mid transmission
+ *      - I manually drive CS because no FIFOs are used
  *      - effective SPI speed can be almost doubled if you modify the "nrfTransfer" function
+ *      - most of the chip documentation is about ShockBurst(tm) mode, were not using that
  *
  * ------------------------------------------------------------
  *      ______________________________________
@@ -76,6 +78,16 @@ typedef union {
         unsigned int                    : 1; // R/W reserved, only 0 allowed
     };
 } NRFStatus;
+
+typedef struct __attribute__((packed)) {
+    bool PRIME_RX       : 1;
+    bool MASK_RX_DR     : 1; // mask interrupt caused by RX_DR : asserted after the packet is received by the PRX
+    bool MASK_TX_DS     : 1; // mask interrupt caused by TX_DS : indicates PTX received ACK with payload
+    bool MASK_MAX_RT    : 1; // mask interrupt caused by MAX_RT
+    bool ENABLE_CRC     : 1;
+    bool CRC_2or1_BYTE  : 1; // true:2B, false:1B
+    bool POWER_UP       : 1;
+} NRFConfig;
 
 /*---module specific functions-------------------------------------
  * see pg.51 of datasheet

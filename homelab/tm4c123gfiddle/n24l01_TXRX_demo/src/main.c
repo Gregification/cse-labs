@@ -57,7 +57,7 @@
 
 // Custom . README
 #define F_CPU 40e6
-#define UART0_BAUD 115200
+#define UART0_BAUD 9600
 #define WIRELESS_RX_BUFFER_SIZE 200
 
 //-----------------------------------------------------------------------------
@@ -154,6 +154,7 @@ void processShell()
 
             if (strcmp(token, "help") == 0)
             {
+                putsUart0("green led on indicates IRQ pin is active\n\r");
                 putsUart0("Commands:\n\r");
                 putsUart0("  tx [data]\n\r");
                 putsUart0("  rx\n\r");
@@ -197,13 +198,22 @@ int main(void)
 
     uint8_t rx_buffer[WIRELESS_RX_BUFFER_SIZE]; // no need for a TX buffer if we just do blocking calls
 
+    {
+        char str[40];
+        uint8_t config;
+        NRFStatus statusW = nrfWriteRegister(NRF_REG_CONFIG_ADDR, &config, sizeof(config));
+        NRFStatus statusR = nrfReadRegister(NRF_REG_CONFIG_ADDR, &config, sizeof(config));
+        snprintf(str, sizeof(str), "config:0x%x\n\rstatus:%x\n\r", config, statusR.raw);
+        putsUart0(str);
+    }
+
     while (true) {
         processShell();
 
         if(nrfIsIRQing()){
             if(getPinValue(GREEN_LED) == 0){
                 setPinValue(GREEN_LED, 1);
-                putsUart0("irq pin is high");
+                putsUart0("irq pin is high\n\r");
             }
         } else
             setPinValue(GREEN_LED, 0);
