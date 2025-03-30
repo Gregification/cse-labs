@@ -49,6 +49,8 @@
 #include "timer.h"
 #include "nrfModule.h"
 
+#include "common.h"
+
 // Pins
 #define RED_LED PORTF,1
 #define BLUE_LED PORTF,2
@@ -122,33 +124,40 @@ void processShell()
             token = strtok(strInput, " ");
 
             if (strcmp(token, "rx") == 0){
-                putsUart0("womp");
+                nrfActAsReceiver();
+                char str[20];
+                nrfPacketBase pkt;
+                while(true){
+                    if(nrfIsIRQing()){
+                        nrfReadRXPayload(pkt.rawArr, sizeof(pkt));
+
+                        for(int i = 0; i < sizeof(pkt); i++){
+                            snprintf(str,sizeof(str), "%2x",pkt.rawArr[i]);
+                            putsUart0(str);
+                        }
+                        putsUart0("\n\r");
+                    }
+                }
             }
 
             if (strcmp(token, "tx") == 0){
-                nrfSetMode(NRF_MODE_TX);
-            }
+                nrfActAsTransmitter();
+                nrfPacketBase pkt;
+                for(int i = 0; i < sizeof(pkt); i++)
+                    pkt.rawArr[i] = 0xAA;
+                uint8_t i = 0;
+                while(true){
+                    nrfWriteTXPayload(pkt.rawArr, sizeof(pkt));
+                    setPinValue(RED_LED, 1);
 
-            if (strcmp(token, "status") == 0){
-                switch(nrfGetMode()){
-                    case NRF_MODE_POWER_DOWN:
-                        putsUart0("NRF_MODE_POWER_DOWN");
-                        break;
-                    case NRF_MODE_RX:
-                        putsUart0("NRF_MODE_RX");
-                        break;
-                    case NRF_MODE_STANDBY_1:
-                        putsUart0("NRF_MODE_STANDBY_1");
-                        break;
-                    case NRF_MODE_STANDBY_2:
-                        putsUart0("NRF_MODE_STANDBY_2");
-                        break;
-                    case NRF_MODE_TX:
-                        putsUart0("NRF_MODE_TX");
-                        break;
-                    default:
-                        putsUart0("unknown state");
-                        break;
+                    char str[10];
+                    snprintf(str,sizeof(str), "%03d",i++);
+                    putsUart0(str);
+                    putsUart0("\n\r");
+
+                    waitMicrosecond(10e3);
+                    setPinValue(RED_LED, 0);
+                    waitMicrosecond(10e3);
                 }
             }
 
@@ -184,6 +193,9 @@ int main(void)
     initTimer();
 
     initNrf();
+    nrfSetPowerUp(true);
+    nrfSetChannel(10);
+    nrfSetDataRate(NRF_DATARATE_250kbps);
 
     putsUart0("\n\rCSE4352 spring2025 project 2 team 14. N24L01+ RF transceiver demo\n\r");
 
@@ -197,15 +209,6 @@ int main(void)
     //---main----------------------------------------------------------------------
 
     uint8_t rx_buffer[WIRELESS_RX_BUFFER_SIZE]; // no need for a TX buffer if we just do blocking calls
-
-    {
-        char str[40];
-        uint8_t config;
-        NRFStatus statusW = nrfWriteRegister(NRF_REG_CONFIG_ADDR, &config, sizeof(config));
-        NRFStatus statusR = nrfReadRegister(NRF_REG_CONFIG_ADDR, &config, sizeof(config));
-        snprintf(str, sizeof(str), "config:0x%x\n\rstatus:%x\n\r", config, statusR.raw);
-        putsUart0(str);
-    }
 
     while (true) {
         processShell();

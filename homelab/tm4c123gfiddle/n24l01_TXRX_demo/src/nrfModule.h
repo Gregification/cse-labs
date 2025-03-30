@@ -15,9 +15,9 @@
  *          - you can almost double the SPI throughput if you use the TX FIFO but that would mean changing Losh's lib
  *      - IRQ pin is checked manually, no interrupt is used
  *      - I manually drive CS because no FIFOs are used
- *      - effective SPI speed can be almost doubled if you modify the "nrfTransfer" function
  *      - most of the chip documentation is about ShockBurst(tm) mode, were not using that
- *
+ *      - max TX/RX data size of 29B -> 3B overhead for version(1B) and CRC(16b)
+ *          - using CRC16-CCITT : x^(16,12,5) + 1 , seeded with 0xCE
  * ------------------------------------------------------------
  *      ______________________________________
  *      | |------|                            |
@@ -46,29 +46,82 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "common.h"
+
 //---program specific macros---------------------------------------
 
 #define F_CPU 40e6
 
-#define NRF_SPI_BAUD 5e6
+#define NRF_SPI_BAUD 2e6
 #define NRF_SPI_CS PORTA,3
 #define NRF_SPI_CS_ACTIVE 0     // active low
 
 #define NRF_CE_PIN PORTB,6
 #define NRF_IRQ_PIN PORTB,7
 
+#define NRF_CRC_SEED 0xCE
+
 //---module specific-----------------------------------------------
 
 // register addresses, incomplete list
 #define NRF_REG_CONFIG_ADDR         0x00
+#define NRF_REG_EN_AA_ADDR          0x01
+#define NRF_REG_EN_RXADDR_ADDR      0x02
+#define NRF_REG_SETUP_RETR_ADDR     0x04
 #define NRF_REG_RH_CH_ADDR          0x05
 #define NRF_REG_RF_SETUP_ADDR       0x06
 #define NRF_REG_STATUS_ADDR         0x07
-#define NRF_RX__PW_P0_ADDR          0x11
+#define NRF_RX_PW_P0_ADDR           0x11
 #define NRF_FIFO_STATUS_ADDR        0x17
 
+// register specific macros
+#define NRF_REG_RF_SETUP_CONSTANT_WAVE      BV(7)
+#define NRF_REG_RF_SETUP_DATARATE_M         (BV(3) | BV(5))
+#define NRF_REG_RF_SETUP_DATARATE_1Mbps     0
+#define NRF_REG_RF_SETUP_DATARATE_2Mbps     BV(3)
+#define NRF_REG_RF_SETUP_DATARATE_250Kbps   BV(5)
+#define NRF_REG_RF_SETUP_PLL_LOCK           BV(4)
+#define NRF_REG_RF_SETUP_RF_POWER_M         (BV(1) | BV(2))
+#define NRF_REG_RF_SETUP_RF_POWER_15uW      0               // -18dBm
+#define NRF_REG_RF_SETUP_RF_POWER_63uW      BV(1)           // -12dBm
+#define NRF_REG_RF_SETUP_RF_POWER_251uW     BV(2)           // -6dBm
+#define NRF_REG_RF_SETUP_RF_POWER_1mW       (BV(1) | BV(2)) // 0dBm
+#define NRF_REG_EN_AA_DATAPIPE_0            BV(0)
+#define NRF_REG_EN_AA_DATAPIPE_1            BV(1)
+#define NRF_REG_EN_AA_DATAPIPE_2            BV(2)
+#define NRF_REG_EN_AA_DATAPIPE_3            BV(3)
+#define NRF_REG_EN_AA_DATAPIPE_4            BV(4)
+#define NRF_REG_EN_AA_DATAPIPE_5            BV(5)
+#define NRF_REG_EN_RXADDR_DATAPIPE_0        BV(0)
+#define NRF_REG_EN_RXADDR_DATAPIPE_1        BV(1)
+#define NRF_REG_EN_RXADDR_DATAPIPE_2        BV(2)
+#define NRF_REG_EN_RXADDR_DATAPIPE_3        BV(3)
+#define NRF_REG_EN_RXADDR_DATAPIPE_4        BV(4)
+#define NRF_REG_EN_RXADDR_DATAPIPE_5        BV(5)
+
 typedef union {
-    unsigned int raw : 7;
+    uint8_t raw;
+    struct __attribute__((packed)) {
+        unsigned int                : 1;
+        unsigned int RF_POWER       : 2; // R/W
+        bool RF_DATARATE_HIGH       : 1; // R/W . high bit of DR setting
+        bool PLL_LOCK               : 1; // R/W . force PLL lock, only used in test
+        bool RF_DATARATE_LOW        : 1; // R/W . low bit of DR setting
+        unsigned int                : 1;
+        bool CONSTANT_WAVE          : 1; // R/W . enables continuous carrier wave transmission
+    };
+} NRFRFSetup;
+
+typedef union{
+    uint8_t raw;
+    struct __attribute__((packed)) {
+        unsigned int rtDelay : 4;
+        unsigned int rtCount : 4;
+    };
+} NRFSetupRetries;
+
+typedef union {
+    uint8_t raw;
     struct __attribute__((packed)) {
         bool TX_FULL                    : 1; // R
         unsigned int RX_PAYLOAD_PIPE    : 3; // R
@@ -79,42 +132,101 @@ typedef union {
     };
 } NRFStatus;
 
-typedef struct __attribute__((packed)) {
-    bool PRIME_RX       : 1;
-    bool MASK_RX_DR     : 1; // mask interrupt caused by RX_DR : asserted after the packet is received by the PRX
-    bool MASK_TX_DS     : 1; // mask interrupt caused by TX_DS : indicates PTX received ACK with payload
-    bool MASK_MAX_RT    : 1; // mask interrupt caused by MAX_RT
-    bool ENABLE_CRC     : 1;
-    bool CRC_2or1_BYTE  : 1; // true:2B, false:1B
-    bool POWER_UP       : 1;
+typedef union {
+    uint8_t raw;
+    struct __attribute__((packed)) {
+        bool PRIME_RX       : 1;
+        bool MASK_RX_DR     : 1; // mask interrupt caused by RX_DR : indicates new data arrived in a FIFO
+        bool MASK_TX_DS     : 1; // mask interrupt caused by TX_DS : indicates successful TX
+        bool MASK_MAX_RT    : 1; // mask interrupt caused by MAX_RT: indicates max re-TX count reached
+        bool ENABLE_CRC     : 1;
+        bool CRC_2or1_BYTE  : 1; // true:2B, false:1B
+        bool POWER_UP       : 1;
+    };
 } NRFConfig;
+
+//---protocol------------------------------------------------------
+
+#define NRF_PACKET_TOTAL_LEN 32
+#define NRF_PACKET_DATA_LEN 29  // = PACKET_TOTAL_LEN - [overhead (3B)]
+
+typedef union {
+    uint8_t rawArr[NRF_PACKET_TOTAL_LEN];
+
+    struct __attribute__((packed)) {
+        uint8_t protocol_version;
+        uint8_t data[NRF_PACKET_DATA_LEN];
+        uint16_t crc;
+    };
+
+} nrfPacketBase;
+
+
 
 /*---module specific functions-------------------------------------
  * see pg.51 of datasheet
  * "8 bit command set"
 */
 
-typedef enum _nrfMode {
-    NRF_MODE_POWER_DOWN,
-    NRF_MODE_STANDBY_1,
-    NRF_MODE_STANDBY_2,
-    NRF_MODE_TX,
-    NRF_MODE_RX
-} NRFMode;
-
 void initNrf();
 
-NRFStatus nrfSetMode(NRFMode mode);
-NRFMode nrfGetMode();
-
 void reverseBytes(uint8_t * data, uint8_t len);
+
+NRFStatus nrfGetStatus();
+
+/**
+ * calculates the CRC for a packet.
+ *  CRC16-CCITT : x^(16,12,5,0) : 0x1021
+ *  "correct" CRC process base lined from https://srecord.sourceforge.net/crc16-ccitt.html#source
+ */
+uint16_t nrfCalcPacketCRC(nrfPacketBase const * pk);
 
 NRFStatus nrfReadRegister(uint8_t addr, uint8_t * out, uint8_t len);
 
 // quote from data sheet : "Addresses 18 to 1B are reserved for test purposes, altering them makes the chip malfunction"
 NRFStatus nrfWriteRegister(uint8_t addr, uint8_t const * in, uint8_t len);
 
+NRFStatus nrfActAsTransmitter();
+NRFStatus nrfActAsReceiver();
+NRFStatus nrfSetAutoRetransmitTries(uint8_t attempts);
+
+typedef enum {
+    NRF_DATARATE_1Mbps,
+    NRF_DATARATE_2Mbps,
+    NRF_DATARATE_250kbps,
+} NRF_DATARATE;
+
+NRFStatus nrfSetDataRate(NRF_DATARATE);
+NRFStatus nrfSetPowerUp(bool);
+/** channel index, bits [6:0] only
+ */
+NRFStatus nrfSetChannel(uint8_t);
+
+/** reads and empties the selected RX FIFO. max len is NRF_PACKET_TOTAL_LEN
+ */
+NRFStatus nrfReadRXPayload(uint8_t * data, uint8_t len);
+
+/** writes to the selected TX FIFO. max len is NRF_PACKET_TOTAL_LEN
+ */
+NRFStatus nrfWriteTXPayload(uint8_t const * in, uint8_t len);
+
+/** flushes the selected TX FIFo
+ */
+NRFStatus nrfFlushTXFIFO();
+
+/** flushes the selected RX FIFo
+ */
+NRFStatus nrfFlushRXFIFO();
+
+/**
+ * returns true if the IRQ pin is active
+ */
 bool nrfIsIRQing();
+
+/**
+ * a normal SPI0 transfer
+ */
+NRFStatus nrfTransfer(uint8_t const * tx, uint8_t * rx, uint32_t len);
 
 /**
  * transfers bytes over SPI0 while keeping CS active the entire time.
