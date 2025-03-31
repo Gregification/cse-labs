@@ -44,41 +44,21 @@ void initNrf(){
                 .MASK_TX_DS = true,     // ignore TX success, we'll just check if FIFOS are full instead
                 .MASK_MAX_RT = true,    // were not using auto-retransmit so ignore this flag
                 .PRIME_RX = 0,
-                .POWER_UP = 1,      // do this later
+                .POWER_UP = 0,      // do this later
         };
         nrfWriteRegister(NRF_REG_CONFIG_ADDR, &configW.raw, sizeof(configW));
     }
 
+    setPinValue(NRF_CE_PIN, 0);// keep this enabled to make life simple
+
+    { // enable the W_TX_PAYLOAD_NOACK command
+        uint8_t feature = 0b1;
+        nrfWriteRegister(NRF_REG_FEATURE_ADDR, &feature, sizeof(feature));
+    }
+
     nrfSetChannel(10);
     nrfSetDataRate(NRF_DATARATE_250kbps);
-//    nrfSetPowerUp(true);
-    setPinValue(NRF_CE_PIN, 1);// keep this enabled to make life simple
-
-//    // disable auto ack for all pipes
-//    {
-//        uint8_t data = 0;
-//        nrfWriteRegister(
-//                NRF_REG_EN_AA_ADDR,
-//                &data,
-//                sizeof(data)
-//            );
-//    }
-//
-//    // disable rx addresses for all pipes
-//    {
-//        uint8_t data = 0;
-//        nrfWriteRegister(
-//                NRF_REG_EN_RXADDR_ADDR,
-//                &data,
-//                sizeof(data)
-//            );
-//    }
-//
-//    nrfSetAutoRetransmitTries(0);
-//    nrfSetDataRate(NRF_DATARATE_250kbps);
-
-//    nrfFlushRXFIFO();
-//    nrfFlushTXFIFO();
+    nrfSetOutputPower(NRF_OUTPUT_POWER_0dBm);
 }
 
 NRFStatus nrfGetStatus(){
@@ -127,18 +107,14 @@ uint16_t nrfCalcPacketCRC(nrfPacketBase const * pk){
 NRFStatus nrfActAsTransmitter(){
     NRFConfig config;
     nrfReadRegister(NRF_REG_CONFIG_ADDR, &config.raw, sizeof(config));
-    config.PRIME_RX = false;
-
-    nrfFlushTXFIFO();
+    config.PRIME_RX = 0;
     return nrfWriteRegister(NRF_REG_CONFIG_ADDR, &config.raw, sizeof(config));
 }
 
 NRFStatus nrfActAsReceiver(){
     NRFConfig config;
     nrfReadRegister(NRF_REG_CONFIG_ADDR, &config.raw, sizeof(config));
-    config.PRIME_RX = true;
-
-    nrfFlushRXFIFO();
+    config.PRIME_RX = 1;
     return nrfWriteRegister(NRF_REG_CONFIG_ADDR, &config.raw, sizeof(config));
 }
 
@@ -148,6 +124,13 @@ NRFStatus nrfSetAutoRetransmitTries(uint8_t attempts){
     nrfReadRegister(NRF_REG_SETUP_RETR_ADDR, &setup.raw, sizeof(setup));
     setup.rtCount = 0;
     return nrfWriteRegister(NRF_REG_SETUP_RETR_ADDR, &setup.raw, sizeof(setup));
+}
+
+NRFStatus nrfSetContCarriTransmit(bool enable){
+    NRFRFSetup setup;
+    nrfReadRegister(NRF_REG_RF_SETUP_ADDR, &setup.raw, sizeof(setup));
+    setup.CONSTANT_WAVE = enable;
+    return nrfWriteRegister(NRF_REG_RF_SETUP_ADDR, &setup.raw, sizeof(setup));
 }
 
 NRFStatus nrfSetDataRate(NRF_DATARATE dr){
@@ -171,6 +154,34 @@ NRFStatus nrfSetDataRate(NRF_DATARATE dr){
             setup.RF_DATARATE_LOW = 0;
             setup.RF_DATARATE_HIGH = 1;
             break;
+    }
+    setup.CONSTANT_WAVE = true;
+    return nrfWriteRegister(NRF_REG_RF_SETUP_ADDR, &setup.raw, sizeof(setup));
+}
+
+NRFStatus nrfSetOutputPower(NRF_OUTPUT_POWER power){
+    NRFRFSetup setup;
+
+    nrfReadRegister(NRF_REG_RF_SETUP_ADDR, &setup.raw, sizeof(setup));
+
+    switch(power){
+        default:
+        case NRF_OUTPUT_POWER_0dBm:
+            setup.RF_POWER = 0b11;
+            break;
+
+        case NRF_OUTPUT_POWER_n6dBm:
+            setup.RF_POWER = 0b10;
+            break;
+
+        case NRF_OUTPUT_POWER_n12dBm:
+            setup.RF_POWER = 0b01;
+            break;
+
+        case NRF_OUTPUT_POWER_n18dBm:
+            setup.RF_POWER = 0b00;
+            break;
+
     }
     setup.CONSTANT_WAVE = true;
     return nrfWriteRegister(NRF_REG_RF_SETUP_ADDR, &setup.raw, sizeof(setup));
@@ -202,7 +213,7 @@ NRFStatus nrfReadRXPayload(uint8_t * out, uint8_t len){
 
 NRFStatus nrfWriteTXPayload(uint8_t const * in, uint8_t len){
     NRFStatus ret;
-    uint8_t cmd = 0xB0; // 0b1010_0000
+    uint8_t cmd = 0xB0; // 0b1010_0000 , write no ACK
     ret = nrfTransferOpen(&cmd, NULL, 1);
 
     nrfTransferClosed(in, NULL, NRF_PACKET_TOTAL_LEN);
@@ -222,6 +233,19 @@ NRFStatus nrfFlushRXFIFO(){
 bool nrfIsIRQing(){
     // active low, so invert it
     return !getPinValue(NRF_IRQ_PIN);
+}
+
+void nrfSetChipEnable(bool value){
+    setPinValue(NRF_CE_PIN, value);
+
+    if(value)
+        waitMicrosecond(130);
+}
+
+bool nrfIsCarrierDetected(){
+    uint8_t carrierDetect;
+    nrfReadRegister(NRF_REG_RPD_ADDR, &carrierDetect, sizeof(carrierDetect));
+    return carrierDetect & 0b1;
 }
 
 NRFStatus nrfReadRegister(uint8_t addr, uint8_t * out, uint8_t len){

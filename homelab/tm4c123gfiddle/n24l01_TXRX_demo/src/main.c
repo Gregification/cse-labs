@@ -124,40 +124,97 @@ void processShell()
             token = strtok(strInput, " ");
 
             if (strcmp(token, "rx") == 0){
+                nrfSetPowerUp(true);
                 nrfActAsReceiver();
-                char str[20];
-                nrfPacketBase pkt;
-                while(true){
-                    nrfReadRXPayload(pkt.rawArr, sizeof(pkt));
+                nrfSetChipEnable(true);
 
-                    nrfFlushRXFIFO();
-                    for(int i = 0; i < sizeof(pkt); i++){
-                        snprintf(str,sizeof(str), "%02x ",pkt.rawArr[i]);
-                        putsUart0(str);
+                nrfPacketBase pkt;
+
+                while(true){
+//                    nrfReadRXPayload(pkt.rawArr, sizeof(pkt));
+
+                    NRFFIFOStatus fifostatus;
+                    nrfReadRegister(NRF_REG_FIFO_STATUS_ADDR, &fifostatus.raw, sizeof(fifostatus));
+
+                    if(fifostatus.RX_EMPTY){
+                        putsUart0("rx empty\n\r");
                     }
-                    putsUart0("\n\r");
+                    if(fifostatus.RX_FULL){
+                        putsUart0("rx full\n\r");
+                    }
+                    if(fifostatus.TX_EMPTY){
+                        putsUart0("tx empty\n\r");
+                    }
+                    if(fifostatus.TX_FULL){
+                        putsUart0("tx full\n\r");
+                    }
+                    if(fifostatus.TX_REUSE){
+                        putsUart0("tx reuse\n\r");
+                    }
+
+                    if(nrfIsCarrierDetected()){
+                       putsUart0("carrier wave detected\n\r");
+                    } else
+                        putsUart0("carrier wave NOT detected\n\r");
+
+                    if(!fifostatus.RX_EMPTY)
+                        waitMicrosecond(100e3);
+
+                    putsUart0("--------------\n\r");
+
+//                    for(int i = 0; i < sizeof(pkt); i++){
+//                        static char str[20];
+//                        snprintf(str,sizeof(str), "%02x ",pkt.rawArr[i]);
+//                        putsUart0(str);
+//                    }
+//                    putsUart0("\n\r");
                 }
             }
 
             if (strcmp(token, "tx") == 0){
+
+                nrfSetContCarriTransmit(true);
+                nrfSetPowerUp(true);
                 nrfActAsTransmitter();
+
                 nrfPacketBase pkt;
                 for(int i = 0; i < sizeof(pkt); i++)
                     pkt.rawArr[i] = 0xAA;
-                uint8_t i = 0;
+
+
                 while(true){
-                    nrfWriteTXPayload(pkt.rawArr, sizeof(pkt));
-                    setPinValue(RED_LED, 1);
+                    NRFStatus status = nrfWriteTXPayload(pkt.rawArr, sizeof(pkt));
 
-                    char str[10];
-                    snprintf(str,sizeof(str), "%03d",i++);
-                    putsUart0(str);
-                    putsUart0("\n\r");
+                    if(status.MAX_RT) // clear flag to enable further communication
+                        nrfWriteRegister(NRF_REG_STATUS_ADDR, &status.raw, sizeof(status));
 
+                    nrfSetChipEnable(true);
+                    waitMicrosecond(150e3);
+                    // "it is important to never keep the [NRF] in TX mode for more than 4ms"
+                    nrfSetChipEnable(false);
+                    waitMicrosecond(10e3);
+
+                    NRFFIFOStatus fifostatus;
+                    nrfReadRegister(NRF_REG_FIFO_STATUS_ADDR, &fifostatus.raw, sizeof(fifostatus));
+
+                    if(fifostatus.RX_EMPTY){
+                        putsUart0("rx empty\n\r");
+                    }
+                    if(fifostatus.RX_FULL){
+                        putsUart0("rx full\n\r");
+                    }
+                    if(fifostatus.TX_EMPTY){
+                        putsUart0("tx empty\n\r");
+                    }
+                    if(fifostatus.TX_FULL){
+                        putsUart0("tx full\n\r");
+                    }
+                    if(fifostatus.TX_REUSE){
+                        putsUart0("tx reuse\n\r");
+                    }
                     nrfFlushTXFIFO();
-                    waitMicrosecond(10e3);
-                    setPinValue(RED_LED, 0);
-                    waitMicrosecond(10e3);
+
+                    putsUart0("--------------\n\r");
                 }
             }
 
@@ -193,6 +250,9 @@ int main(void)
     initTimer();
 
     initNrf();
+    nrfSetDataRate(NRF_DATARATE_1Mbps);
+    nrfSetOutputPower(NRF_OUTPUT_POWER_0dBm);
+    nrfSetChannel(10);
 
     // test NRF connection
     {

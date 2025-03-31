@@ -69,8 +69,10 @@
 #define NRF_REG_RH_CH_ADDR          0x05
 #define NRF_REG_RF_SETUP_ADDR       0x06
 #define NRF_REG_STATUS_ADDR         0x07
-#define NRF_RX_PW_P0_ADDR           0x11
-#define NRF_FIFO_STATUS_ADDR        0x17
+#define NRF_REG_RPD_ADDR            0x09 // received power. carrier detect
+#define NRF_REG_RX_PW_P0_ADDR       0x11
+#define NRF_REG_FIFO_STATUS_ADDR    0x17
+#define NRF_REG_FEATURE_ADDR        0x1D
 
 // register specific macros
 #define NRF_REG_RF_SETUP_CONSTANT_WAVE      BV(7)
@@ -96,6 +98,18 @@
 #define NRF_REG_EN_RXADDR_DATAPIPE_3        BV(3)
 #define NRF_REG_EN_RXADDR_DATAPIPE_4        BV(4)
 #define NRF_REG_EN_RXADDR_DATAPIPE_5        BV(5)
+
+typedef union {
+    uint8_t raw;
+    struct __attribute__((packed)) {
+        bool RX_EMPTY               : 1;
+        bool RX_FULL                : 1;
+        unsigned int                : 2;
+        bool TX_EMPTY               : 1;
+        bool TX_FULL                : 1;
+        bool TX_REUSE               : 1;
+    };
+} NRFFIFOStatus;
 
 typedef union {
     uint8_t raw;
@@ -187,14 +201,23 @@ NRFStatus nrfWriteRegister(uint8_t addr, uint8_t const * in, uint8_t len);
 NRFStatus nrfActAsTransmitter();
 NRFStatus nrfActAsReceiver();
 NRFStatus nrfSetAutoRetransmitTries(uint8_t attempts);
+NRFStatus nrfSetContCarriTransmit(bool);
 
 typedef enum {
     NRF_DATARATE_1Mbps,
     NRF_DATARATE_2Mbps,
     NRF_DATARATE_250kbps,
 } NRF_DATARATE;
-
 NRFStatus nrfSetDataRate(NRF_DATARATE);
+
+typedef enum {
+    NRF_OUTPUT_POWER_n18dBm,    //  15.84   nW
+    NRF_OUTPUT_POWER_n12dBm,    //  63.09   nW
+    NRF_OUTPUT_POWER_n6dBm,     // 251.18   nW
+    NRF_OUTPUT_POWER_0dBm,      //   1.00   mW
+} NRF_OUTPUT_POWER;
+NRFStatus nrfSetOutputPower(NRF_OUTPUT_POWER);
+
 NRFStatus nrfSetPowerUp(bool);
 /** channel index, bits [6:0] only
  */
@@ -220,6 +243,12 @@ NRFStatus nrfFlushRXFIFO();
  * returns true if the IRQ pin is active
  */
 bool nrfIsIRQing();
+
+void nrfSetChipEnable(bool);
+
+/** can be read out live in RX mode, otherwise latches last value
+ */
+bool nrfIsCarrierDetected();
 
 /**
  * a normal SPI0 transfer
