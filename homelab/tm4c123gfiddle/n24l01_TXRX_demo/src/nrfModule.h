@@ -32,12 +32,12 @@
  *  NRF module                      TM4C pin        Note
  *  A: GND                          GND
  *  B: VCC (3.3V)                   3.3v
- *  C: Chip enable (active high)    PB6             enables tx/rx , does not effect SPI communication
- *  D: CS (active low)              PA3
+ *  C: Chip enable (active high)    PE2             enables tx/rx , does not effect SPI communication
+ *  D: CS (active low)              PA7
  *  E: SCK                          PA2
  *  F: MOSI                         PA5
  *  G: MISO                         PA4
- *  H: IRQ                          PB7
+ *  H: IRQ                          PE3
  */
 
 #ifndef SRC_NRFMODULE_H_
@@ -52,14 +52,12 @@
 
 #define F_CPU 40e6
 
-#define NRF_SPI_BAUD 2e6
-#define NRF_SPI_CS PORTA,3
+#define NRF_SPI_BAUD 1e6
+#define NRF_SPI_CS PORTA,7
 #define NRF_SPI_CS_ACTIVE 0     // active low
 
-#define NRF_CE_PIN PORTB,6
-#define NRF_IRQ_PIN PORTB,7
-
-#define NRF_CRC_SEED 0xCE
+#define NRF_CE_PIN PORTE,2
+#define NRF_IRQ_PIN PORTE,3
 
 //---module specific-----------------------------------------------
 
@@ -115,8 +113,8 @@ typedef union {
 typedef union{
     uint8_t raw;
     struct __attribute__((packed)) {
-        unsigned int rtDelay : 4;
         unsigned int rtCount : 4;
+        unsigned int rtDelay : 4;
     };
 } NRFSetupRetries;
 
@@ -136,12 +134,12 @@ typedef union {
     uint8_t raw;
     struct __attribute__((packed)) {
         bool PRIME_RX       : 1;
-        bool MASK_RX_DR     : 1; // mask interrupt caused by RX_DR : indicates new data arrived in a FIFO
-        bool MASK_TX_DS     : 1; // mask interrupt caused by TX_DS : indicates successful TX
-        bool MASK_MAX_RT    : 1; // mask interrupt caused by MAX_RT: indicates max re-TX count reached
-        bool ENABLE_CRC     : 1;
-        bool CRC_2or1_BYTE  : 1; // true:2B, false:1B
         bool POWER_UP       : 1;
+        bool CRC_2or1_BYTE  : 1; // true:2B, false:1B
+        bool ENABLE_CRC     : 1;
+        bool MASK_MAX_RT    : 1; // mask interrupt caused by MAX_RT: indicates max re-TX count reached
+        bool MASK_TX_DS     : 1; // mask interrupt caused by TX_DS : indicates successful TX
+        bool MASK_RX_DR     : 1; // mask interrupt caused by RX_DR : indicates new data arrived in a FIFO
     };
 } NRFConfig;
 

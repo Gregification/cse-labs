@@ -128,15 +128,14 @@ void processShell()
                 char str[20];
                 nrfPacketBase pkt;
                 while(true){
-                    if(nrfIsIRQing()){
-                        nrfReadRXPayload(pkt.rawArr, sizeof(pkt));
+                    nrfReadRXPayload(pkt.rawArr, sizeof(pkt));
 
-                        for(int i = 0; i < sizeof(pkt); i++){
-                            snprintf(str,sizeof(str), "%2x",pkt.rawArr[i]);
-                            putsUart0(str);
-                        }
-                        putsUart0("\n\r");
+                    nrfFlushRXFIFO();
+                    for(int i = 0; i < sizeof(pkt); i++){
+                        snprintf(str,sizeof(str), "%02x ",pkt.rawArr[i]);
+                        putsUart0(str);
                     }
+                    putsUart0("\n\r");
                 }
             }
 
@@ -155,6 +154,7 @@ void processShell()
                     putsUart0(str);
                     putsUart0("\n\r");
 
+                    nrfFlushTXFIFO();
                     waitMicrosecond(10e3);
                     setPinValue(RED_LED, 0);
                     waitMicrosecond(10e3);
@@ -193,9 +193,29 @@ int main(void)
     initTimer();
 
     initNrf();
-    nrfSetPowerUp(true);
-    nrfSetChannel(10);
-    nrfSetDataRate(NRF_DATARATE_250kbps);
+
+    // test NRF connection
+    {
+        NRFConfig original;
+        nrfReadRegister(NRF_REG_CONFIG_ADDR, &original.raw, sizeof(original));
+
+        for(uint8_t write = 0; write < 7; write++){
+            nrfWriteRegister(NRF_REG_CONFIG_ADDR, &write, sizeof(write));
+            uint8_t read = write + 1;
+            nrfReadRegister(NRF_REG_CONFIG_ADDR, &read, sizeof(read));
+
+            while(read != write){
+                setPinValue(RED_LED, 1);
+                setPinValue(GREEN_LED, 0);
+                waitMicrosecond(100e3);
+                setPinValue(RED_LED, 0);
+                setPinValue(GREEN_LED, 1);
+                waitMicrosecond(100e3);
+            }
+        }
+
+        nrfWriteRegister(NRF_REG_CONFIG_ADDR, &original.raw, sizeof(original));
+    }
 
     putsUart0("\n\rCSE4352 spring2025 project 2 team 14. N24L01+ RF transceiver demo\n\r");
 
@@ -205,6 +225,7 @@ int main(void)
     setPinValue(RED_LED, 0);
     setPinValue(GREEN_LED, 0);
     waitMicrosecond(100e3);
+
 
     //---main----------------------------------------------------------------------
 

@@ -11,6 +11,7 @@
 
 #include "gpio.h"
 #include "spi0.h"
+#include "wait.h"
 
 
 #define BV(X) (1 << (X))
@@ -19,8 +20,11 @@ void initNrf(){
 
     //---tm4c config--------------------------------------------
 
-    enablePort(PORTB);
-    enablePinPullup(NRF_CE_PIN); // keep this enabled to make life simple
+    enablePort(PORTE);
+    selectPinPushPullOutput(NRF_CE_PIN);
+
+    selectPinPushPullOutput(NRF_SPI_CS);
+    setPinValue(NRF_SPI_CS, !NRF_SPI_CS_ACTIVE);
 
     // increased drive strength, needed for faster SPI clocks
 //    GPIO_PORTA_DR8R_R |= BV(2); // SSI0CLK
@@ -32,9 +36,6 @@ void initNrf(){
 
     selectPinDigitalInput(NRF_IRQ_PIN);
 
-    selectPinPushPullOutput(NRF_SPI_CS);
-    setPinValue(NRF_SPI_CS, !NRF_SPI_CS_ACTIVE);
-
     //---nrf24 init---------------------------------------------
     {
         NRFConfig configW = {
@@ -42,33 +43,42 @@ void initNrf(){
                 .MASK_RX_DR = false,    // allow RXing indication
                 .MASK_TX_DS = true,     // ignore TX success, we'll just check if FIFOS are full instead
                 .MASK_MAX_RT = true,    // were not using auto-retransmit so ignore this flag
-                .POWER_UP = false,      // do this later
+                .PRIME_RX = 0,
+                .POWER_UP = 1,      // do this later
         };
         nrfWriteRegister(NRF_REG_CONFIG_ADDR, &configW.raw, sizeof(configW));
-        NRFConfig configR;
-        nrfWriteRegister(NRF_REG_CONFIG_ADDR, &configR.raw, sizeof(configR));
-        volatile int a = 0;
     }
 
-    // disable auto ack for all pipes
-    nrfWriteRegister(
-            NRF_REG_EN_AA_ADDR,
-            0,
-            1
-        );
-
-    // disable rx addresses for all pipes
-//    nrfWriteRegister(
-//            NRF_REG_EN_RXADDR_ADDR,
-//            0,
-//            1
-//        );
-
-    nrfSetAutoRetransmitTries(0);
+    nrfSetChannel(10);
     nrfSetDataRate(NRF_DATARATE_250kbps);
+//    nrfSetPowerUp(true);
+    setPinValue(NRF_CE_PIN, 1);// keep this enabled to make life simple
 
-    nrfFlushRXFIFO();
-    nrfFlushTXFIFO();
+//    // disable auto ack for all pipes
+//    {
+//        uint8_t data = 0;
+//        nrfWriteRegister(
+//                NRF_REG_EN_AA_ADDR,
+//                &data,
+//                sizeof(data)
+//            );
+//    }
+//
+//    // disable rx addresses for all pipes
+//    {
+//        uint8_t data = 0;
+//        nrfWriteRegister(
+//                NRF_REG_EN_RXADDR_ADDR,
+//                &data,
+//                sizeof(data)
+//            );
+//    }
+//
+//    nrfSetAutoRetransmitTries(0);
+//    nrfSetDataRate(NRF_DATARATE_250kbps);
+
+//    nrfFlushRXFIFO();
+//    nrfFlushTXFIFO();
 }
 
 NRFStatus nrfGetStatus(){
@@ -162,7 +172,7 @@ NRFStatus nrfSetDataRate(NRF_DATARATE dr){
             setup.RF_DATARATE_HIGH = 1;
             break;
     }
-
+    setup.CONSTANT_WAVE = true;
     return nrfWriteRegister(NRF_REG_RF_SETUP_ADDR, &setup.raw, sizeof(setup));
 }
 
@@ -170,10 +180,14 @@ NRFStatus nrfSetPowerUp(bool powerup){
     NRFConfig config;
     nrfReadRegister(NRF_REG_CONFIG_ADDR, &config.raw, sizeof(config));
     config.POWER_UP = powerup;
-    return nrfWriteRegister(NRF_REG_CONFIG_ADDR, &config.raw, sizeof(config));
+    NRFStatus ret = nrfWriteRegister(NRF_REG_CONFIG_ADDR, &config.raw, sizeof(config));
+
+    waitMicrosecond(1500);
+    return ret;
 }
 
 NRFStatus nrfSetChannel(uint8_t channel){
+    channel &= 0x7F;
     return nrfWriteRegister(NRF_REG_RH_CH_ADDR, &channel, sizeof(channel));
 }
 
@@ -188,7 +202,7 @@ NRFStatus nrfReadRXPayload(uint8_t * out, uint8_t len){
 
 NRFStatus nrfWriteTXPayload(uint8_t const * in, uint8_t len){
     NRFStatus ret;
-    uint8_t cmd = 0xA0; // 0b1010_0000
+    uint8_t cmd = 0xB0; // 0b1010_0000
     ret = nrfTransferOpen(&cmd, NULL, 1);
 
     nrfTransferClosed(in, NULL, NRF_PACKET_TOTAL_LEN);
@@ -213,9 +227,9 @@ bool nrfIsIRQing(){
 NRFStatus nrfReadRegister(uint8_t addr, uint8_t * out, uint8_t len){
     NRFStatus ret;
 
-    out[0] = (addr & 0x1F);   // 0b000A_AAAA -> A:address
-    ret = nrfTransferOpen(out, out, 1);
-    nrfTransferClosed(out, out, len);
+    uint8_t cmd = (addr & 0x1F);   // 0b000A_AAAA -> A:address
+    ret = nrfTransferOpen(&cmd, NULL, sizeof(cmd));
+    nrfTransferClosed(NULL, out, len);
 
     return ret;
 }
