@@ -26,10 +26,6 @@ void initNrf(){
     selectPinPushPullOutput(NRF_SPI_CS);
     setPinValue(NRF_SPI_CS, !NRF_SPI_CS_ACTIVE);
 
-    // increased drive strength, needed for faster SPI clocks
-//    GPIO_PORTA_DR8R_R |= BV(2); // SSI0CLK
-//    GPIO_PORTA_DR8R_R |= BV(3); // SSI0FSS
-//    GPIO_PORTA_DR8R_R |= BV(5); // SSI0TX
     initSpi0(USE_SSI0_RX);
     setSpi0BaudRate(NRF_SPI_BAUD, F_CPU);
     setSpi0Mode(0, 0);
@@ -49,7 +45,7 @@ void initNrf(){
         nrfWriteRegister(NRF_REG_CONFIG_ADDR, &configW.raw, sizeof(configW));
     }
 
-    setPinValue(NRF_CE_PIN, 0);// keep this enabled to make life simple
+    setPinValue(NRF_CE_PIN, 0);
 
     { // enable the W_TX_PAYLOAD_NOACK command
         uint8_t feature = 0b1;
@@ -123,6 +119,7 @@ NRFStatus nrfSetAutoRetransmitTries(uint8_t attempts){
 
     nrfReadRegister(NRF_REG_SETUP_RETR_ADDR, &setup.raw, sizeof(setup));
     setup.rtCount = 0;
+    setup.raw = 0;
     return nrfWriteRegister(NRF_REG_SETUP_RETR_ADDR, &setup.raw, sizeof(setup));
 }
 
@@ -131,6 +128,64 @@ NRFStatus nrfSetContCarriTransmit(bool enable){
     nrfReadRegister(NRF_REG_RF_SETUP_ADDR, &setup.raw, sizeof(setup));
     setup.CONSTANT_WAVE = enable;
     return nrfWriteRegister(NRF_REG_RF_SETUP_ADDR, &setup.raw, sizeof(setup));
+}
+
+NRFStatus nefGetEnabledRXAddr(NRFPipes * pipes){
+    return nrfReadRegister(NRF_REG_EN_RXADDR_ADDR, &(pipes->raw), sizeof(pipes));
+}
+
+NRFStatus nrfSetEnableRXAddr(NRFPipes pipes){
+    return nrfWriteRegister(NRF_REG_EN_RXADDR_ADDR, &pipes.raw, sizeof(pipes));
+}
+
+NRFStatus nrfSetEnableDynamicPayloadLength(NRFPipes pipes){
+    return nrfWriteRegister(NRF_REG_DYNPD_ADDR, &pipes.raw, sizeof(pipes));
+}
+
+NRFStatus nrfGetLostPacketCount(NRFTxMeta * txmeta){
+    return nrfReadRegister(NRF_REG_OBSERVE_TX_ADDR, &(txmeta->raw), sizeof(txmeta));
+}
+
+NRFStatus nrfSetRxAddrLSBOfPipe(NRFPipes  pipes, uint8_t lsb){
+    NRFStatus ret;
+    if(pipes.EN_RXADDR_DATAPIPE_0)
+        ret = nrfWriteRegister(NRF_REG_RX_ADDR_P0_ADDR, &lsb, 1);
+    if(pipes.EN_RXADDR_DATAPIPE_1)
+        ret = nrfWriteRegister(NRF_REG_RX_ADDR_P1_ADDR, &lsb, 1);
+    if(pipes.EN_RXADDR_DATAPIPE_2)
+        ret = nrfWriteRegister(NRF_REG_RX_ADDR_P2_ADDR, &lsb, 1);
+    if(pipes.EN_RXADDR_DATAPIPE_3)
+        ret = nrfWriteRegister(NRF_REG_RX_ADDR_P3_ADDR, &lsb, 1);
+    if(pipes.EN_RXADDR_DATAPIPE_4)
+        ret = nrfWriteRegister(NRF_REG_RX_ADDR_P4_ADDR, &lsb, 1);
+    if(pipes.EN_RXADDR_DATAPIPE_5)
+        ret = nrfWriteRegister(NRF_REG_RX_ADDR_P5_ADDR, &lsb, 1);
+
+    return ret;
+}
+
+NRFStatus nrfSetRxAddrOfPipe0(uint8_t addr[5]){
+    return nrfWriteRegister(NRF_REG_RX_ADDR_P0_ADDR, addr, sizeof(addr));
+}
+
+NRFStatus nrfSetTXAddr(uint8_t addr[5]){
+    return nrfWriteRegister(NRF_REG_TX_ADDR_ADDR, addr, sizeof(addr));
+}
+
+NRFStatus nrfSetAddressWidths(NRF_ADDR_WIDTH width){
+    uint8_t val;
+    switch(width){
+        case NRF_ADDR_WIDTH_3B:
+            val = 0b01;
+            break;
+        case NRF_ADDR_WIDTH_4B:
+            val = 0b10;
+            break;
+        case NRF_ADDR_WIDTH_5B:
+            val = 0b11;
+            break;
+    }
+    return nrfWriteRegister(NRF_REG_SETUP_AW_ADDR, &val, sizeof(val));
 }
 
 NRFStatus nrfSetDataRate(NRF_DATARATE dr){

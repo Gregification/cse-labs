@@ -65,13 +65,23 @@
 #define NRF_REG_CONFIG_ADDR         0x00
 #define NRF_REG_EN_AA_ADDR          0x01
 #define NRF_REG_EN_RXADDR_ADDR      0x02
+#define NRF_REG_SETUP_AW_ADDR       0x03
 #define NRF_REG_SETUP_RETR_ADDR     0x04
 #define NRF_REG_RH_CH_ADDR          0x05
 #define NRF_REG_RF_SETUP_ADDR       0x06
 #define NRF_REG_STATUS_ADDR         0x07
+#define NRF_REG_OBSERVE_TX_ADDR     0x08 // transmit observe register
 #define NRF_REG_RPD_ADDR            0x09 // received power. carrier detect
+#define NRF_REG_RX_ADDR_P0_ADDR     0x0A
+#define NRF_REG_RX_ADDR_P1_ADDR     0x0B
+#define NRF_REG_RX_ADDR_P2_ADDR     0x0C
+#define NRF_REG_RX_ADDR_P3_ADDR     0x0D
+#define NRF_REG_RX_ADDR_P4_ADDR     0x0E
+#define NRF_REG_RX_ADDR_P5_ADDR     0x0F
+#define NRF_REG_TX_ADDR_ADDR        0x10
 #define NRF_REG_RX_PW_P0_ADDR       0x11
 #define NRF_REG_FIFO_STATUS_ADDR    0x17
+#define NRF_REG_DYNPD_ADDR          0x1C // dynamic payload length
 #define NRF_REG_FEATURE_ADDR        0x1D
 
 // register specific macros
@@ -92,12 +102,6 @@
 #define NRF_REG_EN_AA_DATAPIPE_3            BV(3)
 #define NRF_REG_EN_AA_DATAPIPE_4            BV(4)
 #define NRF_REG_EN_AA_DATAPIPE_5            BV(5)
-#define NRF_REG_EN_RXADDR_DATAPIPE_0        BV(0)
-#define NRF_REG_EN_RXADDR_DATAPIPE_1        BV(1)
-#define NRF_REG_EN_RXADDR_DATAPIPE_2        BV(2)
-#define NRF_REG_EN_RXADDR_DATAPIPE_3        BV(3)
-#define NRF_REG_EN_RXADDR_DATAPIPE_4        BV(4)
-#define NRF_REG_EN_RXADDR_DATAPIPE_5        BV(5)
 
 typedef union {
     uint8_t raw;
@@ -157,6 +161,26 @@ typedef union {
     };
 } NRFConfig;
 
+typedef union {
+    uint8_t raw;
+    struct __attribute__((packed)) {
+        bool EN_RXADDR_DATAPIPE_0 : 1;
+        bool EN_RXADDR_DATAPIPE_1 : 1;
+        bool EN_RXADDR_DATAPIPE_2 : 1;
+        bool EN_RXADDR_DATAPIPE_3 : 1;
+        bool EN_RXADDR_DATAPIPE_4 : 1;
+        bool EN_RXADDR_DATAPIPE_5 : 1;
+    };
+} NRFPipes;
+
+typedef union {
+    uint8_t raw;
+    struct __attribute__((packed)) {
+        unsigned int RETRANSMISSION_COUNT   : 4;
+        unsigned int LOSTPACKET_COUNT       : 4;
+    };
+} NRFTxMeta;
+
 //---protocol------------------------------------------------------
 
 #define NRF_PACKET_TOTAL_LEN 32
@@ -172,7 +196,6 @@ typedef union {
     };
 
 } nrfPacketBase;
-
 
 
 /*---module specific functions-------------------------------------
@@ -202,6 +225,20 @@ NRFStatus nrfActAsTransmitter();
 NRFStatus nrfActAsReceiver();
 NRFStatus nrfSetAutoRetransmitTries(uint8_t attempts);
 NRFStatus nrfSetContCarriTransmit(bool);
+NRFStatus nrfSetEnableRXAddr(NRFPipes pipes);
+NRFStatus nrfGetEnableRXAddr(NRFPipes * pipes);
+NRFStatus nrfSetEnableDynamicPayloadLength(NRFPipes pipes);
+NRFStatus nrfGetLostPacketCount(NRFTxMeta *);
+NRFStatus nrfSetRxAddrLSBOfPipe(NRFPipes, uint8_t lsb);
+NRFStatus nrfSetRxAddrOfPipe0(uint8_t [5]);
+NRFStatus nrfSetTXAddr(uint8_t [5]);
+
+typedef enum {
+    NRF_ADDR_WIDTH_3B,
+    NRF_ADDR_WIDTH_4B,
+    NRF_ADDR_WIDTH_5B,
+} NRF_ADDR_WIDTH;
+NRFStatus nrfSetAddressWidths(NRF_ADDR_WIDTH);
 
 typedef enum {
     NRF_DATARATE_1Mbps,
