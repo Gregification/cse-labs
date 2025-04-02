@@ -77,7 +77,10 @@ module rv32_ex_alu32(
             
             7'b1100111: begin // I type : dull blue
                 // JALR : jump to address relative to register value
-                // rd <- pc + 4 //TODO
+                // done in ID
+
+                // rd <- pc + 4 
+                alu_out <= pc_in + 4;
 
                 // pc
                 /* page 8 of 2019 spec. 
@@ -85,8 +88,7 @@ module rv32_ex_alu32(
                  *       to simplifyhardware and to allow auxiliary information to be stored in function
                  *       pointers."
                  */
-                alu_out[31:1]   <= {i_I + rs1_data_in}[31:1];
-                alu_out[0]      <= 0;
+                // alu_out[31:0]   <= {{i_I + rs1_data_in}[31:1], 1'b0};
             end // I type : dull blue
 
             7'b0000011: begin // I type : dull red
@@ -137,7 +139,8 @@ module rv32_ex_alu32(
                 endcase // funct3
             end // S type : dull pruple
 
-            7'b1100011: begin // B type : white
+            // done in ID
+            // 7'b1100011: begin // B type : white
                 // case (funct3)
                     // 3'b000: // BEQ   //TODO
                     // 3'b001: // BNE   //TODO
@@ -146,7 +149,7 @@ module rv32_ex_alu32(
                     // 3'b110: // BLTU  //TODO
                     // 3'b111: // BGEU  //TODO
                 // endcase // funct3
-            end // B type : white
+            // end // B type : white
 
             7'b0110111: begin // U type : dull blue
                 alu_out <= {i_U[31:12], 12'b0}; // LUI : load upper immediate
@@ -156,8 +159,10 @@ module rv32_ex_alu32(
                 alu_out <= pc_in + {i_U[31:12], 12'b0}; // AUIPC : add upper immediate to PC
             end // U type : dark green
 
+            // done in ID
             7'b1101111: begin // J type : ilme green
-                alu_out <= $signed(pc_in + i_J); // JAL : jump to address relative to PC
+                alu_out <= pc_in + 4;
+                // alu_out <= $signed(pc_in + i_J); // JAL : jump to address relative to PC
             end // J type : ilme green
         endcase // opcode
     end

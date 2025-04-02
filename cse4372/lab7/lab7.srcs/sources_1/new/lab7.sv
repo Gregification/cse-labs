@@ -118,8 +118,8 @@ module lab7(
         // id_top
         .probe3(_rv32_id_top.pc_in), // input wire [31:0]  probe3 
         .probe4(_rv32_id_top.iw_in), // input wire [31:0]  probe4 
-        .probe5(_rv32_id_top.regif_rs1_reg), // input wire [5:0]  probe5 
-	    .probe6(_rv32_id_top.regif_rs2_reg), // input wire [5:0]  probe6 
+        .probe5(_rv32_id_top.regif_rs1_reg), // input wire [4:0]  probe5 
+	    .probe6(_rv32_id_top.regif_rs2_reg), // input wire [4:0]  probe6 
 
         // ex_top
         .probe7(_rv32_ex_top.pc_in), // input wire [31:0]  probe7 
@@ -148,7 +148,11 @@ module lab7(
         .probe24(_rv32_wb_top.regif_wb_reg), // input wire [4:0]  probe24
         .probe25(_rv32_wb_top.regif_wb_data), // input wire [31:0]  probe25
         .probe26(reset), // input wire [0:0]  probe26
-        .probe27(_rv32_if_top.reset) // input wire [0:0]  probe27
+        .probe27(_rv32_if_top.reset), // input wire [0:0]  probe27
+
+        // jump information
+        .probe28(_rv32_id_top.jump_enable_out), // input wire [0:0]  probe28 
+        .probe29(_rv32_id_top.jump_addr_out) // input wire [31:0]  probe29
     );
 
     assign is_ebreak = _rv32_if_top.memif_data == 32'h00100073;
@@ -251,6 +255,10 @@ module lab7(
         .df_wb_wb_reg(_rv32_wb_top.regif_wb_reg),
         .df_wb_wb_data(_rv32_wb_top.regif_wb_data),
         .df_wb_wb_enable(_rv32_wb_top.regif_wb_enable)
+
+        // to id : regarding pc jumping
+        // output reg jump_enable_out,
+        // output reg [31:0] jump_addr_out
     );
     
     rv32_ex_top _rv32_ex_top (
