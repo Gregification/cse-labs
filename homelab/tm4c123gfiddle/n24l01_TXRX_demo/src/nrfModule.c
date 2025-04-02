@@ -20,41 +20,30 @@ void initNrf(){
 
     //---tm4c config--------------------------------------------
 
-    enablePort(PORTE);
-    selectPinPushPullOutput(NRF_CE_PIN);
-
-    selectPinPushPullOutput(NRF_SPI_CS);
-    setPinValue(NRF_SPI_CS, !NRF_SPI_CS_ACTIVE);
-
     initSpi0(USE_SSI0_RX);
     setSpi0BaudRate(NRF_SPI_BAUD, F_CPU);
     setSpi0Mode(0, 0);
 
+    enablePort(PORTE);
+    selectPinPushPullOutput(NRF_CE_PIN);
+
+    selectPinPushPullOutput(NRF_SPI_CS);
+
+    setPinValue(NRF_SPI_CS, !NRF_SPI_CS_ACTIVE);
+    setPinValue(NRF_CE_PIN, 0);
     selectPinDigitalInput(NRF_IRQ_PIN);
 
-    //---nrf24 init---------------------------------------------
-    {
-        NRFConfig configW = {
-                .ENABLE_CRC = false,    // we'll do manual CRC setting to figure out mal transmissions
-                .MASK_RX_DR = false,    // allow RXing indication
-                .MASK_TX_DS = true,     // ignore TX success, we'll just check if FIFOS are full instead
-                .MASK_MAX_RT = true,    // were not using auto-retransmit so ignore this flag
-                .PRIME_RX = 0,
-                .POWER_UP = 0,      // do this later
-        };
-        nrfWriteRegister(NRF_REG_CONFIG_ADDR, &configW.raw, sizeof(configW));
-    }
-
-    setPinValue(NRF_CE_PIN, 0);
-
-    { // enable the W_TX_PAYLOAD_NOACK command
-        uint8_t feature = 0b1;
-        nrfWriteRegister(NRF_REG_FEATURE_ADDR, &feature, sizeof(feature));
-    }
-
-    nrfSetChannel(10);
-    nrfSetDataRate(NRF_DATARATE_250kbps);
-    nrfSetOutputPower(NRF_OUTPUT_POWER_0dBm);
+    nrfSetPowerUp(false);
+    waitMicrosecond(300e3);
+    nrfSetPowerUp(true);
+    nrfSetChipEnable(false);
+    nrfSetForcePLLLock(false);
+    nrfSetContCarriTransmit(false);
+    nrfActAsReceiver();
+    nrfFlushRXFIFO();
+    nrfActAsTransmitter();
+    nrfFlushTXFIFO();
+    nrfSetPowerUp(false);
 }
 
 NRFStatus nrfGetStatus(){
@@ -100,6 +89,21 @@ uint16_t nrfCalcPacketCRC(nrfPacketBase const * pk){
     return crc;
 }
 
+bool nrfTestSPI(){
+    uint8_t og;
+    nrfReadRegister(NRF_REG_RX_ADDR_P5_ADDR, &og, sizeof(og));
+
+    uint8_t testW;
+    nrfWriteRegister(NRF_REG_RX_ADDR_P5_ADDR, &testW, sizeof(testW));
+
+    uint8_t testR;
+    nrfWriteRegister(NRF_REG_RX_ADDR_P5_ADDR, &testR, sizeof(testR));
+
+    nrfWriteRegister(NRF_REG_RX_ADDR_P5_ADDR, &og, sizeof(og));
+
+    return testW == testR;
+}
+
 NRFStatus nrfActAsTransmitter(){
     NRFConfig config;
     nrfReadRegister(NRF_REG_CONFIG_ADDR, &config.raw, sizeof(config));
@@ -130,7 +134,14 @@ NRFStatus nrfSetContCarriTransmit(bool enable){
     return nrfWriteRegister(NRF_REG_RF_SETUP_ADDR, &setup.raw, sizeof(setup));
 }
 
-NRFStatus nefGetEnabledRXAddr(NRFPipes * pipes){
+NRFStatus nrfSetForcePLLLock(bool enable){
+    NRFRFSetup setup;
+    nrfReadRegister(NRF_REG_RF_SETUP_ADDR, &setup.raw, sizeof(setup));
+    setup.PLL_LOCK = enable;
+    return nrfWriteRegister(NRF_REG_RF_SETUP_ADDR, &setup.raw, sizeof(setup));
+}
+
+NRFStatus nrfGetEnabledRXAddr(NRFPipes * pipes){
     return nrfReadRegister(NRF_REG_EN_RXADDR_ADDR, &(pipes->raw), sizeof(pipes));
 }
 
@@ -164,12 +175,63 @@ NRFStatus nrfSetRxAddrLSBOfPipe(NRFPipes  pipes, uint8_t lsb){
     return ret;
 }
 
+NRFStatus nrfSetRXPipePayloadWidth(NRFPipes pipes, uint8_t width){
+    NRFStatus ret;
+    if(pipes.EN_RXADDR_DATAPIPE_0)
+        ret = nrfWriteRegister(NRF_REG_RX_PW_P0_ADDR, &width, 1);
+    if(pipes.EN_RXADDR_DATAPIPE_1)
+        ret = nrfWriteRegister(NRF_REG_RX_PW_P1_ADDR, &width, 1);
+    if(pipes.EN_RXADDR_DATAPIPE_2)
+        ret = nrfWriteRegister(NRF_REG_RX_PW_P2_ADDR, &width, 1);
+    if(pipes.EN_RXADDR_DATAPIPE_3)
+        ret = nrfWriteRegister(NRF_REG_RX_PW_P3_ADDR, &width, 1);
+    if(pipes.EN_RXADDR_DATAPIPE_4)
+        ret = nrfWriteRegister(NRF_REG_RX_PW_P4_ADDR, &width, 1);
+    if(pipes.EN_RXADDR_DATAPIPE_5)
+        ret = nrfWriteRegister(NRF_REG_RX_PW_P5_ADDR, &width, 1);
+
+    return ret;
+}
+
+NRFStatus nrfSetEnableAutoAck(NRFPipes pipes){
+    pipes.raw &= 0x3F; //0bxx11_1111
+    return nrfWriteRegister(NRF_REG_EN_AA_ADDR, &pipes.raw, sizeof(NRFPipes));
+}
+
+NRFStatus nrfSetRxAddrOfPipe1(uint8_t addr[5]){
+    return nrfWriteRegister(NRF_REG_RX_ADDR_P1_ADDR, addr, 5);
+}
+
 NRFStatus nrfSetRxAddrOfPipe0(uint8_t addr[5]){
-    return nrfWriteRegister(NRF_REG_RX_ADDR_P0_ADDR, addr, sizeof(addr));
+    return nrfWriteRegister(NRF_REG_RX_ADDR_P0_ADDR, addr, 5);
 }
 
 NRFStatus nrfSetTXAddr(uint8_t addr[5]){
-    return nrfWriteRegister(NRF_REG_TX_ADDR_ADDR, addr, sizeof(addr));
+    return nrfWriteRegister(NRF_REG_TX_ADDR_ADDR, addr, 5);
+}
+
+NRFStatus nrfGetPipeFIFOCount(NRFPipes pipes, uint8_t * out){
+    NRFStatus ret;
+    if(pipes.EN_RXADDR_DATAPIPE_0)
+        ret = nrfReadRegister(NRF_REG_RX_PW_P0_ADDR, out, 1);
+    if(pipes.EN_RXADDR_DATAPIPE_1)
+        ret = nrfReadRegister(NRF_REG_RX_PW_P1_ADDR, out, 1);
+    if(pipes.EN_RXADDR_DATAPIPE_2)
+        ret = nrfReadRegister(NRF_REG_RX_PW_P2_ADDR, out, 1);
+    if(pipes.EN_RXADDR_DATAPIPE_3)
+        ret = nrfReadRegister(NRF_REG_RX_PW_P3_ADDR, out, 1);
+    if(pipes.EN_RXADDR_DATAPIPE_4)
+        ret = nrfReadRegister(NRF_REG_RX_PW_P4_ADDR, out, 1);
+    if(pipes.EN_RXADDR_DATAPIPE_5)
+        ret = nrfReadRegister(NRF_REG_RX_PW_P5_ADDR, out, 1);
+
+    if(pipes.raw){
+        *out &= 0x3F; // 0bxx11_1111
+        return ret;
+    }
+
+    *out = 0;
+    return nrfGetStatus();
 }
 
 NRFStatus nrfSetAddressWidths(NRF_ADDR_WIDTH width){
@@ -210,7 +272,7 @@ NRFStatus nrfSetDataRate(NRF_DATARATE dr){
             setup.RF_DATARATE_HIGH = 1;
             break;
     }
-    setup.CONSTANT_WAVE = true;
+
     return nrfWriteRegister(NRF_REG_RF_SETUP_ADDR, &setup.raw, sizeof(setup));
 }
 
@@ -252,6 +314,13 @@ NRFStatus nrfSetPowerUp(bool powerup){
     return ret;
 }
 
+NRFStatus nrfSetCRCEnable(bool enable){
+    NRFConfig config;
+    nrfReadRegister(NRF_REG_CONFIG_ADDR, &config.raw, sizeof(config));
+    config.ENABLE_CRC = enable;
+    return nrfWriteRegister(NRF_REG_CONFIG_ADDR, &config.raw, sizeof(config));
+}
+
 NRFStatus nrfSetChannel(uint8_t channel){
     channel &= 0x7F;
     return nrfWriteRegister(NRF_REG_RH_CH_ADDR, &channel, sizeof(channel));
@@ -262,16 +331,18 @@ NRFStatus nrfReadRXPayload(uint8_t * out, uint8_t len){
     uint8_t cmd = 0x61; // 0b0110_0001
     ret = nrfTransferOpen(&cmd, NULL, 1);
 
-    nrfTransferClosed(NULL, out, NRF_PACKET_TOTAL_LEN);
+    nrfTransferClosed(NULL, out, len);
+
+    nrfFlushRXFIFO();
     return ret;
 }
 
 NRFStatus nrfWriteTXPayload(uint8_t const * in, uint8_t len){
     NRFStatus ret;
-    uint8_t cmd = 0xB0; // 0b1010_0000 , write no ACK
+    uint8_t cmd = 0xA0; // 0b1010_0000 , write tx payload
     ret = nrfTransferOpen(&cmd, NULL, 1);
 
-    nrfTransferClosed(in, NULL, NRF_PACKET_TOTAL_LEN);
+    nrfTransferClosed(in, NULL, len);
     return ret;
 }
 
@@ -283,6 +354,26 @@ NRFStatus nrfFlushTXFIFO(){
 NRFStatus nrfFlushRXFIFO(){
     uint8_t cmd = 0xE2; // 0b1110_0010
     return nrfTransfer(&cmd, NULL, 1);
+}
+
+NRFStatus nrfSetCRCUse2B(bool enable){
+    NRFConfig config;
+    nrfReadRegister(NRF_REG_CONFIG_ADDR, &config.raw, sizeof(config));
+    config.CRC_2or1_BYTE = enable;
+    return nrfWriteRegister(NRF_REG_CONFIG_ADDR, &config.raw, sizeof(config));
+}
+
+uint8_t nrfGetRXPayloadWidth(){
+    uint8_t ret;
+
+    uint8_t cmd = 0x60;   // 0b0110_0000
+    nrfTransferOpen(&cmd, NULL, sizeof(cmd));
+    nrfTransferClosed(NULL, &ret, 1);
+
+    if(ret > 32)
+        nrfFlushRXFIFO();
+
+    return ret;
 }
 
 bool nrfIsIRQing(){
@@ -297,10 +388,10 @@ void nrfSetChipEnable(bool value){
         waitMicrosecond(130);
 }
 
-bool nrfIsCarrierDetected(){
+bool nrfIsReceivedPowerDetected(){
     uint8_t carrierDetect;
     nrfReadRegister(NRF_REG_RPD_ADDR, &carrierDetect, sizeof(carrierDetect));
-    return carrierDetect & 0b1;
+    return carrierDetect;
 }
 
 NRFStatus nrfReadRegister(uint8_t addr, uint8_t * out, uint8_t len){

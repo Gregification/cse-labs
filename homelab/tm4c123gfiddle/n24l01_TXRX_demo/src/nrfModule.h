@@ -80,28 +80,33 @@
 #define NRF_REG_RX_ADDR_P5_ADDR     0x0F
 #define NRF_REG_TX_ADDR_ADDR        0x10
 #define NRF_REG_RX_PW_P0_ADDR       0x11
+#define NRF_REG_RX_PW_P1_ADDR       0x12
+#define NRF_REG_RX_PW_P2_ADDR       0x13
+#define NRF_REG_RX_PW_P3_ADDR       0x14
+#define NRF_REG_RX_PW_P4_ADDR       0x15
+#define NRF_REG_RX_PW_P5_ADDR       0x16
 #define NRF_REG_FIFO_STATUS_ADDR    0x17
 #define NRF_REG_DYNPD_ADDR          0x1C // dynamic payload length
 #define NRF_REG_FEATURE_ADDR        0x1D
 
 // register specific macros
-#define NRF_REG_RF_SETUP_CONSTANT_WAVE      BV(7)
-#define NRF_REG_RF_SETUP_DATARATE_M         (BV(3) | BV(5))
-#define NRF_REG_RF_SETUP_DATARATE_1Mbps     0
-#define NRF_REG_RF_SETUP_DATARATE_2Mbps     BV(3)
-#define NRF_REG_RF_SETUP_DATARATE_250Kbps   BV(5)
-#define NRF_REG_RF_SETUP_PLL_LOCK           BV(4)
-#define NRF_REG_RF_SETUP_RF_POWER_M         (BV(1) | BV(2))
-#define NRF_REG_RF_SETUP_RF_POWER_15uW      0               // -18dBm
-#define NRF_REG_RF_SETUP_RF_POWER_63uW      BV(1)           // -12dBm
-#define NRF_REG_RF_SETUP_RF_POWER_251uW     BV(2)           // -6dBm
-#define NRF_REG_RF_SETUP_RF_POWER_1mW       (BV(1) | BV(2)) // 0dBm
-#define NRF_REG_EN_AA_DATAPIPE_0            BV(0)
-#define NRF_REG_EN_AA_DATAPIPE_1            BV(1)
-#define NRF_REG_EN_AA_DATAPIPE_2            BV(2)
-#define NRF_REG_EN_AA_DATAPIPE_3            BV(3)
-#define NRF_REG_EN_AA_DATAPIPE_4            BV(4)
-#define NRF_REG_EN_AA_DATAPIPE_5            BV(5)
+#define NRF_RF_SETUP_CONSTANT_WAVE      BV(7)
+#define NRF_RF_SETUP_DATARATE_M         (BV(3) | BV(5))
+#define NRF_RF_SETUP_DATARATE_1Mbps     0
+#define NRF_RF_SETUP_DATARATE_2Mbps     BV(3)
+#define NRF_RF_SETUP_DATARATE_250Kbps   BV(5)
+#define NRF_RF_SETUP_PLL_LOCK           BV(4)
+#define NRF_RF_SETUP_RF_POWER_M         (BV(1) | BV(2))
+#define NRF_RF_SETUP_RF_POWER_15uW      0               // -18dBm
+#define NRF_RF_SETUP_RF_POWER_63uW      BV(1)           // -12dBm
+#define NRF_RF_SETUP_RF_POWER_251uW     BV(2)           // -6dBm
+#define NRF_RF_SETUP_RF_POWER_1mW       (BV(1) | BV(2)) // 0dBm
+#define NRF_DATAPIPE_0                  BV(0)
+#define NRF_DATAPIPE_1                  BV(1)
+#define NRF_DATAPIPE_2                  BV(2)
+#define NRF_DATAPIPE_3                  BV(3)
+#define NRF_DATAPIPE_4                  BV(4)
+#define NRF_DATAPIPE_5                  BV(5)
 
 typedef union {
     uint8_t raw;
@@ -230,8 +235,18 @@ NRFStatus nrfGetEnableRXAddr(NRFPipes * pipes);
 NRFStatus nrfSetEnableDynamicPayloadLength(NRFPipes pipes);
 NRFStatus nrfGetLostPacketCount(NRFTxMeta *);
 NRFStatus nrfSetRxAddrLSBOfPipe(NRFPipes, uint8_t lsb);
+NRFStatus nrfSetRxAddrOfPipe1(uint8_t [5]);
 NRFStatus nrfSetRxAddrOfPipe0(uint8_t [5]);
 NRFStatus nrfSetTXAddr(uint8_t [5]);
+NRFStatus nrfGetPipeFIFOCount(NRFPipes pipe, uint8_t * out);
+NRFStatus nrfSetCRCEnable(bool);
+NRFStatus nrfSetForcePLLLock(bool);
+NRFStatus nrfSetEnableAutoAck(NRFPipes pipes);
+NRFStatus nrfSetRXPipePayloadWidth(NRFPipes pipes, uint8_t width);
+NRFStatus nrfSetCRCUse2B(bool);
+uint8_t nrfGetRXPayloadWidth();
+
+bool nrfTestSPI();
 
 typedef enum {
     NRF_ADDR_WIDTH_3B,
@@ -285,7 +300,7 @@ void nrfSetChipEnable(bool);
 
 /** can be read out live in RX mode, otherwise latches last value
  */
-bool nrfIsCarrierDetected();
+bool nrfIsReceivedPowerDetected();
 
 /**
  * a normal SPI0 transfer
