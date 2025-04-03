@@ -25,13 +25,14 @@ void initNrf(){
     setSpi0Mode(0, 0);
 
     enablePort(PORTE);
+    selectPinAnalogInput(NRF_IRQ_PIN);
     selectPinPushPullOutput(NRF_CE_PIN);
 
     selectPinPushPullOutput(NRF_SPI_CS);
 
     setPinValue(NRF_SPI_CS, !NRF_SPI_CS_ACTIVE);
     setPinValue(NRF_CE_PIN, 0);
-    selectPinDigitalInput(NRF_IRQ_PIN);
+
     waitMicrosecond(300e3);
 
     nrfSetChipEnable(false);

@@ -104,6 +104,8 @@ void printNRFStats();
 void printNRFStatus(NRFStatus);
 void printFIFORX();
 void printFIFOTX();
+void printFIFO(NRFFIFOStatus);
+
 void processShell()
 {
     if (kbhitUart0())
@@ -130,8 +132,18 @@ void processShell()
             token = strtok(strInput, " ");
 
             if (strcmp(token, "rx") == 0){
+                {
+                    NRFConfig config = {
+                        .MASK_TX_DS = true,
+                        .MASK_MAX_RT = true,
+                        .ENABLE_CRC = false,
+                        .PRIME_RX = true,
+                        .POWER_UP = true,
+                    };
+                    nrfWriteRegister(NRF_REG_CONFIG_ADDR, &config.raw, 1);
+                }
 
-                nrfActAsReceiver();
+//                nrfActAsReceiver();
 
                 nrfSetPowerUp(true);
 
@@ -179,10 +191,55 @@ void processShell()
 //                        nrfFlushRXFIFO();
 //                    }
 
-                    printFIFORX();
-
+                    setPinValue(GREEN_LED, nrfIsIRQing());
+                    putsUart0("CW:");
                     putcUart0('0' + nrfIsReceivedPowerDetected());
-                    putsUart0("-------------------rx\n\r");
+                    putsUart0(",IRQ:");
+                    putcUart0('0' + nrfIsIRQing());
+                    putsUart0("--rx--");
+
+                    if(nrfIsIRQing()){
+                        NRFStatus status = nrfGetStatus();
+                        printNRFStatus(status);
+
+                        if(status.RX_DATAREADY || status.MAX_RT){
+                            {
+                                NRFStatus s = {
+                                   .RX_DATAREADY = true,
+                                   .MAX_RT = true,
+                                };
+                                nrfWriteRegister(NRF_REG_STATUS_ADDR, &s.raw, 1);
+                            }
+
+                            NRFFIFOStatus fifostatus;
+                            nrfReadRegister(NRF_REG_FIFO_STATUS_ADDR, &fifostatus.raw, sizeof(fifostatus));
+
+                            printFIFO(fifostatus);
+
+                            while(!fifostatus.RX_EMPTY){
+                                nrfPacketBase pkt;
+                                nrfReadRXPayload(pkt.rawArr, sizeof(pkt));
+                                putsUart0("\t");
+                                for(int i = 0; i < sizeof(pkt); i++){
+                                    static char str[20];
+                                    snprintf(str,sizeof(str), "%02x ",pkt.rawArr[i]);
+                                    putsUart0(str);
+                                }
+                                putsUart0("\n\r");
+
+                                {
+                                    NRFStatus status = {
+                                        .RX_DATAREADY = true,
+                                    };
+                                    nrfWriteRegister(NRF_REG_STATUS_ADDR, &status.raw, 1);
+                                }
+
+                                nrfReadRegister(NRF_REG_FIFO_STATUS_ADDR, &fifostatus.raw, sizeof(fifostatus));
+                            }
+                        }
+
+                        putsUart0("\n\r");
+                    }
                 }
             }
 
@@ -212,22 +269,36 @@ void processShell()
                     pkt.rawArr[i] = 0xAA;
 
                     while(true){
-                        NRFStatus s;
-//                        s = nrfWriteTXPayload(pkt.rawArr, 32);
+                        setPinValue(GREEN_LED, nrfIsIRQing());
+                        putsUart0("CW:");
+                        putcUart0('0' + nrfIsReceivedPowerDetected());
+                        putsUart0(",IRQ:");
+                        putcUart0('0' + nrfIsIRQing());
+                        putsUart0("--tx--");
 
                         nrfSetChipEnable(true);
                         waitMicrosecond(100e3);
                         nrfSetChipEnable(false);
                         waitMicrosecond(20e3);
+
+                        printNRFStatus(nrfGetStatus());
+                        if(nrfIsIRQing()){
+                            NRFStatus status = nrfGetStatus();
+                            printNRFStatus(status);
+
+                            NRFFIFOStatus fifostatus;
+                            nrfReadRegister(NRF_REG_FIFO_STATUS_ADDR, &fifostatus.raw, sizeof(fifostatus));
+                        }
+
+                        NRFStatus s;
+//                        s = nrfWriteTXPayload(pkt.rawArr, 32);
+
+
 //                        printFIFOTX();
-//                        printNRFStatus(s);
-
-                        setPinValue(GREEN_LED, s.TX_DATASENT);
-
-                        putcUart0('0' + nrfIsReceivedPowerDetected());
-                        putsUart0("-------------------tx\n\r");
 
 //                        waitMicrosecond(500e3);
+
+                        putsUart0("\n\r");
                     }
                 }
             }
@@ -469,37 +540,38 @@ void dumpnrfConfig(){
 }
 
 void printNRFStatus(NRFStatus status){
-    putsUart0("status ");
-    putsUart0("\n\r     max_RT:         ");
+    putsUart0("status{");
+    putsUart0("max_RT:");
     putcUart0('0' + status.MAX_RT);
-    putsUart0("\n\r     rx data ready:  ");
+    putsUart0(", rx data ready:  ");
     putcUart0('0' + status.RX_DATAREADY);
-    putsUart0("\n\r     rx pipe:       ");
+    putsUart0(", rx pipe:       ");
     {
         if(status.RX_PAYLOAD_PIPE == 7)
             putsUart0("empty");
         else {
             char str[20];
-            snprintf(str,sizeof(str), "%2d ", status.RX_PAYLOAD_PIPE);
+            snprintf(str,sizeof(str), "%5d ", status.RX_PAYLOAD_PIPE);
             putsUart0(str);
         }
     }
-    putsUart0("\n\r     tx data sent:   ");
+    putsUart0(", tx data sent:   ");
     putcUart0('0' + status.TX_DATASENT);
-    putsUart0("\n\r     tx full:        ");
+    putsUart0(", tx full:        ");
     putcUart0('0' + status.TX_FULL);
-    putsUart0("\n\r");
+    putsUart0("}");
 }
 
 void printFIFORX(){
     NRFFIFOStatus fifostatus;
-    nrfReadRegister(NRF_REG_FIFO_STATUS_ADDR, &fifostatus.raw, sizeof(fifostatus));
+    NRFStatus s = nrfReadRegister(NRF_REG_FIFO_STATUS_ADDR, &fifostatus.raw, sizeof(fifostatus));
+    printNRFStatus(s);
 
     if(fifostatus.RX_EMPTY){
-        putsUart0("rx empty\n\r");
+        putsUart0("rx empty          ");
     }
     if(fifostatus.RX_FULL){
-        putsUart0("rx full\n\r\t");
+        putsUart0("rx full    ->     ");
         nrfPacketBase pkt;
         nrfReadRXPayload(pkt.rawArr, sizeof(pkt));
         for(int i = 0; i < sizeof(pkt); i++){
@@ -507,12 +579,11 @@ void printFIFORX(){
             snprintf(str,sizeof(str), "%02x ",pkt.rawArr[i]);
             putsUart0(str);
         }
-        putsUart0("\n\r");
         nrfFlushRXFIFO();
     }
 
     if(!fifostatus.RX_EMPTY && !fifostatus.RX_FULL){
-        putsUart0("rx partially full\n\r");
+        putsUart0("rx partially full");
     }
 
 //    if(!fifostatus.RX_EMPTY){
@@ -527,8 +598,6 @@ void printFIFORX(){
 //        }
 //        putsUart0("\n\r");
 //    }
-
-    printNRFStatus(nrfGetStatus());
 }
 
 void printFIFOTX(){
@@ -536,18 +605,38 @@ void printFIFOTX(){
     nrfReadRegister(NRF_REG_FIFO_STATUS_ADDR, &fifostatus.raw, sizeof(fifostatus));
 
     if(fifostatus.TX_EMPTY){
-        putsUart0("tx empty\n\r");
+        putsUart0("tx empty");
     }
     if(fifostatus.TX_FULL){
-        putsUart0("tx full\n\r");
+        putsUart0("tx full");
     }
     if(fifostatus.TX_REUSE){
-        putsUart0("tx reuse\n\r");
+        putsUart0("tx reuse");
     }
 
     if(!fifostatus.TX_EMPTY && !fifostatus.TX_FULL){
-        putsUart0("tx partially full\n\r");
+        putsUart0("tx partially full");
     }
 
     printNRFStatus(nrfGetStatus());
+}
+
+void printFIFO(NRFFIFOStatus fifostatus){
+    putsUart0("fifo{");
+    if(fifostatus.RX_EMPTY){
+        putsUart0("rx empty, ");
+    }
+    if(fifostatus.RX_FULL){
+        putsUart0("rx full, ");
+    }
+    if(fifostatus.TX_EMPTY){
+        putsUart0("tx empty, ");
+    }
+    if(fifostatus.TX_FULL){
+        putsUart0("tx full, ");
+    }
+    if(fifostatus.TX_REUSE){
+        putsUart0("tx reuse");
+    }
+    putsUart0("}");
 }

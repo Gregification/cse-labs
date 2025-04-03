@@ -149,7 +149,6 @@ typedef union {
         bool MAX_RT                     : 1; // R/w
         bool TX_DATASENT                : 1; // R/W
         bool RX_DATAREADY               : 1; // R/W
-        unsigned int                    : 1; // R/W reserved, only 0 allowed
     };
 } NRFStatus;
 
