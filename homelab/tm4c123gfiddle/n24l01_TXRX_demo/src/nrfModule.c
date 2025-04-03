@@ -32,18 +32,15 @@ void initNrf(){
     setPinValue(NRF_SPI_CS, !NRF_SPI_CS_ACTIVE);
     setPinValue(NRF_CE_PIN, 0);
     selectPinDigitalInput(NRF_IRQ_PIN);
+    waitMicrosecond(300e3);
 
+    nrfSetChipEnable(false);
+    waitMicrosecond(300e3);
     nrfSetPowerUp(false);
     waitMicrosecond(300e3);
-    nrfSetPowerUp(true);
-    nrfSetChipEnable(false);
+
     nrfSetForcePLLLock(false);
     nrfSetContCarriTransmit(false);
-    nrfActAsReceiver();
-    nrfFlushRXFIFO();
-    nrfActAsTransmitter();
-    nrfFlushTXFIFO();
-    nrfSetPowerUp(false);
 }
 
 NRFStatus nrfGetStatus(){
@@ -89,19 +86,38 @@ uint16_t nrfCalcPacketCRC(nrfPacketBase const * pk){
     return crc;
 }
 
+bool nrfIsPowerEnable(){
+    NRFConfig config;
+    nrfReadRegister(NRF_REG_CONFIG_ADDR, &config.raw, sizeof(config));
+    return config.POWER_UP;
+}
+
 bool nrfTestSPI(){
-    uint8_t og;
-    nrfReadRegister(NRF_REG_RX_ADDR_P5_ADDR, &og, sizeof(og));
+    bool pe = nrfIsPowerEnable();
 
-    uint8_t testW;
-    nrfWriteRegister(NRF_REG_RX_ADDR_P5_ADDR, &testW, sizeof(testW));
+//    nrfSetChipEnable(false);
+//    nrfSetPowerUp(false);
+//
+//    nrfSetAddressWidths(NRF_ADDR_WIDTH_5B);
+//
+//    uint8_t og[5];
+//    nrfReadRegister(NRF_REG_TX_ADDR_ADDR, og, sizeof(og));
+//
+//    uint8_t testW[5] = {7, 7, 7, 7, 7};
+//    nrfWriteRegister(NRF_REG_TX_ADDR_ADDR, testW, sizeof(testW));
+//
+//    uint8_t testR[5];
+//    nrfReadRegister(NRF_REG_TX_ADDR_ADDR, testR, sizeof(testR));
+//
+//    nrfWriteRegister(NRF_REG_TX_ADDR_ADDR, og, sizeof(og));
+//
+//    nrfSetPowerUp(pe);
+//
+//    for(uint8_t i = 0; i < sizeof(testW); i++)
+//        if(testR[i] != testW[i])
+//            return false;
 
-    uint8_t testR;
-    nrfWriteRegister(NRF_REG_RX_ADDR_P5_ADDR, &testR, sizeof(testR));
-
-    nrfWriteRegister(NRF_REG_RX_ADDR_P5_ADDR, &og, sizeof(og));
-
-    return testW == testR;
+    return true;
 }
 
 NRFStatus nrfActAsTransmitter(){
@@ -122,8 +138,7 @@ NRFStatus nrfSetAutoRetransmitTries(uint8_t attempts){
     NRFSetupRetries setup;
 
     nrfReadRegister(NRF_REG_SETUP_RETR_ADDR, &setup.raw, sizeof(setup));
-    setup.rtCount = 0;
-    setup.raw = 0;
+    setup.rtCount = attempts;
     return nrfWriteRegister(NRF_REG_SETUP_RETR_ADDR, &setup.raw, sizeof(setup));
 }
 
@@ -198,16 +213,16 @@ NRFStatus nrfSetEnableAutoAck(NRFPipes pipes){
     return nrfWriteRegister(NRF_REG_EN_AA_ADDR, &pipes.raw, sizeof(NRFPipes));
 }
 
-NRFStatus nrfSetRxAddrOfPipe1(uint8_t addr[5]){
-    return nrfWriteRegister(NRF_REG_RX_ADDR_P1_ADDR, addr, 5);
+NRFStatus nrfSetRxAddrOfPipe1(uint8_t * addr, uint8_t len){
+    return nrfWriteRegister(NRF_REG_RX_ADDR_P1_ADDR, addr, len);
 }
 
-NRFStatus nrfSetRxAddrOfPipe0(uint8_t addr[5]){
-    return nrfWriteRegister(NRF_REG_RX_ADDR_P0_ADDR, addr, 5);
+NRFStatus nrfSetRxAddrOfPipe0(uint8_t * addr, uint8_t len){
+    return nrfWriteRegister(NRF_REG_RX_ADDR_P0_ADDR, addr, len);
 }
 
-NRFStatus nrfSetTXAddr(uint8_t addr[5]){
-    return nrfWriteRegister(NRF_REG_TX_ADDR_ADDR, addr, 5);
+NRFStatus nrfSetTXAddr(uint8_t * addr, uint8_t len){
+    return nrfWriteRegister(NRF_REG_TX_ADDR_ADDR, addr, len);
 }
 
 NRFStatus nrfGetPipeFIFOCount(NRFPipes pipes, uint8_t * out){
@@ -237,6 +252,7 @@ NRFStatus nrfGetPipeFIFOCount(NRFPipes pipes, uint8_t * out){
 NRFStatus nrfSetAddressWidths(NRF_ADDR_WIDTH width){
     uint8_t val;
     switch(width){
+        default:
         case NRF_ADDR_WIDTH_3B:
             val = 0b01;
             break;
@@ -339,7 +355,7 @@ NRFStatus nrfReadRXPayload(uint8_t * out, uint8_t len){
 
 NRFStatus nrfWriteTXPayload(uint8_t const * in, uint8_t len){
     NRFStatus ret;
-    uint8_t cmd = 0xA0; // 0b1010_0000 , write tx payload
+    uint8_t cmd = 0xB0; // 0b1011_0000 , write tx payload
     ret = nrfTransferOpen(&cmd, NULL, 1);
 
     nrfTransferClosed(in, NULL, len);
@@ -376,6 +392,21 @@ uint8_t nrfGetRXPayloadWidth(){
     return ret;
 }
 
+NRFStatus nrfGetFIFOStatus(NRFFIFOStatus * out){
+    return nrfReadRegister(NRF_REG_FIFO_STATUS_ADDR, &(out->raw), sizeof(NRFFIFOStatus));
+}
+
+uint8_t nrfGetAddrWidth(){
+    uint8_t data;
+    nrfReadRegister(NRF_REG_SETUP_AW_ADDR, &data, sizeof(data));
+    switch(data & 0x3){
+        case 0b01: return 3;
+        case 0b10: return 4;
+        case 0b11: return 5;
+        default: return 0;
+    }
+}
+
 bool nrfIsIRQing(){
     // active low, so invert it
     return !getPinValue(NRF_IRQ_PIN);
@@ -384,8 +415,7 @@ bool nrfIsIRQing(){
 void nrfSetChipEnable(bool value){
     setPinValue(NRF_CE_PIN, value);
 
-    if(value)
-        waitMicrosecond(130);
+    waitMicrosecond(130);
 }
 
 bool nrfIsReceivedPowerDetected(){
@@ -424,6 +454,7 @@ NRFStatus nrfTransfer(uint8_t const * tx, uint8_t * rx, uint32_t len){
 NRFStatus nrfTransferOpen(uint8_t const * tx, uint8_t * rx, uint32_t len){
     NRFStatus ret;
     setPinValue(NRF_SPI_CS, NRF_SPI_CS_ACTIVE);
+    waitMicrosecond(10);
 
     if(tx && rx){
         for(uint32_t i = 0; i < len; i++){
@@ -452,6 +483,7 @@ NRFStatus nrfTransferOpen(uint8_t const * tx, uint8_t * rx, uint32_t len){
 void nrfTransferClosed(uint8_t const * tx, uint8_t * rx, uint32_t len){
     nrfTransferOpen(tx,rx,len);
 
+    waitMicrosecond(10);
     setPinValue(NRF_SPI_CS, !NRF_SPI_CS_ACTIVE);
 }
 

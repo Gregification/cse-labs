@@ -61,8 +61,8 @@
 #define F_CPU 40e6
 #define UART0_BAUD 9600
 #define WIRELESS_RX_BUFFER_SIZE 200
-#define NRF_F_CHANNEL 10
-#define NRF_A_ADDR {1,2,3,4,5}
+#define NRF_F_CHANNEL 1
+uint8_t RXADDR[5] = {1,2,3,4,5};
 
 //-----------------------------------------------------------------------------
 // Subroutines                
@@ -131,42 +131,37 @@ void processShell()
 
             if (strcmp(token, "rx") == 0){
 
-                nrfSetCRCEnable(false);
-                nrfSetCRCUse2B(true);
-
                 nrfActAsReceiver();
+
+                nrfSetPowerUp(true);
 
                 nrfSetEnableAutoAck((NRFPipes){0});
 
+                nrfSetEnableRXAddr((NRFPipes){NRF_DATAPIPE_1});
                 nrfSetAddressWidths(NRF_ADDR_WIDTH_5B);
-//                nrfSetEnableRXAddr((NRFPipes){NRF_DATAPIPE_0});
+                nrfSetRxAddrOfPipe1(RXADDR, 5);
 
                 nrfSetChannel(NRF_F_CHANNEL);
 
-                nrfSetDataRate(NRF_DATARATE_250kbps);
+                nrfSetDataRate(NRF_DATARATE_1Mbps);
 
-                nrfSetRXPipePayloadWidth((NRFPipes){NRF_DATAPIPE_0}, sizeof(nrfPacketBase)); // pipe0 width of 32B
-
-                nrfSetPowerUp(true);
+                nrfSetRXPipePayloadWidth((NRFPipes){NRF_DATAPIPE_1}, sizeof(nrfPacketBase)); // pipe width of 32B
 
                 printNRFStats();
 
                 nrfSetChipEnable(true);
 
-                char str[20];
-                uint8_t fifocount;
+//                char str[20];
+//                uint8_t fifocount;
                 while(true){
                     waitMicrosecond(1000e3);
 
-                    nrfGetPipeFIFOCount((NRFPipes){NRF_DATAPIPE_0}, &fifocount);
-                    snprintf(str,sizeof(str), "%02d\n\r", fifocount);
-                    putsUart0(str);
+//                    nrfGetPipeFIFOCount((NRFPipes){NRF_DATAPIPE_1}, &fifocount);
+//                    snprintf(str,sizeof(str), "%02d\n\r", fifocount);
+//                    putsUart0(str);
 
                     printFIFORX();
-
-                    nrfGetPipeFIFOCount((NRFPipes){NRF_DATAPIPE_0}, &fifocount);
-                    snprintf(str,sizeof(str), "%02d\n\r", fifocount);
-                    putsUart0(str);
+                    printNRFStatus(nrfGetStatus());
 
                     putcUart0('0' + nrfIsReceivedPowerDetected());
                     putsUart0("-------------------rx\n\r");
@@ -176,14 +171,7 @@ void processShell()
             if (strcmp(token, "tx") == 0){
                 nrfSetOutputPower(NRF_OUTPUT_POWER_0dBm);
 
-                nrfSetAddressWidths(NRF_ADDR_WIDTH_5B);
-//                {
-//                    uint8_t addr[5] = NRF_A_ADDR;
-//                    nrfSetTXAddr(addr);
-//                }
-
-                nrfSetCRCEnable(false);
-                nrfSetCRCUse2B(true);
+//                nrfSetAddressWidths(NRF_ADDR_WIDTH_5B);
 
                 nrfActAsTransmitter();
 
@@ -191,33 +179,42 @@ void processShell()
 
                 nrfSetChannel(NRF_F_CHANNEL);
 
-                nrfSetDataRate(NRF_DATARATE_250kbps);
+                nrfSetDataRate(NRF_DATARATE_1Mbps);
+
+//                nrfSetRXPipePayloadWidth((NRFPipes){NRF_DATAPIPE_1}, sizeof(nrfPacketBase)); // pipe width of 32B
 
                 nrfSetPowerUp(true);
+
+                nrfSetTXAddr(RXADDR, 5);
 
                 printNRFStats();
 
                 nrfPacketBase pkt;
-                for(int i = 0; i < sizeof(pkt); i++)
+                for(int i = 0; i < sizeof(pkt); i++){
                     pkt.rawArr[i] = 0xAA;
 
-                while(true){
-                    nrfWriteTXPayload(pkt.rawArr, sizeof(nrfPacketBase));
+                    while(true){
+                        NRFStatus s;
+                        s = nrfWriteTXPayload(pkt.rawArr, sizeof(nrfPacketBase));
+                        nrfSetChipEnable(true);
+                        waitMicrosecond(200e3);
+                        nrfSetChipEnable(false);
+                        waitMicrosecond(300e3);
+//                        printFIFOTX();
+                        printNRFStatus(s);
 
-                    printFIFOTX();
-                    nrfSetChipEnable(true);
-                    nrfSetChipEnable(false);
+                        putcUart0('0' + nrfIsReceivedPowerDetected());
+                        putsUart0("-------------------tx\n\r");
 
-                    putcUart0('0' + nrfIsReceivedPowerDetected());
-                    putsUart0("-------------------tx\n\r");
-
-                    waitMicrosecond(1000e3);
+                        waitMicrosecond(500e3);
+                    }
                 }
             }
 
             if (strcmp(token, "info") == 0)
             {
                 printNRFStats();
+                printNRFStatus(nrfGetStatus());
             }
 
             if (strcmp(token, "help") == 0)
@@ -280,12 +277,12 @@ int main(void)
     // Init timer
     initTimer();
 
+    waitMicrosecond(500e3);
     initNrf();
-//    printNRFStats();
+    waitMicrosecond(500e3);
 
     // test NRF connection
-    nrfSetPowerUp(true);
-    while(nrfTestSPI()){
+    while(!nrfTestSPI()){
         setPinValue(RED_LED, 1);
         setPinValue(GREEN_LED, 0);
         waitMicrosecond(100e3);
@@ -293,9 +290,30 @@ int main(void)
         setPinValue(GREEN_LED, 1);
         waitMicrosecond(100e3);
     }
-    nrfSetPowerUp(false);
 
     //---init nrf------------------------------------------------
+    nrfSetCRCEnable(false);
+    nrfSetCRCUse2B(false);
+
+    {
+        uint8_t feature = BV(0);
+        nrfWriteRegister(NRF_REG_FEATURE_ADDR, &feature, sizeof(feature));
+    }
+
+//    nrfSetOutputPower(NRF_OUTPUT_POWER_0dBm);
+//    nrfSetDataRate(NRF_DATARATE_2Mbps);
+//    nrfSetChannel(10);
+//    nrfSetAutoRetransmitTries(0);
+//    nrfSetEnableAutoAck((NRFPipes){0});
+
+//    NRFPipes pipe0 = {.EN_RXADDR_DATAPIPE_0 = true};
+//    NRFPipes pipe3 = {.EN_RXADDR_DATAPIPE_3 = true};
+//    uint8_t addr[] = {1,2,3,4,5};
+//    nrfSetEnableRXAddr(pipe0);
+//    nrfSetAddressWidths(NRF_ADDR_WIDTH_5B);
+//    nrfSetRxAddrLSBOfPipe(pipe3, 0x44);
+//    nrfSetRxAddrOfPipe1(addr, 5);
+//    nrfSetTXAddr(addr, 5);
 
     putsUart0("\n\rCSE4352 spring2025 project 2 team 14. N24L01+ RF transceiver demo\n\r");
 
@@ -335,7 +353,7 @@ void printNRFStats(){
         }
     }
     NRFFIFOStatus fifostatus;
-    nrfReadRegister(NRF_REG_FIFO_STATUS_ADDR, &fifostatus.raw, sizeof(fifostatus));
+    nrfGetFIFOStatus(&fifostatus);
 
     if(fifostatus.RX_EMPTY){
         putsUart0("rx empty\n\r");
@@ -344,7 +362,6 @@ void printNRFStats(){
         putsUart0("rx full\n\r\t");
         nrfPacketBase pkt;
         nrfReadRXPayload(pkt.rawArr, sizeof(pkt));
-        nrfFlushRXFIFO();
         for(int i = 0; i < sizeof(pkt); i++){
             static char str[20];
             snprintf(str,sizeof(str), "%02x ",pkt.rawArr[i]);
@@ -368,28 +385,33 @@ void printNRFStats(){
     if(!fifostatus.TX_EMPTY && !fifostatus.TX_FULL)
         putsUart0("tx partially full\n\r");
 
-    if(nrfIsReceivedPowerDetected()){
-           putsUart0("carrier wave detected\n\r");
-        } else
-            putsUart0("carrier wave NOT detected\n\r");
-
     {// print TX & rx addrs
         static char str[40];
         uint8_t addr[5];
 
-        nrfReadRegister(NRF_REG_TX_ADDR_ADDR, addr, 5);
+        nrfReadRegister(NRF_REG_TX_ADDR_ADDR, addr, nrfGetAddrWidth());
         putsUart0("TX addr: ");
-        for(int i = 0; i < sizeof(addr); i++){
+        for(int i = 0; i < nrfGetAddrWidth(); i++){
             snprintf(str,sizeof(str), "%02x ", addr[i]);
             putsUart0(str);
         }
         putsUart0("\n\r");
 
-        for(int i = 0; i <=5; i++){
+        for(int i = 0; i <=nrfGetAddrWidth(); i++){
             snprintf(str, sizeof(str), "RX p%d addr: ", i);
             putsUart0(str);
-            int len = (i == 0) ? 5 : 1;
+
+            int len;
+            switch(i){
+                case 0:
+                case 1:
+                    len = nrfGetAddrWidth();
+                    break;
+                default:
+                    len = 1;
+            }
             nrfReadRegister(NRF_REG_RX_ADDR_P0_ADDR+i, addr, len);
+
             for(int i = 0; i < len; i++){
                 snprintf(str, sizeof(str), "%02x ", addr[i]);
                 putsUart0(str);
@@ -469,8 +491,22 @@ void printFIFORX(){
 
     if(!fifostatus.RX_EMPTY && !fifostatus.RX_FULL){
         putsUart0("rx partially full\n\r");
-        printNRFStatus(nrfGetStatus());
     }
+
+//    if(!fifostatus.RX_EMPTY){
+//        uint8_t fifocount;
+//        nrfGetPipeFIFOCount((NRFPipes){NRF_DATAPIPE_0}, &fifocount);
+//        nrfPacketBase pkt;
+//        nrfReadRXPayload(pkt.rawArr, fifocount);
+//        for(int i = 0; i < fifocount; i++){
+//            static char str[20];
+//            snprintf(str,sizeof(str), "%02x ",pkt.rawArr[i]);
+//            putsUart0(str);
+//        }
+//        putsUart0("\n\r");
+//    }
+
+    printNRFStatus(nrfGetStatus());
 }
 
 void printFIFOTX(){
@@ -489,6 +525,7 @@ void printFIFOTX(){
 
     if(!fifostatus.TX_EMPTY && !fifostatus.TX_FULL){
         putsUart0("tx partially full\n\r");
-        printNRFStatus(nrfGetStatus());
     }
+
+    printNRFStatus(nrfGetStatus());
 }

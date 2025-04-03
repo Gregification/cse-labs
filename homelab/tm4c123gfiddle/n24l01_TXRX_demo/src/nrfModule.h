@@ -235,9 +235,9 @@ NRFStatus nrfGetEnableRXAddr(NRFPipes * pipes);
 NRFStatus nrfSetEnableDynamicPayloadLength(NRFPipes pipes);
 NRFStatus nrfGetLostPacketCount(NRFTxMeta *);
 NRFStatus nrfSetRxAddrLSBOfPipe(NRFPipes, uint8_t lsb);
-NRFStatus nrfSetRxAddrOfPipe1(uint8_t [5]);
-NRFStatus nrfSetRxAddrOfPipe0(uint8_t [5]);
-NRFStatus nrfSetTXAddr(uint8_t [5]);
+NRFStatus nrfSetRxAddrOfPipe1(uint8_t *, uint8_t len);
+NRFStatus nrfSetRxAddrOfPipe0(uint8_t *, uint8_t len);
+NRFStatus nrfSetTXAddr(uint8_t *, uint8_t len);
 NRFStatus nrfGetPipeFIFOCount(NRFPipes pipe, uint8_t * out);
 NRFStatus nrfSetCRCEnable(bool);
 NRFStatus nrfSetForcePLLLock(bool);
@@ -245,7 +245,14 @@ NRFStatus nrfSetEnableAutoAck(NRFPipes pipes);
 NRFStatus nrfSetRXPipePayloadWidth(NRFPipes pipes, uint8_t width);
 NRFStatus nrfSetCRCUse2B(bool);
 uint8_t nrfGetRXPayloadWidth();
+NRFStatus nrfGetFIFOStatus(NRFFIFOStatus * out);
 
+uint8_t nrfGetAddrWidth();
+
+bool nrfIsPowerEnable();
+
+/**returns true is SPI read write successful
+ */
 bool nrfTestSPI();
 
 typedef enum {
