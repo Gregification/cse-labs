@@ -155,17 +155,6 @@ module lab7(
         .probe29(_rv32_id_top.jump_addr_out) // input wire [31:0]  probe29
     );
 
-    assign is_ebreak = _rv32_if_top.memif_data == 32'h00100073;
-    reg ebreak_latch;
-    initial ebreak_latch = 0;
-
-    always @(posedge `CLK_PIPELINE) begin
-        if(reset)
-            ebreak_latch <= 0;
-        if(is_ebreak)
-            ebreak_latch <= 1;
-    end
-
     //---dual port memory---------------------------------------------------
     
     dual_port_ram _dual_port_ram (
@@ -210,20 +199,24 @@ module lab7(
 
     rv32_if_top _rv32_if_top (
         .clk(`CLK_PIPELINE),
-        .reset(reset || ebreak_latch),
+        .reset(reset),
 
         // memory interface
         // output [31:2] memif_addr,
-        .memif_data(_dual_port_ram.i_rdata) // in
+        .memif_data(_dual_port_ram.i_rdata), // in
 
         // to id
         // output reg [31:0] pc_out,
         // output [31:0] iw_out
+
+        // from id
+        .jump_enable_in(_rv32_id_top.jump_enable_out),
+        .jump_addr_in(_rv32_id_top.jump_addr_out)
     );
 
     rv32_id_top _rv32_id_top (
         .clk(`CLK_PIPELINE),
-        .reset(reset || ebreak_latch),
+        .reset(reset),
 
         // from if
         .pc_in(_rv32_if_top.pc_out),
@@ -243,7 +236,7 @@ module lab7(
 
         // df from ex
         .df_ex_wb_reg(_rv32_ex_top.wb_reg_out),
-        .df_ex_wb_data(_rv32_ex_top.alu_raw),
+        .df_ex_wb_data(_rv32_ex_top.alu_out),
         .df_ex_wb_enable(_rv32_ex_top.wb_enable_out),
         
         // df from mem

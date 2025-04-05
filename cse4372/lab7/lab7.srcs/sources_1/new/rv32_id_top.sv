@@ -58,14 +58,17 @@ module rv32_id_top(
         output reg [31:0] regif_rs1_data_out,
         output reg [31:0] regif_rs2_data_out,
 
-        // to id : regarding pc jumping
+        // to if : regarding pc jumping
         output reg jump_enable_out,
         output reg [31:0] jump_addr_out
     );
 
     assign regif_rs1_reg = iw_in[19:15];
     assign regif_rs2_reg = iw_in[24:20];
-    
+
+    reg ebreak_latch;
+    initial ebreak_latch = 0;
+
     reg [31:0] regif_rs1_data;
     reg [31:0] regif_rs2_data;
 
@@ -73,12 +76,12 @@ module rv32_id_top(
     wire    [2:0]  funct3  = iw_in[14:12];
     wire    [4:0]  rs1     = iw_in[19:15];
     wire    [4:0]  rs2     = iw_in[24:20];
-    wire    [31:0] i_B     = {{19{iw_in[31]}}, iw_in[31], iw_in[7], iw_in[30:25], iw_in[11:8], 1'b0};
+    wire    [31:0] i_B     = {{21{iw_in[31]}}, iw_in[31], iw_in[7], iw_in[30:25], iw_in[11:8]};
     wire    [31:0] i_I     = {{20{iw_in[31]}}, iw_in[31:20]};
-    wire    [31:0] i_J     = {{11{iw_in[31]}}, iw_in[31], iw_in[19:12], iw_in[20], iw_in[30:21], 1'b0};
+    wire    [31:0] i_J     = {{12{iw_in[31]}}, iw_in[31], iw_in[19:12], iw_in[20], iw_in[30:21]};
 
     always_ff @ (posedge clk) begin
-        if(reset) begin
+        if(reset || ebreak_latch) begin
             pc_out <= `PC_RESET;
             iw_out <= `IW_RESET;
 
@@ -90,106 +93,124 @@ module rv32_id_top(
 
             jump_enable_out <= 0;
             jump_addr_out <= 0;
+
+            ebreak_latch <= 0;
         end else begin
             pc_out <= pc_in;
-            iw_out <= iw_in;
-
-            wb_reg_out      <= iw_in[11:7];
-            wb_enable_out   <= 
-                   (    opcode == 7'b0110011    // R type : orange
-                    ||  opcode == 7'b0000011    // I type subsection : dull red
-                    ||  opcode == 7'b0010011    // ^ : yellow
-                    ||  opcode == 7'b0110111    // U type : dull blue
-                    ||  opcode == 7'b0010111    // U type : dark green
-                   )
-                    && (iw_in[11:7] != 0)
-                ;
-
-            regif_rs1_data_out <= regif_rs1_data;
-            regif_rs2_data_out <= regif_rs2_data;
 
             jump_enable_out <= 0;
-            case (opcode)
+            if(jump_enable_out) begin // if is bad instruction
+                // replace with nop
+                iw_out <= `NOP_IW;
 
-                // 7'b1110011: begin // I type : gray
-                //     if(iw_in[20]) begin
-                //         // ECALL     //TODO
-                //     end else begin
-                //         // EBREAK    //TODO
-                //     end
-                // end // I type : gray
+                wb_reg_out      <= 0;
+                wb_enable_out   <= 0;
 
-                7'b1100111: begin // I type : dull blue
-                    // JALR : jump to address relative to register value
-                    jump_enable_out <= 1;
+                regif_rs1_data_out <= 0;
+                regif_rs2_data_out <= 0;
 
-                    // in ex
-                    // rd <- pc + 4
+                jump_addr_out <= 0;
+            end else begin
 
-                    // pc ← rs1+signex(i[11:0]) (zero lsb)
-                    jump_addr_out[31:1] <= $signed(i_I) + regif_rs1_data;
-                    jump_addr_out[0] <= 0;
-                end // I type : dull blue
-        
-                7'b1101111: begin // J type : ilme green
-                    // JAL : jump to address relative to PC
-                    jump_enable_out <= 1;
+                iw_out <= iw_in;
 
-                    // in ex
-                    // rd <- pc + 4
+                wb_reg_out      <= iw_in[11:7];
+                wb_enable_out   <= 
+                    (    opcode == 7'b0110011    // R type : orange
+                        ||  opcode == 7'b0000011    // I type subsection : dull red
+                        ||  opcode == 7'b0010011    // ^ : yellow
+                        ||  opcode == 7'b0110111    // U type : dull blue
+                        ||  opcode == 7'b0010111    // U type : dark green
+                    )
+                        && (iw_in[11:7] != 0)
+                    ;
 
-                    // pc ← pc+2*signex(i[20:1])
-                    jump_addr_out <= pc_in + 2 * $signed(i_J); 
-                end // J type : ilme green
+                regif_rs1_data_out <= regif_rs1_data;
+                regif_rs2_data_out <= regif_rs2_data;
                 
+                case (opcode)
 
-                7'b1100011: begin // B type : white
-                    case (funct3)
-                        3'b000: // BEQ   //TODO
-                            if($signed(regif_rs1_data) == $signed(regif_rs2_data)) begin
-                                jump_enable_out <= 1;
-                                // pc←pc + 2*signex(i[12:1])
-                                jump_addr_out <= pc_in + 2 * $signed(i_B);
-                            end
+                    7'b1110011: begin // I type : gray
+                        if(iw_in[20]) begin
+                            // ECALL     //TODO
+                        end else begin
+                            // EBREAK
+                            // iw_in == 32'h00100073
+                            ebreak_latch <= 1;
+                        end
+                    end // I type : gray
 
-                        3'b001: // BNE   //TODO
-                            if($signed(regif_rs1_data) != $signed(regif_rs2_data)) begin
-                                jump_enable_out <= 1;
-                                // pc←pc + 2*signex(i[12:1])
-                                jump_addr_out <= pc_in + 2 * $signed(i_B);
-                            end
+                    7'b1100111: begin // I type : dull blue
+                        // JALR : jump to address relative to register value
+                        jump_enable_out <= 1;
 
-                        3'b100: // BLT   //TODO
-                            if($signed(regif_rs1_data) < $signed(regif_rs2_data)) begin
-                                jump_enable_out <= 1;
-                                // pc←pc + 2*signex(i[12:1])
-                                jump_addr_out <= pc_in + 2 * $signed(i_B);
-                            end
+                        // in ex
+                        // rd <- pc + 4
 
-                        3'b101: // BGE   //TODO
-                            if($signed(regif_rs1_data) >= $signed(regif_rs2_data)) begin
-                                jump_enable_out <= 1;
-                                // pc←pc + 2*signex(i[12:1])
-                                jump_addr_out <= pc_in + 2 * $signed(i_B);
-                            end
+                        // pc ← rs1+signex(i[11:0]) (zero lsb)
+                        jump_addr_out[31:1] <= $signed(i_I) + regif_rs1_data;
+                        jump_addr_out[0] <= 0;
+                    end // I type : dull blue
+            
+                    7'b1101111: begin // J type : ilme green
+                        // JAL : jump to address relative to PC
+                        jump_enable_out <= 1;
 
-                        3'b110: // BLTU  //TODO
-                            if($unsigned(regif_rs1_data) < $unsigned(regif_rs2_data)) begin
-                                jump_enable_out <= 1;
-                                // pc←pc + 2*signex(i[12:1])
-                                jump_addr_out <= pc_in + 2 * $signed(i_B);
-                            end
+                        // in ex
+                        // rd <- pc + 4
 
-                        3'b111: // BGEU  //TODO
-                            if($unsigned(regif_rs1_data) >= $unsigned(regif_rs2_data)) begin
-                                jump_enable_out <= 1;
-                                // pc←pc + 2*signex(i[12:1])
-                                jump_addr_out <= pc_in + 2 * $signed(i_B);
-                            end
-                    endcase // funct3
-                end // B type : white
+                        // pc ← pc+2*signex(i[20:1])
+                        jump_addr_out <= pc_in + 2 * $signed(i_J); 
+                    end // J type : ilme green
+                    
 
-            endcase // opcode
+                    7'b1100011: begin // B type : white
+                        case (funct3)
+                            3'b000: // BEQ
+                                if($signed(regif_rs1_data) == $signed(regif_rs2_data)) begin
+                                    jump_enable_out <= 1;
+                                    // pc←pc + 2*signex(i[12:1])
+                                    jump_addr_out <= pc_in + 2 * $signed(i_B);
+                                end
+
+                            3'b001: // BNE
+                                if($signed(regif_rs1_data) != $signed(regif_rs2_data)) begin
+                                    jump_enable_out <= 1;
+                                    // pc←pc + 2*signex(i[12:1])
+                                    jump_addr_out <= pc_in + 2 * $signed(i_B);
+                                end
+
+                            3'b100: // BLT
+                                if($signed(regif_rs1_data) < $signed(regif_rs2_data)) begin
+                                    jump_enable_out <= 1;
+                                    // pc←pc + 2*signex(i[12:1])
+                                    jump_addr_out <= pc_in + 2 * $signed(i_B);
+                                end
+
+                            3'b101: // BGE
+                                if($signed(regif_rs1_data) >= $signed(regif_rs2_data)) begin
+                                    jump_enable_out <= 1;
+                                    // pc←pc + 2*signex(i[12:1])
+                                    jump_addr_out <= pc_in + 2 * $signed(i_B);
+                                end
+
+                            3'b110: // BLTU
+                                if($unsigned(regif_rs1_data) < $unsigned(regif_rs2_data)) begin
+                                    jump_enable_out <= 1;
+                                    // pc←pc + 2*signex(i[12:1])
+                                    jump_addr_out <= pc_in + 2 * $signed(i_B);
+                                end
+
+                            3'b111: // BGEU
+                                if($unsigned(regif_rs1_data) >= $unsigned(regif_rs2_data)) begin
+                                    jump_enable_out <= 1;
+                                    // pc←pc + 2*signex(i[12:1])
+                                    jump_addr_out <= pc_in + 2 * $signed(i_B);
+                                end
+                        endcase // funct3
+                    end // B type : white
+                endcase // opcode
+            end
         end
     end
 

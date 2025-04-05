@@ -35,7 +35,7 @@ module rv32_ex_top(
         input wb_enable_in,
 
         //to id
-        output [31:0] alu_raw,
+        // output [31:0] alu_raw,
 
         // to mem
         output reg [31:0] pc_out,

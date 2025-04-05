@@ -15,17 +15,17 @@ _start:
 
 	addi t2, x0, 4 # number of itterations
 
-	jalr t3, t1, 7
-	
-	ebreak
-
 itterate:
 	
 	addi t0, t0, 1 # itterate
 
 	slli t1, t1, 1 # do something
 
-	bne t0, t2, itterate
+	bne t2, t0, itterate
+
+	ebreak
+
+	ebreak
 
 	ebreak
 
