@@ -25,7 +25,7 @@ void initNrf(){
     setSpi0Mode(0, 0);
 
     enablePort(PORTE);
-    selectPinAnalogInput(NRF_IRQ_PIN);
+    selectPinDigitalInput(NRF_IRQ_PIN);
     selectPinPushPullOutput(NRF_CE_PIN);
 
     selectPinPushPullOutput(NRF_SPI_CS);
@@ -33,15 +33,17 @@ void initNrf(){
     setPinValue(NRF_SPI_CS, !NRF_SPI_CS_ACTIVE);
     setPinValue(NRF_CE_PIN, 0);
 
-    waitMicrosecond(300e3);
-
+    nrfSetPowerUp(true);
     nrfSetChipEnable(false);
-    waitMicrosecond(300e3);
-    nrfSetPowerUp(false);
-    waitMicrosecond(300e3);
-
+    nrfSetCRCEnable(false);
+    nrfSetCRCUse2B(false);
     nrfSetForcePLLLock(false);
     nrfSetContCarriTransmit(false);
+
+    {
+        uint8_t feature = BV(0);
+        nrfWriteRegister(NRF_REG_FEATURE_ADDR, &feature, sizeof(feature));
+    }
 }
 
 NRFStatus nrfGetStatus(){
@@ -94,29 +96,24 @@ bool nrfIsPowerEnable(){
 }
 
 bool nrfTestSPI(){
-    bool pe = nrfIsPowerEnable();
 
-//    nrfSetChipEnable(false);
-//    nrfSetPowerUp(false);
-//
-//    nrfSetAddressWidths(NRF_ADDR_WIDTH_5B);
-//
-//    uint8_t og[5];
-//    nrfReadRegister(NRF_REG_TX_ADDR_ADDR, og, sizeof(og));
-//
-//    uint8_t testW[5] = {7, 7, 7, 7, 7};
-//    nrfWriteRegister(NRF_REG_TX_ADDR_ADDR, testW, sizeof(testW));
-//
-//    uint8_t testR[5];
-//    nrfReadRegister(NRF_REG_TX_ADDR_ADDR, testR, sizeof(testR));
-//
-//    nrfWriteRegister(NRF_REG_TX_ADDR_ADDR, og, sizeof(og));
-//
-//    nrfSetPowerUp(pe);
-//
-//    for(uint8_t i = 0; i < sizeof(testW); i++)
-//        if(testR[i] != testW[i])
-//            return false;
+    nrfSetAddressWidths(NRF_ADDR_WIDTH_5B);
+
+    uint8_t original[5];
+    nrfReadRegister(NRF_REG_TX_ADDR_ADDR, original, sizeof(original));
+
+    uint8_t testW[5] = {7, 7, 7, 7, 7};
+    nrfSetTXAddr(testW, 5);
+
+    uint8_t testR[5];
+    nrfReadRegister(NRF_REG_TX_ADDR_ADDR, testR, sizeof(testR));
+
+    nrfWriteRegister(NRF_REG_TX_ADDR_ADDR, original, sizeof(original));
+
+    // check read vs written
+    for(uint8_t i = 0; i < sizeof(testW); i++)
+        if(testR[i] != testW[i])
+            return false;
 
     return true;
 }
@@ -356,8 +353,8 @@ NRFStatus nrfReadRXPayload(uint8_t * out, uint8_t len){
 
 NRFStatus nrfWriteTXPayload(uint8_t const * in, uint8_t len){
     NRFStatus ret;
-//    uint8_t cmd = 0xB0; // 0b1011_0000 , write tx payload no ack
-    uint8_t cmd = 0xA0; // 0b1010_0000 , write tx payload
+    uint8_t cmd = 0xB0; // 0b1011_0000 , write tx payload no ack
+//    uint8_t cmd = 0xA0; // 0b1010_0000 , write tx payload
     ret = nrfTransferOpen(&cmd, NULL, 1);
 
     nrfTransferClosed(in, NULL, len);
@@ -396,6 +393,15 @@ uint8_t nrfGetRXPayloadWidth(){
 
 NRFStatus nrfGetFIFOStatus(NRFFIFOStatus * out){
     return nrfReadRegister(NRF_REG_FIFO_STATUS_ADDR, &(out->raw), sizeof(NRFFIFOStatus));
+}
+
+NRFStatus nrfClearIRQ(){
+    NRFStatus status = {
+        .MAX_RT = true,
+        .RX_DATAREADY = true,
+        .TX_DATASENT = true,
+    };
+    return nrfWriteRegister(NRF_REG_STATUS_ADDR, &status.raw, sizeof(status));
 }
 
 uint8_t nrfGetAddrWidth(){
@@ -456,28 +462,18 @@ NRFStatus nrfTransfer(uint8_t const * tx, uint8_t * rx, uint32_t len){
 NRFStatus nrfTransferOpen(uint8_t const * tx, uint8_t * rx, uint32_t len){
     NRFStatus ret;
     setPinValue(NRF_SPI_CS, NRF_SPI_CS_ACTIVE);
-    waitMicrosecond(10);
 
-    if(tx && rx){
-        for(uint32_t i = 0; i < len; i++){
-            writeSpi0Data(tx[i]);
+    for(uint32_t i = 0; i < len; i++){
+        writeSpi0Data(tx ? tx[i] : 0);
+
+        if(rx)
             rx[i] = readSpi0Data();
-        }
-        ret = ((NRFStatus *)rx)[0];
+        else
+            readSpi0Data();
     }
-    else if(tx)
-        for(uint32_t i = 0; i < len; i++){
-            writeSpi0Data(tx[i]);
-            if(i == 0)
-                ret = (NRFStatus)(uint8_t)readSpi0Data();
-        }
-    else if(rx){
-        for(uint32_t i = 0; i < len; i++){
-            writeSpi0Data(0);
-            rx[i] = readSpi0Data();
-        }
+
+    if(rx);
         ret = ((NRFStatus *)rx)[0];
-    }
 
     return ret;
 }
@@ -485,7 +481,7 @@ NRFStatus nrfTransferOpen(uint8_t const * tx, uint8_t * rx, uint32_t len){
 void nrfTransferClosed(uint8_t const * tx, uint8_t * rx, uint32_t len){
     nrfTransferOpen(tx,rx,len);
 
-    waitMicrosecond(10);
+    waitMicrosecond(2);
     setPinValue(NRF_SPI_CS, !NRF_SPI_CS_ACTIVE);
 }
 

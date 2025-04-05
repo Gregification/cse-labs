@@ -245,6 +245,7 @@ NRFStatus nrfSetRXPipePayloadWidth(NRFPipes pipes, uint8_t width);
 NRFStatus nrfSetCRCUse2B(bool);
 uint8_t nrfGetRXPayloadWidth();
 NRFStatus nrfGetFIFOStatus(NRFFIFOStatus * out);
+NRFStatus nrfClearIRQ();
 
 uint8_t nrfGetAddrWidth();
 
