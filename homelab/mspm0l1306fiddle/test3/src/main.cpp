@@ -7,6 +7,8 @@
 #include <cstdio> // snprintf
 #include <inttypes.h>// len safe prints
 
+#include "FatFs/FatFs.hpp"
+
 #define BV(X) (1 << (X))
 
 void ex_gpio();
@@ -35,8 +37,8 @@ int main(void)
 //    ex_gpio();
 //    ex_uart();
 //    ex_spi();
-   ex_single_adc_to_uart(); // funny thing, on the LP ADC channel 0 (PA27) is tied to a LED, you can see the ADC respond to changing brightness levels exposed to the unpowered LED.
-    // ex_multi_adc_to_uart();
+//   ex_single_adc_to_uart(); // funny thing, on the LP ADC channel 0 (PA27) is tied to a LED, you can see the ADC respond to changing brightness levels exposed to the unpowered LED.
+     ex_multi_adc_to_uart();
 }
 
 void ex_gpio(){
