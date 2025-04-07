@@ -7,11 +7,10 @@
 #include <cstdio> // snprintf
 #include <inttypes.h>// len safe prints
 
-#include "FatFs/FatFs.hpp"
-
 #define BV(X) (1 << (X))
 
 void ex_gpio();
+void ex_spi();
 void ex_uart();
 void ex_single_adc_to_uart();
 void ex_multi_adc_to_uart();
@@ -36,9 +35,9 @@ int main(void)
 
 //    ex_gpio();
 //    ex_uart();
-//    ex_spi();
+    ex_spi();
 //   ex_single_adc_to_uart(); // funny thing, on the LP ADC channel 0 (PA27) is tied to a LED, you can see the ADC respond to changing brightness levels exposed to the unpowered LED.
-     ex_multi_adc_to_uart();
+//     ex_multi_adc_to_uart();
 }
 
 void ex_gpio(){
@@ -168,7 +167,7 @@ void ex_spi(){
     };
     DL_SPI_ClockConfig clkconfig = {
         .clockSel       = DL_SPI_CLOCK_BUSCLK,
-        .divideRatio    = DL_SPI_CLOCK_DIVIDE_RATIO_2
+        .divideRatio    = DL_SPI_CLOCK_DIVIDE_RATIO_1
     };
 
     DL_SPI_disable(SPI0);
@@ -180,12 +179,17 @@ void ex_spi(){
 
     DL_SPI_setBitRateSerialClockDivider(SPI0, 1);
 
-    uint8_t data[] = {BV(0),BV(1),BV(2)};
+    uint8_t data[10];
+    for(int i = 0; i < sizeof(data); i++){
+        data[i] = BV(i%8) + BV(0);
+    }
 
     for(uint32_t i = 0; i < sizeof(data);){
         // depending on the spi m/s mode, this either transmits or just fills the fifo
         // assuming controller mode: the CS will remain active until FIFO is emptied,
         //      or maybe it wont. for the love of god see the wave form on the scope, its like a 50/50 chance CS resets itself
+        //  - as it is right now, CLK and CS are idle high, and CS is low for the entirety of the data transmit
+        //  - transition on falling edge, sample on rising edge
         // if PH is 1 then CS wont toggle between bytes
         i += DL_SPI_fillTXFIFO8(SPI0, data + i, sizeof(data) - i);
     }
