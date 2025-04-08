@@ -41,7 +41,7 @@ module rv32_ex_top(
         output reg [31:0] pc_out,
         output reg [31:0] iw_out,
         output reg [31:0] alu_out,
-        output reg [3:0] wb_reg_out,
+        output reg [4:0] wb_reg_out,
         output reg wb_enable_out
     );
 

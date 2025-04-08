@@ -167,9 +167,13 @@ void processShell()
                     NRFStatus status = nrfGetStatus();
                     printNRFStatus(status);
 
+                    nrfSetChipEnable(false);
+                    waitMicrosecond(10);
                     NRFFIFOStatus fifostatus;
                     nrfReadRegister(NRF_REG_FIFO_STATUS_ADDR, &fifostatus.raw, sizeof(fifostatus));
                     printFIFO(fifostatus);
+                    nrfSetChipEnable(true);
+                    waitMicrosecond(10);
 
                     if(nrfIsIRQing()){
                         nrfClearIRQ();

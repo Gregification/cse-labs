@@ -31,7 +31,7 @@ module rv32_if_top(
         input reset,
 
         // memory interface
-        output [31:2] memif_addr,
+        output wire [31:2] memif_addr,
         input [31:0] memif_data,
 
         // to id

@@ -76,7 +76,7 @@ module lab7(
     reg     [31:0]  clk_ladder = 0;
         `define CLK_ILA CLK100
         `define CLK_PIPELINE CLK100
-        `define CLK_IO CLK100
+        `define CLK_IO clk_ladder[10]
 
     always_ff @ (posedge clk)
         clk_ladder <= clk_ladder + 1;
@@ -102,8 +102,6 @@ module lab7(
     assign reset = btns[0];
 
     //---ILA----------------------------------------------------------------
-
-    reg is_ebreak;
 
     ila_0 your_instance_name (
         .clk(`CLK_ILA), // input wire clk
@@ -147,7 +145,7 @@ module lab7(
         .probe23(_rv32_wb_top.regif_wb_enable), // input wire [0:0]  probe23
         .probe24(_rv32_wb_top.regif_wb_reg), // input wire [4:0]  probe24
         .probe25(_rv32_wb_top.regif_wb_data), // input wire [31:0]  probe25
-        .probe26(reset), // input wire [0:0]  probe26
+        .probe26(0), // input wire [0:0]  probe26
         .probe27(_rv32_if_top.reset), // input wire [0:0]  probe27
 
         // jump information
@@ -236,17 +234,17 @@ module lab7(
 
         // df from ex
         .df_ex_wb_reg(_rv32_ex_top.wb_reg_out),
-        .df_ex_wb_data(_rv32_ex_top.alu_out),
+        .df_ex_wb_data(_rv32_ex_top.alu_raw),
         .df_ex_wb_enable(_rv32_ex_top.wb_enable_out),
         
         // df from mem
         .df_mem_wb_reg(_rv32_mem_top.wb_reg_out),
-        .df_mem_wb_data(_rv32_mem_top.alu_out),
+        .df_mem_wb_data(_rv32_mem_top.alu_in),
         .df_mem_wb_enable(_rv32_mem_top.wb_enable_out),
 
         // df from wb
         .df_wb_wb_reg(_rv32_wb_top.regif_wb_reg),
-        .df_wb_wb_data(_rv32_wb_top.regif_wb_data),
+        .df_wb_wb_data(_rv32_wb_top.alu_in),
         .df_wb_wb_enable(_rv32_wb_top.regif_wb_enable)
 
         // to id : regarding pc jumping
