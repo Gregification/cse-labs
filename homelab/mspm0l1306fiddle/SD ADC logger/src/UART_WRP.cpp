@@ -11,18 +11,13 @@
 #include "UART_WRP.hpp"
 
 UART_WRP::UART_WRP(UART_Regs * reg) : uart_reg(reg) {
-
+    init();
 }
 
 void UART_WRP::init(){
     DL_UART_reset(uart_reg);
     DL_UART_enablePower(uart_reg);
     delay_cycles(16);
-
-    // init gpio alt function
-    //      - IOMUX values can be found on table 6-1. pg.8 of family documentation
-    DL_GPIO_initPeripheralInputFunction(IOMUX_PINCM::IOMUX_PINCM10, IOMUX_PINCM10_PF_UART0_RX);
-    DL_GPIO_initPeripheralOutputFunction(IOMUX_PINCM::IOMUX_PINCM9, IOMUX_PINCM9_PF_UART0_TX);
 
     // init uart0
     DL_UART_ClockConfig clkconf = {

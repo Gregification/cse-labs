@@ -353,8 +353,8 @@ NRFStatus nrfReadRXPayload(uint8_t * out, uint8_t len){
 
 NRFStatus nrfWriteTXPayload(uint8_t const * in, uint8_t len){
     NRFStatus ret;
-    uint8_t cmd = 0xB0; // 0b1011_0000 , write tx payload no ack
-//    uint8_t cmd = 0xA0; // 0b1010_0000 , write tx payload
+//    uint8_t cmd = 0xB0; // 0b1011_0000 , write tx payload no ack
+    uint8_t cmd = 0xA0; // 0b1010_0000 , write tx payload
     ret = nrfTransferOpen(&cmd, NULL, 1);
 
     nrfTransferClosed(in, NULL, len);
@@ -481,7 +481,6 @@ NRFStatus nrfTransferOpen(uint8_t const * tx, uint8_t * rx, uint32_t len){
 void nrfTransferClosed(uint8_t const * tx, uint8_t * rx, uint32_t len){
     nrfTransferOpen(tx,rx,len);
 
-    waitMicrosecond(2);
     setPinValue(NRF_SPI_CS, !NRF_SPI_CS_ACTIVE);
 }
 

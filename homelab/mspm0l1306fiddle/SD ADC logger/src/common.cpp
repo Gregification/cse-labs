@@ -17,35 +17,12 @@ void common::init(){
 
     // brown-out settings
     // level meanings: 0:1V62, 1:2V23, 2:2V82, 3:2V95 . (see 7.6.1 of )
-    DL_SYSCTL_setBORThreshold(DL_SYSCTL_BOR_THRESHOLD_LEVEL_0);
-//    DL_SYSCTL_activateBORThreshold();
+    // i don't see anything in the data sheet about min-voltage levels for certain clock speeds
+    DL_SYSCTL_setBORThreshold(DL_SYSCTL_BOR_THRESHOLD_LEVEL_2);
+    DL_SYSCTL_activateBORThreshold();
 
     // enable GPIOA
-//    DL_GPIO_reset(GPIOA);
-//    DL_GPIO_enablePower(GPIOA);
-//    delay_cycles(16);
-}
-
-void common::crc::initCRC(){
-    if(DL_CRC_isPowerEnabled(CRC)){
-        DL_CRC_disablePower(CRC);
-    }
-
-    DL_CRC_reset(CRC);
-    DL_CRC_enablePower(CRC);
+    DL_GPIO_reset(GPIOA);
+    DL_GPIO_enablePower(GPIOA);
     delay_cycles(POWER_STARTUP_DELAY);
-}
-
-//TODO test
-uint8_t common::crc::calcCRC7(uint8_t seed, uint8_t * data, uint32_t len){
-    const unsigned int poly = 0b100110001;
-
-    while(len-- > 0){
-        seed ^= data++[0];
-        seed <<= 1;
-        if(seed & BV(8))
-            seed ^= poly << 1;
-    }
-
-    return 0;
 }

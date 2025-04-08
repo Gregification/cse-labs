@@ -74,9 +74,9 @@ module lab7(
 
     wire            clk = CLK100;
     reg     [31:0]  clk_ladder = 0;
-        `define CLK_ILA clk
-        `define CLK_PIPELINE clk_ladder[0]
-        `define CLK_IO clk_ladder[15]
+        `define CLK_ILA CLK100
+        `define CLK_PIPELINE CLK100
+        `define CLK_IO CLK100
 
     always_ff @ (posedge clk)
         clk_ladder <= clk_ladder + 1;
@@ -109,7 +109,7 @@ module lab7(
         .clk(`CLK_ILA), // input wire clk
 
         // reset <1->0> used as trigger 
-        .probe0(`CLK_PIPELINE), // input wire [0:0]  probe0  
+        .probe0(0), // input wire [0:0]  probe0  
         .probe1(reset), // input wire [0:0]  probe1 
         
         // if_top

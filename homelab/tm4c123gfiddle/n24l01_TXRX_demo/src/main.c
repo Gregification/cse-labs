@@ -136,15 +136,13 @@ void processShell()
 
                 nrfSetPowerUp(true);
 
-                nrfSetEnableAutoAck((NRFPipes){0});
-
                 nrfSetEnableRXAddr((NRFPipes){NRF_DATAPIPE_1});
                 nrfSetAddressWidths(NRF_ADDR_WIDTH_5B);
                 nrfSetRxAddrOfPipe1(RXADDR, 5);
 
                 nrfSetChannel(NRF_F_CHANNEL);
 
-                nrfSetDataRate(NRF_DATARATE_250kbps);
+                nrfSetDataRate(NRF_DATARATE_1Mbps);
 
                 nrfSetRXPipePayloadWidth((NRFPipes){NRF_DATAPIPE_1}, sizeof(nrfPacketBase)); // pipe width of 32B
 
@@ -169,14 +167,12 @@ void processShell()
                     NRFStatus status = nrfGetStatus();
                     printNRFStatus(status);
 
-                    nrfFlushRXFIFO();
+                    NRFFIFOStatus fifostatus;
+                    nrfReadRegister(NRF_REG_FIFO_STATUS_ADDR, &fifostatus.raw, sizeof(fifostatus));
+                    printFIFO(fifostatus);
 
                     if(nrfIsIRQing()){
                         nrfClearIRQ();
-
-                        NRFFIFOStatus fifostatus;
-                        nrfReadRegister(NRF_REG_FIFO_STATUS_ADDR, &fifostatus.raw, sizeof(fifostatus));
-                        printFIFO(fifostatus);
 
                         if(status.RX_DATAREADY || status.MAX_RT){
 
@@ -238,22 +234,20 @@ void processShell()
 
                 nrfSetAddressWidths(NRF_ADDR_WIDTH_5B);
 
-                nrfSetAutoRetransmitTries(0);               // disable auto ack
-
                 nrfSetChannel(NRF_F_CHANNEL);
 
-                nrfSetDataRate(NRF_DATARATE_250kbps);
+                nrfSetDataRate(NRF_DATARATE_1Mbps);
 
-//                nrfSetRXPipePayloadWidth((NRFPipes){NRF_DATAPIPE_1}, sizeof(nrfPacketBase)); // pipe width of 32B
+                nrfSetRXPipePayloadWidth((NRFPipes){NRF_DATAPIPE_1}, sizeof(nrfPacketBase)); // pipe width of 32B
 
                 nrfSetPowerUp(true);
 
                 nrfSetTXAddr(RXADDR, 5);
 
+//                nrfSetContCarriTransmit(true);
+
                 nrfFlushTXFIFO();
 //                printNRFStats();
-
-                nrfSetChipEnable(true);
 
                 nrfPacketBase pkt;
                 for(int i = 0; i < sizeof(pkt); i++)
@@ -269,16 +263,24 @@ void processShell()
                     putsUart0("--tx--");
 
                     printNRFStatus(nrfGetStatus());
+
+                    NRFFIFOStatus fifostatus;
+                    nrfReadRegister(NRF_REG_FIFO_STATUS_ADDR, &fifostatus.raw, sizeof(fifostatus));
+                    printFIFO(fifostatus);
+
                     if(nrfIsIRQing()){
                         nrfClearIRQ();
 
-                        NRFFIFOStatus fifostatus;
-                        nrfReadRegister(NRF_REG_FIFO_STATUS_ADDR, &fifostatus.raw, sizeof(fifostatus));
-                        printFIFO(fifostatus);
-
                     }
 
-                    nrfWriteTXPayload(pkt.rawArr, 32);
+                    if(!fifostatus.TX_FULL){
+                        putsUart0("\n\raelnclekancleakncalekcaelckn\n\r");
+                        nrfWriteTXPayload(pkt.rawArr, 32);
+                        nrfSetChipEnable(true);
+                        waitMicrosecond(15);
+                        nrfSetChipEnable(false);
+                        waitMicrosecond(15);
+                    }
                 }
             }
 
@@ -286,6 +288,10 @@ void processShell()
             {
                 printNRFStats();
                 printNRFStatus(nrfGetStatus());
+                putsUart0("\n\r");
+                NRFFIFOStatus fifostatus;
+                nrfReadRegister(NRF_REG_FIFO_STATUS_ADDR, &fifostatus.raw, sizeof(fifostatus));
+                printFIFO(fifostatus);
             }
 
             if (strcmp(token, "help") == 0)
@@ -350,7 +356,7 @@ int main(void)
 
     initNrf();
     nrfSetCRCUse2B(true);
-    nrfSetCRCEnable(true);
+    nrfSetCRCEnable(false);
 
     // test NRF connection
     while(!nrfTestSPI()){
@@ -386,6 +392,15 @@ int main(void)
     setPinValue(GREEN_LED, 0);
     waitMicrosecond(100e3);
 
+    {
+        uint8_t val = BV(1);
+        nrfWriteRegister(NRF_REG_EN_RXADDR_ADDR, &val, 1);
+    }
+    {
+        uint8_t val = 0;
+        nrfWriteRegister(NRF_REG_EN_AA_ADDR, &val, 1);
+    }
+    nrfSetAutoRetransmitTries(0);
 
     //---main----------------------------------------------------------------------
 

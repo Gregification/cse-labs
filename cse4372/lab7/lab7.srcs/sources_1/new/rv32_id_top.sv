@@ -32,15 +32,15 @@ module rv32_id_top(
         input [31:0] iw_in,
 
         // df from ex
-        input [3:0] df_ex_wb_reg,
+        input [4:0] df_ex_wb_reg,
         input [31:0] df_ex_wb_data,
         input df_ex_wb_enable,
         // df from mem
-        input [3:0] df_mem_wb_reg,
+        input [4:0] df_mem_wb_reg,
         input [31:0] df_mem_wb_data,
         input df_mem_wb_enable,
         // df from wb
-        input [3:0] df_wb_wb_reg,
+        input [4:0] df_wb_wb_reg,
         input [31:0] df_wb_wb_data,
         input df_wb_wb_enable,
 
@@ -67,7 +67,7 @@ module rv32_id_top(
     assign regif_rs2_reg = iw_in[24:20];
 
     reg ebreak_latch;
-    initial ebreak_latch = 0;
+    initial ebreak_latch = 1; // processer starts in a locked state until first after reset
 
     reg [31:0] regif_rs1_data;
     reg [31:0] regif_rs2_data;
@@ -94,8 +94,12 @@ module rv32_id_top(
             jump_enable_out <= 0;
             jump_addr_out <= 0;
 
-            ebreak_latch <= 0;
+            if(reset)
+                ebreak_latch <= 0;
         end else begin
+            if(iw_in == 32'h00100073)
+                ebreak_latch <= 1;
+
             pc_out <= pc_in;
 
             jump_enable_out <= 0;
@@ -111,7 +115,6 @@ module rv32_id_top(
 
                 jump_addr_out <= 0;
             end else begin
-
                 iw_out <= iw_in;
 
                 wb_reg_out      <= iw_in[11:7];

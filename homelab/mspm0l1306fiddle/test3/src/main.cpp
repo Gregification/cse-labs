@@ -166,8 +166,8 @@ void ex_spi(){
         .chipSelectPin  = DL_SPI_CHIP_SELECT_1
     };
     DL_SPI_ClockConfig clkconfig = {
-        .clockSel       = DL_SPI_CLOCK_BUSCLK,
-        .divideRatio    = DL_SPI_CLOCK_DIVIDE_RATIO_1
+        .clockSel       = DL_SPI_CLOCK::DL_SPI_CLOCK_BUSCLK,
+        .divideRatio    = DL_SPI_CLOCK_DIVIDE_RATIO::DL_SPI_CLOCK_DIVIDE_RATIO_1
     };
 
     DL_SPI_disable(SPI0);

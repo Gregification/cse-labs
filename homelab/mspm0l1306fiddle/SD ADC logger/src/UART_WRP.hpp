@@ -4,13 +4,13 @@
  *  Created on: Mar 27, 2025
  *      Author: greg
  *
- *  target device: mspm0l1306
+ * target device : MSPM0L1306
+ * uses DriverLib
  */
 
 #ifndef SRC_UART_WRP_HPP_
 #define SRC_UART_WRP_HPP_
 
-#include <ti/devices/msp/msp.h>
 #include <ti/driverlib/driverlib.h>
 #include <stdint.h>
 
