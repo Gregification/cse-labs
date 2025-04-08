@@ -44,13 +44,22 @@ void SPI_WRP::init() {
     DL_SPI_enable(spi_reg);
 }
 
+uint32_t SPI_WRP::setBaudTarget(uint32_t maxBaud, uint32_t spiClk){
+    DL_SPI_setBitRateSerialClockDivider(
+            spi_reg,
+            spiClk / (maxBaud + 1)
+        );
+
+    return spiClk >> (spiClk / (maxBaud + 1));
+};
+
 void SPI_WRP::transfer(uint32_t cs, uint8_t const * tx, uint8_t * rx, uint32_t len){
 
-    while(DL_SPI_isBusy(spi_reg))
-        ;
-
-    if(cs)
-        DL_GPIO_setPins(GPIOA, cs);
+    if(cs){
+        while(DL_SPI_isBusy(spi_reg))
+            ;
+        DL_GPIO_togglePins(GPIOA, cs);
+    }
 
     uint32_t
         itx = 0,
@@ -68,16 +77,14 @@ void SPI_WRP::transfer(uint32_t cs, uint8_t const * tx, uint8_t * rx, uint32_t l
     }
 
     while(itx < len || irx < len){
-        if(tx)
-            while(DL_SPI_transmitDataCheck8(spi_reg, tx[itx]))
-                itx++;
-        else
-            DL_SPI_transmitDataCheck8(spi_reg, 0);
-        if(rx)
-            while(DL_SPI_receiveDataCheck8(spi_reg, rx + irx))
-                irx++;
+        if(tx) itx += DL_SPI_fillTXFIFO8(spi_reg, tx + itx, len - itx);
+        else DL_SPI_transmitDataCheck8(spi_reg, 0);
+        if(rx) irx += DL_SPI_drainRXFIFO8(spi_reg, rx + irx, len - irx);
     }
 
-    if(cs)
-        DL_GPIO_clearPins(GPIOA, cs);
+    if(cs){
+        while(DL_SPI_isBusy(spi_reg))
+            ;
+        DL_GPIO_togglePins(GPIOA, cs);
+    }
 }

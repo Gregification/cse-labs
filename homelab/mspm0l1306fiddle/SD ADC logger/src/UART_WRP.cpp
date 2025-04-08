@@ -72,9 +72,9 @@ void UART_WRP::setBaud(uint32_t baud, uint32_t clock_freq){
     DL_UART_setBaudRateDivisor(uart_reg, di, df);
 }
 
-void UART_WRP::puts(char * str){
-    while(str[0] != '\0')
-        DL_UART_transmitDataBlocking(uart_reg, str++[0]);
+void UART_WRP::puts(char str[]){
+    while (str++[0] != '\0')
+        DL_UART_transmitDataBlocking(uart_reg, str[0]);
 }
 
 void UART_WRP::transmit(void * data, uint32_t len8){

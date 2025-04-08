@@ -37,7 +37,7 @@ public:
     /**
      * transmits string
      */
-    void puts(char * str);
+    void puts(char str[]);
 
     void transmit(void * data, uint32_t len8);
     void transmit(uint8_t * data, uint32_t len);

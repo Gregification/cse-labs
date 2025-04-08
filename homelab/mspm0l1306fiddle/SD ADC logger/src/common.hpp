@@ -14,7 +14,7 @@
 // something something common defines something
 
 #define PROJECT_NAME "ADC to SD Card logger, 9 channel. https://github.com/Gregification/cse-labs/tree/main/homelab/mspm0l1306fiddle/SD%20ADC%20logger"
-#define PROJECT_VERSION "0"
+#define PROJECT_VERSION "v0"
 
 #define F_CPU (32e6)
 #define F_BUS (16e6)

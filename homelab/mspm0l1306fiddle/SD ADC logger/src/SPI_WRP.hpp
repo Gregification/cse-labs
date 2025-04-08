@@ -42,14 +42,14 @@ public:
 
     /**
      * sets baud to at most this value. we dont get fractional divisions.
+     *  so this calculates the next best integer divisor
      * @return actual baud value set to
      */
     uint32_t setBaudTarget(uint32_t maxBaud, uint32_t spiClk = 16e6);
 
     /**
      * a normal spi transfer. accepts NULL pointers.
-     * CS must be controlled manually
-     * THIS DOES NOT CONTROL CS, do that manually yourself.
+     * CS, if given, will be toggled during transmission
      *
      *  i have tried and tried to make this crap work without manual CS, it don wrk :(.
      *      i think its because RX & TX are off the same clock

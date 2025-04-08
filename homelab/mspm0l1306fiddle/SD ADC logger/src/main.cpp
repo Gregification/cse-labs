@@ -34,24 +34,13 @@ int main(void) {
 
     // SPI
     SPI_WRP spi(SPI0);
-    // CS 2 : PA24 .
-//    DL_GPIO_initPeripheralOutputFunctionFeatures(
-//            IOMUX_PINCM::IOMUX_PINCM25,
-//            IOMUX_PINCM25_PF_SPI0_CS2_POCI2,
-//            DL_GPIO_INVERSION::DL_GPIO_INVERSION_DISABLE,
-//            DL_GPIO_RESISTOR::DL_GPIO_RESISTOR_PULL_UP,
-//            DL_GPIO_DRIVE_STRENGTH::DL_GPIO_DRIVE_STRENGTH_HIGH,
-//            DL_GPIO_HIZ::DL_GPIO_HIZ_DISABLE
-//        );
-    // CS 1 : PA3 .
     // CLK : PA6 .
-    DL_GPIO_initDigitalOutput(BV(3));
     DL_GPIO_initPeripheralOutputFunction(IOMUX_PINCM::IOMUX_PINCM7, IOMUX_PINCM7_PF_SPI0_SCLK);
     // MISO / POCI : PA4 .
     DL_GPIO_initPeripheralInputFunction(IOMUX_PINCM::IOMUX_PINCM5, IOMUX_PINCM5_PF_SPI0_POCI);
     // MOSI / PICO : PA5 .
     DL_GPIO_initPeripheralOutputFunction(IOMUX_PINCM::IOMUX_PINCM6, IOMUX_PINCM6_PF_SPI0_PICO);
-//    DL_SPI_setBitRateSerialClockDivider(SPI0, 4);
+    spi.setBaudTarget(7e6, 16e6);
 
     delay_cycles(500); // give CS time to stabilize
 
@@ -60,13 +49,13 @@ int main(void) {
         data[i] = i;
     }
 
-    spi.transfer(BV(15), data, data, sizeof(data));
-    DL_GPIO_setPins(GPIOA, BV(3));
+    spi.transfer(0, data, nullptr, sizeof(data));
 
     for(int i = 0; i < sizeof(data); i++){
         char str[10];
         snprintf(str, sizeof(str), "%02x ", data[i]);
         uart.puts(str);
+
     }
     uart.puts(NEWLINE);
 
