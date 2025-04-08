@@ -31,7 +31,7 @@ void initNrf(){
     selectPinPushPullOutput(NRF_SPI_CS);
 
     setPinValue(NRF_SPI_CS, !NRF_SPI_CS_ACTIVE);
-    setPinValue(NRF_CE_PIN, 0);
+    setPinValue(NRF_CE_PIN, !NRF_SPI_CE_ACTIVE);
 
     nrfSetPowerUp(true);
     nrfSetChipEnable(false);
@@ -421,9 +421,7 @@ bool nrfIsIRQing(){
 }
 
 void nrfSetChipEnable(bool value){
-    setPinValue(NRF_CE_PIN, value);
-
-    waitMicrosecond(130);
+    setPinValue(NRF_CE_PIN, value ? NRF_SPI_CE_ACTIVE : !NRF_SPI_CE_ACTIVE);
 }
 
 bool nrfIsReceivedPowerDetected(){

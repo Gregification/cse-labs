@@ -55,6 +55,7 @@
 #define NRF_SPI_BAUD 1e6
 #define NRF_SPI_CS PORTA,7
 #define NRF_SPI_CS_ACTIVE 0     // active low
+#define NRF_SPI_CE_ACTIVE 1
 
 #define NRF_CE_PIN PORTE,2
 #define NRF_IRQ_PIN PORTE,3
