@@ -68,9 +68,14 @@ void SPI_WRP::transfer(uint32_t cs, uint8_t const * tx, uint8_t * rx, uint32_t l
     }
 
     while(itx < len || irx < len){
-        if(tx)  itx += DL_SPI_transmitData(spi_reg, tx[itx]);
-        else    DL_SPI_transmitDataCheck8(spi_reg, 0);
-        if(rx)  irx += DL_SPI_receiveData(spi_reg, rx + irx);
+        if(tx)
+            while(DL_SPI_transmitDataCheck8(spi_reg, tx[itx]))
+                itx++;
+        else
+            DL_SPI_transmitDataCheck8(spi_reg, 0);
+        if(rx)
+            while(DL_SPI_receiveDataCheck8(spi_reg, rx + irx))
+                irx++;
     }
 
     if(cs)
