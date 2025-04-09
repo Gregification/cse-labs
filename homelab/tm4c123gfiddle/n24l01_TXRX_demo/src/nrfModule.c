@@ -324,7 +324,7 @@ NRFStatus nrfSetPowerUp(bool powerup){
     config.POWER_UP = powerup;
     NRFStatus ret = nrfWriteRegister(NRF_REG_CONFIG_ADDR, &config.raw, sizeof(config));
 
-    waitMicrosecond(1500);
+    waitMicrosecond(100e3);
     return ret;
 }
 
