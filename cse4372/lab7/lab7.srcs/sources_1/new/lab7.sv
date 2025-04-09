@@ -169,7 +169,7 @@ module lab7(
         // input [3:0] d_be,
         // input [31:0] d_wdata
     );
-
+    
     assign LED = _dual_port_ram.d_rdata;
 
     //---registers----------------------------------------------------------
