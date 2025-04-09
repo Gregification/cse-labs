@@ -154,7 +154,7 @@ void processShell()
 
                 nrfSetDataRate(NRF_DATARATE_1Mbps);
 
-                nrfSetRXPipePayloadWidth((NRFPipes){NRF_DATAPIPE_0}, 10); // pipe width of 32B
+                nrfSetRXPipePayloadWidth((NRFPipes){NRF_DATAPIPE_0}, 32); // pipe width of 32B
 
                 char str[50];
                 nrfPacketBase pkt;
@@ -248,7 +248,7 @@ void processShell()
 //
 //                    }
 
-                    waitMicrosecond(100e3);
+//                    waitMicrosecond(100e3);
 
 //                    printNRFStatus(nrfGetFIFOStatus(&fs));
 //                    nrfGetPipeFIFOCount((NRFPipes){NRF_DATAPIPE_1}, &fifocount);
