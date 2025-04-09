@@ -137,21 +137,23 @@ module rv32_id_top(
     end
 
     always_comb begin
+        // it is essential "regif_rs1_data" is inferred a latch
         case ({3{
-                df_ex_wb_enable && (df_ex_wb_reg == regif_rs1_reg),
-                df_mem_wb_enable && (df_mem_wb_reg == regif_rs1_reg),
-                df_wb_wb_enable && (df_wb_wb_reg == regif_rs1_reg)
+                df_ex_wb_enable     && (df_ex_wb_reg    == regif_rs1_reg),
+                df_mem_wb_enable    && (df_mem_wb_reg   == regif_rs1_reg),
+                df_wb_wb_enable     && (df_wb_wb_reg    == regif_rs1_reg)
             }})
             3'b1xx: regif_rs1_data = df_ex_wb_data;
             3'b01x: regif_rs1_data = df_mem_wb_data;
             3'b001: regif_rs1_data = df_wb_wb_data;
             3'b000: regif_rs1_data = regif_rs1_data_in;
         endcase
-        
+
+        // it is essential "regif_rs2_data" is inferred a latch
         case ({3{
-                df_ex_wb_enable && (df_ex_wb_reg == regif_rs2_reg),
-                df_mem_wb_enable && (df_mem_wb_reg == regif_rs2_reg),
-                df_wb_wb_enable && (df_wb_wb_reg == regif_rs2_reg)
+                df_ex_wb_enable     && (df_ex_wb_reg    == regif_rs2_reg),
+                df_mem_wb_enable    && (df_mem_wb_reg   == regif_rs2_reg),
+                df_wb_wb_enable     && (df_wb_wb_reg    == regif_rs2_reg)
             }})
             3'b1xx: regif_rs2_data = df_ex_wb_data;
             3'b01x: regif_rs2_data = df_mem_wb_data;
