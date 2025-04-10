@@ -42,14 +42,25 @@ int main(void) {
     DL_GPIO_initPeripheralOutputFunction(IOMUX_PINCM::IOMUX_PINCM6, IOMUX_PINCM6_PF_SPI0_PICO);
     spi.setBaudTarget(7e6, 16e6);
 
-    delay_cycles(500); // give CS time to stabilize
+    // CS (manual) : PA1
+    DL_GPIO_initDigitalOutputFeatures(
+            IOMUX_PINCM::IOMUX_PINCM2,
+            DL_GPIO_INVERSION::DL_GPIO_INVERSION_ENABLE, // active low
+            DL_GPIO_RESISTOR::DL_GPIO_RESISTOR_NONE,
+            DL_GPIO_DRIVE_STRENGTH::DL_GPIO_DRIVE_STRENGTH_HIGH,
+            DL_GPIO_HIZ::DL_GPIO_HIZ_DISABLE
+        );
+    uint32_t const CSpin = BV(1);
+    DL_GPIO_clearPins(GPIOA, CSpin);
+    DL_GPIO_enableOutput(GPIOA, CSpin);
+//    delay_cycles(50); // give CS time to stabilize
 
     uint8_t data[30];
     for(int i = 0; i < sizeof(data); i++){
         data[i] = i;
     }
 
-    spi.transfer(0, data, nullptr, sizeof(data));
+    spi.transfer(CSpin, data, nullptr, sizeof(data));
 
     for(int i = 0; i < sizeof(data); i++){
         char str[10];

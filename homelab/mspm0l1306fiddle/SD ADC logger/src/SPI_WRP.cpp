@@ -58,7 +58,7 @@ void SPI_WRP::transfer(uint32_t cs, uint8_t const * tx, uint8_t * rx, uint32_t l
     if(cs){
         while(DL_SPI_isBusy(spi_reg))
             ;
-        DL_GPIO_togglePins(GPIOA, cs);
+        DL_GPIO_setPins(GPIOA, cs);
     }
 
     uint32_t
@@ -85,6 +85,6 @@ void SPI_WRP::transfer(uint32_t cs, uint8_t const * tx, uint8_t * rx, uint32_t l
     if(cs){
         while(DL_SPI_isBusy(spi_reg))
             ;
-        DL_GPIO_togglePins(GPIOA, cs);
+        DL_GPIO_clearPins(GPIOA, cs);
     }
 }
