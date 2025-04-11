@@ -347,7 +347,6 @@ NRFStatus nrfReadRXPayload(uint8_t * out, uint8_t len){
 
     nrfTransferClosed(NULL, out, len);
 
-    nrfFlushRXFIFO();
     return ret;
 }
 

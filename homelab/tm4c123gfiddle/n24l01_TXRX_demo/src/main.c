@@ -132,10 +132,6 @@ void processShell()
             token = strtok(strInput, " ");
 
             if (strcmp(token, "rx") == 0){
-                nrfSetChipEnable(false);
-                nrfSetPowerUp(false);
-                waitMicrosecond(1e3);
-
                 nrfSetCRCUse2B(false);
                 nrfSetCRCEnable(false);
 
@@ -143,7 +139,17 @@ void processShell()
 
                 nrfSetPowerUp(true);
 
+                {// disable auto ack
+                    uint8_t val = ~BV(0);
+                    nrfWriteRegister(NRF_REG_EN_AA_ADDR, &val, 1);
+                }
+
+                nrfSetAddressWidths(NRF_ADDR_WIDTH_5B);
 //                nrfSetEnableRXAddr((NRFPipes){NRF_DATAPIPE_0});
+//                nrfSetRxAddrOfPipe0(RXADDR, 5);
+
+
+                nrfSetRXPipePayloadWidth((NRFPipes){NRF_DATAPIPE_0}, 5); // pipe width of 32B
 
                 {
                     NRFPipes p;
@@ -152,15 +158,13 @@ void processShell()
                     nrfWriteRegister(NRF_REG_EN_AA_ADDR, &p.raw, 1);
                 }
 
-                nrfSetAddressWidths(NRF_ADDR_WIDTH_5B);
-
                 nrfSetChannel(NRF_F_CHANNEL);
 
                 nrfSetDataRate(NRF_DATARATE_1Mbps);
 
-                nrfSetRXPipePayloadWidth((NRFPipes){NRF_DATAPIPE_0}, 10); // pipe width of 32B
-
                 printNRFStats();
+
+                nrfSetChipEnable(true);
 
                 char str[50];
                 nrfPacketBase pkt;
@@ -181,13 +185,8 @@ void processShell()
                     NRFStatus status = nrfGetStatus();
                     printNRFStatus(status);
 
-
-
                     nrfSetChipEnable(false);
                     waitMicrosecond(10);
-
-//                    len =  10;
-//                    nrfWriteRegister(NRF_REG_RX_ADDR_P1_ADDR, &len, 1);
 
                     {
                         uint8_t pipecount = 0;
@@ -201,7 +200,7 @@ void processShell()
                             nrfFlushRXFIFO();
                         else {
                             nrfReadRXPayload(pkt.rawArr, len);
-                            for(int i = 0; i < 32; i++){
+                            for(int i = 0; i < len; i++){
                                 snprintf(str,sizeof(str), "%02x ",pkt.rawArr[i]);
                                 putsUart0(str);
                             }
@@ -209,33 +208,29 @@ void processShell()
                     }
 
                     nrfSetChipEnable(true);
-                    waitMicrosecond(100e3);
+                    waitMicrosecond(10);
                 }
             }
 
             if (strcmp(token, "tx") == 0){
-                nrfSetChipEnable(false);
-                nrfSetPowerUp(false);
-                waitMicrosecond(1e3);
-
                 nrfSetCRCEnable(false);
                 nrfSetCRCUse2B(false);
 
                 nrfActAsTransmitter();
 
-                nrfSetOutputPower(NRF_OUTPUT_POWER_0dBm);
-
                 nrfSetAutoRetransmitTries(0);
 
                 nrfSetAddressWidths(NRF_ADDR_WIDTH_5B);
+//                nrfSetTXAddr(RXADDR, 5);
 
                 nrfSetChannel(NRF_F_CHANNEL);
 
                 nrfSetDataRate(NRF_DATARATE_1Mbps);
 
+//                nrfSetRXPipePayloadWidth((NRFPipes){NRF_DATAPIPE_0}, 32);
+
                 nrfSetPowerUp(true);
 
-//                nrfSetTXAddr(RXADDR, 5);
 
 //                nrfSetContCarriTransmit(true);
 
@@ -246,11 +241,11 @@ void processShell()
 
                 nrfPacketBase pkt;
                 for(int i = 0; i < sizeof(pkt); i++)
-                    pkt.rawArr[i] = 0xFF;
+                    pkt.rawArr[i] = i;
 
                 while(!kbhitUart0()){
                     static uint8_t len = 0;
-                    len = (len+1) % 32;
+                    len = (len+1) % 33;
                     setPinValue(GREEN_LED, nrfIsIRQing());
                     putsUart0("\n\r");
                     putsUart0("CW:");
@@ -269,10 +264,10 @@ void processShell()
                     printNRFStatus(nrfReadRegister(NRF_REG_FIFO_STATUS_ADDR, &fifostatus.raw, sizeof(fifostatus)));
                     printFIFO(fifostatus);
 
-                    nrfFlushTXFIFO();
+//                    nrfFlushTXFIFO();
                     nrfWriteTXPayload(pkt.rawArr, len);
                     nrfSetChipEnable(true);
-                    waitMicrosecond(150);
+                    waitMicrosecond(15);
                     nrfSetChipEnable(false);
                     waitMicrosecond(15);
                 }
@@ -360,21 +355,6 @@ int main(void)
         waitMicrosecond(100e3);
     }
 
-//    nrfSetOutputPower(NRF_OUTPUT_POWER_0dBm);
-//    nrfSetDataRate(NRF_DATARATE_2Mbps);
-//    nrfSetChannel(10);
-//    nrfSetAutoRetransmitTries(0);
-//    nrfSetEnableAutoAck((NRFPipes){0});
-
-//    NRFPipes pipe0 = {.EN_RXADDR_DATAPIPE_0 = true};
-//    NRFPipes pipe3 = {.EN_RXADDR_DATAPIPE_3 = true};
-//    uint8_t addr[] = {1,2,3,4,5};
-//    nrfSetEnableRXAddr(pipe0);
-//    nrfSetAddressWidths(NRF_ADDR_WIDTH_5B);
-//    nrfSetRxAddrLSBOfPipe(pipe3, 0x44);
-//    nrfSetRxAddrOfPipe1(addr, 5);
-//    nrfSetTXAddr(addr, 5);
-
     putsUart0("\n\rCSE4352 spring2025 project 2 team 14. N24L01+ RF transceiver demo\n\r");
 
     setPinValue(RED_LED, 1);
@@ -385,33 +365,12 @@ int main(void)
     waitMicrosecond(100e3);
 
 
-//    {
-//        uint8_t val = BV(1);
-//        nrfWriteRegister(NRF_REG_EN_RXADDR_ADDR, &val, 1);
-//    }
-//    {
-//        uint8_t val = 0;
-//        nrfWriteRegister(NRF_REG_EN_AA_ADDR, &val, 1);
-//    }
-//    nrfSetAutoRetransmitTries(0);
-//    {
-//        NRFConfig val;
-//        nrfReadRegister(NRF_REG_CONFIG_ADDR, &val.raw, 1);
-//        val.MASK_MAX_RT = false;
-//        val.MASK_RX_DR = false;
-//        val.MASK_TX_DS = false;
-//        nrfWriteRegister(NRF_REG_CONFIG_ADDR, &val.raw, 1);
-//    }
-//
-
     //---main----------------------------------------------------------------------
 
     while (true) {
         processShell();
-        nrfSetChipEnable(true);
-        waitMicrosecond(150);
-        nrfSetChipEnable(false);
-        waitMicrosecond(15);
+
+        waitMicrosecond(10e3);
     }
 }
 
