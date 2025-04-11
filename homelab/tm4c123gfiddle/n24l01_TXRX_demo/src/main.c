@@ -61,8 +61,10 @@
 #define F_CPU 40e6
 #define UART0_BAUD 9600
 #define WIRELESS_RX_BUFFER_SIZE 200
-#define NRF_F_CHANNEL 1
-uint8_t RXADDR[5] = {1,2,3,4,5};
+#define NRF_F_CHANNEL 10
+#define NRF_ADDR_WIDTH NRF_ADDR_WIDTH_5B
+#define NRF_D_WIDTH 32
+uint8_t RXADDR[5] = {0xa0,0xb0,0xa0,0xb0, 0xa0};
 
 //-----------------------------------------------------------------------------
 // Subroutines                
@@ -144,12 +146,12 @@ void processShell()
                     nrfWriteRegister(NRF_REG_EN_AA_ADDR, &val, 1);
                 }
 
-                nrfSetAddressWidths(NRF_ADDR_WIDTH_5B);
+                nrfSetAddressWidths(NRF_ADDR_WIDTH);
 //                nrfSetEnableRXAddr((NRFPipes){NRF_DATAPIPE_0});
-//                nrfSetRxAddrOfPipe0(RXADDR, 5);
+                nrfSetRxAddrOfPipe0(RXADDR, 5);
 
 
-                nrfSetRXPipePayloadWidth((NRFPipes){NRF_DATAPIPE_0}, 5); // pipe width of 32B
+                nrfSetRXPipePayloadWidth((NRFPipes){NRF_DATAPIPE_0}, NRF_D_WIDTH); // pipe width of 32B
 
                 {
                     NRFPipes p;
@@ -220,8 +222,8 @@ void processShell()
 
                 nrfSetAutoRetransmitTries(0);
 
-                nrfSetAddressWidths(NRF_ADDR_WIDTH_5B);
-//                nrfSetTXAddr(RXADDR, 5);
+                nrfSetAddressWidths(NRF_ADDR_WIDTH);
+                nrfSetTXAddr(RXADDR, 5);
 
                 nrfSetChannel(NRF_F_CHANNEL);
 
@@ -241,7 +243,7 @@ void processShell()
 
                 nrfPacketBase pkt;
                 for(int i = 0; i < sizeof(pkt); i++)
-                    pkt.rawArr[i] = i;
+                    pkt.rawArr[i] = 'a' + i;
 
                 while(!kbhitUart0()){
                     static uint8_t len = 0;
@@ -269,7 +271,7 @@ void processShell()
                     nrfSetChipEnable(true);
                     waitMicrosecond(15);
                     nrfSetChipEnable(false);
-                    waitMicrosecond(15);
+                    waitMicrosecond(1e6);
                 }
             }
 
