@@ -187,9 +187,10 @@ void processShell()
                     NRFStatus status = nrfGetStatus();
                     printNRFStatus(status);
 
-                    nrfSetChipEnable(false);
-                    waitMicrosecond(10);
+//                    nrfSetChipEnable(false);
+                    waitMicrosecond(100);
 
+                    if(nrfIsIRQing())
                     {
                         uint8_t pipecount = 0;
                         nrfReadRegister(NRF_REG_RX_ADDR_P0_ADDR, &pipecount, 1);
@@ -207,10 +208,12 @@ void processShell()
                                 putsUart0(str);
                             }
                         }
+
+                        nrfClearIRQ();
                     }
 
-                    nrfSetChipEnable(true);
-                    waitMicrosecond(10);
+//                    nrfSetChipEnable(true);
+//                    waitMicrosecond(10);
                 }
             }
 
@@ -229,25 +232,17 @@ void processShell()
 
                 nrfSetDataRate(NRF_DATARATE_1Mbps);
 
-//                nrfSetRXPipePayloadWidth((NRFPipes){NRF_DATAPIPE_0}, 32);
-
                 nrfSetPowerUp(true);
-
-
-//                nrfSetContCarriTransmit(true);
 
                 printNRFStats();
 
-//                if(nrfIsIRQing())
-//                    nrfClearIRQ();
-
                 nrfPacketBase pkt;
                 for(int i = 0; i < sizeof(pkt); i++)
-                    pkt.rawArr[i] = 'a' + i;
+                    pkt.rawArr[i] = i;
 
                 while(!kbhitUart0()){
-                    static uint8_t len = 0;
-                    len = (len+1) % 33;
+                    static uint8_t len = NRF_D_WIDTH;
+//                    len = (len+1) % 33;
                     setPinValue(GREEN_LED, nrfIsIRQing());
                     putsUart0("\n\r");
                     putsUart0("CW:");
@@ -266,12 +261,17 @@ void processShell()
                     printNRFStatus(nrfReadRegister(NRF_REG_FIFO_STATUS_ADDR, &fifostatus.raw, sizeof(fifostatus)));
                     printFIFO(fifostatus);
 
-//                    nrfFlushTXFIFO();
+                    nrfFlushTXFIFO();
+
+                    if(nrfIsIRQing())
+                        nrfClearIRQ();
+
+                    pkt.rawArr[0]++;
                     nrfWriteTXPayload(pkt.rawArr, len);
                     nrfSetChipEnable(true);
                     waitMicrosecond(15);
                     nrfSetChipEnable(false);
-                    waitMicrosecond(1e6);
+                    waitMicrosecond(15);
                 }
             }
 

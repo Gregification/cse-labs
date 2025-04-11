@@ -395,11 +395,8 @@ NRFStatus nrfGetFIFOStatus(NRFFIFOStatus * out){
 }
 
 NRFStatus nrfClearIRQ(){
-    NRFStatus status = {
-        .MAX_RT = true,
-        .RX_DATAREADY = true,
-        .TX_DATASENT = true,
-    };
+    NRFStatus status = nrfGetStatus();
+    status.raw &= 0x70;
     return nrfWriteRegister(NRF_REG_STATUS_ADDR, &status.raw, sizeof(status));
 }
 
