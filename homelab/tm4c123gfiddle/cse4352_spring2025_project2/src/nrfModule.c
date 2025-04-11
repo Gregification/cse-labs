@@ -115,6 +115,44 @@ NRFStatus nrfGetStatus(){
     return nrfTransfer(&cmd, NULL, 1);
 }
 
+uint16_t nrfCalcPacketCRC(nrfPacketBase const * pk){
+    uint16_t crc = 0xFFFF;
+
+    bool xor;
+    uint8_t test;
+
+    uint8_t i;
+    for(i = 0; i < NRF_PACKET_DATA_LEN; i++){
+        test = BV(7);
+
+        while(test) {
+            xor = crc & BV(15);
+
+            crc <<= 1;
+
+            if(pk->data[i] & test)
+                crc += 1;
+
+            if(xor)
+                crc ^= 0x1021;
+
+            test >>= 1;
+        }
+    }
+
+    // one more time without data
+    test = BV(7);
+    while(test) {
+        xor = crc & BV(15);
+        crc <<= 1;
+        if(xor)
+            crc ^= 0x1021;
+        test >>= 1;
+    }
+
+    return crc;
+}
+
 bool nrfIsPowerEnable(){
     NRFConfig config;
     nrfReadRegister(NRF_REG_CONFIG_ADDR, &config.raw, sizeof(config));
@@ -502,4 +540,13 @@ void nrfTransferClosed(uint8_t const * tx, uint8_t * rx, uint32_t len){
     nrfTransferOpen(tx,rx,len);
 
     setPinValue(NRF_SPI_CS, !NRF_SPI_CS_ACTIVE);
+}
+
+void reverseBytes(uint8_t * data, uint8_t len){
+    len--;
+    for(uint8_t i = 0; i <= len/2; i++){
+        uint8_t tmp = data[i];
+        data[i] = data[len-i];
+        data[len-i] = tmp;
+    }
 }

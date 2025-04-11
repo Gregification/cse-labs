@@ -8,8 +8,6 @@
 #ifndef SRC_COMMON_H_
 #define SRC_COMMON_H_
 
-#include <stdint.h>
-
 #define BV(X) (1 << (X))
 
 #endif /* SRC_COMMON_H_ */

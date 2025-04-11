@@ -186,6 +186,22 @@ typedef union {
     };
 } NRFTxMeta;
 
+//---protocol------------------------------------------------------
+
+#define NRF_PACKET_TOTAL_LEN 32
+#define NRF_PACKET_DATA_LEN 29  // = PACKET_TOTAL_LEN - [overhead (3B)]
+
+typedef union {
+    uint8_t rawArr[NRF_PACKET_TOTAL_LEN];
+
+    struct __attribute__((packed)) {
+        uint8_t protocol_version;
+        uint8_t data[NRF_PACKET_DATA_LEN];
+        uint16_t crc;
+    };
+
+} nrfPacketBase;
+
 
 /*---module specific functions-------------------------------------
  * see pg.51 of datasheet
@@ -194,7 +210,16 @@ typedef union {
 
 void initNrf();
 
+void reverseBytes(uint8_t * data, uint8_t len);
+
 NRFStatus nrfGetStatus();
+
+/**
+ * calculates the CRC for a packet.
+ *  CRC16-CCITT : x^(16,12,5,0) : 0x1021
+ *  "correct" CRC process base lined from https://srecord.sourceforge.net/crc16-ccitt.html#source
+ */
+uint16_t nrfCalcPacketCRC(nrfPacketBase const * pk);
 
 NRFStatus nrfReadRegister(uint8_t addr, uint8_t * out, uint8_t len);
 

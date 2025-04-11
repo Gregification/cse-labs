@@ -21,6 +21,7 @@
 #include <stdbool.h>
 #include "tm4c123gh6pm.h"
 #include "timer.h"
+#include "conf.h"
 
 //-----------------------------------------------------------------------------
 // Global variables

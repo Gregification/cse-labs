@@ -50,21 +50,13 @@
 #include "nrfModule.h"
 
 #include "common.h"
+#include "conf.h"
 
 // Pins
 #define RED_LED PORTF,1
 #define BLUE_LED PORTF,2
 #define GREEN_LED PORTF,3
 #define PUSH_BUTTON PORTF,4
-
-// Custom . README
-#define F_CPU 40e6
-#define UART0_BAUD 9600
-#define WIRELESS_RX_BUFFER_SIZE 200
-#define NRF_F_CHANNEL 10
-#define NRF_ADDR_WIDTH NRF_ADDR_WIDTH_5B
-#define NRF_D_WIDTH 32
-uint8_t RXADDR[5] = {0xa0,0xb0,0xa0,0xb0, 0xa0};
 
 //-----------------------------------------------------------------------------
 // Subroutines                
@@ -134,46 +126,16 @@ void processShell()
             token = strtok(strInput, " ");
 
             if (strcmp(token, "rx") == 0){
-                nrfSetPowerUp(true);
-
-                nrfSetCRCUse2B(false);
-                nrfSetCRCEnable(false);
-
-                nrfActAsReceiver();
-
-                nrfSetAutoRetransmitTries(0);
-
-                {// disable auto ack
-                    uint8_t val = ~BV(0);
-                    nrfWriteRegister(NRF_REG_EN_AA_ADDR, &val, 1);
-                }
-
-                nrfSetAddressWidths(NRF_ADDR_WIDTH);
-                nrfSetTXAddr(RXADDR, 5);
-                nrfSetRxAddrOfPipe0(RXADDR, 5);
-
-
-                nrfSetRXPipePayloadWidth((NRFPipes){NRF_DATAPIPE_0}, NRF_D_WIDTH); // pipe width of 32B
-
-                {
-                    NRFPipes p;
-                    p.EN_RXADDR_DATAPIPE_0 = true;
-                    p.raw = ~p.raw;
-                    nrfWriteRegister(NRF_REG_EN_AA_ADDR, &p.raw, 1);
-                }
-
-                nrfSetChannel(NRF_F_CHANNEL);
-
-                nrfSetDataRate(NRF_DATARATE_1Mbps);
+                nrfConfigAsReceiver();
 
                 nrfSetChipEnable(true);
 
                 printNRFStats();
 
                 char str[50];
-                nrfPacketBase pkt;
+                nrfPacket pkt;
                 for(int i = 0; i < sizeof(pkt); i++)
-                        pkt.rawArr[i] = 0x0;
+                        pkt.raw_arr[i] = 0x0;
                 uint8_t len;
                 uint8_t fifocount;
                 NRFFIFOStatus fs;
@@ -186,27 +148,22 @@ void processShell()
                     putcUart0('0' + nrfIsIRQing());
                     putsUart0("--rx--");
 
-                    NRFStatus status = nrfGetStatus();
-                    printNRFStatus(status);
-
                     nrfSetChipEnable(false);
                     waitMicrosecond(100);
 
                     if(nrfIsReceivedPowerDetected())
                     {
-                        uint8_t pipecount = 0;
-                        nrfReadRegister(NRF_REG_RX_ADDR_P0_ADDR, &pipecount, 1);
                         len = nrfGetRXPayloadWidth();
 
-                        snprintf(str,sizeof(str), "pipe0 count: %02d , payload count: %02d : ", pipecount, len);
+                        snprintf(str,sizeof(str), "payload count: %02d : ", len);
                         putsUart0(str);
 
                         if(len > 32)
                             nrfFlushRXFIFO();
                         else {
-                            nrfReadRXPayload(pkt.rawArr, len);
+                            nrfReadRXPayload(pkt.raw_arr, len);
                             for(int i = 0; i < len; i++){
-                                snprintf(str,sizeof(str), "%02x ",pkt.rawArr[i]);
+                                snprintf(str,sizeof(str), "%02x ",pkt.raw_arr[i]);
                                 putsUart0(str);
                             }
                         }
@@ -220,38 +177,13 @@ void processShell()
             }
 
             if (strcmp(token, "tx") == 0){
-                nrfSetPowerUp(true);
+                nrfConfigAsTransmitter();
 
-                nrfSetCRCUse2B(false);
-                nrfSetCRCEnable(false);
-
-                nrfActAsTransmitter();
-
-                nrfSetAutoRetransmitTries(0);
-
-                nrfSetAddressWidths(NRF_ADDR_WIDTH);
-                nrfSetTXAddr(RXADDR, 5);
-                nrfSetRxAddrOfPipe0(RXADDR, 5);
-
-                nrfSetChannel(NRF_F_CHANNEL);
-
-                nrfSetDataRate(NRF_DATARATE_1Mbps);
-
-
-                {// disable auto ack
-                    uint8_t val = ~BV(0);
-                    nrfWriteRegister(NRF_REG_EN_AA_ADDR, &val, 1);
-                }
-
-                nrfSetRXPipePayloadWidth((NRFPipes){NRF_DATAPIPE_0}, NRF_D_WIDTH); // pipe width of 32B
-
-                nrfPacketBase pkt;
+                nrfPacket pkt;
                 for(int i = 0; i < sizeof(pkt); i++)
-                    pkt.rawArr[i] = i;
+                    pkt.raw_arr[i] = i;
 
                 while(!kbhitUart0()){
-                    static uint8_t len = NRF_D_WIDTH;
-//                    len = (len+1) % 33;
                     setPinValue(GREEN_LED, nrfIsIRQing());
                     putsUart0("\n\r");
                     putsUart0("CW:");
@@ -262,12 +194,12 @@ void processShell()
 
                     {
                         char str[20];
-                        snprintf(str,sizeof(str), "txlen: %2d, ", len);
+                        snprintf(str,sizeof(str), "txlen: %2d, ", NRF_D_WIDTH);
                         putsUart0(str);
                     }
 
                     NRFFIFOStatus fifostatus;
-                    printNRFStatus(nrfReadRegister(NRF_REG_FIFO_STATUS_ADDR, &fifostatus.raw, sizeof(fifostatus)));
+                    nrfReadRegister(NRF_REG_FIFO_STATUS_ADDR, &fifostatus.raw, sizeof(fifostatus));
                     printFIFO(fifostatus);
 
                     nrfFlushTXFIFO();
@@ -275,8 +207,8 @@ void processShell()
                     if(nrfIsIRQing())
                         nrfClearIRQ();
 
-                    pkt.rawArr[0]++;
-                    nrfWriteTXPayload(pkt.rawArr, len);
+                    pkt.raw_arr[0]++;
+                    nrfWriteTXPayload(pkt.raw_arr, NRF_D_WIDTH);
                     nrfSetChipEnable(true);
                     waitMicrosecond(1e3);
                     nrfSetChipEnable(false);
@@ -303,6 +235,16 @@ void processShell()
                 putsUart0("  info\n\r");
             }
 
+            if (strcmp(token, "host") == 0)
+            {
+
+            }
+
+            if (strcmp(token, "join") == 0)
+            {
+
+            }
+
             putsUart0("\n\r> ");
         }
     }
@@ -314,35 +256,6 @@ void processShell()
 void dumpnrfConfig();
 int main(void)
 {
-    /** overview
-     *  the wireless module (dubbed "NRF"), works around addresses. meaning it needs
-     *      a address to TX and RX. this doesn't align well with what the class
-     *      agreed to use for wireless. Anyways, to make this work we just TX and
-     *      RX on a predetermined address and only use one of the "pipes" of the NRF.
-     *      this is terrible utilization of the chip but its what it takes to make
-     *      it work.
-     *  the NRF dosent allow for data streaming, instead well be using 32Byte packets.
-     *      you can see the packet outline in the "nrfPacketBase" structure. We'll
-     *      be doing manual CRC checks so we can detect malformed packets
-     *      (otherwise the hardware will ignore bad packets and we'll never know).
-     *      we'll be using CRC-CCITT, because its what everyone uses (must be good?).
-     *  over each frame:
-     *      - any amount of packets may be transmitted
-     *      - packets may START at any time during the frame.
-     *
-     * - all frame times are the same length
-     * - there is a short interfarme time to allow packets to finish
-     * - all interframe times are the same length
-     * - dynamic # of frames
-     *
-     *   <---fame time----> <--interframe time--> <---frame time--------> <--interframe time-->
-     *   ______________________________________________________________________________________
-     *  | synch fame (#0)  |                     | frame #1 (unoccupied) |                     |
-     *
-     *      ^ the # of frames is 1,
-     *      ^ the next available frame is #1
-     */
-
     //---init----------------------------------------------------------------------
 
     initHw();
@@ -366,7 +279,7 @@ int main(void)
         waitMicrosecond(100e3);
     }
 
-    putsUart0("\n\rCSE4352 spring2025 project 2 team 14. N24L01+ RF transceiver demo\n\r");
+    putsUart0("\n\rCSE4352 spring2025 project 2 team 14. demo code. not final\n\r");
 
     setPinValue(RED_LED, 1);
     setPinValue(GREEN_LED, 1);
@@ -413,11 +326,11 @@ void printNRFStats(){
     }
     if(fifostatus.RX_FULL){
         putsUart0("rx full\n\r\t");
-        nrfPacketBase pkt;
-        nrfReadRXPayload(pkt.rawArr, sizeof(pkt));
+        nrfPacket pkt;
+        nrfReadRXPayload(pkt.raw_arr, sizeof(pkt));
         for(int i = 0; i < sizeof(pkt); i++){
             static char str[20];
-            snprintf(str,sizeof(str), "%02x ",pkt.rawArr[i]);
+            snprintf(str,sizeof(str), "%02x ",pkt.raw_arr[i]);
             putsUart0(str);
         }
         putsUart0("\n\r");
@@ -533,11 +446,11 @@ void printFIFORX(){
     }
     if(fifostatus.RX_FULL){
         putsUart0("rx full -> ");
-        nrfPacketBase pkt;
-        nrfReadRXPayload(pkt.rawArr, sizeof(pkt));
+        nrfPacket pkt;
+        nrfReadRXPayload(pkt.raw_arr, sizeof(pkt));
         for(int i = 0; i < sizeof(pkt); i++){
             static char str[20];
-            snprintf(str,sizeof(str), "%02x ",pkt.rawArr[i]);
+            snprintf(str,sizeof(str), "%02x ",pkt.raw_arr[i]);
             putsUart0(str);
         }
         nrfFlushRXFIFO();
