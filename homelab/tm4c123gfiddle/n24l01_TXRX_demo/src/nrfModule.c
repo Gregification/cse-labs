@@ -103,11 +103,17 @@ void nrfConfigAsTransmitter(){
 }
 
 void nrfTransmit(uint8_t * data, uint8_t len){
-    nrfWriteTXPayload(data, len % 32);
+    if(len > 32)
+        len = 32;
+    nrfWriteTXPayload(data, len);
     nrfSetChipEnable(true);
-    waitMicrosecond(1e3);
+    waitMicrosecond(20);
     nrfSetChipEnable(false);
-    waitMicrosecond(1e3);
+    waitMicrosecond(20);
+}
+
+bool nrfIsDataAvaliable(){
+    return nrfIsReceivedPowerDetected() && nrfGetRXPayloadWidth();
 }
 
 NRFStatus nrfGetStatus(){

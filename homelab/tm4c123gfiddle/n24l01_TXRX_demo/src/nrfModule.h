@@ -204,6 +204,7 @@ NRFStatus nrfWriteRegister(uint8_t addr, uint8_t const * in, uint8_t len);
 void nrfConfigAsReceiver();
 void nrfConfigAsTransmitter();
 void nrfTransmit(uint8_t * data, uint8_t len);  // transmits up to 32 bytes of data
+bool nrfIsDataAvaliable();
 NRFStatus nrfSetPrimAsTransmitter();
 NRFStatus nrfSetPrimAsReceiver();
 NRFStatus nrfSetAutoRetransmitTries(uint8_t attempts);

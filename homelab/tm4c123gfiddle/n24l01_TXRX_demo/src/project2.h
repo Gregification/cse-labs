@@ -14,7 +14,7 @@
  *
  *
  *      - inter frame time is some extra time for listeners to get ready
- *      - buffer time is there to ensure no all transmissions finish before the next frame
+ *      - buffer time is there to ensure all transmissions finish before the next frame
  *      - in the diagram above there are 2 total frames: 0,1
  *
  * data
@@ -38,32 +38,38 @@
 
 #include "common.h"
 
-#define P2_T_FRAME_TX_US        200e3
-#define P2_T_BUFFER_US          1e3
-#define P2_T_FRAME_US           (P2_T_FRAME_TX_US + P2_T_BUFFER_US)
-#define P2_T_MIN_TX_DELAY_US    40
-#define P2_T_INTER_FRAME_US     5
+#define P2_T_FRAME_TX_US        1e6
+#define P2_T_BUFFER_US          100
+#define P2_T_INTER_FRAME_US     100
+#define P2_T_FRAME_US           (P2_T_FRAME_TX_US + P2_T_BUFFER_US + P2_T_INTER_FRAME_US)
+#define P2_T_MIN_TX_DELAY_US    1e3
+#define P2_FRAME_COUNT          32
 
 //---protocol------------------------------------------------------
 
 #define P2_MAX_PKT_SIZE         32  // a limit of the NRF module
 
 typedef enum {
-    P2_CMD_RESET,
-    P2_CMD_DISCONNNECT,
-    P2_CMD_JOIN_REQUEST,
-    P2_CMD_JOIN_ACCEPT,
-    P2_CMD_JOIN_DENY,
-    P2_CMD_SET_INFO,
-    P2_CMD_GET_INFO,
-} P2_CMD;
+    P2_ENTRY_TYPE_CMD_RESET,
+    P2_ENTRY_TYPE_CMD_DISCONNNECT,
+    P2_ENTRY_TYPE_CMD_JOIN_REQUEST,
+    P2_ENTRY_TYPE_CMD_JOIN_ACCEPT,
+    P2_ENTRY_TYPE_CMD_JOIN_DENY,
+//    P2_ENTRY_TYPE_CMD_SET_INFO,
+//    P2_ENTRY_TYPE_CMD_GET_INFO,
+    P2_ENTRY_TYPE_CMD_top,
+
+    P2_ENTRY_TYPE_FRAME_START,
+    P2_ENTRY_TYPE_MQTT,
+} P2_ENTRY_TYPE;
 
 typedef union {
-    uint8_t raw;
+    uint16_t raw;
 
     struct __attribute__((packed)) {
-        unsigned int data_length    : 5; // if == 1 then assume next byte is a command, otherwise its length of data in bytes
-        unsigned int dinky_crc      : 3; // crc of data
+        unsigned int data_length    : 5;
+        unsigned int dinky_crc      : 3;
+        P2_ENTRY_TYPE meta;
     };
 
 } nrfPacketEntryHeader;
@@ -76,7 +82,7 @@ typedef union {
         uint8_t data[P2_MAX_PKT_SIZE - sizeof(nrfPacketEntryHeader)];
     };
 
-} nrfPacket;
+} p2Packet;
 
 /**
  * calculates the CRC for a packet.
@@ -85,31 +91,48 @@ typedef union {
  *
  *  just use the lsb's of the returned value
  */
-uint8_t p2CalcPacketCRC(nrfPacket const * pk);
+uint8_t p2CalcPacketCRC(p2Packet const * pk);
 
 bool p2isPacketACommand(nrfPacketEntryHeader const);
 
 //---globals-------------------------------------------------------
 
-uint8_t p2CurrentFrame;
+#define P2_MSG_QUEUE_SIZE 10
+
+struct {
+    uint8_t     ttl;
+    p2Packet   pkt;
+} p2MsgQueue[P2_MSG_QUEUE_SIZE];
+
+volatile uint8_t p2CurrentFrame;
 
 void initP2();
 
 //---process-------------------------------------------------------
+
+typedef enum {
+    P2_STATE_OFF,
+    P2_STATE_HOSTING,
+    P2_STATE_HOST_START,
+    P2_STATE_CLIENT_WAIT_CONN_ACK,
+    P2_STATE_CLIENT_CONNECTED
+} P2_STATE;
+P2_STATE p2State;
+uint8_t p2TxEndpoint;
 
 void p2StartFrameTimerUS(uint32_t timeToNextFrame_us);
 void p2StopFrameTimer();
 
 void p2OnFrameTimeIsr();
 
-bool p2ClientJoin(uint32_t systick_timeout);
+void p2HostStart();
 
+uint8_t p2ClientJoin(uint32_t systick_timeout);
 void p2ClientDisconnect();
 
-void p2QueueMessage();
+void p2QueueMessage(p2Packet pkt, uint8_t ttl);
 
-//---timer processes-----------------------------------------------
-
-void p2ServerProcessData(uint8_t * data, uint8_t len);
+void p2HostLoop();
+void p2ClientLoop();
 
 #endif /* SRC_PROJECT2_H_ */
