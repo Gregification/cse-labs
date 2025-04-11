@@ -39,6 +39,7 @@ void initNrf(){
     nrfSetCRCUse2B(false);
     nrfSetForcePLLLock(false);
     nrfSetContCarriTransmit(false);
+    nrfSetPowerUp(false);
 
     {
         uint8_t feature = BV(0);

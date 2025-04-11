@@ -134,12 +134,14 @@ void processShell()
             token = strtok(strInput, " ");
 
             if (strcmp(token, "rx") == 0){
+                nrfSetPowerUp(true);
+
                 nrfSetCRCUse2B(false);
                 nrfSetCRCEnable(false);
 
                 nrfActAsReceiver();
 
-                nrfSetPowerUp(true);
+                nrfSetAutoRetransmitTries(0);
 
                 {// disable auto ack
                     uint8_t val = ~BV(0);
@@ -147,7 +149,7 @@ void processShell()
                 }
 
                 nrfSetAddressWidths(NRF_ADDR_WIDTH);
-//                nrfSetEnableRXAddr((NRFPipes){NRF_DATAPIPE_0});
+                nrfSetTXAddr(RXADDR, 5);
                 nrfSetRxAddrOfPipe0(RXADDR, 5);
 
 
@@ -164,9 +166,9 @@ void processShell()
 
                 nrfSetDataRate(NRF_DATARATE_1Mbps);
 
-                printNRFStats();
-
                 nrfSetChipEnable(true);
+
+                printNRFStats();
 
                 char str[50];
                 nrfPacketBase pkt;
@@ -187,10 +189,10 @@ void processShell()
                     NRFStatus status = nrfGetStatus();
                     printNRFStatus(status);
 
-//                    nrfSetChipEnable(false);
+                    nrfSetChipEnable(false);
                     waitMicrosecond(100);
 
-                    if(nrfIsIRQing())
+                    if(nrfIsReceivedPowerDetected())
                     {
                         uint8_t pipecount = 0;
                         nrfReadRegister(NRF_REG_RX_ADDR_P0_ADDR, &pipecount, 1);
@@ -212,14 +214,16 @@ void processShell()
                         nrfClearIRQ();
                     }
 
-//                    nrfSetChipEnable(true);
-//                    waitMicrosecond(10);
+                    nrfSetChipEnable(true);
+                    waitMicrosecond(100);
                 }
             }
 
             if (strcmp(token, "tx") == 0){
-                nrfSetCRCEnable(false);
+                nrfSetPowerUp(true);
+
                 nrfSetCRCUse2B(false);
+                nrfSetCRCEnable(false);
 
                 nrfActAsTransmitter();
 
@@ -227,14 +231,19 @@ void processShell()
 
                 nrfSetAddressWidths(NRF_ADDR_WIDTH);
                 nrfSetTXAddr(RXADDR, 5);
+                nrfSetRxAddrOfPipe0(RXADDR, 5);
 
                 nrfSetChannel(NRF_F_CHANNEL);
 
                 nrfSetDataRate(NRF_DATARATE_1Mbps);
 
-                nrfSetPowerUp(true);
 
-                printNRFStats();
+                {// disable auto ack
+                    uint8_t val = ~BV(0);
+                    nrfWriteRegister(NRF_REG_EN_AA_ADDR, &val, 1);
+                }
+
+                nrfSetRXPipePayloadWidth((NRFPipes){NRF_DATAPIPE_0}, NRF_D_WIDTH); // pipe width of 32B
 
                 nrfPacketBase pkt;
                 for(int i = 0; i < sizeof(pkt); i++)
@@ -269,9 +278,9 @@ void processShell()
                     pkt.rawArr[0]++;
                     nrfWriteTXPayload(pkt.rawArr, len);
                     nrfSetChipEnable(true);
-                    waitMicrosecond(15);
+                    waitMicrosecond(1e3);
                     nrfSetChipEnable(false);
-                    waitMicrosecond(15);
+                    waitMicrosecond(1e3);
                 }
             }
 
