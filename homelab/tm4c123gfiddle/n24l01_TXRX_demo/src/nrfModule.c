@@ -71,6 +71,8 @@ void nrfConfigAsReceiver(){
     nrfSetChannel(NRF_F_CHANNEL);
 
     nrfSetDataRate(NRF_DATARATE_1Mbps);
+
+    nrfSetChipEnable(true);
 }
 
 void nrfConfigAsTransmitter(){
@@ -102,6 +104,23 @@ void nrfConfigAsTransmitter(){
     nrfSetRXPipePayloadWidth((NRFPipes){NRF_DATAPIPE_0}, NRF_D_WIDTH); // pipe width of 32B
 }
 
+uint8_t nrfGetRXData(uint8_t * out, uint8_t maxLen){
+    uint8_t len = nrfGetRXPayloadWidth();
+
+    if(len > 32){
+        len = 0;
+    } else {
+        if(len > maxLen)
+            len = maxLen;
+
+        nrfReadRXPayload(out, len);
+    }
+
+    nrfFlushRXFIFO();
+
+    return len;
+}
+
 void nrfTransmit(uint8_t * data, uint8_t len){
     if(len > 32)
         len = 32;
@@ -113,7 +132,8 @@ void nrfTransmit(uint8_t * data, uint8_t len){
 }
 
 bool nrfIsDataAvaliable(){
-    return nrfIsReceivedPowerDetected() && nrfGetRXPayloadWidth();
+    bool ret = nrfIsReceivedPowerDetected() && nrfGetRXPayloadWidth();
+    return ret;
 }
 
 NRFStatus nrfGetStatus(){

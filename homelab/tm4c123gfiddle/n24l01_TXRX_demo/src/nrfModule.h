@@ -227,6 +227,8 @@ uint8_t nrfGetRXPayloadWidth();
 NRFStatus nrfGetFIFOStatus(NRFFIFOStatus * out);
 NRFStatus nrfClearIRQ();
 
+uint8_t nrfGetRXData(uint8_t * out, uint8_t maxLen);
+
 uint8_t nrfGetAddrWidth();
 
 bool nrfIsPowerEnable();

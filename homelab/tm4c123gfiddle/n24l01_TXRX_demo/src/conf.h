@@ -16,7 +16,7 @@
 #define WIRELESS_RX_BUFFER_SIZE 200
 #define NRF_F_CHANNEL 10
 #define NRF_ADDR_WIDTH_COMMON NRF_ADDR_WIDTH_5B
-#define NRF_D_WIDTH (sizeof(p2Packet))
+#define NRF_D_WIDTH (sizeof(p2Pkt))
 #define RXADDR ((uint8_t []){0xa0,0xb0,0xa0,0xb0,0xa0})
 
 #endif /* SRC_CONF_H_ */

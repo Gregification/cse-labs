@@ -135,7 +135,7 @@ void processShell()
                 printNRFStats();
 
                 char str[50];
-                p2Packet pkt;
+                p2Pkt pkt;
                 for(int i = 0; i < sizeof(pkt); i++)
                         pkt.raw_arr[i] = 0x0;
                 uint8_t len;
@@ -147,8 +147,8 @@ void processShell()
                     putcUart0('0' + nrfIsIRQing());
                     putsUart0("--rx--");
 
-                    nrfSetChipEnable(false);
-                    waitMicrosecond(100);
+//                    nrfSetChipEnable(false);
+//                    waitMicrosecond(10);
 
                     if(nrfIsReceivedPowerDetected())
                     {
@@ -167,18 +167,18 @@ void processShell()
                             }
                         }
 
-                        nrfClearIRQ();
+//                        nrfClearIRQ();
                     }
 
-                    nrfSetChipEnable(true);
-                    waitMicrosecond(100);
+//                    nrfSetChipEnable(true);
+//                    waitMicrosecond(100);
                 }
             }
 
             if (strcmp(token, "tx") == 0){
                 nrfConfigAsTransmitter();
 
-                p2Packet pkt;
+                p2Pkt pkt;
                 for(int i = 0; i < sizeof(pkt); i++)
                     pkt.raw_arr[i] = i;
 
@@ -236,10 +236,6 @@ void processShell()
             if (strcmp(token, "host") == 0)
             {
                 p2HostStart();
-
-                while(!kbhitUart0()){
-                    p2HostLoop();
-                }
             }
 
             if (strcmp(token, "join") == 0)
@@ -250,6 +246,11 @@ void processShell()
             if (strcmp(token, "stop") == 0)
             {
                 p2StopFrameTimer();
+            }
+
+            if (strcmp(token, "start") == 0)
+            {
+                p2StartFrameTimerUS(P2_T_FRAME_US);
             }
 
             putsUart0("\n\r> ");
@@ -301,21 +302,21 @@ int main(void)
     while (true) {
         processShell();
 
-        {
-            static int lastframe = 0;
-            if(p2CurrentFrame != lastframe){
-                lastframe = p2CurrentFrame;
-                togglePinValue(GREEN_LED);
-            }
-        }
+        setPinValue(GREEN_LED, newFrame);
 
         switch(p2State){
-            case P2_STATE_OFF: break;
+            default:
+            case P2_STATE_OFF:
+                break;
+
             case P2_STATE_HOST_START:
             case P2_STATE_HOSTING:
                 p2HostLoop();
                 break;
-            default:
+
+            case P2_STATE_CLIENTING:
+            case P2_STATE_CLIENT_START:
+            case P2_STATE_CLIENT_WAIT_CONN_ACK:
                 p2ClientLoop();
                 break;
         }
@@ -350,7 +351,7 @@ void printNRFStats(){
     }
     if(fifostatus.RX_FULL){
         putsUart0("rx full\n\r\t");
-        p2Packet pkt;
+        p2Pkt pkt;
         nrfReadRXPayload(pkt.raw_arr, sizeof(pkt));
         for(int i = 0; i < sizeof(pkt); i++){
             static char str[20];
@@ -470,7 +471,7 @@ void printFIFORX(){
     }
     if(fifostatus.RX_FULL){
         putsUart0("rx full -> ");
-        p2Packet pkt;
+        p2Pkt pkt;
         nrfReadRXPayload(pkt.raw_arr, sizeof(pkt));
         for(int i = 0; i < sizeof(pkt); i++){
             static char str[20];
