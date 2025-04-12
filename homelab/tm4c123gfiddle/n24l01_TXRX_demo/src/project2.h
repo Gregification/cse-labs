@@ -40,12 +40,14 @@
 
 #define P2_T_FRAME_TX_US        500e3
 #define P2_T_BUFFER_US          100
-#define P2_T_INTER_FRAME_US     100
+#define P2_T_INTER_FRAME_US     1e3
 #define P2_T_FRAME_US           (P2_T_FRAME_TX_US + P2_T_BUFFER_US + P2_T_INTER_FRAME_US)
 #define P2_T_MIN_TX_DELAY_US    50
-#define P2_FRAME_COUNT          32
+#define P2_FRAME_COUNT          6
 #define P2_SYNC_FRAME_INDEX     0
 #define P2_FRAME_DEFAULT_TTL    10
+
+#define P2_SERVER_RESPONSE_TIMEOUT_CYCLES   3
 
 //---protocol------------------------------------------------------
 
@@ -61,9 +63,11 @@ typedef enum {
     P2_TYPE_CMD_FRAME_START,
     P2_TYPE_CMD_MQTT_PUB,
 
-    P2_TYPE_CMD_KEEPALIVE,
 
     P2_TYPE_ENTRY_SYNCH_PKT,
+
+    P2_TYPE_CMD_KEEPALIVE,
+    P2_TYPE_LAST = P2_TYPE_CMD_KEEPALIVE,
 } P2_TYPE;
 
 typedef struct {
@@ -72,7 +76,7 @@ typedef struct {
 
 typedef struct __attribute__((packed)) {
     uint8_t crc;
-    uint8_t frame_id;
+    uint8_t frame_id;                // the frame it should be part of
     unsigned int                : 3; // reserved. in case I forgot something
     uint8_t type;
     unsigned int data_length    : 5;
@@ -96,6 +100,15 @@ typedef struct {
     uint8_t default_ttl;
 } p2PktSynch;
 
+typedef struct {
+    uint8_t frame;
+}p2PktJoinRq;
+
+typedef struct {
+    uint8_t frame;
+    bool join_request_accepted;
+}p2PktJoinResponse;
+
 /**
  * calculates the CRC for a packet.
  *  CRC3 : x^(5) : 0x10
@@ -112,13 +125,15 @@ uint8_t p2CalcPacketCRC(p2Pkt const *);
 
 #define P2_MSG_QUEUE_SIZE 5
 
+#define P2DATAAS(STRUCT, PKT) ((STRUCT *)pkt.data)
+
 bool newFrame;
 
-struct {
-    uint8_t priority; //1 is max priority
+typedef struct {
+    bool enabled;
     p2Pkt pkt;
-    uint8_t * offset;
-} p2MsgQueue[P2_MSG_QUEUE_SIZE];
+} p2MsgQEntry;
+p2MsgQEntry p2MsgQueue[P2_MSG_QUEUE_SIZE];
 
 volatile uint8_t p2CurrentFrame;
 
@@ -127,6 +142,7 @@ struct {
 } p2FrameMetas[P2_FRAME_COUNT];
 
 void initP2();
+
 
 //---process-------------------------------------------------------
 
@@ -139,6 +155,7 @@ typedef enum {
     P2_STATE_CLIENTING, //mmm
 } P2_STATE;
 P2_STATE p2State;
+
 uint8_t p2TxEndpoint;
 
 void p2StartFrameTimerUS(uint32_t timeToNextFrame_us);
@@ -148,11 +165,11 @@ void p2OnFrameTimeIsr();
 
 void p2HostStart();
 
-uint8_t p2ClientJoin(uint32_t systick_timeout);
+void p2ClientJoin();
 void p2ClientDisconnect();
 
-void p2PushMsgQueue(p2Pkt const * pkt, uint8_t priority, uint8_t frame);
-uint8_t p2PullMsgQueue(p2Pkt * out, uint8_t frame);
+p2MsgQEntry * p2PushMsgQueue(p2Pkt);
+p2MsgQEntry * p2PopMsgQueue();
 
 void p2HostProcessPacket(p2Pkt const *);
 void p2ClientProcessPacket(p2Pkt const *);

@@ -152,22 +152,16 @@ void processShell()
 
                     if(nrfIsReceivedPowerDetected())
                     {
-                        len = nrfGetRXPayloadWidth();
+                        if(nrfGetRXData(pkt.raw_arr, sizeof(p2Pkt))){
 
-                        snprintf(str,sizeof(str), "payload count: %02d : ", len);
-                        putsUart0(str);
+                            bool isValid = p2IsPacketValid(&pkt);
 
-                        if(len > 32)
-                            nrfFlushRXFIFO();
-                        else {
-                            nrfReadRXPayload(pkt.raw_arr, len);
-                            for(int i = 0; i < len; i++){
-                                snprintf(str,sizeof(str), "%02x ",pkt.raw_arr[i]);
-                                putsUart0(str);
-                            }
+                            putsUart0("hostRX; valid  ");
+                            putcUart0('0' + isValid);
+                            putsUart0(", ");
+                            p2PrintPacket(&pkt);
+                            putsUart0("\n\r");
                         }
-
-//                        nrfClearIRQ();
                     }
 
 //                    nrfSetChipEnable(true);

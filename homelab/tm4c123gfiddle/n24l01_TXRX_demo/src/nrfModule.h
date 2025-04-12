@@ -203,6 +203,8 @@ NRFStatus nrfWriteRegister(uint8_t addr, uint8_t const * in, uint8_t len);
 
 void nrfConfigAsReceiver();
 void nrfConfigAsTransmitter();
+bool nrfConfigAsReceiverChecked();
+bool nrfConfigAsTransmitterChecked();
 void nrfTransmit(uint8_t * data, uint8_t len);  // transmits up to 32 bytes of data
 bool nrfIsDataAvaliable();
 NRFStatus nrfSetPrimAsTransmitter();
@@ -232,6 +234,8 @@ uint8_t nrfGetRXData(uint8_t * out, uint8_t maxLen);
 uint8_t nrfGetAddrWidth();
 
 bool nrfIsPowerEnable();
+
+bool nrfIsConfigAsReceiver();
 
 /**returns true is SPI read write successful
  */

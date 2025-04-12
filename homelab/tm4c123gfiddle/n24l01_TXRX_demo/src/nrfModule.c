@@ -14,6 +14,7 @@
 #include "spi0.h"
 #include "wait.h"
 
+bool lastConfigedAsRx;
 
 #define BV(X) (1 << (X))
 
@@ -37,7 +38,28 @@ void initNrf(){
 
 }
 
+bool nrfIsConfigAsReceiver(){
+    return lastConfigedAsRx;
+}
+
+bool nrfConfigAsReceiverChecked(){
+        nrfConfigAsReceiver();
+    if(!nrfIsConfigAsReceiver()){
+        return true;
+    }
+    return false;
+}
+bool nrfConfigAsTransmitterChecked(){
+        nrfConfigAsTransmitter();
+    if(nrfIsConfigAsReceiver()){
+        return true;
+    }
+    return false;
+}
+
 void nrfConfigAsReceiver(){
+    lastConfigedAsRx = true;
+
     nrfSetPowerUp(true);
     nrfSetChipEnable(false);
     nrfSetCRCEnable(false);
@@ -76,6 +98,8 @@ void nrfConfigAsReceiver(){
 }
 
 void nrfConfigAsTransmitter(){
+    lastConfigedAsRx = false;
+
     nrfSetPowerUp(true);
     nrfSetChipEnable(false);
     nrfSetCRCEnable(false);

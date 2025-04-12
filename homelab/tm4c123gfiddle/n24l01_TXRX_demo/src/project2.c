@@ -31,8 +31,12 @@ void initP2(){
 
 void p2HostStart(){
     p2State = P2_STATE_HOST_START;
+    p2TxEndpoint = P2_SYNC_FRAME_INDEX;
+}
 
-    nrfConfigAsTransmitter();
+void p2ClientJoin(){
+    p2State = P2_STATE_CLIENT_START;
+    p2TxEndpoint = P2_SYNC_FRAME_INDEX;
 }
 
 bool p2IsFrameStartSetting(){
@@ -60,10 +64,12 @@ void p2HostLoop(){
                 if(isFrameStart){
                     // send frame start signal
 
+                    // send synch packet at start of each frame
                     p2Pkt pkt;
                     pkt.header.frame_id = p2CurrentFrame;
                     pkt.header.type = P2_TYPE_ENTRY_SYNCH_PKT;
-                    { // populate data
+
+                    {
                         p2PktSynch * sd = (p2PktSynch *)pkt.data;
 
                         // search for free frames
@@ -74,25 +80,24 @@ void p2HostLoop(){
                                 &&  sd->next_avaliable_frame != P2_SYNC_FRAME_INDEX
                               )
                             sd->next_avaliable_frame = (sd->next_avaliable_frame + 1) % P2_FRAME_COUNT;
-                        // if did not find a free frame
+
+                        // if did not find a free frame send the sync frame index to indicate no space
                         if(p2FrameMetas[sd->next_avaliable_frame].ttl)
-                            break;
+                            sd->next_avaliable_frame = P2_SYNC_FRAME_INDEX;
 
                         sd->default_ttl = P2_FRAME_DEFAULT_TTL;
                     }
-
                     pkt.header.crc = p2CalcPacketCRC(&pkt);
-                    nrfConfigAsTransmitter();
+                    nrfConfigAsTransmitterChecked();
                     nrfTransmit(pkt.raw_arr, P2_MAX_PKT_SIZE);
 
                     // timer to next frame
-                    p2StartFrameTimerUS(P2_T_FRAME_US - P2_T_INTER_FRAME_US);
+                    p2StartFrameTimerUS(P2_T_FRAME_US);
 
-                    nrfConfigAsReceiver();
+                } else if(p2CurrentFrame != p2TxEndpoint){
+                    // receive messages each frame
+                    nrfConfigAsReceiverChecked();
 
-                } else {
-                    // receive messages
-                    nrfConfigAsReceiver();
                     if(nrfIsDataAvaliable()){
 
                         p2Pkt pkt;
@@ -101,6 +106,23 @@ void p2HostLoop(){
                             bool isValid;
                             if(isValid = p2IsPacketValid(&pkt)){
                                 p2HostProcessPacket(&pkt);
+
+                                switch(pkt.header.type){
+                                    case P2_TYPE_CMD_JOIN_REQUEST:{
+
+                                            p2Pkt p;
+                                            p.header.data_length = sizeof(p2PktJoinResponse);
+
+                                            // no if frame already occupied
+                                            P2DATAAS(p2PktJoinResponse, p)->join_request_accepted =
+                                                    p2FrameMetas[P2DATAAS(p2PktJoinRq, pkt)->frame].ttl;
+
+                                            p2PushMsgQueue(p);
+                                        }break;
+
+                                    default: break;
+
+                                }
 
                             } else {
 
@@ -112,6 +134,16 @@ void p2HostLoop(){
                             p2PrintPacket(&pkt);
                             putsUart0("\n\r");
                         }
+                    }
+                } else {
+                    // server transmit time
+
+                    nrfConfigAsTransmitterChecked();
+
+                    p2MsgQEntry * toSend = p2PopMsgQueue();
+                    if(toSend){
+                        toSend->pkt.header.frame_id = p2TxEndpoint;
+                        nrfTransmit(&toSend->pkt, P2_MAX_PKT_SIZE);
                     }
                 }
 
@@ -125,31 +157,38 @@ void p2ClientLoop(){
 
     switch(p2State){
         case P2_STATE_CLIENT_START: {
-                nrfConfigAsReceiver();
-
                 // wait for synch
+                // stall in this stage until so
+
+                nrfConfigAsReceiverChecked();
+
                 if(nrfIsDataAvaliable()){
 
                     p2Pkt pkt;
                     if(nrfGetRXData(pkt.raw_arr, sizeof(p2Pkt))){
 
-                        // stall in this stage until connected
-
                         bool isValid;
                         if(isValid = p2IsPacketValid(&pkt)){
-                            p2ClientProcessPacket(&pkt);
 
                             if(pkt.header.type == P2_TYPE_ENTRY_SYNCH_PKT){
                                 if(pkt.header.frame_id == P2_SYNC_FRAME_INDEX){
-                                    // send join request
-                                    p2Pkt pkt;
-                                    pkt.header.data_length = 0;
-                                    pkt.header.frame_id = P2_SYNC_FRAME_INDEX;
+                                    // send join request, repurpose the exising packet
+
                                     pkt.header.type = P2_TYPE_CMD_JOIN_REQUEST;
+
+                                    p2TxEndpoint = ((p2PktSynch *)pkt.data)->next_avaliable_frame;
+                                    ((p2PktJoinRq *)pkt.data)->frame = p2TxEndpoint;
+
+                                    pkt.header.data_length = sizeof(p2PktJoinRq);
+
                                     pkt.header.crc = p2CalcPacketCRC(&pkt);
 
-                                    nrfConfigAsTransmitter();
-                                    nrfTransmit(pkt.raw_arr, P2_MAX_PKT_SIZE);
+                                    if(p2PushMsgQueue(pkt)){
+                                        p2State = P2_STATE_CLIENT_WAIT_CONN_ACK;
+                                        putsUart0("P2_STATE_CLIENT_WAIT_CONN_ACK\n\r");
+                                    } else {
+                                        putsUart0("failed to queue join pkt\n\r");
+                                    }
                                 }
                             }
 
@@ -158,7 +197,7 @@ void p2ClientLoop(){
 
                         }
 
-                        putsUart0("clientRX; valid : ");
+                        putsUart0("client_start RX; valid : ");
                         putcUart0('0' + isValid);
                         putsUart0(" ");
                         p2PrintPacket(&pkt);
@@ -168,26 +207,76 @@ void p2ClientLoop(){
 
             }break;
         case P2_STATE_CLIENT_WAIT_CONN_ACK:{
+                /*
+                 * wait for host to accept/deny join request
+                 *
+                 * if join request denied or timed out
+                 *      go back to join search state
+                 * else
+                 *      move to active join state
+                 */
 
+                // timeout logic
+                static uint8_t response_timeout;
+                if(response_timeout >= P2_SERVER_RESPONSE_TIMEOUT_CYCLES){
+                    response_timeout = 0;
+                    p2State = P2_STATE_CLIENT_START;
+                    break;
+                }
+
+                nrfConfigAsReceiverChecked();
+
+                if(nrfIsDataAvaliable()){
+                    p2Pkt pkt;
+                    if(nrfGetRXData(pkt.raw_arr, sizeof(p2Pkt))){
+
+                        bool isValid;
+
+                        if(isValid = p2IsPacketValid(&pkt)){
+
+                            if(pkt.header.frame_id == P2_SYNC_FRAME_INDEX){
+
+                                switch(pkt.header.type){
+
+                                    case P2_TYPE_CMD_JOIN_ACCEPT:
+                                        p2State = P2_STATE_CLIENTING;
+                                        response_timeout = 0;
+                                        break;
+
+                                    case P2_TYPE_CMD_JOIN_DENY:
+                                        p2State = P2_STATE_CLIENT_START;
+                                        response_timeout = 0;
+                                        p2StartFrameTimerUS((P2_T_FRAME_US -P2_T_BUFFER_US) * p2TxEndpoint);
+                                        break;
+
+                                    case P2_TYPE_ENTRY_SYNCH_PKT:
+                                        response_timeout += 1;
+                                        break;
+
+                                    default:
+                                        break;
+                                }
+                            }
+                        }
+
+                        putsUart0("client_wait_con_ack RX; valid : ");
+                        putcUart0('0' + isValid);
+                        putsUart0(" ");
+                        p2PrintPacket(&pkt);
+                        putsUart0("\n\r");
+                    }
+                }
             }break;
         case P2_STATE_CLIENTING: {
-
                 if(isFrameStart){
-                   putsUart0("clienting\n\r");
+                   putsUart0("P2_STATE_CLIENTING\n\r");
                 } else {
-                    // tx messages
-
+                    // tx pending messages
                 }
 
             } break;
         default:;
     };
-}
-
-uint8_t p2ClientJoin(uint32_t timeout_us){
-    p2StartFrameTimerUS(timeout_us); // repurpose this as a timeout
-    p2State = P2_STATE_CLIENT_START;
-    return 0;
 }
 
 void p2HostProcessPacket(p2Pkt const * pkt){
@@ -200,15 +289,38 @@ void p2ClientProcessPacket(p2Pkt const * pkt){
 
 }
 
-void p2QueueMessage(p2Pkt pkt, uint8_t ttl){
-//    for(uint8_t i = 0; i < P2_MSG_QUEUE_SIZE; i++){
-//        if(p2MsgQueue[i])
-//    }
+p2MsgQEntry * p2PushMsgQueue(p2Pkt pkt){
+    for(uint8_t i = 1; i < P2_MSG_QUEUE_SIZE; i++)
+        if(!p2MsgQueue[i].enabled){
+            p2MsgQueue[i].enabled = true;
+
+            p2MsgQueue[i].pkt = pkt;
+
+            return p2MsgQueue + i;
+        }
+
+    return NULL;
 }
 
+p2MsgQEntry * p2PopMsgQueue(){
+    p2MsgQEntry * spot = p2MsgQueue;
+    for(uint8_t i = 1; i < P2_MSG_QUEUE_SIZE; i++)
+        if(p2MsgQueue[i].enabled)
+            spot = p2MsgQueue + i;
+
+    if(spot->enabled){
+        spot->enabled = false;
+        return spot;
+    }
+    return NULL;
+}
 
 bool p2IsPacketValid(p2Pkt const * pkt){
-    return pkt->header.crc == p2CalcPacketCRC(pkt);
+    return
+            pkt->header.frame_id < P2_FRAME_COUNT
+        &&  pkt->header.type <= P2_TYPE_LAST
+        &&  pkt->header.crc == p2CalcPacketCRC(pkt)
+        ;
 }
 
 // baselined off of Jason Losh's "initTimer()" function
@@ -263,9 +375,13 @@ void p2PrintPacket(p2Pkt const * p){
         case P2_TYPE_CMD_DISCONNNECT:
             putsUart0("CMD_DISCONNNECT  ,");
             break;
-        case P2_TYPE_CMD_JOIN_REQUEST:
-            putsUart0("CMD_JOIN_REQUEST ,");
-            break;
+        case P2_TYPE_CMD_JOIN_REQUEST:{
+                putsUart0("CMD_JOIN_REQUEST ,");
+                p2PktJoinRq * j = (p2PktJoinRq *)p->data;
+                putsUart0("frame: ");
+                snprintf(str, sizeof(str), "%02d, ", j->frame);
+                putsUart0(str);
+            }break;
         case P2_TYPE_CMD_JOIN_ACCEPT:
             putsUart0("CMD_JOIN_ACCEPT  ,");
             break;
