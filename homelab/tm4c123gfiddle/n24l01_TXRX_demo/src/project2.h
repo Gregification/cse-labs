@@ -99,16 +99,17 @@ typedef struct {
     uint8_t default_ttl;
 } p2PktSynch;
 
-typedef struct {
-    uint8_t frame;
-}p2PktJoinRq;
+typedef p2TypeCMDFrameStart p2PktJoinRq;
 
 typedef struct {
     uint8_t frame;
     bool join_request_accepted;
 }p2PktJoinResponse;
 
-typedef p2PktJoinRq p2PktReset;
+typedef struct {
+    uint8_t frame;
+    bool isEcho;
+} p2PktReset;
 
 /**
  * calculates the CRC for a packet.
@@ -171,6 +172,7 @@ void p2ClientDisconnect();
 
 p2MsgQEntry * p2PushMsgQueue(p2Pkt);
 p2MsgQEntry * p2PopMsgQueue();
+bool p2IsMsgQueueEmpty();
 
 void p2HostProcessPacket(p2Pkt const *);
 void p2ClientProcessPacket(p2Pkt const *);
@@ -190,5 +192,7 @@ bool p2IsFrameStartSetting();
 
 /**returns addr to next empty space is successful, null if over ran output*/
 //uint8_t * p2AppendPktEntry(p2Pkt const * , uint8_t * offset, p2PktEntryHeader, void const * data);
+
+bool p2GetData(p2Pkt * pk_out, bool * isValid_out);
 
 #endif /* SRC_PROJECT2_H_ */

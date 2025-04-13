@@ -9,6 +9,7 @@
 #define SRC_COMMON_H_
 
 #include <stdint.h>
+#include "gpio.h"
 
 #define BV(X) (1 << (X))
 

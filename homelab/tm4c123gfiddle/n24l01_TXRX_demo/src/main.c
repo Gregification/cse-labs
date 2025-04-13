@@ -128,11 +128,9 @@ void processShell()
 
                 printNRFStats();
 
-                char str[50];
                 p2Pkt pkt;
                 for(int i = 0; i < sizeof(pkt); i++)
                         pkt.raw_arr[i] = 0x0;
-                uint8_t len;
                 while(!kbhitUart0()){
 //                    nrfSetChipEnable(false);
 //                    waitMicrosecond(10);
@@ -298,7 +296,7 @@ int main(void)
     while (true) {
         processShell();
 
-        setPinValue(GREEN_LED, newFrame);
+
 
         switch(p2State){
             default:
@@ -310,9 +308,9 @@ int main(void)
                 p2HostLoop();
                 break;
 
-            case P2_STATE_CLIENTING:
             case P2_STATE_CLIENT_START:
             case P2_STATE_CLIENT_WAIT_CONN_ACK:
+            case P2_STATE_CLIENTING:
                 p2ClientLoop();
                 break;
         }
