@@ -38,12 +38,12 @@
 
 #include "common.h"
 
-#define P2_T_FRAME_TX_US        500e3
+#define P2_T_FRAME_TX_US        2e6
 #define P2_T_BUFFER_US          100
 #define P2_T_INTER_FRAME_US     1e3
 #define P2_T_FRAME_US           (P2_T_FRAME_TX_US + P2_T_BUFFER_US + P2_T_INTER_FRAME_US)
 #define P2_T_MIN_TX_DELAY_US    50
-#define P2_FRAME_COUNT          6
+#define P2_FRAME_COUNT          3
 #define P2_SYNC_FRAME_INDEX     0
 #define P2_FRAME_DEFAULT_TTL    10
 
@@ -58,8 +58,7 @@ typedef enum {
     P2_TYPE_CMD_RESET,
     P2_TYPE_CMD_DISCONNNECT,
     P2_TYPE_CMD_JOIN_REQUEST,
-    P2_TYPE_CMD_JOIN_ACCEPT,
-    P2_TYPE_CMD_JOIN_DENY,
+    P2_TYPE_CMD_JOIN_RESPONSE,
     P2_TYPE_CMD_FRAME_START,
     P2_TYPE_CMD_MQTT_PUB,
 
@@ -109,6 +108,8 @@ typedef struct {
     bool join_request_accepted;
 }p2PktJoinResponse;
 
+typedef p2PktJoinRq p2PktReset;
+
 /**
  * calculates the CRC for a packet.
  *  CRC3 : x^(5) : 0x10
@@ -125,7 +126,7 @@ uint8_t p2CalcPacketCRC(p2Pkt const *);
 
 #define P2_MSG_QUEUE_SIZE 5
 
-#define P2DATAAS(STRUCT, PKT) ((STRUCT *)pkt.data)
+#define P2DATAAS(STRUCT, PKT) ((STRUCT *)PKT.data)
 
 bool newFrame;
 
@@ -180,6 +181,7 @@ void p2ClientLoop();
 bool p2IsPacketValid(p2Pkt const *);
 
 void p2PrintPacket(p2Pkt const *);
+void p2PrintFrameMetas();
 
 bool p2IsFrameStartSetting();
 

@@ -54,12 +54,6 @@
 
 #include "project2.h"
 
-// Pins
-#define RED_LED PORTF,1
-#define BLUE_LED PORTF,2
-#define GREEN_LED PORTF,3
-#define PUSH_BUTTON PORTF,4
-
 //-----------------------------------------------------------------------------
 // Subroutines                
 //-----------------------------------------------------------------------------
@@ -140,18 +134,27 @@ void processShell()
                         pkt.raw_arr[i] = 0x0;
                 uint8_t len;
                 while(!kbhitUart0()){
-                    putsUart0("\n\r");
-                    putsUart0("CW:");
-                    putcUart0('0' + nrfIsReceivedPowerDetected());
-                    putsUart0(",IRQ:");
-                    putcUart0('0' + nrfIsIRQing());
-                    putsUart0("--rx--");
-
 //                    nrfSetChipEnable(false);
 //                    waitMicrosecond(10);
 
                     if(nrfIsReceivedPowerDetected())
                     {
+                        putsUart0("\n\r");
+                        putsUart0("CW:");
+                        putcUart0('0' + nrfIsReceivedPowerDetected());
+                        putsUart0(",IRQ:");
+                        putcUart0('0' + nrfIsIRQing());
+                        putsUart0("--rx--");
+
+                        {
+                            static uint8_t counter = 0;
+                            counter++;
+
+                            static char str[5];
+                            snprintf(str,sizeof(str), "%02x| ",counter);
+                            putsUart0(str);
+                        }
+
                         if(nrfGetRXData(pkt.raw_arr, sizeof(p2Pkt))){
 
                             bool isValid = p2IsPacketValid(&pkt);
@@ -160,7 +163,6 @@ void processShell()
                             putcUart0('0' + isValid);
                             putsUart0(", ");
                             p2PrintPacket(&pkt);
-                            putsUart0("\n\r");
                         }
                     }
 
