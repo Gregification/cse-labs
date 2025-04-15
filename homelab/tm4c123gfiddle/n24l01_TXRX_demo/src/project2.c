@@ -651,9 +651,9 @@ void p2PrintPacket(p2Pkt const * p){
             putsUart0("accepted: ");
             putcUart0('0' + P2DATAAS(p2PktJoinResponse, (*p))->join_request_accepted);
             break;
-        case P2_TYPE_CMD_FRAME_START:
-            putsUart0("CMD_FRAME_START  ,");
-            break;
+//        case P2_TYPE_CMD_FRAME_START:
+//            putsUart0("CMD_FRAME_START  ,");
+//            break;
         case P2_TYPE_CMD_MQTT_PUB:
             putsUart0("CMD_MQTT_PUB     ,");
             break;

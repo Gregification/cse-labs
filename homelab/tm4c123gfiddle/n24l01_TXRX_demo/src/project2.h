@@ -2,7 +2,7 @@
  * project2.h
  *
  * - static number of frames
- * - non dynamic frame times
+ * - static frame times
  *
  **protocol info*******************************************************************************
  *
@@ -17,17 +17,49 @@
  *      - buffer time is there to ensure all transmissions finish before the next frame
  *      - in the diagram above there are 2 total frames shown: 0,1
  *
- * data
+ *      *note: the timing described is not precise, but still try to meet the standard to minimize collisions.
+ *
+ * overview
+ *      server & client setup, there are a predetermined X amount of "frames"(a time segment).
+ *      during each time frame any amount of packets can be transmitted. packets have a standard
+ *      16b header and 30B following data. because the NRF module requires the TX and RX to have
+ *      the same packet size we'll always T/RX in 32B packets (the max size) even if the intended
+ *      content is less than 32B.
+ *
+ *      frame 0 is always reserved for server transmissions
+ *
+ *      The packet header
+ *          - data length   : the length of the useful data
+ *          - crc           : crc8-ccitt, performed over the packet header(with crc field set to 0) and the data (size from data_length field)
+ *          - frame id      : the frame thats transmitting the packet
+ *          - type          : determines the purpose of the packet and how the data is interpreted
+ *
+ *      Each frame is started by a SYNC packet sent by the server. the sync packet tells
+ *          you what frame is starting, the next available unclaimed frame, the TTL(time-to-live)
+ *          setting of the frame.
+ *
+ *      joining:
+ *              must go though a simple 2 way hand shake to reserve a frame; then only TX during that
+ *          frames TX time. client sends a JOIN_REQUEST packet with the data filled out for the
+ *          frame its trying to occupy. the server then responds with a JOIN_RESPONSE packet thats
+ *          addressed to the frame the clients trying to occupy, and indicating if the client
+ *          has successfully claimed the frame.
+ *
+ *      disconnecting:
+ *          just send a reset packet to the host, no hand shake needed. or not send anything and
+ *          let the host timeout the connection.
+ *
+ *      transmit useful information:
+ *              at this point the device has joined and reserved a frame. after receiving the
+ *          SYNC packet corresponding to the frame. the device is free to transmit packets
+ *          for the duration of the TX time of the frame. there is a minimum required X amount
+ *          of time between transmissions to give others time to process the packet.
  *
  *
- **details*************************************************************************************
+ **packet types********************************************************************************
+ *  - every packet "type" corresponds to how you should interpert the data field of the packet.
+ *          its tedious but makes for fool proof code.
  *
- *  - any amount of packets may be transmitted during TX time
- *  - packets may start at any time during TX time
- *  - packets should not START during the frame's buffer time
- *  - nothing should be transmitting during inter-frame time
- *  - frame ownership will be dropped if no messages are sent within a keep alive time
- *  - minimum of 50us between consecutive transmissions in a single frame
  */
 
 #ifndef SRC_PROJECT2_H_
@@ -59,19 +91,21 @@ typedef enum {
     P2_TYPE_CMD_DISCONNNECT,
     P2_TYPE_CMD_JOIN_REQUEST,
     P2_TYPE_CMD_JOIN_RESPONSE,
-    P2_TYPE_CMD_FRAME_START,
-    P2_TYPE_CMD_MQTT_PUB,
-
+//    P2_TYPE_CMD_FRAME_START,
 
     P2_TYPE_ENTRY_SYNCH_PKT,
 
     P2_TYPE_CMD_KEEPALIVE,
     P2_TYPE_LAST = P2_TYPE_CMD_KEEPALIVE,
+
+
+
+    P2_TYPE_CMD_MQTT_PUB,
 } P2_TYPE;
 
-typedef struct {
-    uint8_t frame;
-} p2TypeCMDFrameStart;
+//typedef struct {
+//    uint8_t frame;
+//} p2TypeCMDFrameStart;
 
 typedef struct __attribute__((packed)) {
     uint8_t crc;
@@ -99,7 +133,9 @@ typedef struct {
     uint8_t default_ttl;
 } p2PktSynch;
 
-typedef p2TypeCMDFrameStart p2PktJoinRq;
+typedef struct {p2PktJoinRq;
+    uint8_t frame;
+} p2PktJoinRq;
 
 typedef struct {
     uint8_t frame;
