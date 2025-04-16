@@ -96,11 +96,10 @@ typedef enum {
     P2_TYPE_ENTRY_SYNCH_PKT,
 
     P2_TYPE_CMD_KEEPALIVE,
-    P2_TYPE_LAST = P2_TYPE_CMD_KEEPALIVE,
 
+    P2_TYPE_GLASS_BRAKE_SENSOR,
 
-
-    P2_TYPE_CMD_MQTT_PUB,
+    P2_TYPE_LAST = P2_TYPE_GLASS_BRAKE_SENSOR
 } P2_TYPE;
 
 //typedef struct {
@@ -139,13 +138,17 @@ typedef struct {p2PktJoinRq;
 
 typedef struct {
     uint8_t frame;
-    bool join_request_accepted;
+    bool join_request_accepted : 8;
 }p2PktJoinResponse;
 
 typedef struct {
     uint8_t frame;
-    bool isEcho;
+    bool isEcho : 8;
 } p2PktReset;
+
+typedef struct {
+
+} p2PktDisconnect;
 
 /**
  * calculates the CRC for a packet.
