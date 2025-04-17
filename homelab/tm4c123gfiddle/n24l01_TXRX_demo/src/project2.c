@@ -128,8 +128,12 @@ void p2HostLoop(){
                                 if(p2FrameMetas[frameid].ttl == 0){
                                     // queue a reset message
                                     putsUart0("\n\r reset cmd to frame ");
-                                    putcUart0('0' + frameid);
-                                    putsUart0("\n\r");
+                                    {
+                                        char str[6];
+                                        snprintf(str, sizeof(str), "%02d", frameid);
+                                        putsUart0(str);
+                                    }
+                                    putsUart0(" for timeout");
 
                                     p2Pkt p;
                                     p.header.type = P2_TYPE_CMD_RESET;
@@ -165,23 +169,34 @@ void p2HostLoop(){
                             if(isValid = p2IsPacketValid(&pkt)){
 
                                 // TTL updates
-                                // reset TTL if packet received from a live frame
-                                if(p2FrameMetas[pkt.header.from_frame].ttl){
-                                    p2FrameMetas[pkt.header.from_frame].ttl = P2_FRAME_DEFAULT_TTL;
+                                if(pkt.header.type == P2_TYPE_CMD_JOIN_REQUEST){
                                     p2HostProcessPacket(&pkt);
                                 } else {
-                                    // packet from unexpected frame, send back a reset
-                                    isValid = false;
+                                    // reset TTL if packet received from a live frame
+                                    if(p2FrameMetas[pkt.header.from_frame].ttl != 0){
 
-                                    // fake receive a reset packet
-                                    p2Pkt p;
-                                    p.header.type = P2_TYPE_CMD_RESET;
-                                    p.header.data_length = sizeof(p2PktReset);
-                                    P2DATAAS(p2PktReset, p)->frame = pkt.header.from_frame;
-                                    P2DATAAS(p2PktReset, p)->isEcho = false;
-
-                                    p.header.crc = p2CalcPacketCRC(&p);
-                                    p2HostProcessPacket(&pkt);
+                                        p2FrameMetas[pkt.header.from_frame].ttl = P2_FRAME_DEFAULT_TTL;
+                                        p2HostProcessPacket(&pkt);
+                                    } else {
+//                                        // packet from unexpected frame, send back a reset
+//                                        isValid = false;
+//                                        putsUart0("packet from unoccupied frame ");
+//                                        {
+//                                            char str[8];
+//                                            snprintf(str, sizeof(str), "%02d\n\r", pkt.header.from_frame);
+//                                            putsUart0(str);
+//                                        }
+//
+//                                        // fake receive a reset packet
+//                                        p2Pkt p;
+//                                        p.header.type = P2_TYPE_CMD_RESET;
+//                                        p.header.data_length = sizeof(p2PktReset);
+//                                        P2DATAAS(p2PktReset, p)->frame = pkt.header.from_frame;
+//                                        P2DATAAS(p2PktReset, p)->isEcho = false;
+//
+//                                        p.header.crc = p2CalcPacketCRC(&p);
+//                                        p2HostProcessPacket(&pkt);
+                                    }
                                 }
                             }
 
@@ -331,8 +346,10 @@ void p2ClientLoop(){
                                             response_timeout = 0;
 
                                             if(P2DATAAS(p2PktJoinResponse, pkt)->join_request_accepted){
+                                                p2StopFrameTimer();
                                                 p2State = P2_STATE_CLIENTING; // yippie
                                                 putsUart0("P2_STATE_CLIENTING transition, yuppie\n\r");
+                                                p2CurrentFrame = P2_SYNC_FRAME_INDEX; // set to some invlaid frame
                                             }
                                             else
                                                 p2ClientJoin(); // nayy
@@ -361,139 +378,79 @@ void p2ClientLoop(){
                 }
             }break;
         case P2_STATE_CLIENTING: {
-                static bool awaitSync;
-                if(isFrameStart) // wait for sync at beginning of every frame before doing anything
-                    awaitSync = true;
-
-                if(awaitSync){
-                    // manage timing
-                    // use each frames synch packet as time reference
-                    // internal frame timer is only trusted to get us to the next immediate frame
-                    // the rest of the timing depends on the sync packets
-
-                    nrfConfigAsReceiverChecked();
-
-                    p2Pkt pkt;
-                    bool isValid;
-                    if(p2GetData(&pkt, &isValid)){
-                        if(isValid){
-
-                            switch(pkt.header.type){
-
-                                // timing synchronization
-                                case P2_TYPE_ENTRY_SYNCH_PKT:
-                                    // if is NOT form host
-                                    if(pkt.header.from_frame != P2_SYNC_FRAME_INDEX)
-                                        break;
-
-                                    awaitSync = false;
-
-                                    p2StartFrameTimerUS(P2_T_FRAME_US);
-
-                                    // update local info using this packet, everyone trusts the same source
-                                    p2CurrentFrame = P2DATAAS(p2PktSynch, pkt)->frame;
-                                    p2IsFrameStartSetting(); // flush any triggers about a new frame
-
-                                    // if is addressing the frame were occupying
-                                    if(P2DATAAS(p2PktSynch, pkt)->frame == p2TxEndpoint){
-                                        if(P2DATAAS(p2PktSynch, pkt)->frame_ttl == 0){
-                                            // must have missed a reset packet
-                                            // restart
-                                            p2ClientJoin();
-                                            break;
-                                        }
-
-                                        putsUart0("sync for me :333\n\r");
-                                        // if nothing to send
-                                        if(p2IsMsgQueueEmpty() || P2DATAAS(p2PktSynch, pkt)->frame_ttl <= 2){
-                                            // send keepalive message to prevent timeout
-                                            putsUart0("queuing keepalive\n\r");
-                                            p2Pkt p;
-                                            p.header.type = P2_TYPE_CMD_KEEPALIVE;
-                                            p.header.data_length = sizeof(p2PktKeepAlive);
-                                            p.header.from_frame = p2TxEndpoint;
-                                            P2DATAAS(p2PktKeepAlive, p)->newTTL = 5; // use server default
-                                            p2PushMsgQueue(p);
-                                        }
-
-                                    }
-
-                                default:
-                                    break;
-                            }
-                        }
-
-                        putsUart0("clienting@");
-                        {
-                           char str[5];
-                           snprintf(str, sizeof(str), "%2d ", p2TxEndpoint);
-                           putsUart0(str);
-                        }
-                        putsUart0(" RX; valid: ");
-                        putcUart0('0' + isValid);
-                        putsUart0(" ");
-                        p2PrintPacket(&pkt);
-                        putsUart0("\n\r");
-
-                    }
-
-                } else { // sync packet has been handled
-                    // assume timing is correct
 
                     // if time for this client to TX
                     if(p2CurrentFrame == p2TxEndpoint){
                         // tx pending messages
-
-                        nrfConfigAsTransmitterChecked();
 
                         p2MsgQEntry * toSend = p2PopMsgQueue();
                         if(toSend){
                             nrfTransmit(toSend->pkt.raw_arr, P2_MAX_PKT_SIZE);
                         }
 
-                    } // if time for server to TX
-                    else if(p2CurrentFrame == P2_SYNC_FRAME_INDEX) {
+                        setPinValue(GREEN_LED, 1);
+                    }
+                    else
+                    {
+                        setPinValue(GREEN_LED, 0);
+
                         bool isValid;
                         p2Pkt pkt;
                         if(p2GetData(&pkt, &isValid)){
 
                             // if is valid data
                             if(isValid){
-                                p2ClientProcessPacket(&pkt);
 
                                 switch(pkt.header.type){
-                                    case P2_TYPE_CMD_RESET: {
-                                            // if intended for this frame
-                                            if(P2DATAAS(p2PktReset, pkt)->frame != p2TxEndpoint)
+                                        // timing synchronization
+                                        case P2_TYPE_ENTRY_SYNCH_PKT: {
+                                            // if is NOT form host
+                                            if(pkt.header.from_frame != P2_SYNC_FRAME_INDEX)
                                                 break;
 
-                                            // disconnect
-                                            p2StopFrameTimer();
-                                            p2State = P2_STATE_OFF;
-
-                                            // if is not a retransmission
-                                            if(! P2DATAAS(p2PktReset, pkt)->isEcho){
-                                                // send disconnect msg back to ensure both parties understand
-                                                //   can reuse the same packet
-
-                                                // modify a few values
-                                                pkt.header.from_frame = p2TxEndpoint;
-                                                pkt.header.data_length = sizeof(p2PktReset);
-                                                P2DATAAS(p2PktReset, pkt)->isEcho = true;
-                                                P2DATAAS(p2PktReset, pkt)->frame = p2TxEndpoint;
-
-                                                // mild effort to echo back the message
-                                                if(p2PushMsgQueue(pkt)){
-                                                    // great success!
-                                                } else {
-                                                    // it didn't make it, oh well, we did our due diligence ... thats what the timeout's for
-                                                }
+                                            // update local info using this packet, everyone trusts the same source
+                                            p2CurrentFrame = P2DATAAS(p2PktSynch, pkt)->frame;
+                                            if(p2CurrentFrame == p2TxEndpoint){
+                                                nrfConfigAsTransmitterChecked();
+                                                p2StartFrameTimerUS(P2_T_FRAME_TX_US);
+                                                break;
+//                                                p2MsgQEntry * toSend = p2PopMsgQueue();
+//                                                if(toSend){
+//                                                    nrfConfigAsTransmitter();
+//                                                    nrfTransmit(toSend->pkt.raw_arr, P2_MAX_PKT_SIZE);
+//                                                    nrfConfigAsReceiver();
+//                                                }
+//
+//                                                setPinValue(GREEN_LED, 1);
                                             }
 
-                                            // restart connection locally
-                                            p2ClientJoin();
+                                            // if is addressing the frame were occupying
+                                            if(P2DATAAS(p2PktSynch, pkt)->frame == p2TxEndpoint){
+                                                if(P2DATAAS(p2PktSynch, pkt)->frame_ttl == 0){
+                                                    // must have missed a reset packet
+                                                    // restart
+                                                    p2ClientJoin();
+                                                    break;
+                                                }
+
+                                                // if near timeout
+                                                if(P2DATAAS(p2PktSynch, pkt)->frame_ttl <= 4){
+                                                    // send keepalive message to prevent timeout
+                                                    p2Pkt p;
+                                                    p.header.type = P2_TYPE_CMD_KEEPALIVE;
+                                                    p.header.data_length = sizeof(p2PktKeepAlive);
+                                                    p.header.from_frame = p2TxEndpoint;
+                                                    P2DATAAS(p2PktKeepAlive, p)->newTTL = 10; // use server default
+                                                    p2PushMsgQueue(p);
+                                                }
+
+                                            }
                                         } break;
+
+                                        default:;
                                 }
+
+                                p2ClientProcessPacket(&pkt);
 
                             }
 
@@ -503,6 +460,11 @@ void p2ClientLoop(){
                                snprintf(str, sizeof(str), "%2d ", p2TxEndpoint);
                                putsUart0(str);
                             }
+                            {
+                                char str[15];
+                                snprintf(str, sizeof(str), "cf: %02d | ", p2CurrentFrame);
+                                putsUart0(str);
+                            }
                             putsUart0(" RX; valid: ");
                             putcUart0('0' + isValid);
                             putsUart0(" ");
@@ -510,9 +472,7 @@ void p2ClientLoop(){
                             putsUart0("\n\r");
                         }
                     }
-                }
-
-            } break;
+                } break;
         default:;
     };
 }
@@ -587,6 +547,14 @@ void p2HostProcessPacket(p2Pkt const * pkt){
                     p2FrameMetas[pkt->header.from_frame].ttl = 6;
             }break;
 
+        case P2_TYPE_CMD_JOIN_RESPONSE:
+        case P2_TYPE_ENTRY_SYNCH_PKT:
+            // do nothing. should only occur if multiple hosts are running. systems screwed up anyways
+            break;
+        case P2_TYPE_GLASS_BRAKE_SENSOR:
+            putsUart0("glass broke!\n\r");
+            break;
+
         default:
             putsUart0("unhandled type ");
             break;
@@ -598,24 +566,40 @@ void p2ClientProcessPacket(p2Pkt const * pkt){
     // assume packet is good
 
     switch(pkt->header.type){
-        case P2_TYPE_CMD_JOIN_RESPONSE:{
-                // if intended for this frame
-                if(P2DATAAS(p2PktJoinResponse, *pkt)->frame == p2TxEndpoint){
-                    // reset frame
-                    p2Pkt p;
-                    p.header.data_length = sizeof(p2PktReset);
-                    p.header.from_frame = p2TxEndpoint;
-                    p.header.type = P2_TYPE_CMD_RESET;
-                    P2DATAAS(p2PktReset, p)->frame = p2TxEndpoint;
-                    P2DATAAS(p2PktReset, p)->isEcho = false;
-                    p2PushMsgQueue(p);
-                }
-            }
+        case P2_TYPE_CMD_JOIN_RESPONSE:
+            break;
 
-        case P2_TYPE_CMD_RESET: // already handled by client loop
-            // if intended for this device
-            if(P2DATAAS(p2PktReset, *pkt)->frame != p2TxEndpoint)
-                break;
+        case P2_TYPE_CMD_RESET: {
+                    // if intended for this frame
+                    if(P2DATAAS(p2PktReset, *pkt)->frame != p2TxEndpoint)
+                        break;
+
+                    // disconnect
+                    p2StopFrameTimer();
+                    p2State = P2_STATE_OFF;
+
+                    // if is not a retransmission
+                    if(! P2DATAAS(p2PktReset, *pkt)->isEcho){
+                        // send disconnect msg back to ensure both parties understand
+
+                        p2Pkt p;
+                        p.header.type = P2_TYPE_CMD_RESET;
+                        p.header.from_frame = p2TxEndpoint;
+                        p.header.data_length = sizeof(p2PktReset);
+                        P2DATAAS(p2PktReset, p)->isEcho = true;
+                        P2DATAAS(p2PktReset, p)->frame = p2TxEndpoint;
+
+                        // mild effort to echo back the message
+                        if(p2PushMsgQueue(p)){
+                            // great success!
+                        } else {
+                            // it didn't make it, oh well, we did our due diligence ... thats what the timeout's for
+                        }
+                    }
+
+                    // restart connection locally
+                    p2ClientJoin();
+                } break;
 
         case P2_TYPE_CMD_DISCONNNECT:
             // if intended for this device
@@ -638,7 +622,19 @@ void p2ClientProcessPacket(p2Pkt const * pkt){
 
         case P2_TYPE_ENTRY_SYNCH_PKT:
             // un oh, desync
-//            p2StartFrameTimerUS(1); // abort this loop
+            if(random32() & BV(5)){
+                putsUart0("queuing alarm!\n\r");
+                p2Pkt p;
+                p.header.data_length = sizeof(p2PktEPGlassBreakSensor);
+                p.header.type = P2_TYPE_GLASS_BRAKE_SENSOR;
+                p.header.from_frame = p2TxEndpoint;
+                p2PktEPGlassBreakSensor * gbs = P2DATAAS(p2PktEPGlassBreakSensor, p);
+                gbs->alarm = random32() & BV(0);
+                gbs->battery_level = random32() % 101;
+                gbs->battery_low = gbs->battery_level <= 20;
+
+                p2PushMsgQueue(p);
+            }
             break;
 
         default:{
@@ -677,15 +673,10 @@ p2MsgQEntry * p2PopMsgQueue(){
 }
 
 bool p2IsMsgQueueEmpty(){
-    p2MsgQEntry * spot = p2PopMsgQueue(); // search using the pop funciton
-    if(spot){
-
-        spot->enabled = true; // dont actually pop the element
-
-        return false;
-
-    } else
-        return true;
+    for(uint8_t i = 0; i < P2_MSG_QUEUE_SIZE; i++)
+            if(p2MsgQueue[i].enabled)
+                return false;
+    return true;
 }
 
 bool p2IsPacketValid(p2Pkt const * pkt){
@@ -713,6 +704,10 @@ void p2StartFrameTimerUS(uint32_t timeToNextFrame_us){
 
 void p2StopFrameTimer(){
     TIMER3_CTL_R &= ~TIMER_CTL_TAEN;                 // turn-off timer
+}
+
+bool p2IsFrameTimerRunning(){
+    return (TIMER3_CTL_R & TIMER_CTL_TAEN) && (TIMER3_IMR_R & TIMER_IMR_TATOIM) && (TIMER3_TAILR_R > 0);
 }
 
 void p2OnFrameTimeIsr(){
@@ -748,7 +743,7 @@ void p2PrintPacket(p2Pkt const * p){
             snprintf(str, sizeof(str), "%02d, ", P2DATAAS(p2PktReset, (*p))->frame);
             putsUart0(str);
             putsUart0("echo: ");
-            putcUart0('0' + P2DATAAS(p2PktReset, (*p))->isEcho);
+            putcUart0('0' + (P2DATAAS(p2PktReset, (*p))->isEcho ? 1 : 0));
             break;
         case P2_TYPE_CMD_DISCONNNECT:
             putsUart0("CMD_DISCONNNECT ,");

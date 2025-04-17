@@ -71,13 +71,13 @@
 #include "common.h"
 
 #define P2_T_FRAME_TX_US        2e6
-#define P2_T_BUFFER_US          100
+#define P2_T_BUFFER_US          1e3
 #define P2_T_INTER_FRAME_US     1e3
 #define P2_T_FRAME_US           (P2_T_FRAME_TX_US + P2_T_BUFFER_US + P2_T_INTER_FRAME_US)
 #define P2_T_MIN_TX_DELAY_US    50
 #define P2_FRAME_COUNT          3
 #define P2_SYNC_FRAME_INDEX     0
-#define P2_FRAME_DEFAULT_TTL    5
+#define P2_FRAME_DEFAULT_TTL    10
 
 #define P2_SERVER_RESPONSE_TIMEOUT_CYCLES   3
 
@@ -156,7 +156,7 @@ typedef struct {
 
 typedef struct __attribute__((packed)) {
     uint8_t battery_level;
-    unsigned int        : 21; // unused
+    unsigned int        : 22; // unused
     bool battery_low    : 1;
     bool alarm          : 1;
 } p2PktEPGlassBreakSensor;
@@ -211,6 +211,7 @@ uint8_t p2TxEndpoint;
 
 void p2StartFrameTimerUS(uint32_t timeToNextFrame_us);
 void p2StopFrameTimer();
+bool p2IsFrameTimerRunning();
 
 void p2OnFrameTimeIsr();
 
