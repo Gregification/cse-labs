@@ -3,7 +3,7 @@
 // Company: 
 // Engineer: 
 // 
-// Create Date: 04/16/2025 12:58:29 AM
+// Create Date: 03/16/2025 05:23:17 PM
 // Design Name: 
 // Module Name: rv32_if_top
 // Project Name: 
@@ -21,6 +21,7 @@
 
 `include "defines.vh"
 
+// instruction fetch
 /**
  * itterates a buffered PC so as to allow the memeory 1 clock cycle to fetch the next instruction 
  */
