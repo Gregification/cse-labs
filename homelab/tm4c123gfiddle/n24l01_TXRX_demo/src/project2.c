@@ -654,9 +654,9 @@ void p2PrintPacket(p2Pkt const * p){
 //        case P2_TYPE_CMD_FRAME_START:
 //            putsUart0("CMD_FRAME_START  ,");
 //            break;
-        case P2_TYPE_CMD_MQTT_PUB:
-            putsUart0("CMD_MQTT_PUB     ,");
-            break;
+//        case P2_TYPE_CMD_PUBLISH:
+//            putsUart0("CMD_MQTT_PUB     ,");
+//            break;
         case P2_TYPE_CMD_KEEPALIVE:
             putsUart0("CMD_KEEPALIVE    ,");
             break;
