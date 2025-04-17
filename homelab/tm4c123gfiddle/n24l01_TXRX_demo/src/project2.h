@@ -77,7 +77,7 @@
 #define P2_T_MIN_TX_DELAY_US    50
 #define P2_FRAME_COUNT          3
 #define P2_SYNC_FRAME_INDEX     0
-#define P2_FRAME_DEFAULT_TTL    10
+#define P2_FRAME_DEFAULT_TTL    5
 
 #define P2_SERVER_RESPONSE_TIMEOUT_CYCLES   3
 
@@ -86,18 +86,14 @@
 #define P2_MAX_PKT_SIZE         32  // a limit of the NRF module
 
 typedef enum {
-
-    P2_TYPE_CMD_RESET,
+    P2_TYPE_CMD_RESET           = 0,
     P2_TYPE_CMD_DISCONNNECT,
     P2_TYPE_CMD_JOIN_REQUEST,
     P2_TYPE_CMD_JOIN_RESPONSE,
-//    P2_TYPE_CMD_FRAME_START,
-
     P2_TYPE_ENTRY_SYNCH_PKT,
-
     P2_TYPE_CMD_KEEPALIVE,
 
-    P2_TYPE_GLASS_BRAKE_SENSOR,
+    P2_TYPE_GLASS_BRAKE_SENSOR  = 11,
 
     P2_TYPE_LAST = P2_TYPE_GLASS_BRAKE_SENSOR
 } P2_TYPE;
@@ -108,7 +104,7 @@ typedef enum {
 
 typedef struct __attribute__((packed)) {
     uint8_t crc;
-    uint8_t frame_id;                // the frame it should be part of
+    uint8_t from_frame;                // the frame of the transmitter
     uint8_t type;
     unsigned int data_length    : 5;
     unsigned int                : 3; // reserved. in case I forgot something
@@ -129,7 +125,9 @@ typedef struct {
     uint8_t next_avaliable_frame;
 
     // other useful info
-    uint8_t default_ttl;
+    uint8_t frame_ttl;
+
+    uint8_t frame; // frame this sync packet is for
 } p2PktSynch;
 
 typedef struct {
@@ -147,8 +145,21 @@ typedef struct {
 } p2PktReset;
 
 typedef struct {
-
+    uint8_t frame;
 } p2PktDisconnect;
+
+typedef struct {
+    uint8_t newTTL;
+}p2PktKeepAlive;
+
+//---endpoints-----------------------------------------------------
+
+typedef struct __attribute__((packed)) {
+    uint8_t battery_level;
+    unsigned int        : 21; // unused
+    bool battery_low    : 1;
+    bool alarm          : 1;
+} p2PktEPGlassBreakSensor;
 
 /**
  * calculates the CRC for a packet.
@@ -166,7 +177,7 @@ uint8_t p2CalcPacketCRC(p2Pkt const *);
 
 #define P2_MSG_QUEUE_SIZE 5
 
-#define P2DATAAS(STRUCT, PKT) ((STRUCT *)PKT.data)
+#define P2DATAAS(STRUCT, PKT) ((STRUCT *)(PKT).data)
 
 bool newFrame;
 
@@ -183,7 +194,6 @@ struct {
 } p2FrameMetas[P2_FRAME_COUNT];
 
 void initP2();
-
 
 //---process-------------------------------------------------------
 
