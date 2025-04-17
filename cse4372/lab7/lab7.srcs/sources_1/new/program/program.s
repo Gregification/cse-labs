@@ -9,19 +9,31 @@
 .text
 
 _start:
-	addi t0, x0, 0 # index
 
-	addi t1, x0, 3 # some value to be modified
+	addi t0, x0, 1
+	addi t0, x0, 2
+	addi t0, x0, 3
+	addi t0, x0, 4
+	addi t0, x0, 5
+	addi t0, x0, 6
+	addi t0, x0, 7
+	add  t1, x0, t0
+	add  t2, t0, x0
 
-	addi t2, x0, 4 # number of itterations
 
-itterate:
+# 	addi t0, x0, 0 # index
+
+# 	addi t1, x0, 3 # some value to be modified
+
+# 	addi t2, x0, 4 # number of itterations
+
+# itterate:
 	
-	addi t0, t0, 1 # itterate
+# 	addi t0, t0, 1 # itterate
 
-	slli t1, t1, 1 # do something
+# 	slli t1, t1, 1 # do something
 
-	bne t2, t0, itterate
+# 	bne t2, t0, itterate
 
 	ebreak
 
