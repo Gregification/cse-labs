@@ -110,9 +110,9 @@ typedef enum {
 typedef struct __attribute__((packed)) {
     uint8_t crc;
     uint8_t frame_id;                // the frame it should be part of
-    unsigned int                : 3; // reserved. in case I forgot something
     uint8_t type;
     unsigned int data_length    : 5;
+    unsigned int                : 3; // reserved. in case I forgot something
 } p2PktHeader;
 
 #define P2_MAX_DATA_SIZE        (P2_MAX_PKT_SIZE - sizeof(p2PktHeader))
@@ -133,7 +133,7 @@ typedef struct {
     uint8_t default_ttl;
 } p2PktSynch;
 
-typedef struct {p2PktJoinRq;
+typedef struct {
     uint8_t frame;
 } p2PktJoinRq;
 
