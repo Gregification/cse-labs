@@ -17,6 +17,7 @@
 #include "another_clock_file.h"
 #include "framework/eth0.h"
 #include "framework/timer.h"
+#include "common.h"
 
 #define port uint16_t
 
@@ -31,8 +32,6 @@ typedef union _MAC {
 } MAC;
 
 
-#define F_CPU 66666666                  // DNM : see "initHW()" for where this value is set, values must match
-#define UART0_BAUD 115200
 #define ETHH_NO_TIMEOUT 0xFF
 #define ETHH_RESOLUTION_do_nothing
 

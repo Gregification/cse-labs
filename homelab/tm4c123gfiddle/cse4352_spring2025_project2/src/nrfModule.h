@@ -48,18 +48,6 @@
 
 #include "common.h"
 
-//---program specific macros---------------------------------------
-
-#define F_CPU 40e6
-
-#define NRF_SPI_BAUD 1e6
-#define NRF_SPI_CS PORTA,7
-#define NRF_SPI_CS_ACTIVE 0     // active low
-#define NRF_SPI_CE_ACTIVE 1
-
-#define NRF_CE_PIN PORTE,2
-#define NRF_IRQ_PIN PORTE,3
-
 //---module specific-----------------------------------------------
 
 // register addresses, incomplete list
@@ -186,22 +174,6 @@ typedef union {
     };
 } NRFTxMeta;
 
-//---protocol------------------------------------------------------
-
-#define NRF_PACKET_TOTAL_LEN 32
-#define NRF_PACKET_DATA_LEN 29  // = PACKET_TOTAL_LEN - [overhead (3B)]
-
-typedef union {
-    uint8_t rawArr[NRF_PACKET_TOTAL_LEN];
-
-    struct __attribute__((packed)) {
-        uint8_t protocol_version;
-        uint8_t data[NRF_PACKET_DATA_LEN];
-        uint16_t crc;
-    };
-
-} nrfPacketBase;
-
 
 /*---module specific functions-------------------------------------
  * see pg.51 of datasheet
@@ -210,16 +182,7 @@ typedef union {
 
 void initNrf();
 
-void reverseBytes(uint8_t * data, uint8_t len);
-
 NRFStatus nrfGetStatus();
-
-/**
- * calculates the CRC for a packet.
- *  CRC16-CCITT : x^(16,12,5,0) : 0x1021
- *  "correct" CRC process base lined from https://srecord.sourceforge.net/crc16-ccitt.html#source
- */
-uint16_t nrfCalcPacketCRC(nrfPacketBase const * pk);
 
 NRFStatus nrfReadRegister(uint8_t addr, uint8_t * out, uint8_t len);
 
@@ -228,7 +191,10 @@ NRFStatus nrfWriteRegister(uint8_t addr, uint8_t const * in, uint8_t len);
 
 void nrfConfigAsReceiver();
 void nrfConfigAsTransmitter();
+bool nrfConfigAsReceiverChecked();
+bool nrfConfigAsTransmitterChecked();
 void nrfTransmit(uint8_t * data, uint8_t len);  // transmits up to 32 bytes of data
+bool nrfIsDataAvaliable();
 NRFStatus nrfSetPrimAsTransmitter();
 NRFStatus nrfSetPrimAsReceiver();
 NRFStatus nrfSetAutoRetransmitTries(uint8_t attempts);
@@ -251,9 +217,13 @@ uint8_t nrfGetRXPayloadWidth();
 NRFStatus nrfGetFIFOStatus(NRFFIFOStatus * out);
 NRFStatus nrfClearIRQ();
 
+uint8_t nrfGetRXData(uint8_t * out, uint8_t maxLen);
+
 uint8_t nrfGetAddrWidth();
 
 bool nrfIsPowerEnable();
+
+bool nrfIsConfigAsReceiver();
 
 /**returns true is SPI read write successful
  */

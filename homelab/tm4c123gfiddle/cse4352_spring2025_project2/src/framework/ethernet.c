@@ -59,11 +59,6 @@
 
 #include "../env.h"
 
-// Pins
-#define RED_LED PORTF,1
-#define BLUE_LED PORTF,2
-#define GREEN_LED PORTF,3
-#define PUSH_BUTTON PORTF,4
 
 // EEPROM Map
 #define EEPROM_DHCP        1
@@ -83,7 +78,8 @@
 void initHw()
 {
     // Initialize system clock to 66.66 MHz (seems that going any higher involves a multi-step process synchronizing the PLL? TODO)
-    initSysClkTo66Mhz67();
+//    initSysClkTo66Mhz67();
+    initSysClkTo40Mhz();
 
     // Enable clocks
     enablePort(PORTF);

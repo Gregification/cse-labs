@@ -7,13 +7,16 @@
 
 #include <stddef.h> // for NULL
 
-#include "tm4c123gh6pm.h"
-#include "conf.h"
+#include "framework/tm4c123gh6pm.h"
+#include "common.h"
 
-#include "gpio.h"
-#include "spi0.h"
-#include "wait.h"
+#include "framework/gpio.h"
+#include "framework/spi0.h"
+#include "framework/wait.h"
 
+#include "project2.h"
+
+bool lastConfigedAsRx;
 
 #define BV(X) (1 << (X))
 
@@ -37,7 +40,28 @@ void initNrf(){
 
 }
 
+bool nrfIsConfigAsReceiver(){
+    return lastConfigedAsRx;
+}
+
+bool nrfConfigAsReceiverChecked(){
+        nrfConfigAsReceiver();
+    if(!nrfIsConfigAsReceiver()){
+        return true;
+    }
+    return false;
+}
+bool nrfConfigAsTransmitterChecked(){
+        nrfConfigAsTransmitter();
+    if(nrfIsConfigAsReceiver()){
+        return true;
+    }
+    return false;
+}
+
 void nrfConfigAsReceiver(){
+    lastConfigedAsRx = true;
+
     nrfSetPowerUp(true);
     nrfSetChipEnable(false);
     nrfSetCRCEnable(false);
@@ -71,9 +95,13 @@ void nrfConfigAsReceiver(){
     nrfSetChannel(NRF_F_CHANNEL);
 
     nrfSetDataRate(NRF_DATARATE_1Mbps);
+
+    nrfSetChipEnable(true);
 }
 
 void nrfConfigAsTransmitter(){
+    lastConfigedAsRx = false;
+
     nrfSetPowerUp(true);
     nrfSetChipEnable(false);
     nrfSetCRCEnable(false);
@@ -102,55 +130,41 @@ void nrfConfigAsTransmitter(){
     nrfSetRXPipePayloadWidth((NRFPipes){NRF_DATAPIPE_0}, NRF_D_WIDTH); // pipe width of 32B
 }
 
+uint8_t nrfGetRXData(uint8_t * out, uint8_t maxLen){
+    uint8_t len = nrfGetRXPayloadWidth();
+
+    if(len > 32){
+        len = 0;
+    } else {
+        if(len > maxLen)
+            len = maxLen;
+
+        nrfReadRXPayload(out, len);
+    }
+
+    nrfFlushRXFIFO();
+
+    return len;
+}
+
 void nrfTransmit(uint8_t * data, uint8_t len){
-    nrfWriteTXPayload(data, len % 32);
+    if(len > 32)
+        len = 32;
+    nrfWriteTXPayload(data, len);
     nrfSetChipEnable(true);
-    waitMicrosecond(1e3);
+    waitMicrosecond(20);
     nrfSetChipEnable(false);
-    waitMicrosecond(1e3);
+    waitMicrosecond(20);
+}
+
+bool nrfIsDataAvaliable(){
+    bool ret = nrfIsReceivedPowerDetected() && nrfGetRXPayloadWidth();
+    return ret;
 }
 
 NRFStatus nrfGetStatus(){
     uint8_t cmd = 0xFF; // 0b1111_1111
     return nrfTransfer(&cmd, NULL, 1);
-}
-
-uint16_t nrfCalcPacketCRC(nrfPacketBase const * pk){
-    uint16_t crc = 0xFFFF;
-
-    bool xor;
-    uint8_t test;
-
-    uint8_t i;
-    for(i = 0; i < NRF_PACKET_DATA_LEN; i++){
-        test = BV(7);
-
-        while(test) {
-            xor = crc & BV(15);
-
-            crc <<= 1;
-
-            if(pk->data[i] & test)
-                crc += 1;
-
-            if(xor)
-                crc ^= 0x1021;
-
-            test >>= 1;
-        }
-    }
-
-    // one more time without data
-    test = BV(7);
-    while(test) {
-        xor = crc & BV(15);
-        crc <<= 1;
-        if(xor)
-            crc ^= 0x1021;
-        test >>= 1;
-    }
-
-    return crc;
 }
 
 bool nrfIsPowerEnable(){
@@ -540,13 +554,4 @@ void nrfTransferClosed(uint8_t const * tx, uint8_t * rx, uint32_t len){
     nrfTransferOpen(tx,rx,len);
 
     setPinValue(NRF_SPI_CS, !NRF_SPI_CS_ACTIVE);
-}
-
-void reverseBytes(uint8_t * data, uint8_t len){
-    len--;
-    for(uint8_t i = 0; i <= len/2; i++){
-        uint8_t tmp = data[i];
-        data[i] = data[len-i];
-        data[len-i] = tmp;
-    }
 }
