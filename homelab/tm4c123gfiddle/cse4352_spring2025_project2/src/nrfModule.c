@@ -79,8 +79,8 @@ void nrfConfigAsReceiver(){
     }
 
     nrfSetAddressWidths(NRF_ADDR_WIDTH_COMMON);
-    nrfSetTXAddr(RXADDR, 5);
-    nrfSetRxAddrOfPipe0(RXADDR, 5);
+    nrfSetTXAddr(TRXADDR, 5);
+    nrfSetRxAddrOfPipe0(TRXADDR, 5);
 
 
     nrfSetRXPipePayloadWidth((NRFPipes){NRF_DATAPIPE_0}, NRF_D_WIDTH); // pipe width of 32B
@@ -114,8 +114,8 @@ void nrfConfigAsTransmitter(){
     nrfSetAutoRetransmitTries(0);
 
     nrfSetAddressWidths(NRF_ADDR_WIDTH_COMMON);
-    nrfSetTXAddr(RXADDR, 5);
-    nrfSetRxAddrOfPipe0(RXADDR, 5);
+    nrfSetTXAddr(TRXADDR, 5);
+    nrfSetRxAddrOfPipe0(TRXADDR, 5);
 
     nrfSetChannel(NRF_F_CHANNEL);
 

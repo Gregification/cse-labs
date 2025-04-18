@@ -234,6 +234,50 @@ void processShell()
                 p2ClientJoin(P2_T_FRAME_US * 2);
             }
 
+            if (strcmp(token, "rxraw") == 0){
+                nrfConfigAsReceiver();
+
+                nrfSetChipEnable(true);
+
+                printNRFStats();
+
+                p2Pkt pkt;
+                for(int i = 0; i < sizeof(pkt); i++)
+                        pkt.raw_arr[i] = 0x0;
+                while(!kbhitUart0()){
+                    char str[20];
+                    if(nrfIsReceivedPowerDetected())
+                    {
+                        putsUart0("\n\r");
+                        putsUart0("CW:");
+                        putcUart0('0' + nrfIsReceivedPowerDetected());
+                        putsUart0(",IRQ:");
+                        putcUart0('0' + nrfIsIRQing());
+                        putsUart0("--rxraw--");
+
+                        {
+                            static uint8_t counter = 0;
+                            counter++;
+
+                            static char str[5];
+                            snprintf(str,sizeof(str), "%02x| ",counter);
+                            putsUart0(str);
+                        }
+
+                        if(nrfGetRXData(pkt.raw_arr, sizeof(p2Pkt))){
+                            for(int i = 0; i < P2_MAX_PKT_SIZE; i++){
+                                snprintf(str, sizeof(str), "%02x ", pkt.raw_arr[i]);
+                                putsUart0(str);
+                            }
+                            putsUart0("\n\r");
+                        }
+                    }
+
+//                    nrfSetChipEnable(true);
+//                    waitMicrosecond(100);
+                }
+            }
+
             if (strcmp(token, "stop") == 0)
             {
                 p2StopFrameTimer();
@@ -541,12 +585,13 @@ void dumpHelp(){
     putsUart0("\n\r");
     putsUart0(" ------------------------------------------------------------\n\r");
     putsUart0("\n\rCSE4352 spring2025 project 2 team 14. NRF24 network demo code. \n\r");
-    putsUart0("     last update: 4/18/2025 10:00am \n\r");
+    putsUart0("     last update: 4/18/2025 12:06pm \n\r");
     putsUart0("     reach team 14 here: ygb5713@mavs , or IOT discord channel (link on lab whiteboard)\n\r");
     putsUart0(" ------------------------------------------------------------\n\r");
     putsUart0("\n\r");
     putsUart0("- basic demonstration of the network. does not include all features. \n\r");
     putsUart0("- does not do anything with ethernet.\n\r");
+    putsUart0("- 1 Mbps, channel "); { char str[10]; snprintf(str, sizeof(str), "%d\n\r", NRF_F_CHANNEL); putsUart0(str); }
     putsUart0("- for demo purposes; total # of frames is 3. each frame times out within 10 cycles if nothing is received.\n\r");
     putsUart0("- suggest you use the \"rx\" command to see if your packet transmissions are compatiable.\n\r");
     putsUart0("- on some red-boards R/TX  or dosen't work, try swapping boards.\n\r");
@@ -590,6 +635,7 @@ void dumpHelp(){
     putsUart0("  info : dumps some information about the NRF module settings\n\r");
     putsUart0("  tx : spam TX junk | CW : carrier wave detect | IRQ : the irq pin\n\r");
     putsUart0("  rx : print out everything it receives; attempts to parse as network packet.\n\r");
+    putsUart0("  rxraw : print out everything it receives; as is\n\r");
     putsUart0("\n\r");
     putsUart0(" ------------------------------------------------------------\n\r");
 }

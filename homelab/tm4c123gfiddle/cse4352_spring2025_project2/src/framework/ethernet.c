@@ -81,6 +81,8 @@ p2eState p2estate;
 // Subroutines                
 //-----------------------------------------------------------------------------
 
+void dumpHelp();
+
 // Initialize Hardware
 void initHw()
 {
@@ -462,6 +464,9 @@ void processShell(etherHeader * e)
             if (strcmp(token, "auto") == 0)
             {
                 p2estate = P2ESTATE_AUTO;
+            } else {
+                p2estate = P2ESTATE_NONE;
+                p2State = P2_STATE_OFF;
             }
 
             if (strcmp(token, "help") == 0)
@@ -477,6 +482,8 @@ void processShell(etherHeader * e)
                 putsUart0("  host\n\r");
                 putsUart0("  stop\n\r");
                 putsUart0("  auto : automatically tries to start acting like a wireless bridge\n\r");
+
+                dumpHelp();
             }
 
             putsUart0("\n\r> ");
@@ -568,13 +575,13 @@ int main(void)
     // Main Loop
     // RTOS and interrupts would greatly improve this code,
     // but the goal here is simplicity
+
+    p2estate = P2ESTATE_AUTO;
     while (true)
     {
 
         // nrf stuff
         // only differing baud rate, spi mode is the same
-        setSpi0BaudRate(NRF_SPI_BAUD, F_CPU);
-        waitMicrosecond(10);
 
         {
             switch(p2State){
@@ -584,21 +591,30 @@ int main(void)
 
                 case P2_STATE_HOST_START:
                 case P2_STATE_HOSTING:
+                    setSpi0BaudRate(NRF_SPI_BAUD, F_CPU);
                     p2HostLoop();
+                    setSpi0BaudRate(ETH_SPI_BAUD, F_CPU);
                     break;
 
                 case P2_STATE_CLIENT_START:
                 case P2_STATE_CLIENT_WAIT_CONN_ACK:
                 case P2_STATE_CLIENTING:
+                    setSpi0BaudRate(NRF_SPI_BAUD, F_CPU);
                     p2ClientLoop();
+                    setSpi0BaudRate(ETH_SPI_BAUD, F_CPU);
                     break;
             }
         }
 
         // ethernet stuff
-        // only differing baud rate, spi mode is the same
-        setSpi0BaudRate(ETH_SPI_BAUD, F_CPU);
-        waitMicrosecond(10);
+
+        // Terminal processing here
+        processShell(data);
+
+        updateSocketInfos(data);
+
+        // TCP pending messages
+        sendTcpPendingMessages(data);
 
         switch(p2estate){
                     default:
@@ -609,6 +625,16 @@ int main(void)
                             putsUart0("|///|auto mode|\\\\\\| ");
                             if(p2State == P2_STATE_OFF){
                                 p2HostStart();
+                                putsUart0("starting wireless host");
+                                putsUart0("\n\r");
+                                break;
+                            }
+
+                            static uint8_t t_counter;
+                            if(!mqttsocket || (mqttsocket->state == TCP_CLOSED) || (mqttsocket->state == TCP_ESTABLISHED && mqttstate == MQTT_DISCONNECTED)){
+                                if(t_counter == 0)
+                                    connectMqtt(data);
+                                t_counter = (t_counter + 1) % 10;
                             }
 
                             putsUart0("wireless: ");
@@ -637,12 +663,8 @@ int main(void)
                             }
                             putsUart0("| ethernet: ");
 
-                            if(!mqttsocket){
-                                putsUart0("socket DNE");
-                            }
-                            else {
-                                putsUart0("socket exists > ");
 
+                            if(mqttsocket){
                                 switch(mqttsocket->state){
                                     case TCP_CLOSED:        putsUart0("TCP_CLOSED       "); break;
                                     case TCP_LISTEN:        putsUart0("TCP_LISTEN       "); break;
@@ -656,15 +678,6 @@ int main(void)
                                     case TCP_LAST_ACK:      putsUart0("TCP_LAST_ACK     "); break;
                                     case TCP_TIME_WAIT:     putsUart0("TCP_TIME_WAIT    "); break;
                                     default:                putsUart0("unknown TCP state"); break;
-                                }
-
-                                if(mqttsocket->state == TCP_CLOSED){
-                                    static uint8_t t_count = 0;
-                                    t_count++;
-                                    if(t_count >= 15){
-                                        connectMqtt(data);
-                                        t_count = 0;
-                                    }
                                 }
 
                                 if(mqttsocket->state != TCP_ESTABLISHED){
@@ -686,14 +699,6 @@ int main(void)
                         }break;
 
                 }
-
-        // Terminal processing here
-        processShell(data);
-
-        updateSocketInfos(data);
-
-        // TCP pending messages
-        sendTcpPendingMessages(data);
 
         // Packet processing
         if (isEtherDataAvailable())
@@ -802,3 +807,51 @@ int main(void)
         }
     }
 }
+
+void dumpHelp(){
+    putsUart0("\n\r");
+    putsUart0(" ------------------------------------------------------------\n\r");
+    putsUart0("\n\rCSE4352 spring2025 project 2 team 14. \n\r");
+    putsUart0("     last update: 4/18/2025 12:06pm \n\r");
+    putsUart0("     reach team 14 here: ygb5713@mavs , or IOT discord channel (link on lab whiteboard)\n\r");
+    putsUart0(" ------------------------------------------------------------\n\r");
+    putsUart0("\n\r");
+    putsUart0("- does not do anything with ethernet.\n\r");
+    putsUart0("- 1 Mbps, channel "); { char str[10]; snprintf(str, sizeof(str), "%d\n\r", NRF_F_CHANNEL); putsUart0(str); }
+    putsUart0("- on some red-boards R/TX  or dosen't work, try swapping boards.\n\r");
+    putsUart0("- bug where clients can both join the same frame. solution: wait for one client to join before starting the other\n\r");
+    putsUart0("- crc8-ccitt calcualtion -> https://srecord.sourceforge.net/crc16-ccitt.html#source\n\r");
+    putsUart0("- supported teams: \n\r");
+    putsUart0("     * if the packet format isnt what you would like, or your team is not listed, then contact me.\n\r");
+    putsUart0("     - GLASS_BREAK_SENSOR\n\r");
+    putsUart0("     - WEATHER_STATION\n\r");
+    putsUart0(" ------------------------------------------------------------\n\r");
+    putsUart0("- red/green led's flashing on start indicate SPI connection failed. (unable to R/W to NRF)\n\r");
+    putsUart0("- when hosting : green led toggles every new frame\n\r");
+    putsUart0("- when clienting : green led is on when its the devices turn to transmit\n\r");
+    putsUart0("- in RX or TX mode the led just does stuff, ignore it. \n\r");
+    putsUart0("\n\r");
+    putsUart0(" ------------------------------------------------------------\n\r");
+    putsUart0("      ______________________________________\n\r");
+    putsUart0("      | |------|                            |\n\r");
+    putsUart0("      | | A  B |      ______  _____________ |\n\r");
+    putsUart0("      | | C  D |     |      |/   |   ______||\n\r");
+    putsUart0("      | | E  F |     | RFIC |    |  |______ |\n\r");
+    putsUart0("      | | G  H |     |______|    |   ______||\n\r");
+    putsUart0("      | |------|   ____________  |  |______ |\n\r");
+    putsUart0("      |           | oscillator |           ||\n\r");
+    putsUart0("      |___________|____________|___________||\n\r");
+    putsUart0("\n\r");
+    putsUart0("  NRF module                      TM4C pin        Note\n\r");
+    putsUart0("  A: GND                          GND\n\r");
+    putsUart0("  B: VCC (3.3V)                   3.3v\n\r");
+    putsUart0("  C: Chip enable (active high)    PE2             enables tx/rx , does not effect SPI communication\n\r");
+    putsUart0("  D: CS (active low)              PA7\n\r");
+    putsUart0("  E: SCK                          PA2\n\r");
+    putsUart0("  F: MOSI                         PA5\n\r");
+    putsUart0("  G: MISO                         PA4\n\r");
+    putsUart0("  H: IRQ                          PE3\n\r");
+    putsUart0("\n\r");
+    putsUart0(" ------------------------------------------------------------\n\r");
+}
+

@@ -36,6 +36,7 @@ void p2HostStart(){
 
     for(uint8_t i = 0; i < P2_FRAME_COUNT; i++){
         p2FrameMetas[i].ttl = 0;
+        p2FrameMetas[i].ttl_on_reset = P2_FRAME_DEFAULT_TTL;
     }
 }
 
