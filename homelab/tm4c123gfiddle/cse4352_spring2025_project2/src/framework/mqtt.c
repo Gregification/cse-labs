@@ -190,6 +190,8 @@ bool connectMqtt(etherHeader * e)
             vh.protocol_version = 4;
             vh.fclean_session = true;
             vh.keepalive_timer = ~0;
+            vh.fwill = false;
+            vh.fwill_qos = 0;
 
             data = packmqttVH_meta(&vh, data, TCP_PENQUE_ENTRY_MAX_MEM);// - (msg->data - data));
         }
