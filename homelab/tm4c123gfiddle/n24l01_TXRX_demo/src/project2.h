@@ -132,7 +132,8 @@ typedef struct {
 } p2PktSynch;
 
 typedef struct {
-    uint8_t frame;
+    bool low_power_device   : 1;
+    unsigned int frame      : 7;
 } p2PktJoinRq;
 
 typedef struct {
@@ -156,10 +157,8 @@ typedef struct {
 //---endpoints-----------------------------------------------------
 
 typedef struct __attribute__((packed)) {
-    uint8_t battery_level;
-    unsigned int        : 22; // unused
-    bool battery_low    : 1;
-    bool alarm          : 1;
+    bool alarm              : 1; // active high
+    uint8_t battery_level   : 7; // [0,100]
 } p2PktEPGlassBreakSensor;
 
 typedef enum{
@@ -204,7 +203,8 @@ p2MsgQEntry p2MsgQueue[P2_MSG_QUEUE_SIZE];
 volatile uint8_t p2CurrentFrame;
 
 struct {
-    uint8_t ttl;
+    uint64_t ttl;
+    uint64_t ttl_on_reset;
 } p2FrameMetas[P2_FRAME_COUNT];
 
 void initP2();

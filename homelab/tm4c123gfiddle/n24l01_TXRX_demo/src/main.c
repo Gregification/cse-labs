@@ -541,7 +541,7 @@ void dumpHelp(){
     putsUart0("\n\r");
     putsUart0(" ------------------------------------------------------------\n\r");
     putsUart0("\n\rCSE4352 spring2025 project 2 team 14. NRF24 network demo code. \n\r");
-    putsUart0("     last update: 4/17/2025 10:50pm \n\r");
+    putsUart0("     last update: 4/18/2025 10:00am \n\r");
     putsUart0("     reach team 14 here: ygb5713@mavs , or IOT discord channel (link on lab whiteboard)\n\r");
     putsUart0(" ------------------------------------------------------------\n\r");
     putsUart0("\n\r");
@@ -567,7 +567,7 @@ void dumpHelp(){
     putsUart0("      | |------|                            |\n\r");
     putsUart0("      | | A  B |      ______  _____________ |\n\r");
     putsUart0("      | | C  D |     |      |/   |   ______||\n\r");
-    putsUart0("      | | E  F |     |  IC  |    |  |______ |\n\r");
+    putsUart0("      | | E  F |     | RFIC |    |  |______ |\n\r");
     putsUart0("      | | G  H |     |______|    |   ______||\n\r");
     putsUart0("      | |------|   ____________  |  |______ |\n\r");
     putsUart0("      |           | oscillator |           ||\n\r");
@@ -589,7 +589,7 @@ void dumpHelp(){
     putsUart0("  host : starts a server, prints out messages received and Time-To-Live counters each frame\n\r");
     putsUart0("  info : dumps some information about the NRF module settings\n\r");
     putsUart0("  tx : spam TX junk | CW : carrier wave detect | IRQ : the irq pin\n\r");
-    putsUart0("  rx : print out everything it receives\n\r");
+    putsUart0("  rx : print out everything it receives; attempts to parse as network packet.\n\r");
     putsUart0("\n\r");
     putsUart0(" ------------------------------------------------------------\n\r");
 }

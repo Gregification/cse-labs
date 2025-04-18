@@ -175,7 +175,9 @@ void p2HostLoop(){
                                     // reset TTL if packet received from a live frame
                                     if(p2FrameMetas[pkt.header.from_frame].ttl != 0){
 
-                                        p2FrameMetas[pkt.header.from_frame].ttl = P2_FRAME_DEFAULT_TTL;
+                                        if(p2FrameMetas[pkt.header.from_frame].ttl < p2FrameMetas[pkt.header.from_frame].ttl_on_reset)
+                                            p2FrameMetas[pkt.header.from_frame].ttl = p2FrameMetas[pkt.header.from_frame].ttl_on_reset;
+
                                         p2HostProcessPacket(&pkt);
                                     } else {
 //                                        // packet from unexpected frame, send back a reset
@@ -270,8 +272,9 @@ void p2ClientLoop(){
                                     p2Pkt p;
                                     p.header.type = P2_TYPE_CMD_JOIN_REQUEST;
                                     p.header.from_frame = p2TxEndpoint;
-                                    P2DATAAS(p2PktJoinRq, p)->frame = p2TxEndpoint;
                                     p.header.data_length = sizeof(p2PktJoinRq);
+                                    P2DATAAS(p2PktJoinRq, p)->frame = p2TxEndpoint;
+                                    P2DATAAS(p2PktJoinRq, p)->low_power_device = true;
 
                                     p.header.crc = p2CalcPacketCRC(&p);
 
@@ -516,7 +519,12 @@ void p2HostProcessPacket(p2Pkt const * pkt){
                             break;
                         }
                     }
-                    p2FrameMetas[sourceFrame].ttl = P2_FRAME_DEFAULT_TTL;
+                    if(P2DATAAS(p2PktJoinRq, *pkt)->low_power_device)
+                        p2FrameMetas[sourceFrame].ttl_on_reset = 1e6 / P2_T_FRAME_US * 15 * 3600 / P2_FRAME_COUNT; // 15 hours
+                    else
+                        p2FrameMetas[sourceFrame].ttl_on_reset = P2_FRAME_DEFAULT_TTL;
+
+                    p2FrameMetas[sourceFrame].ttl = p2FrameMetas[sourceFrame].ttl_on_reset;
                 }
 
                 p.header.crc = p2CalcPacketCRC(&p);
@@ -631,7 +639,6 @@ void p2ClientProcessPacket(p2Pkt const * pkt){
                 p2PktEPGlassBreakSensor * gbs = P2DATAAS(p2PktEPGlassBreakSensor, p);
                 gbs->alarm = random32() & BV(0);
                 gbs->battery_level = random32() % 101;
-                gbs->battery_low = gbs->battery_level <= 20;
 
                 p2PushMsgQueue(p);
             }
@@ -753,6 +760,8 @@ void p2PrintPacket(p2Pkt const * p){
                 putsUart0("frame: ");
                 snprintf(str, sizeof(str), "%02d, ", P2DATAAS(p2PktJoinRq, (*p))->frame);
                 putsUart0(str);
+                putsUart0("LPD : ");
+                putcUart0('0' + (P2DATAAS(p2PktJoinRq, *p)->low_power_device));
             }break;
         case P2_TYPE_CMD_JOIN_RESPONSE:
             putsUart0("CMD_JOIN_RESPONSE ,");
@@ -785,9 +794,6 @@ void p2PrintPacket(p2Pkt const * p){
                 putsUart0("GLASS_BRAKE_SENSOR ,");
                 putsUart0("alarm: ");
                 snprintf(str, sizeof(str), "%d, ", P2DATAAS(p2PktEPGlassBreakSensor, *p)->alarm);
-                putsUart0(str);
-                putsUart0("batt low: ");
-                snprintf(str, sizeof(str), "%d, ", P2DATAAS(p2PktEPGlassBreakSensor, *p)->battery_low);
                 putsUart0(str);
                 putsUart0("batt level: ");
                 snprintf(str, sizeof(str), "%03d, ", P2DATAAS(p2PktEPGlassBreakSensor, *p)->battery_level);
@@ -831,12 +837,12 @@ void p2PrintPacket(p2Pkt const * p){
 void p2PrintFrameMetas(){
     putsUart0("FM{");
 
-    char str[8];
+    char str[20];
 
     for(uint8_t i = 0; i < P2_FRAME_COUNT; i++){
         snprintf(str, sizeof(str), "%d{", i);
         putsUart0(str);
-        snprintf(str, sizeof(str), "ttl:%03d,", p2FrameMetas[i].ttl);
+        snprintf(str, sizeof(str), "ttl:0x%06llx,", p2FrameMetas[i].ttl);
         putsUart0(str);
         putsUart0("} ");
     }

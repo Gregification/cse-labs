@@ -461,8 +461,6 @@ void processShell(etherHeader * e)
 
             if (strcmp(token, "auto") == 0)
             {
-                connectMqtt(data);
-
                 p2estate = P2ESTATE_AUTO;
             }
 
