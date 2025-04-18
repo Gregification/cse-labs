@@ -71,6 +71,12 @@
 #define EEPROM_MQTT        7
 #define EEPROM_ERASED      0xFFFFFFFF
 
+typedef enum {
+    P2ESTATE_NONE,
+    P2ESTATE_AUTO
+} p2eState;
+p2eState p2estate;
+
 //-----------------------------------------------------------------------------
 // Subroutines                
 //-----------------------------------------------------------------------------
@@ -449,7 +455,15 @@ void processShell(etherHeader * e)
             if (strcmp(token, "stop") == 0)
             {
                 p2State = P2_STATE_OFF;
+                p2estate = P2ESTATE_NONE;
                 p2StopFrameTimer();
+            }
+
+            if (strcmp(token, "auto") == 0)
+            {
+                connectMqtt(data);
+
+                p2estate = P2ESTATE_AUTO;
             }
 
             if (strcmp(token, "help") == 0)
@@ -464,6 +478,7 @@ void processShell(etherHeader * e)
                 putsUart0("  set ip|gw|dns|time|mqtt|sn w.x.y.z\n\r");
                 putsUart0("  host\n\r");
                 putsUart0("  stop\n\r");
+                putsUart0("  auto : automatically tries to start acting like a wireless bridge\n\r");
             }
 
             putsUart0("\n\r> ");
@@ -557,9 +572,11 @@ int main(void)
     // but the goal here is simplicity
     while (true)
     {
+
         // nrf stuff
         // only differing baud rate, spi mode is the same
         setSpi0BaudRate(NRF_SPI_BAUD, F_CPU);
+        waitMicrosecond(10);
 
         {
             switch(p2State){
@@ -583,6 +600,94 @@ int main(void)
         // ethernet stuff
         // only differing baud rate, spi mode is the same
         setSpi0BaudRate(ETH_SPI_BAUD, F_CPU);
+        waitMicrosecond(10);
+
+        switch(p2estate){
+                    default:
+                    case P2ESTATE_NONE:
+                        break;
+
+                    case P2ESTATE_AUTO:{
+                            putsUart0("|///|auto mode|\\\\\\| ");
+                            if(p2State == P2_STATE_OFF){
+                                p2HostStart();
+                            }
+
+                            putsUart0("wireless: ");
+                            switch(p2State){
+                                case P2_STATE_CLIENTING:
+                                    putsUart0("CLIENTING            ");
+                                    break;
+                                case P2_STATE_CLIENT_START:
+                                    putsUart0("CLIENT_START         ");
+                                    break;
+                                case P2_STATE_CLIENT_WAIT_CONN_ACK:
+                                    putsUart0("CLIENT_WAIT_CONN_ACK ");
+                                    break;
+                                case P2_STATE_HOSTING:
+                                    putsUart0("HOSTING              ");
+                                    break;
+                                case P2_STATE_HOST_START:
+                                    putsUart0("HOST_START           ");
+                                    break;
+                                case P2_STATE_OFF:
+                                    putsUart0("OFF                  ");
+                                    break;
+                                default:
+                                    putsUart0("<unknown>            ");
+                                    break;
+                            }
+                            putsUart0("| ethernet: ");
+
+                            if(!mqttsocket){
+                                putsUart0("socket DNE");
+                            }
+                            else {
+                                putsUart0("socket exists > ");
+
+                                switch(mqttsocket->state){
+                                    case TCP_CLOSED:        putsUart0("TCP_CLOSED       "); break;
+                                    case TCP_LISTEN:        putsUart0("TCP_LISTEN       "); break;
+                                    case TCP_SYN_RECEIVED:  putsUart0("TCP_SYN_RECEIVED "); break;
+                                    case TCP_SYN_SENT:      putsUart0("TCP_SYN_SENT     "); break;
+                                    case TCP_ESTABLISHED:   putsUart0("TCP_ESTABLISHED  "); break;
+                                    case TCP_FIN_WAIT_1:    putsUart0("TCP_FIN_WAIT_1   "); break;
+                                    case TCP_FIN_WAIT_2:    putsUart0("TCP_FIN_WAIT_2   "); break;
+                                    case TCP_CLOSING:       putsUart0("TCP_CLOSING      "); break;
+                                    case TCP_CLOSE_WAIT:    putsUart0("TCP_CLOSE_WAIT   "); break;
+                                    case TCP_LAST_ACK:      putsUart0("TCP_LAST_ACK     "); break;
+                                    case TCP_TIME_WAIT:     putsUart0("TCP_TIME_WAIT    "); break;
+                                    default:                putsUart0("unknown TCP state"); break;
+                                }
+
+                                if(mqttsocket->state == TCP_CLOSED){
+                                    static uint8_t t_count = 0;
+                                    t_count++;
+                                    if(t_count >= 15){
+                                        connectMqtt(data);
+                                        t_count = 0;
+                                    }
+                                }
+
+                                if(mqttsocket->state != TCP_ESTABLISHED){
+                                    putsUart0("\n\r");
+                                    break;
+                                }
+
+                                putsUart0(" > ");
+
+                                switch(mqttstate){
+                                    case MQTT_CONNECTED:    putsUart0("MQTT_CONNECTED    "); break;
+                                    case MQTT_DISCONNECTED: putsUart0("MQTT_DISCONNECTED "); break;
+                                    case MQTT_SENT_CONN:    putsUart0("MQTT_SENT_CONN    "); break;
+                                    default:                putsUart0("unknown MQTT state"); break;
+                                }
+
+                                putsUart0("\n\r");
+                            }
+                        }break;
+
+                }
 
         // Terminal processing here
         processShell(data);
