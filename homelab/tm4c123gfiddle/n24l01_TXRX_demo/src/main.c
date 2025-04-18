@@ -95,6 +95,7 @@ void printNRFStatus(NRFStatus);
 void printFIFORX();
 void printFIFOTX();
 void printFIFO(NRFFIFOStatus);
+void dumpHelp();
 
 void processShell()
 {
@@ -220,11 +221,7 @@ void processShell()
 
             if (strcmp(token, "help") == 0)
             {
-                putsUart0("green led on indicates IRQ pin is active\n\r");
-                putsUart0("Commands:\n\r");
-                putsUart0("  tx [data]\n\r");
-                putsUart0("  rx\n\r");
-                putsUart0("  info\n\r");
+                dumpHelp();
             }
 
             if (strcmp(token, "host") == 0)
@@ -271,6 +268,8 @@ int main(void)
 
     initNrf();
 
+    dumpHelp();
+
     // test NRF connection
     while(!nrfTestSPI()){
         setPinValue(RED_LED, 1);
@@ -280,8 +279,6 @@ int main(void)
         setPinValue(GREEN_LED, 1);
         waitMicrosecond(100e3);
     }
-
-    putsUart0("\n\rCSE4352 spring2025 project 2 team 14. demo code. not final\n\r");
 
     setPinValue(RED_LED, 1);
     setPinValue(GREEN_LED, 1);
@@ -538,4 +535,61 @@ void printFIFO(NRFFIFOStatus fifostatus){
         putsUart0("tx reuse");
     }
     putsUart0("}");
+}
+
+void dumpHelp(){
+    putsUart0("\n\r");
+    putsUart0(" ------------------------------------------------------------\n\r");
+    putsUart0("\n\rCSE4352 spring2025 project 2 team 14. NRF24 network demo code. \n\r");
+    putsUart0("     last update: 4/17/2025 10:50pm \n\r");
+    putsUart0("     reach team 14 here: ygb5713@mavs , or IOT discord channel (link on lab whiteboard)\n\r");
+    putsUart0(" ------------------------------------------------------------\n\r");
+    putsUart0("\n\r");
+    putsUart0("- basic demonstration of the network. does not include all features. \n\r");
+    putsUart0("- does not do anything with ethernet.\n\r");
+    putsUart0("- for demo purposes; total # of frames is 3. each frame times out within 10 cycles if nothing is received.\n\r");
+    putsUart0("- suggest you use the \"rx\" command to see if your packet transmissions are compatiable.\n\r");
+    putsUart0("- on some red-boards R/TX  or dosen't work, try swapping boards.\n\r");
+    putsUart0("- bug where clients can both join the same frame. solution: wait for one client to join before starting the other\n\r");
+    putsUart0("- crc8-ccitt calcualtion -> https://srecord.sourceforge.net/crc16-ccitt.html#source\n\r");
+    putsUart0("- supported teams: \n\r");
+    putsUart0("     * if the packet format isnt what you would like, or your team is not listed, then contact me.\n\r");
+    putsUart0("     - GLASS_BREAK_SENSOR\n\r");
+    putsUart0("     - WEATHER_STATION\n\r");
+    putsUart0(" ------------------------------------------------------------\n\r");
+    putsUart0("- red/green led's flashing on start indicate SPI connection failed. (unable to R/W to NRF)\n\r");
+    putsUart0("- when hosting : green led toggles every new frame\n\r");
+    putsUart0("- when clienting : green led is on when its the devices turn to transmit\n\r");
+    putsUart0("- in RX or TX mode the led just does stuff, ignore it. \n\r");
+    putsUart0("\n\r");
+    putsUart0(" ------------------------------------------------------------\n\r");
+    putsUart0("      ______________________________________\n\r");
+    putsUart0("      | |------|                            |\n\r");
+    putsUart0("      | | A  B |      ______  _____________ |\n\r");
+    putsUart0("      | | C  D |     |      |/   |   ______||\n\r");
+    putsUart0("      | | E  F |     |  IC  |    |  |______ |\n\r");
+    putsUart0("      | | G  H |     |______|    |   ______||\n\r");
+    putsUart0("      | |------|   ____________  |  |______ |\n\r");
+    putsUart0("      |           | oscillator |           ||\n\r");
+    putsUart0("      |___________|____________|___________||\n\r");
+    putsUart0("\n\r");
+    putsUart0("  NRF module                      TM4C pin        Note\n\r");
+    putsUart0("  A: GND                          GND\n\r");
+    putsUart0("  B: VCC (3.3V)                   3.3v\n\r");
+    putsUart0("  C: Chip enable (active high)    PE2             enables tx/rx , does not effect SPI communication\n\r");
+    putsUart0("  D: CS (active low)              PA7\n\r");
+    putsUart0("  E: SCK                          PA2\n\r");
+    putsUart0("  F: MOSI                         PA5\n\r");
+    putsUart0("  G: MISO                         PA4\n\r");
+    putsUart0("  H: IRQ                          PE3\n\r");
+    putsUart0("\n\r");
+    putsUart0(" ------------------------------------------------------------\n\r");
+    putsUart0("Commands:\n\r");
+    putsUart0("  join : starts a client, continiously attempts to join a server, will randomly transmit a GLASS_BREAK packet after joining.\n\r");
+    putsUart0("  host : starts a server, prints out messages received and Time-To-Live counters each frame\n\r");
+    putsUart0("  info : dumps some information about the NRF module settings\n\r");
+    putsUart0("  tx : spam TX junk | CW : carrier wave detect | IRQ : the irq pin\n\r");
+    putsUart0("  rx : print out everything it receives\n\r");
+    putsUart0("\n\r");
+    putsUart0(" ------------------------------------------------------------\n\r");
 }

@@ -15,8 +15,6 @@
 #include "framework/uart0.h"
 #include "framework/tm4c123gh6pm.h"
 
-#include "common.h"
-
 void initP2(){
     p2CurrentFrame = 0;
     p2TxEndpoint = 0;
@@ -179,6 +177,25 @@ void p2HostLoop(){
 
                                         p2FrameMetas[pkt.header.from_frame].ttl = P2_FRAME_DEFAULT_TTL;
                                         p2HostProcessPacket(&pkt);
+                                    } else {
+//                                        // packet from unexpected frame, send back a reset
+//                                        isValid = false;
+//                                        putsUart0("packet from unoccupied frame ");
+//                                        {
+//                                            char str[8];
+//                                            snprintf(str, sizeof(str), "%02d\n\r", pkt.header.from_frame);
+//                                            putsUart0(str);
+//                                        }
+//
+//                                        // fake receive a reset packet
+//                                        p2Pkt p;
+//                                        p.header.type = P2_TYPE_CMD_RESET;
+//                                        p.header.data_length = sizeof(p2PktReset);
+//                                        P2DATAAS(p2PktReset, p)->frame = pkt.header.from_frame;
+//                                        P2DATAAS(p2PktReset, p)->isEcho = false;
+//
+//                                        p.header.crc = p2CalcPacketCRC(&p);
+//                                        p2HostProcessPacket(&pkt);
                                     }
                                 }
                             }
@@ -605,19 +622,19 @@ void p2ClientProcessPacket(p2Pkt const * pkt){
 
         case P2_TYPE_ENTRY_SYNCH_PKT:
             // un oh, desync
-//            if(random32() & BV(5)){
-//                putsUart0("queuing alarm!\n\r");
-//                p2Pkt p;
-//                p.header.data_length = sizeof(p2PktEPGlassBreakSensor);
-//                p.header.type = P2_TYPE_GLASS_BRAKE_SENSOR;
-//                p.header.from_frame = p2TxEndpoint;
-//                p2PktEPGlassBreakSensor * gbs = P2DATAAS(p2PktEPGlassBreakSensor, p);
-//                gbs->alarm = random32() & BV(0);
-//                gbs->battery_level = random32() % 101;
-//                gbs->battery_low = gbs->battery_level <= 20;
-//
-//                p2PushMsgQueue(p);
-//            }
+            if(random32() & BV(5)){
+                putsUart0("queuing alarm!\n\r");
+                p2Pkt p;
+                p.header.data_length = sizeof(p2PktEPGlassBreakSensor);
+                p.header.type = P2_TYPE_GLASS_BRAKE_SENSOR;
+                p.header.from_frame = p2TxEndpoint;
+                p2PktEPGlassBreakSensor * gbs = P2DATAAS(p2PktEPGlassBreakSensor, p);
+                gbs->alarm = random32() & BV(0);
+                gbs->battery_level = random32() % 101;
+                gbs->battery_low = gbs->battery_level <= 20;
+
+                p2PushMsgQueue(p);
+            }
             break;
 
         default:{
@@ -775,6 +792,25 @@ void p2PrintPacket(p2Pkt const * p){
                 putsUart0("batt level: ");
                 snprintf(str, sizeof(str), "%03d, ", P2DATAAS(p2PktEPGlassBreakSensor, *p)->battery_level);
                 putsUart0(str);
+            }break;
+        case P2_TYPE_WEATHER_STATION:{
+                putsUart0("WEATHER_STATION ,");
+                putsUart0("data type: ");
+                switch(P2DATAAS(p2PktWeatherStation, *p)->data_type){
+                    case P2WSDT_KEEP_ALIVE: putsUart0("KEEP_ALIVE, "); break;
+                    case P2WSDT_WIND_SPEED: putsUart0("WIND_SPEED, "); break;
+                    case P2WSDT_WIND_DIRECITON: putsUart0("WIND_DIRECITON, "); break;
+                    case P2WSDT_TEMPERATURE: putsUart0("TEMPERATURE, "); break;
+                    case P2WSDT_HUMIDITY: putsUart0("HUMIDITY, "); break;
+                    case P2WSDT_PRESSURE: putsUart0("PRESSURE, "); break;
+                    default: {
+                            putsUart0("unknown (");
+                            snprintf(str, sizeof(str), "%d), ", P2DATAAS(p2PktWeatherStation, *p)->data_type);
+                        } break;
+                }
+                putsUart0("str : ");
+                for(uint8_t i = 0; i < sizeof(p->data) && p->data[i] != '\0'; i++)
+                    putcUart0(p->data[i]);
             }break;
         default:{
                 putsUart0("unknown (");

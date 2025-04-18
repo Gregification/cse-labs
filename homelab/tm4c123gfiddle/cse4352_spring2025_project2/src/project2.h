@@ -74,7 +74,7 @@
 #define P2_T_BUFFER_US          1e3
 #define P2_T_INTER_FRAME_US     1e3
 #define P2_T_FRAME_US           (P2_T_FRAME_TX_US + P2_T_BUFFER_US + P2_T_INTER_FRAME_US)
-#define P2_T_MIN_TX_DELAY_US    50
+#define P2_T_MIN_TX_DELAY_US    500
 #define P2_FRAME_COUNT          3
 #define P2_SYNC_FRAME_INDEX     0
 #define P2_FRAME_DEFAULT_TTL    10
@@ -94,8 +94,9 @@ typedef enum {
     P2_TYPE_CMD_KEEPALIVE,
 
     P2_TYPE_GLASS_BRAKE_SENSOR  = 11,
+    P2_TYPE_WEATHER_STATION,
 
-    P2_TYPE_LAST = P2_TYPE_GLASS_BRAKE_SENSOR
+    P2_TYPE_LAST = P2_TYPE_WEATHER_STATION
 } P2_TYPE;
 
 //typedef struct {
@@ -160,6 +161,19 @@ typedef struct __attribute__((packed)) {
     bool battery_low    : 1;
     bool alarm          : 1;
 } p2PktEPGlassBreakSensor;
+
+typedef enum{
+    P2WSDT_KEEP_ALIVE   = 1, // ignore , the server already keep alive's received packets.
+    P2WSDT_WIND_SPEED,
+    P2WSDT_WIND_DIRECITON,
+    P2WSDT_TEMPERATURE,
+    P2WSDT_HUMIDITY,
+    P2WSDT_PRESSURE
+} p2WeatherStationDataType;
+typedef struct __attribute__((packed)) {
+    p2WeatherStationDataType data_type  : 8;
+    char data[P2_MAX_DATA_SIZE - 1];
+} p2PktWeatherStation;
 
 /**
  * calculates the CRC for a packet.

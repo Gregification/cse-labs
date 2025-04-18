@@ -793,6 +793,25 @@ void p2PrintPacket(p2Pkt const * p){
                 snprintf(str, sizeof(str), "%03d, ", P2DATAAS(p2PktEPGlassBreakSensor, *p)->battery_level);
                 putsUart0(str);
             }break;
+        case P2_TYPE_WEATHER_STATION:{
+                putsUart0("WEATHER_STATION ,");
+                putsUart0("data type: ");
+                switch(P2DATAAS(p2PktWeatherStation, *p)->data_type){
+                    case P2WSDT_KEEP_ALIVE: putsUart0("KEEP_ALIVE, "); break;
+                    case P2WSDT_WIND_SPEED: putsUart0("WIND_SPEED, "); break;
+                    case P2WSDT_WIND_DIRECITON: putsUart0("WIND_DIRECITON, "); break;
+                    case P2WSDT_TEMPERATURE: putsUart0("TEMPERATURE, "); break;
+                    case P2WSDT_HUMIDITY: putsUart0("HUMIDITY, "); break;
+                    case P2WSDT_PRESSURE: putsUart0("PRESSURE, "); break;
+                    default: {
+                            putsUart0("unknown (");
+                            snprintf(str, sizeof(str), "%d), ", P2DATAAS(p2PktWeatherStation, *p)->data_type);
+                        } break;
+                }
+                putsUart0("str : ");
+                for(uint8_t i = 0; i < sizeof(p->data) && p->data[i] != '\0'; i++)
+                    putcUart0(p->data[i]);
+            }break;
         default:{
                 putsUart0("unknown (");
                 snprintf(str, sizeof(str), "%02d) ", p->header.type);

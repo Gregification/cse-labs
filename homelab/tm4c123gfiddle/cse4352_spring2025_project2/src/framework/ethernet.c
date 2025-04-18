@@ -58,7 +58,8 @@
 #include "mqtt.h"
 
 #include "../env.h"
-
+#include "../project2.h"
+#include "../nrfModule.h"
 
 // EEPROM Map
 #define EEPROM_DHCP        1
@@ -435,6 +436,22 @@ void processShell(etherHeader * e)
                 }
             }
 
+            if (strcmp(token, "host") == 0)
+            {
+                p2HostStart();
+            }
+
+            if (strcmp(token, "join") == 0)
+            {
+                p2ClientJoin();
+            }
+
+            if (strcmp(token, "stop") == 0)
+            {
+                p2State = P2_STATE_OFF;
+                p2StopFrameTimer();
+            }
+
             if (strcmp(token, "help") == 0)
             {
                 putsUart0("Commands:\n\r");
@@ -445,6 +462,8 @@ void processShell(etherHeader * e)
                 putsUart0("  ip\n\r");
                 putsUart0("  reboot\n\r");
                 putsUart0("  set ip|gw|dns|time|mqtt|sn w.x.y.z\n\r");
+                putsUart0("  host\n\r");
+                putsUart0("  stop\n\r");
             }
 
             putsUart0("\n\r> ");
@@ -475,7 +494,7 @@ int main(void)
     initSockets();
 
     // Init ethernet interface (eth0)
-    putsUart0("\n\rUTA cse4352 spring2025 project 1. #5713\n\r");
+    putsUart0("\n\rUTA cse4352 spring2025 project 2. Team14\n\r");
     initEther(ETHER_UNICAST | ETHER_BROADCAST | ETHER_HALFDUPLEX);
     setEtherMacAddress(2, 3, 4, 5, 6, 105);
 
@@ -488,6 +507,20 @@ int main(void)
 
     // init tcp sockets
     initTcp();
+
+    initNrf();
+
+    // test NRF connection
+    setSpi0BaudRate(NRF_SPI_BAUD, F_CPU);
+    while(!nrfTestSPI()){
+        setPinValue(RED_LED, 1);
+        setPinValue(GREEN_LED, 0);
+        waitMicrosecond(100e3);
+        setPinValue(RED_LED, 0);
+        setPinValue(GREEN_LED, 1);
+        waitMicrosecond(100e3);
+    }
+    setSpi0BaudRate(ETH_SPI_BAUD, F_CPU);
 
     setPinValue(GREEN_LED, 1);
     waitMicrosecond(1e6);
