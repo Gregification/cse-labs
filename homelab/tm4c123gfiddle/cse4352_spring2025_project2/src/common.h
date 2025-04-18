@@ -25,6 +25,8 @@
 #define GREEN_LED PORTF,3
 #define PUSH_BUTTON PORTF,4
 
+#define ETH_SPI_BAUD 10e6
+
 #define NRF_SPI_BAUD 1e6
 #define NRF_SPI_CS PORTA,7
 #define NRF_SPI_CS_ACTIVE 0     // active low

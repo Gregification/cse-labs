@@ -524,6 +524,33 @@ int main(void)
     // but the goal here is simplicity
     while (true)
     {
+        // nrf stuff
+        // only differing baud rate, spi mode is the same
+        setSpi0BaudRate(NRF_SPI_BAUD, F_CPU);
+
+        {
+            switch(p2State){
+                default:
+                case P2_STATE_OFF:
+                    break;
+
+                case P2_STATE_HOST_START:
+                case P2_STATE_HOSTING:
+                    p2HostLoop();
+                    break;
+
+                case P2_STATE_CLIENT_START:
+                case P2_STATE_CLIENT_WAIT_CONN_ACK:
+                case P2_STATE_CLIENTING:
+                    p2ClientLoop();
+                    break;
+            }
+        }
+
+        // ethernet stuff
+        // only differing baud rate, spi mode is the same
+        setSpi0BaudRate(ETH_SPI_BAUD, F_CPU);
+
         // Terminal processing here
         processShell(data);
 

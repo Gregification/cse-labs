@@ -29,6 +29,7 @@
 #include "gpio.h"
 #include "spi0.h"
 #include "eth0.h"
+#include "../common.h"
 
 // Pins
 #define CS PORTA,3
@@ -260,7 +261,7 @@ void initEther(uint16_t mode)
 {
     // Initialize SPI0
     initSpi0(USE_SSI0_RX);
-    setSpi0BaudRate(10e6, 40e6);
+    setSpi0BaudRate(ETH_SPI_BAUD, F_CPU);
     setSpi0Mode(0, 0);
 
     // Enable clocks
