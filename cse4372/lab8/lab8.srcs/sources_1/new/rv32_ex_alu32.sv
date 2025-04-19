@@ -72,6 +72,7 @@ module rv32_ex_alu32(
                             alu_out <= rs1_data_in >> rs2_data_in[4:0]; // SRL : shift right logical
                     3'b110: alu_out <= rs1_data_in | rs2_data_in; // OR
                     3'b111: alu_out <= rs1_data_in & rs2_data_in; // AND
+                    default: ;
                 endcase // funct3
             end // R type : orange
             
@@ -99,6 +100,7 @@ module rv32_ex_alu32(
                     3'b100, // LBU : load byte unsigned
                     3'b101: // LHU : load halfword unsigned
                         alu_out <= rs1_data_in + i_I;
+                    default: ;
                 endcase // funct3
             end // I type : dull red
 
@@ -115,6 +117,7 @@ module rv32_ex_alu32(
                             alu_out <= rs1_data_in >> shamt; // SRLI : shift right logical immediate
                     3'b110: alu_out <= rs1_data_in | i_I; // ORI
                     3'b111: alu_out <= rs1_data_in & i_I; // ANDI
+                    default: ;
                 endcase // funct 3
             end // I type : yellow
 
@@ -136,6 +139,7 @@ module rv32_ex_alu32(
                     3'b001, // SH : store halfword
                     3'b010: // SW : store word
                         alu_out <= rs1_data_in + i_S;
+                    default: ;
                 endcase // funct3
             end // S type : dull pruple
 
@@ -164,6 +168,8 @@ module rv32_ex_alu32(
                 alu_out <= pc_in + 4;
                 // alu_out <= $signed(pc_in + i_J); // JAL : jump to address relative to PC
             end // J type : ilme green
+
+            default: ;
         endcase // opcode
     end
     
