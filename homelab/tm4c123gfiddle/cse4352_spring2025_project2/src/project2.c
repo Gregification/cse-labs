@@ -108,6 +108,8 @@ void p2HostLoop(){
                     nrfConfigAsTransmitterChecked();
                     nrfTransmit(pkt.raw_arr, P2_MAX_PKT_SIZE);
 
+                    nrfConfigAsReceiverChecked();
+
                     // timer to next frame
                     p2StartFrameTimerUS(P2_T_FRAME_US);
 

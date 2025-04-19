@@ -99,29 +99,26 @@ p2MWResult p2Wireless2Mqtt(
 
     switch(pkt->header.type){
         case P2_TYPE_GLASS_BRAKE_SENSOR:{
-                {
-                    snprintf(topic_out, topic_max, "%s", "glass_alarm");
-                    snprintf(data_out, data_max,"%s", "meow meow meow");
-//                    snprintf(data_out, data_max,
-//                             "alarm:%s,battery_level:%d",
-//                             P2DATAAS(p2PktEPGlassBreakSensor, *pkt)->alarm ? "1" : "0",
-//                             P2DATAAS(p2PktEPGlassBreakSensor, *pkt)->battery_level
-//                         );
-                }
+                snprintf(topic_out, topic_max, "%s", "glass_alarm");
+                snprintf(data_out, data_max,
+                         "alarm:%s,battery_level:%d",
+                         P2DATAAS(p2PktEPGlassBreakSensor, *pkt)->alarm ? "1" : "0",
+                         P2DATAAS(p2PktEPGlassBreakSensor, *pkt)->battery_level
+                     );
             }break;
 
         case P2_TYPE_WEATHER_STATION:{
                 switch(P2DATAAS(p2PktWeatherStation, *pkt)->data_type){
-                    case P2WSDT_WIND_SPEED:     topic_out = "WIND_SPEED"; break;
-                    case P2WSDT_WIND_DIRECITON: topic_out = "WIND_DIRECITON"; break;
-                    case P2WSDT_TEMPERATURE:    topic_out = "TEMPERATURE"; break;
-                    case P2WSDT_HUMIDITY:       topic_out = "HUMIDITY"; break;
-                    case P2WSDT_PRESSURE:       topic_out = "PRESSURE"; break;
+                    case P2WSDT_WIND_SPEED:     snprintf(topic_out, topic_max, "%s", "WIND_SPEED"); break;
+                    case P2WSDT_WIND_DIRECITON: snprintf(topic_out, topic_max, "%s", "WIND_DIRECITON"); break;
+                    case P2WSDT_TEMPERATURE:    snprintf(topic_out, topic_max, "%s", "TEMPERATURE"); break;
+                    case P2WSDT_HUMIDITY:       snprintf(topic_out, topic_max, "%s", "HUMIDITY"); break;
+                    case P2WSDT_PRESSURE:       snprintf(topic_out, topic_max, "%s", "PRESSURE"); break;
                     default: break;
                 }
+                snprintf(data_out, data_max, "%s", P2DATAAS(p2PktWeatherStation, *pkt)->data);
             }break;
 
-            snprintf(data_out, data_max, "%s", P2DATAAS(p2PktWeatherStation, *pkt)->data);
 
         default:
             break;

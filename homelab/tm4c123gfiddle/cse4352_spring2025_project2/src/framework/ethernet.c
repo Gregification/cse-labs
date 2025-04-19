@@ -593,7 +593,7 @@ int main(void)
 //        }
 //        putsUart0("\n\r");
 //    }
-
+    p2estate = P2ESTATE_AUTO;
     while (true)
     {
 
@@ -629,11 +629,11 @@ int main(void)
         {
 
             if(!p2IsRXMsgQueueEmpty()){
-                char topic[P2_MAX_MQTT_TOPIC_LEN];
-                char mdata[P2_MAX_MQTT_DATA_LEN];
+                char topic[P2_MAX_MQTT_TOPIC_LEN]= "default topic";
+                char mdata[P2_MAX_MQTT_DATA_LEN] = "default mdata";
 
                 p2MsgQEntry * msg = p2PopRXMsgQueue();
-                p2MWResult res = p2Wireless2Mqtt(&msg->pkt, topic, sizeof(topic), mdata, sizeof(data));
+                p2MWResult res = p2Wireless2Mqtt(&msg->pkt, topic, sizeof(topic), mdata, sizeof(mdata));
                 if(res.topic_len > 0){
                     publishMqtt(topic, mdata);
                 }
@@ -662,11 +662,16 @@ int main(void)
                                 break;
                             }
 
-                            static uint8_t t_counter;
+//                            static uint16_t t_counter = 40;
                             if(!mqttsocket || (mqttsocket->state == TCP_CLOSED) || (mqttsocket->state == TCP_ESTABLISHED && mqttstate == MQTT_DISCONNECTED)){
-                                if(t_counter == 0)
+                                static bool t_latch = true;
+                                if(t_latch){
+                                    t_latch = false;
                                     connectMqtt(data);
-                                t_counter = (t_counter + 1) % 10;
+                                } else{
+                                    // reboot
+                                    NVIC_APINT_R = NVIC_APINT_VECTKEY | NVIC_APINT_SYSRESETREQ;
+                                }
                             }
 
                             putsUart0("wireless: ");
@@ -729,7 +734,7 @@ int main(void)
 //                                if(mqttstate == MQTT_CONNECTED){
 //                                    static uint8_t o = 0;
 //                                    o = (o+1) %10;
-//                                    publishMqtt("ohhh", "dater");
+//                                    publishMqtt("ohhh", "123456789abcdefghijklmnopqrstuvwxyz");
 //                                }
 
                                 putsUart0("\n\r");
