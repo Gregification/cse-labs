@@ -117,8 +117,8 @@ input [0 : 0] probe26;
 input [0 : 0] probe27;
 input [0 : 0] probe28;
 input [31 : 0] probe29;
-input [15 : 0] probe30;
-input [15 : 0] probe31;
+input [31 : 0] probe30;
+input [31 : 0] probe31;
 
 
 endmodule

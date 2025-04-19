@@ -54,8 +54,10 @@ module rv32_if_top(
         // itterate pc
         if(reset) begin
             pc <= `PC_RESET;
+            pc_out <= `PC_RESET;
         end else if(jump_enable_in) begin
-            pc <= jump_addr_in;
+            pc <= jump_addr_in + 4;
+            pc_out <= jump_addr_in;
         end else begin
             pc <= pc + 4;
         end

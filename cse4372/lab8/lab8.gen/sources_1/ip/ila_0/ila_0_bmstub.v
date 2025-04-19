@@ -106,9 +106,9 @@ module ila_0 (
   (* X_INTERFACE_IGNORE = "true" *)
   input [31:0]probe29;
   (* X_INTERFACE_IGNORE = "true" *)
-  input [15:0]probe30;
+  input [31:0]probe30;
   (* X_INTERFACE_IGNORE = "true" *)
-  input [15:0]probe31;
+  input [31:0]probe31;
 
   // stub module has no contents
 

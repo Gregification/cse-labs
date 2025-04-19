@@ -84,15 +84,10 @@ module rv32_id_top(
     wire    [31:0] i_I     = {{20{iw_in[31]}}, iw_in[31:20]};
     wire    [31:0] i_J     = {{12{iw_in[31]}}, iw_in[31], iw_in[19:12], iw_in[20], iw_in[30:21]};
 
-    reg jump_enable_buffer;
     always_ff @ (posedge clk) begin
-        if(jump_enable_buffer || reset)
-            jump_enable_buffer <= 0;
-        else
-            jump_enable_buffer <= jump_enable_out;
-    end
+        jump_enable_out <= 0;
+        jump_addr_out <= 0;
 
-    always_ff @ (posedge clk) begin
         if(reset || flood_latch) begin
             pc_out <= `PC_RESET;
             iw_out <= `IW_RESET;
@@ -103,14 +98,16 @@ module rv32_id_top(
             regif_rs1_data_out <= 0;
             regif_rs2_data_out <= 0;
 
-            if(reset)
+            if(reset) begin
                 flood_latch <= 0;
+            end
 
         end else begin
             pc_out <= pc_in;
 
-            if(jump_enable_buffer) begin // if is bad instruction
+            if(jump_enable_out) begin // if is bad instruction
                 // replace with nop
+                pc_out <= `PC_RESET;
                 iw_out <= `NOP_IW;
 
                 wb_reg_out      <= 0;
@@ -118,10 +115,9 @@ module rv32_id_top(
 
                 regif_rs1_data_out <= 0;
                 regif_rs2_data_out <= 0;
+
             end else begin
                 iw_out <= iw_in;
-                if(iw_in == `NOP_IW)
-                    flood_latch <= 1;
 
                 wb_reg_out      <= iw_in[11:7];
                 wb_enable_out   <= 
@@ -137,15 +133,13 @@ module rv32_id_top(
                 regif_rs1_data_out <= regif_rs1_data;
                 regif_rs2_data_out <= regif_rs2_data;
 
-                jump_enable_out <= 0;
-                jump_addr_out <= 0;
-
                 case (opcode)
                     7'b1110011: begin // I type : gray
                         if(iw_in[20]) begin
                             // ECALL     //TODO
                         end else begin
                             // EBREAK
+                            flood_latch <= 1;
                         end
                     end // I type : gray
 
