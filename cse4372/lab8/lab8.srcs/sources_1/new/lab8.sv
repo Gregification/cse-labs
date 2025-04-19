@@ -75,7 +75,7 @@ module lab8(
     wire            clk = CLK100;
     reg     [31:0]  clk_ladder = 0;
         `define CLK_ILA CLK100
-        `define CLK_PIPELINE CLK100
+        `define CLK_PIPELINE clk_ladder[0]
         `define CLK_IO clk_ladder[10]
 
     always_ff @ (posedge clk)
@@ -150,7 +150,10 @@ module lab8(
 
         // jump information
         .probe28(_rv32_id_top.jump_enable_out), // input wire [0:0]  probe28 
-        .probe29(_rv32_id_top.jump_addr_out) // input wire [31:0]  probe29
+        .probe29(_rv32_id_top.jump_addr_out), // input wire [31:0]  probe29
+
+        .probe30(_rv32_id_top.wb_reg1_src_indicator), // input wire [15:0]  probe30 
+	    .probe31(_rv32_id_top.wb_reg2_src_indicator) // input wire [15:0]  probe31
     );
 
     //---dual port memory---------------------------------------------------
@@ -239,17 +242,21 @@ module lab8(
         
         // df from mem
         .df_mem_wb_reg(_rv32_mem_top.wb_reg_out),
-        .df_mem_wb_data(_rv32_mem_top.alu_in),
+        .df_mem_wb_data(_rv32_mem_top.alu_out),
         .df_mem_wb_enable(_rv32_mem_top.wb_enable_out),
 
         // df from wb
         .df_wb_wb_reg(_rv32_wb_top.regif_wb_reg),
-        .df_wb_wb_data(_rv32_wb_top.alu_in),
+        .df_wb_wb_data(_rv32_wb_top.regif_wb_data),
         .df_wb_wb_enable(_rv32_wb_top.regif_wb_enable)
 
         // to id : regarding pc jumping
         // output reg jump_enable_out,
         // output reg [31:0] jump_addr_out
+
+        // debugging to top
+        // output reg [15:0] wb_reg1_src_indicator,
+        // output reg [15:0] wb_reg2_src_indicator
     );
     
     rv32_ex_top _rv32_ex_top (

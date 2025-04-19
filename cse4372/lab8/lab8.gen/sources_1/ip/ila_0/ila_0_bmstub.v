@@ -36,7 +36,9 @@ module ila_0 (
   probe26,
   probe27,
   probe28,
-  probe29
+  probe29,
+  probe30,
+  probe31
 );
 
   (* X_INTERFACE_INFO = "xilinx.com:signal:clock:1.0 signal_clock CLK" *)
@@ -103,6 +105,10 @@ module ila_0 (
   input [0:0]probe28;
   (* X_INTERFACE_IGNORE = "true" *)
   input [31:0]probe29;
+  (* X_INTERFACE_IGNORE = "true" *)
+  input [15:0]probe30;
+  (* X_INTERFACE_IGNORE = "true" *)
+  input [15:0]probe31;
 
   // stub module has no contents
 
