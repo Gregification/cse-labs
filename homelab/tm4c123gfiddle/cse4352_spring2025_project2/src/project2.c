@@ -563,8 +563,9 @@ void p2HostProcessPacket(p2Pkt const * pkt){
             // do nothing. should only occur if multiple hosts are running. systems screwed up anyways
             break;
 
-        case P2_TYPE_GLASS_BRAKE_SENSOR:
-        case P2_TYPE_WEATHER_STATION:
+        case P2_TYPE_ENDPOINT_GLASS_BRAKE_SENSOR:
+        case P2_TYPE_ENDPOINT_WEATHER_STATION:
+        case P2_TYPE_ENDPOINT_MAILBOX:
                 p2PushRXMsgQueue(*pkt);
             break;
 
@@ -639,7 +640,7 @@ void p2ClientProcessPacket(p2Pkt const * pkt){
                 putsUart0("queuing alarm!\n\r");
                 p2Pkt p;
                 p.header.data_length = sizeof(p2PktEPGlassBreakSensor);
-                p.header.type = P2_TYPE_GLASS_BRAKE_SENSOR;
+                p.header.type = P2_TYPE_ENDPOINT_GLASS_BRAKE_SENSOR;
                 p.header.from_frame = p2TxEndpoint;
                 p2PktEPGlassBreakSensor * gbs = P2DATAAS(p2PktEPGlassBreakSensor, p);
                 gbs->alarm = random32() & BV(0);
@@ -815,7 +816,7 @@ void p2PrintPacket(p2Pkt const * p){
                 snprintf(str, sizeof(str), "%02d, ", s->frame_ttl);
                 putsUart0(str);
             }break;
-        case P2_TYPE_GLASS_BRAKE_SENSOR:{
+        case P2_TYPE_ENDPOINT_GLASS_BRAKE_SENSOR:{
                 putsUart0("GLASS_BRAKE_SENSOR ,");
                 putsUart0("alarm: ");
                 snprintf(str, sizeof(str), "%d, ", P2DATAAS(p2PktEPGlassBreakSensor, *p)->alarm);
@@ -824,10 +825,10 @@ void p2PrintPacket(p2Pkt const * p){
                 snprintf(str, sizeof(str), "%03d, ", P2DATAAS(p2PktEPGlassBreakSensor, *p)->battery_level);
                 putsUart0(str);
             }break;
-        case P2_TYPE_WEATHER_STATION:{
+        case P2_TYPE_ENDPOINT_WEATHER_STATION:{
                 putsUart0("WEATHER_STATION ,");
                 putsUart0("data type: ");
-                switch(P2DATAAS(p2PktWeatherStation, *p)->data_type){
+                switch(P2DATAAS(p2PktEPWeatherStation, *p)->data_type){
                     case P2WSDT_WIND_SPEED: putsUart0("WIND_SPEED, "); break;
                     case P2WSDT_WIND_DIRECITON: putsUart0("WIND_DIRECITON, "); break;
                     case P2WSDT_TEMPERATURE: putsUart0("TEMPERATURE, "); break;
@@ -835,12 +836,21 @@ void p2PrintPacket(p2Pkt const * p){
                     case P2WSDT_PRESSURE: putsUart0("PRESSURE, "); break;
                     default: {
                             putsUart0("unknown (");
-                            snprintf(str, sizeof(str), "%d), ", P2DATAAS(p2PktWeatherStation, *p)->data_type);
+                            snprintf(str, sizeof(str), "%d), ", P2DATAAS(p2PktEPWeatherStation, *p)->data_type);
+                            putsUart0(str);
                         } break;
                 }
                 putsUart0("str : ");
                 for(uint8_t i = 0; i < sizeof(p->data) && p->data[i] != '\0'; i++)
                     putcUart0(p->data[i]);
+            }break;
+        case P2_TYPE_ENDPOINT_MAILBOX:{
+                putsUart0("MAILBOX,");
+                putsUart0("status: ");
+                if(P2DATAAS(p2PktEPMailbox, *p)->not_empty)
+                    putsUart0("mail delivered");
+                else
+                    putsUart0("mail picked up");
             }break;
         default:{
                 putsUart0("unknown (");

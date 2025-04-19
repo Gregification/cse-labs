@@ -82,6 +82,15 @@
 #define P2_SERVER_RESPONSE_TIMEOUT_CYCLES   3
 
 //---protocol------------------------------------------------------
+/**
+ * to add packet:
+ *  - add to P2_TYPE enum
+ *  - add a matching struct
+ *  - add entry to p2HostProcessPacket(...)
+ *  - add resolver to mqtt if needed
+ *  - add resolver from mqtt if needed
+ *  - add printout entry at bottom of project2.c
+ */
 
 #define P2_MAX_PKT_SIZE         32  // a limit of the NRF module
 
@@ -95,10 +104,11 @@ typedef enum {
 
     P2_TYPE_ENDPOINT_START = 11,
 
-    P2_TYPE_GLASS_BRAKE_SENSOR  = P2_TYPE_ENDPOINT_START,
-    P2_TYPE_WEATHER_STATION,
+    P2_TYPE_ENDPOINT_GLASS_BRAKE_SENSOR  = P2_TYPE_ENDPOINT_START,
+    P2_TYPE_ENDPOINT_WEATHER_STATION,
+    P2_TYPE_ENDPOINT_MAILBOX,
 
-    P2_TYPE_LAST = P2_TYPE_WEATHER_STATION
+    P2_TYPE_LAST = P2_TYPE_ENDPOINT_WEATHER_STATION
 } P2_TYPE;
 
 //typedef struct {
@@ -169,11 +179,16 @@ typedef enum{
     P2WSDT_TEMPERATURE,
     P2WSDT_HUMIDITY,
     P2WSDT_PRESSURE
-} p2WeatherStationDataType;
+} p2EPWeatherStationDataType;
+
 typedef struct __attribute__((packed)) {
-    p2WeatherStationDataType data_type  : 8;
+    p2EPWeatherStationDataType data_type  : 8;
     char data[P2_MAX_DATA_SIZE - 1];
-} p2PktWeatherStation;
+} p2PktEPWeatherStation;
+
+typedef struct __attribute__((packed)) {
+    bool not_empty;
+} p2PktEPMailbox;
 
 /**
  * calculates the CRC for a packet.

@@ -13,8 +13,8 @@ struct {
     char const topic[P2_MAX_MQTT_TOPIC_LEN];
 } p2PktType2TopicMap[] = {
       {P2_TYPE_CMD_RESET,           ""},
-      {P2_TYPE_GLASS_BRAKE_SENSOR,  "glass_alarm"},
-      {P2_TYPE_WEATHER_STATION,     "weather"},
+      {P2_TYPE_ENDPOINT_GLASS_BRAKE_SENSOR,  "glass_alarm"},
+      {P2_TYPE_ENDPOINT_WEATHER_STATION,     "weather"},
 };
 
 P2_TYPE p2TopicToType(char const * str, uint16_t maxLen){
@@ -62,11 +62,11 @@ bool p2Mqtt2Wireless(
             p2Pkt * pkt)
 {
     switch(p2TopicToType((char const *)mqttDataStart, dataTopicLen)){
-        case P2_TYPE_GLASS_BRAKE_SENSOR:{
+        case P2_TYPE_ENDPOINT_GLASS_BRAKE_SENSOR:{
                 // no translation available
             }break;
 
-        case P2_TYPE_WEATHER_STATION:{
+        case P2_TYPE_ENDPOINT_WEATHER_STATION:{
                 // no translation available
             }break;
 
@@ -98,7 +98,7 @@ p2MWResult p2Wireless2Mqtt(
     snprintf(data_out, data_max,"%s", "");
 
     switch(pkt->header.type){
-        case P2_TYPE_GLASS_BRAKE_SENSOR:{
+        case P2_TYPE_ENDPOINT_GLASS_BRAKE_SENSOR:{
                 snprintf(topic_out, topic_max, "%s", "glass_alarm");
                 snprintf(data_out, data_max,
                          "alarm:%s,battery_level:%d",
@@ -107,8 +107,8 @@ p2MWResult p2Wireless2Mqtt(
                      );
             }break;
 
-        case P2_TYPE_WEATHER_STATION:{
-                switch(P2DATAAS(p2PktWeatherStation, *pkt)->data_type){
+        case P2_TYPE_ENDPOINT_WEATHER_STATION:{
+                switch(P2DATAAS(p2PktEPWeatherStation, *pkt)->data_type){
                     case P2WSDT_WIND_SPEED:     snprintf(topic_out, topic_max, "%s", "WIND_SPEED"); break;
                     case P2WSDT_WIND_DIRECITON: snprintf(topic_out, topic_max, "%s", "WIND_DIRECITON"); break;
                     case P2WSDT_TEMPERATURE:    snprintf(topic_out, topic_max, "%s", "TEMPERATURE"); break;
@@ -116,9 +116,15 @@ p2MWResult p2Wireless2Mqtt(
                     case P2WSDT_PRESSURE:       snprintf(topic_out, topic_max, "%s", "PRESSURE"); break;
                     default: break;
                 }
-                snprintf(data_out, data_max, "%s", P2DATAAS(p2PktWeatherStation, *pkt)->data);
+                snprintf(data_out, data_max, "%s", P2DATAAS(p2PktEPWeatherStation, *pkt)->data);
             }break;
 
+        case P2_TYPE_ENDPOINT_MAILBOX:{
+                snprintf(topic_out, topic_max, "%s", "Mailbox_Status");
+                snprintf(data_out, data_max, "%s",
+                         P2DATAAS(p2PktEPMailbox, *pkt)->not_empty ? "delivered" : "picked up"
+                     );
+            }break;
 
         default:
             break;
