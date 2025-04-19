@@ -70,9 +70,9 @@
 
 #include "common.h"
 
-#define P2_T_FRAME_TX_US        2e6
-#define P2_T_BUFFER_US          1e3
-#define P2_T_INTER_FRAME_US     1e3
+#define P2_T_FRAME_TX_US        1e6
+#define P2_T_BUFFER_US          1e6
+#define P2_T_INTER_FRAME_US     1e6
 #define P2_T_FRAME_US           (P2_T_FRAME_TX_US + P2_T_BUFFER_US + P2_T_INTER_FRAME_US)
 #define P2_T_MIN_TX_DELAY_US    500
 #define P2_FRAME_COUNT          3

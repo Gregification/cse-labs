@@ -60,6 +60,7 @@
 #include "../env.h"
 #include "../project2.h"
 #include "../nrfModule.h"
+#include "../project2_mqtt_wireless_translator.h"
 
 // EEPROM Map
 #define EEPROM_DHCP        1
@@ -576,7 +577,23 @@ int main(void)
     // RTOS and interrupts would greatly improve this code,
     // but the goal here is simplicity
 
-    p2estate = P2ESTATE_AUTO;
+//    p2estate = P2ESTATE_AUTO;
+//    {
+//
+//        {
+//            putsUart0("translation: ");
+//            putsUart0(p2TypeToTopic(P2_TYPE_CMD_RESET));
+//        }
+//        {
+//            char str[8];
+//            char strin[] = "glass_alarm";
+//            snprintf(str, sizeof(str),"%d", p2TopicToType(strin, sizeof(strin)));
+//            putsUart0("translation: ");
+//            putsUart0(str);
+//        }
+//        putsUart0("\n\r");
+//    }
+
     while (true)
     {
 
@@ -607,6 +624,21 @@ int main(void)
         }
 
         // ethernet stuff
+
+        // send mqtt from wireless
+        {
+
+            if(!p2IsRXMsgQueueEmpty()){
+                char topic[P2_MAX_MQTT_TOPIC_LEN];
+                char mdata[P2_MAX_MQTT_DATA_LEN];
+
+                p2MsgQEntry * msg = p2PopRXMsgQueue();
+                p2MWResult res = p2Wireless2Mqtt(&msg->pkt, topic, sizeof(topic), mdata, sizeof(data));
+                if(res.topic_len > 0){
+                    publishMqtt(topic, mdata);
+                }
+            }
+        }
 
         // Terminal processing here
         processShell(data);
@@ -694,6 +726,12 @@ int main(void)
                                     default:                putsUart0("unknown MQTT state"); break;
                                 }
 
+//                                if(mqttstate == MQTT_CONNECTED){
+//                                    static uint8_t o = 0;
+//                                    o = (o+1) %10;
+//                                    publishMqtt("ohhh", "dater");
+//                                }
+
                                 putsUart0("\n\r");
                             }
                         }break;
@@ -772,6 +810,14 @@ int main(void)
                                         uint16_t topic_len  = ntohs(((uint16_t *)(dater))[0]);
                                         dater += 2;
 
+                                        p2Pkt p;
+                                        if(p2Mqtt2Wireless(dater, topic_len, packet_end, &p)){
+                                            putsUart0("\n\r translated mqtt 2 wireless");
+                                            p2PushRXMsgQueue(p);
+                                        } else {
+                                            putsUart0("\n\r failed to translate mqtt 2 wireless");
+                                        }
+
                                         putsUart0("\n\r topic: ");
                                         for(; topic_len > 0; topic_len--)
                                             putcUart0(dater++[0]);
@@ -779,6 +825,7 @@ int main(void)
                                         putsUart0("\n\r message: ");
                                         while(dater < packet_end)
                                             putcUart0(dater++[0]);
+
 
                                         putsUart0("\n\r");
                                     }

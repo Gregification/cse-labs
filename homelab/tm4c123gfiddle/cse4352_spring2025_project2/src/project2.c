@@ -143,7 +143,7 @@ void p2HostLoop(){
                                     P2DATAAS(p2PktReset, p)->frame = frameid;
                                     p.header.crc = p2CalcPacketCRC(&p);
 
-                                    if(p2PushMsgQueue(p)){
+                                    if(p2PushTXMsgQueue(p)){
                                         // successfully added to queue
                                     } else {
                                         // something wrong with queue, stop this connection later
@@ -215,7 +215,7 @@ void p2HostLoop(){
 
                     nrfConfigAsTransmitterChecked();
 
-                    p2MsgQEntry * toSend = p2PopMsgQueue();
+                    p2MsgQEntry * toSend = p2PopTXMsgQueue();
                     if(toSend){
                         nrfTransmit(toSend->pkt.raw_arr, P2_MAX_PKT_SIZE);
                     }
@@ -387,7 +387,7 @@ void p2ClientLoop(){
                     if(p2CurrentFrame == p2TxEndpoint){
                         // tx pending messages
 
-                        p2MsgQEntry * toSend = p2PopMsgQueue();
+                        p2MsgQEntry * toSend = p2PopTXMsgQueue();
                         if(toSend){
                             nrfTransmit(toSend->pkt.raw_arr, P2_MAX_PKT_SIZE);
                         }
@@ -445,7 +445,7 @@ void p2ClientLoop(){
                                                     p.header.data_length = sizeof(p2PktKeepAlive);
                                                     p.header.from_frame = p2TxEndpoint;
                                                     P2DATAAS(p2PktKeepAlive, p)->newTTL = 10; // use server default
-                                                    p2PushMsgQueue(p);
+                                                    p2PushTXMsgQueue(p);
                                                 }
 
                                             }
@@ -515,8 +515,8 @@ void p2HostProcessPacket(p2Pkt const * pkt){
                 if(P2DATAAS(p2PktJoinResponse, p)->join_request_accepted){
                     // make sure no double accepting
                     for(uint8_t i = 0; i < P2_MSG_QUEUE_SIZE; i++){
-                        if(p2MsgQueue[i].enabled && p2MsgQueue[i].pkt.header.type == P2_TYPE_CMD_JOIN_RESPONSE){
-                            P2DATAAS(p2PktJoinResponse, p2MsgQueue[i].pkt)->join_request_accepted = false;
+                        if(p2TXMsgQueue[i].enabled && p2TXMsgQueue[i].pkt.header.type == P2_TYPE_CMD_JOIN_RESPONSE){
+                            P2DATAAS(p2PktJoinResponse, p2TXMsgQueue[i].pkt)->join_request_accepted = false;
                             break;
                         }
                     }
@@ -529,7 +529,7 @@ void p2HostProcessPacket(p2Pkt const * pkt){
                 }
 
                 p.header.crc = p2CalcPacketCRC(&p);
-                p2PushMsgQueue(p);
+                p2PushTXMsgQueue(p);
             }break;
 
         case P2_TYPE_CMD_RESET:
@@ -543,7 +543,7 @@ void p2HostProcessPacket(p2Pkt const * pkt){
                 p.header.type = P2_TYPE_CMD_RESET;
                 P2DATAAS(p2PktReset, p)->frame = pkt->header.from_frame;
                 P2DATAAS(p2PktReset, p)->isEcho = true;
-                p2PushMsgQueue(p);
+                p2PushTXMsgQueue(p);
             }
         case P2_TYPE_CMD_DISCONNNECT:
             p2FrameMetas[pkt->header.from_frame].ttl = 0;
@@ -560,13 +560,15 @@ void p2HostProcessPacket(p2Pkt const * pkt){
         case P2_TYPE_ENTRY_SYNCH_PKT:
             // do nothing. should only occur if multiple hosts are running. systems screwed up anyways
             break;
+
         case P2_TYPE_GLASS_BRAKE_SENSOR:
-            putsUart0("glass broke!\n\r");
+        case P2_TYPE_WEATHER_STATION:
+                p2PushRXMsgQueue(*pkt);
             break;
 
-        default:
-            putsUart0("unhandled type ");
-            break;
+        default:{
+                putsUart0("unhandled type ");
+            }break;
 
     }
 }
@@ -599,7 +601,7 @@ void p2ClientProcessPacket(p2Pkt const * pkt){
                         P2DATAAS(p2PktReset, p)->frame = p2TxEndpoint;
 
                         // mild effort to echo back the message
-                        if(p2PushMsgQueue(p)){
+                        if(p2PushTXMsgQueue(p)){
                             // great success!
                         } else {
                             // it didn't make it, oh well, we did our due diligence ... thats what the timeout's for
@@ -641,7 +643,7 @@ void p2ClientProcessPacket(p2Pkt const * pkt){
                 gbs->alarm = random32() & BV(0);
                 gbs->battery_level = random32() % 101;
 
-                p2PushMsgQueue(p);
+                p2PushTXMsgQueue(p);
             }
             break;
 
@@ -655,34 +657,54 @@ void p2ClientProcessPacket(p2Pkt const * pkt){
 
 }
 
-p2MsgQEntry * p2PushMsgQueue(p2Pkt pkt){
+p2MsgQEntry * p2PushTXMsgQueue(p2Pkt pkt){
+    return p2PushMsgQueue(p2TXMsgQueue, pkt);
+}
 
+p2MsgQEntry * p2PopTXMsgQueue(){
+    return p2PopMsgQueue(p2TXMsgQueue);
+}
+
+bool p2IsTXMsgQueueEmpty(){
+    return p2IsMsgQueueEmpty(p2TXMsgQueue);
+}
+
+p2MsgQEntry * p2PushRXMsgQueue(p2Pkt pkt){
+    return p2PushMsgQueue(p2RXMsgQueue, pkt);
+}
+p2MsgQEntry * p2PopRXMsgQueue(){
+    return p2PopMsgQueue(p2RXMsgQueue);
+}
+bool p2IsRXMsgQueueEmpty(){
+    return p2IsMsgQueueEmpty(p2RXMsgQueue);
+}
+
+p2MsgQEntry * p2PushMsgQueue(p2MsgQEntry* q, p2Pkt pkt){
     for(uint8_t i = 1; i < P2_MSG_QUEUE_SIZE; i++)
-        if(!p2MsgQueue[i].enabled){
-            p2MsgQueue[i].enabled = true;
+        if(!q[i].enabled){
+            q[i].enabled = true;
 
             pkt.header.crc = p2CalcPacketCRC(&pkt);
-            p2MsgQueue[i].pkt = pkt;
+            q[i].pkt = pkt;
 
-            return p2MsgQueue + i;
+            return q + i;
+        }
+
+    return NULL;
+}
+p2MsgQEntry * p2PopMsgQueue(p2MsgQEntry* q){
+    for(uint8_t i = 0; i < P2_MSG_QUEUE_SIZE; i++)
+        if(q[i].enabled){
+            q[i].enabled = false;
+            return q + i;
         }
 
     return NULL;
 }
 
-p2MsgQEntry * p2PopMsgQueue(){
+bool p2IsMsgQueueEmpty(p2MsgQEntry* q){
     for(uint8_t i = 0; i < P2_MSG_QUEUE_SIZE; i++)
-        if(p2MsgQueue[i].enabled){
-            p2MsgQueue[i].enabled = false;
-            return p2MsgQueue + i;
-        }
-
-    return NULL;
-}
-
-bool p2IsMsgQueueEmpty(){
-    for(uint8_t i = 0; i < P2_MSG_QUEUE_SIZE; i++)
-            if(p2MsgQueue[i].enabled)
+            if(q[i].enabled)
                 return false;
     return true;
 }
@@ -804,7 +826,6 @@ void p2PrintPacket(p2Pkt const * p){
                 putsUart0("WEATHER_STATION ,");
                 putsUart0("data type: ");
                 switch(P2DATAAS(p2PktWeatherStation, *p)->data_type){
-                    case P2WSDT_KEEP_ALIVE: putsUart0("KEEP_ALIVE, "); break;
                     case P2WSDT_WIND_SPEED: putsUart0("WIND_SPEED, "); break;
                     case P2WSDT_WIND_DIRECITON: putsUart0("WIND_DIRECITON, "); break;
                     case P2WSDT_TEMPERATURE: putsUart0("TEMPERATURE, "); break;
