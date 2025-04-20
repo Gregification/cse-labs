@@ -162,15 +162,15 @@ module lab8(
         .clk(`CLK_PIPELINE),
 
         // Instruction port (RO)
-        .i_addr(_rv32_if_top.memif_addr),
+        .i_addr(_rv32_if_top.memif_addr)
         // output reg [31:0] i_rdata,
         
         // Data port (RW)
-        .d_addr(_rv32_mem_top.memif_addr),
+        // .d_addr(_rv32_mem_top.memif_addr),
         // output reg [31:0] d_rdata,
-        .d_we(_rv32_mem_top.memif_we),
-        .d_be(_rv32_mem_top.memif_be),
-        .d_wdata(_rv32_mem_top.memif_wdata)
+        // .d_we(_rv32_mem_top.memif_we),
+        // .d_be(_rv32_mem_top.memif_be),
+        // .d_wdata(_rv32_mem_top.memif_wdata)
     );
     
     assign LED = _dual_port_ram.d_rdata;
@@ -236,19 +236,19 @@ module lab8(
         // output reg wb_enable_out,
 
         // df from ex
-        .df_ex_wb_reg(_rv32_ex_top.wb_reg_out),
+        .df_ex_wb_reg(_rv32_ex_top.wb_reg_in),
         .df_ex_wb_data(_rv32_ex_top.alu_raw),
-        .df_ex_wb_enable(_rv32_ex_top.wb_enable_out),
+        .df_ex_wb_enable(_rv32_ex_top.wb_enable_in),
         
         // df from mem
-        .df_mem_wb_reg(_rv32_mem_top.wb_reg_out),
-        .df_mem_wb_data(_rv32_mem_top.alu_out),
-        .df_mem_wb_enable(_rv32_mem_top.wb_enable_out),
+        .df_mem_wb_reg(_rv32_mem_top.wb_reg_in),
+        .df_mem_wb_data(_rv32_mem_top.alu_in),
+        .df_mem_wb_enable(_rv32_mem_top.wb_enable_in),
 
         // df from wb
-        .df_wb_wb_reg(_rv32_wb_top.regif_wb_reg),
-        .df_wb_wb_data(_rv32_wb_top.regif_wb_data),
-        .df_wb_wb_enable(_rv32_wb_top.regif_wb_enable)
+        .df_wb_wb_reg(_rv32_wb_top.wb_reg_in),
+        .df_wb_wb_data(_rv32_wb_top.alu_in),
+        .df_wb_wb_enable(_rv32_wb_top.wb_enable_in)
 
         // to id : regarding pc jumping
         // output reg jump_enable_out,
