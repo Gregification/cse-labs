@@ -218,6 +218,18 @@ module rv32_id_top(
     end
 
     always_comb begin
+        wb_reg1_src_indicator = 
+            (df_ex_wb_enable    && (df_ex_wb_reg == regif_rs1_reg))     ? 32'hA0 :  // from ex
+            (df_mem_wb_enable   && (df_mem_wb_reg == regif_rs1_reg))    ? 32'hAA :  // from mem
+            (df_wb_wb_enable    && (df_wb_wb_reg == regif_rs1_reg))     ? 32'hAB :  // from wb
+            32'hAC;                                                                 // no df
+
+        wb_reg1_src_indicator = 
+            (df_ex_wb_enable    && (df_ex_wb_reg == regif_rs2_reg))     ? 32'hB0 :
+            (df_mem_wb_enable   && (df_mem_wb_reg == regif_rs2_reg))    ? 32'hBA :
+            (df_wb_wb_enable    && (df_wb_wb_reg == regif_rs2_reg))     ? 32'hBB : 
+            32'hBC;
+
         regif_rs1_data = 
             (df_ex_wb_enable    && (df_ex_wb_reg == regif_rs1_reg))     ? df_ex_wb_data :
             (df_mem_wb_enable   && (df_mem_wb_reg == regif_rs1_reg))    ? df_mem_wb_data :

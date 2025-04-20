@@ -70,12 +70,12 @@
 
 #include "common.h"
 
-#define P2_T_FRAME_TX_US        1e6
-#define P2_T_BUFFER_US          1e6
-#define P2_T_INTER_FRAME_US     1e6
+#define P2_T_FRAME_TX_US        2e6
+#define P2_T_BUFFER_US          100e3
+#define P2_T_INTER_FRAME_US     100e3
 #define P2_T_FRAME_US           (P2_T_FRAME_TX_US + P2_T_BUFFER_US + P2_T_INTER_FRAME_US)
 #define P2_T_MIN_TX_DELAY_US    500
-#define P2_FRAME_COUNT          3
+#define P2_FRAME_COUNT          32
 #define P2_SYNC_FRAME_INDEX     0
 #define P2_FRAME_DEFAULT_TTL    10
 
@@ -107,6 +107,7 @@ typedef enum {
     P2_TYPE_ENDPOINT_GLASS_BRAKE_SENSOR  = P2_TYPE_ENDPOINT_START,
     P2_TYPE_ENDPOINT_WEATHER_STATION,
     P2_TYPE_ENDPOINT_MAILBOX,
+    P2_TYPE_ENDPOINT_DOORLOCK,
 
     P2_TYPE_LAST = P2_TYPE_ENDPOINT_WEATHER_STATION
 } P2_TYPE;
@@ -189,6 +190,12 @@ typedef struct __attribute__((packed)) {
 typedef struct __attribute__((packed)) {
     bool not_empty;
 } p2PktEPMailbox;
+
+typedef struct __attribute__((packed)) {
+    unsigned int    : 6; // reserved
+    bool break_in   : 1;
+    bool open       : 1;
+} p2PktEPDoorlock;
 
 /**
  * calculates the CRC for a packet.

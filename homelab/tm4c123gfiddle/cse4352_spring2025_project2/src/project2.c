@@ -76,6 +76,7 @@ void p2HostLoop(){
                     p2Pkt pkt;
                     pkt.header.from_frame = p2TxEndpoint;
                     pkt.header.type = P2_TYPE_ENTRY_SYNCH_PKT;
+                    pkt.header.data_length = sizeof(p2PktSynch);
                     P2DATAAS(p2PktSynch, pkt)->frame = p2CurrentFrame;
 
                     // ttl of current frame
@@ -851,6 +852,13 @@ void p2PrintPacket(p2Pkt const * p){
                     putsUart0("mail delivered");
                 else
                     putsUart0("mail picked up");
+            }break;
+        case P2_TYPE_ENDPOINT_DOORLOCK:{
+                putsUart0("DOORLOCK,");
+                putsUart0("is open: ");
+                putsUart0(P2DATAAS(p2PktEPDoorlock, *p)->open ? "1, " : "0, ");
+                putsUart0("break in: ");
+                putsUart0(P2DATAAS(p2PktEPDoorlock, *p)->break_in ? "1" : "0");
             }break;
         default:{
                 putsUart0("unknown (");

@@ -70,18 +70,27 @@
 
 #include "common.h"
 
-#define P2_T_FRAME_TX_US        1e6
-#define P2_T_BUFFER_US          1e6
-#define P2_T_INTER_FRAME_US     1e6
+#define P2_T_FRAME_TX_US        2e6
+#define P2_T_BUFFER_US          100e3
+#define P2_T_INTER_FRAME_US     100e3
 #define P2_T_FRAME_US           (P2_T_FRAME_TX_US + P2_T_BUFFER_US + P2_T_INTER_FRAME_US)
 #define P2_T_MIN_TX_DELAY_US    500
-#define P2_FRAME_COUNT          3
+#define P2_FRAME_COUNT          32
 #define P2_SYNC_FRAME_INDEX     0
 #define P2_FRAME_DEFAULT_TTL    10
 
 #define P2_SERVER_RESPONSE_TIMEOUT_CYCLES   3
 
 //---protocol------------------------------------------------------
+/**
+ * to add packet:
+ *  - add to P2_TYPE enum
+ *  - add a matching struct
+ *  - add entry to p2HostProcessPacket(...)
+ *  - add resolver to mqtt if needed
+ *  - add resolver from mqtt if needed
+ *  - add printout entry at bottom of project2.c
+ */
 
 #define P2_MAX_PKT_SIZE         32  // a limit of the NRF module
 
@@ -93,10 +102,14 @@ typedef enum {
     P2_TYPE_ENTRY_SYNCH_PKT,
     P2_TYPE_CMD_KEEPALIVE,
 
-    P2_TYPE_GLASS_BRAKE_SENSOR  = 11,
-    P2_TYPE_WEATHER_STATION,
+    P2_TYPE_ENDPOINT_START = 11,
 
-    P2_TYPE_LAST = P2_TYPE_WEATHER_STATION
+    P2_TYPE_ENDPOINT_GLASS_BRAKE_SENSOR  = P2_TYPE_ENDPOINT_START,
+    P2_TYPE_ENDPOINT_WEATHER_STATION,
+    P2_TYPE_ENDPOINT_MAILBOX,
+    P2_TYPE_ENDPOINT_DOORLOCK,
+
+    P2_TYPE_LAST = P2_TYPE_ENDPOINT_WEATHER_STATION
 } P2_TYPE;
 
 //typedef struct {
@@ -106,7 +119,7 @@ typedef enum {
 typedef struct __attribute__((packed)) {
     uint8_t crc;
     uint8_t from_frame;                // the frame of the transmitter
-    uint8_t type;
+    P2_TYPE type                : 8;
     unsigned int data_length    : 5;
     unsigned int                : 3; // reserved. in case I forgot something
 } p2PktHeader;
@@ -162,17 +175,27 @@ typedef struct __attribute__((packed)) {
 } p2PktEPGlassBreakSensor;
 
 typedef enum{
-    P2WSDT_KEEP_ALIVE   = 1, // ignore , the server already keep alive's received packets.
-    P2WSDT_WIND_SPEED,
+    P2WSDT_WIND_SPEED = 1,
     P2WSDT_WIND_DIRECITON,
     P2WSDT_TEMPERATURE,
     P2WSDT_HUMIDITY,
     P2WSDT_PRESSURE
-} p2WeatherStationDataType;
+} p2EPWeatherStationDataType;
+
 typedef struct __attribute__((packed)) {
-    p2WeatherStationDataType data_type  : 8;
+    p2EPWeatherStationDataType data_type  : 8;
     char data[P2_MAX_DATA_SIZE - 1];
-} p2PktWeatherStation;
+} p2PktEPWeatherStation;
+
+typedef struct __attribute__((packed)) {
+    bool not_empty;
+} p2PktEPMailbox;
+
+typedef struct __attribute__((packed)) {
+    unsigned int    : 6; // reserved
+    bool break_in   : 1;
+    bool open       : 1;
+} p2PktEPDoorlock;
 
 /**
  * calculates the CRC for a packet.
@@ -198,7 +221,8 @@ typedef struct {
     bool enabled;
     p2Pkt pkt;
 } p2MsgQEntry;
-p2MsgQEntry p2MsgQueue[P2_MSG_QUEUE_SIZE];
+p2MsgQEntry p2TXMsgQueue[P2_MSG_QUEUE_SIZE];
+p2MsgQEntry p2RXMsgQueue[P2_MSG_QUEUE_SIZE];
 
 volatile uint8_t p2CurrentFrame;
 
@@ -234,9 +258,17 @@ void p2HostStart();
 void p2ClientJoin();
 void p2ClientDisconnect();
 
-p2MsgQEntry * p2PushMsgQueue(p2Pkt);
-p2MsgQEntry * p2PopMsgQueue();
-bool p2IsMsgQueueEmpty();
+p2MsgQEntry * p2PushTXMsgQueue(p2Pkt);
+p2MsgQEntry * p2PopTXMsgQueue();
+bool p2IsTXMsgQueueEmpty();
+
+p2MsgQEntry * p2PushRXMsgQueue(p2Pkt);
+p2MsgQEntry * p2PopRXMsgQueue();
+bool p2IsRXMsgQueueEmpty();
+
+p2MsgQEntry * p2PushMsgQueue(p2MsgQEntry*,p2Pkt);
+p2MsgQEntry * p2PopMsgQueue(p2MsgQEntry*);
+bool p2IsMsgQueueEmpty(p2MsgQEntry*);
 
 void p2HostProcessPacket(p2Pkt const *);
 void p2ClientProcessPacket(p2Pkt const *);

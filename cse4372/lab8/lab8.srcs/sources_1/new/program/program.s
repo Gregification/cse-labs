@@ -22,10 +22,9 @@ _start:
 	# add  t3, x0, t0 
 	# add  t4, x0, t0
 
-
 	addi t0, x0, 0 # index
 	addi t1, x0, 3 # some value to be modified
-	addi t2, x0, 4 # number of itterations
+	addi t2, x0, 5 # number of itterations
 itterate:
 	addi t0, t0, 1 # itterate
 	slli t1, t1, 1 # do something

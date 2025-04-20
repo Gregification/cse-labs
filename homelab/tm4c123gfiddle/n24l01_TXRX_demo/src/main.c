@@ -585,7 +585,7 @@ void dumpHelp(){
     putsUart0("\n\r");
     putsUart0(" ------------------------------------------------------------\n\r");
     putsUart0("\n\rCSE4352 spring2025 project 2 team 14. NRF24 network demo code. \n\r");
-    putsUart0("     last update: 4/18/2025 12:06pm \n\r");
+    putsUart0("     last update: 4/19/2025 7:31pm \n\r");
     putsUart0("     reach team 14 here: ygb5713@mavs , or IOT discord channel (link on lab whiteboard)\n\r");
     putsUart0(" ------------------------------------------------------------\n\r");
     putsUart0("\n\r");

@@ -126,6 +126,15 @@ p2MWResult p2Wireless2Mqtt(
                      );
             }break;
 
+        case P2_TYPE_ENDPOINT_DOORLOCK:{
+                publishMqtt("13breakin", P2DATAAS(p2PktEPDoorlock, *pkt)->break_in ? "detected" : "none");
+
+                snprintf(topic_out, topic_max, "%s", "13doorStatus");
+                snprintf(data_out, data_max, "%s",
+                         P2DATAAS(p2PktEPDoorlock, *pkt)->open ? "locked" : "unlocked"
+                     );
+            }break;
+
         default:
             break;
     }

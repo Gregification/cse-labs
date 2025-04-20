@@ -152,8 +152,8 @@ module lab8(
         .probe28(_rv32_id_top.jump_enable_out), // input wire [0:0]  probe28 
         .probe29(_rv32_id_top.jump_addr_out), // input wire [31:0]  probe29
 
-        .probe30(_rv32_if_top.jump_enable_in), // input wire [31:0]  probe30 
-	    .probe31(_rv32_if_top.jump_addr_in) // input wire [31:0]  probe31
+        .probe30(_rv32_id_top.wb_reg1_src_indicator), // input wire [31:0]  probe30 
+	    .probe31(_rv32_id_top.wb_reg2_src_indicator) // input wire [31:0]  probe31
     );
 
     //---dual port memory---------------------------------------------------
@@ -237,7 +237,7 @@ module lab8(
 
         // df from ex
         .df_ex_wb_reg(_rv32_ex_top.wb_reg_out),
-        .df_ex_wb_data(_rv32_ex_top.alu_raw),
+        .df_ex_wb_data(_rv32_ex_top.alu_out),
         .df_ex_wb_enable(_rv32_ex_top.wb_enable_out),
         
         // df from mem

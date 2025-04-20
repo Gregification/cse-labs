@@ -35,32 +35,30 @@ module rv32_if_top(
         input [31:0] memif_data,
 
         // to id
-        output reg [31:0] pc_out,
+        output wire [31:0] pc_out,
         output [31:0] iw_out,       // note: alrealy registerd in memory
 
         // from id
-        input jump_enable_in,
-        input [31:0] jump_addr_in
+        input wire jump_enable_in,
+        input wire [31:0] jump_addr_in
     );
 
     reg [31:0] pc;
-    assign memif_addr = pc[31:2];
+    assign memif_addr = pc_out[31:2];
 
     assign iw_out = memif_data; // memif_data is already registered comming out of memory
 
     always_ff @ (posedge clk) begin
-        pc_out <= pc; // pc_out gets former pc value, since pc is registered
-
         // itterate pc
         if(reset) begin
             pc <= `PC_RESET;
-            pc_out <= `PC_RESET;
         end else if(jump_enable_in) begin
-            pc <= jump_addr_in + 4;
-            pc_out <= jump_addr_in;
+            pc <= jump_addr_in;
         end else begin
             pc <= pc + 4;
         end
     end
 
+    assign pc_out = reset ? `PC_RESET : jump_enable_in ? (jump_addr_in - 4) : pc;
+    
 endmodule
