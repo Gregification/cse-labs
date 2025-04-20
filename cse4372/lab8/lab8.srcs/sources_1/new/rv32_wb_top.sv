@@ -32,6 +32,10 @@ module rv32_wb_top(
         input [4:0] wb_reg_in,
         input wb_enable_in,
 
+        // from io/memory
+        input [31:0] memif_rdata,
+        input [31:0] io_rdata,
+
         // register interface
         output regif_wb_enable,
         output [4:0] regif_wb_reg,

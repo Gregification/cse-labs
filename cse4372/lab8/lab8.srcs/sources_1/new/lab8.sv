@@ -162,15 +162,15 @@ module lab8(
         .clk(`CLK_PIPELINE),
 
         // Instruction port (RO)
-        .i_addr(_rv32_if_top.memif_addr)
+        .i_addr(_rv32_if_top.memif_addr),
         // output reg [31:0] i_rdata,
         
         // Data port (RW)
-        // input [31:2] d_addr,
+        .d_addr(_rv32_mem_top.memif_addr),
         // output reg [31:0] d_rdata,
-        // input d_we,
-        // input [3:0] d_be,
-        // input [31:0] d_wdata
+        .d_we(_rv32_mem_top.memif_we),
+        .d_be(_rv32_mem_top.memif_be),
+        .d_wdata(_rv32_mem_top.memif_wdata)
     );
     
     assign LED = _dual_port_ram.d_rdata;
@@ -237,7 +237,7 @@ module lab8(
 
         // df from ex
         .df_ex_wb_reg(_rv32_ex_top.wb_reg_out),
-        .df_ex_wb_data(_rv32_ex_top.alu_out),
+        .df_ex_wb_data(_rv32_ex_top.alu_raw),
         .df_ex_wb_enable(_rv32_ex_top.wb_enable_out),
         
         // df from mem
@@ -291,14 +291,29 @@ module lab8(
         .iw_in(_rv32_ex_top.iw_out),
         .alu_in(_rv32_ex_top.alu_out),
         .wb_reg_in(_rv32_ex_top.wb_reg_out),
-        .wb_enable_in(_rv32_ex_top.wb_enable_out)
+        .wb_enable_in(_rv32_ex_top.wb_enable_out),
+        .rs2_data_in(_rv32_id_top.regif_rs2_data_out),
 
         // to wb
         // output reg [31:0] pc_out,
         // output reg [31:0] iw_out,
         // output reg [31:0] alu_out,
         // output reg [4:0] wb_reg_out,
-        // output reg wb_enable_out
+        // output reg wb_enable_out,
+
+        // to mem interface
+        // output [31:2] memif_addr,
+        .memif_rdata(_dual_port_ram.d_rdata)
+        // output memif_we,
+        // output [3:0] memif_be,
+        // output [31:0] memif_wdata,
+
+        // to io interface
+        // output [31:2] io_addr,
+        // input [31:0] io_rdata,
+        // output io_we,
+        // output [3:0] io_be,
+        // output [31:0] io_wdata
     );
 
     rv32_wb_top _rv32_wb_top (
@@ -310,7 +325,11 @@ module lab8(
         .iw_in(_rv32_mem_top.iw_out),
         .alu_in(_rv32_mem_top.alu_out),
         .wb_reg_in(_rv32_mem_top.wb_reg_out),
-        .wb_enable_in(_rv32_mem_top.wb_enable_out)
+        .wb_enable_in(_rv32_mem_top.wb_enable_out),
+
+        // from io/memory
+        .memif_rdata(_rv32_mem_top.memif_rdata),
+        .io_rdata(_rv32_mem_top.io_rdata)
 
         // register interface
         // output regif_wb_enable,
