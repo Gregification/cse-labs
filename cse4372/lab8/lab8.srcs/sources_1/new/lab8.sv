@@ -153,7 +153,10 @@ module lab8(
         .probe29(_rv32_id_top.jump_addr_out), // input wire [31:0]  probe29
 
         .probe30(_rv32_id_top.wb_reg1_src_indicator), // input wire [31:0]  probe30 
-	    .probe31(_rv32_id_top.wb_reg2_src_indicator) // input wire [31:0]  probe31
+	    .probe31(_rv32_id_top.wb_reg2_src_indicator), // input wire [31:0]  probe31 
+        .probe32(0), // input wire [3:0]  probe32 
+        .probe33(0), // input wire [0:0]  probe33 
+        .probe34(0) // input wire [31:0]  probe34
     );
 
     //---dual port memory---------------------------------------------------
