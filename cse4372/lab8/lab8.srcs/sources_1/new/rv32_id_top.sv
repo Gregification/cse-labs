@@ -60,11 +60,7 @@ module rv32_id_top(
 
         // to if : regarding pc jumping
         output reg jump_enable_out,
-        output reg [31:0] jump_addr_out,
-
-        // debugging to top
-        output reg [15:0] wb_reg1_src_indicator,
-        output reg [15:0] wb_reg2_src_indicator
+        output reg [31:0] jump_addr_out
     );
 
     assign regif_rs1_reg = iw_in[19:15];

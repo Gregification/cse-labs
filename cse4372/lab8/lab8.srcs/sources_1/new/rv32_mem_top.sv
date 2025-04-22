@@ -40,6 +40,11 @@ module rv32_mem_top(
         output reg [31:0] alu_out,
         output reg [4:0] wb_reg_out,
         output reg wb_enable_out,
+        output reg wb_from_alu_out,
+        output reg wb_from_io_out,
+
+        // to pipe control
+        output stall,
 
         // to mem interface
         output reg [31:2] memif_addr,
@@ -58,8 +63,13 @@ module rv32_mem_top(
 
     // some iw components
     wire        [6:0]  opcode  = iw_in[6:0];
+    wire    [2:0]  funct3  = iw_in[14:12];
 
     always_ff @ (posedge clk) begin
+        io_we <= 0;
+        memif_we <= 0;
+        wb_from_alu_out <= 1;
+
         if(reset) begin
             pc_out <= `PC_RESET;
             iw_out <= `IW_RESET;
@@ -84,18 +94,48 @@ module rv32_mem_top(
             memif_wdata <= rs2_data_in;
             io_wdata <= rs2_data_in;
 
-            /** route write to io or mem */
             // if is store operation
             if (opcode == 7'b0100011) begin
-                // if in io addr space
-                if(iw_in[31] == 1) begin
+                if(iw_in[31] == 1) begin // is io address
                     io_we <= 1;
                     memif_we <= 0;
-                end else begin
+                end else begin // is memory address
                     io_we <= 0;
                     memif_we <= 1;
-                end
+                end    
             end
+
+            // if is load operation
+            if (opcode == 7'b0000011) begin
+                wb_from_alu_out <= 0;
+
+                if(iw_in[31] == 1) begin // is io address
+                    wb_from_io_out <= 1;
+                end else begin // is memory address
+                    wb_from_io_out <= 0;
+                end    
+            end
+
+            case (funct3)
+                3'b100,3'b000:
+                    begin // LB : load byte U/S
+                        io_be <= 4'b0001;
+                        memif_be <= 4'b0001;
+                    end
+                3'b101,3'b001:
+                    begin // LH : load halfword U/S
+                        io_be <= 4'b0011;
+                        memif_be <= 4'b0011;
+                    end
+                3'b010:begin // LW : load word signed
+                        io_be <= 4'b1111;
+                        memif_be <= 4'b1111;
+                    end
+                default: begin
+                    io_be <= 4'b0000;
+                    memif_be <= 4'b0000;
+                end
+            endcase
 
         end
     end

@@ -74,8 +74,8 @@ module lab8(
 
     wire            clk = CLK100;
     reg     [31:0]  clk_ladder = 0;
-        `define CLK_ILA CLK100
-        `define CLK_PIPELINE CLK100
+        `define CLK_ILA clk_ladder[0]
+        `define CLK_PIPELINE clk_ladder[0]
         `define CLK_IO clk_ladder[10]
 
     always_ff @ (posedge clk)
@@ -145,18 +145,22 @@ module lab8(
         .probe23(_rv32_wb_top.regif_wb_enable), // input wire [0:0]  probe23
         .probe24(_rv32_wb_top.regif_wb_reg), // input wire [4:0]  probe24
         .probe25(_rv32_wb_top.regif_wb_data), // input wire [31:0]  probe25
-        .probe26(0), // input wire [0:0]  probe26
+        .probe26(_rv32_mem_top.io_we), // input wire [0:0]  probe26 ----------------
         .probe27(_rv32_if_top.reset), // input wire [0:0]  probe27
 
         // jump information
         .probe28(_rv32_id_top.jump_enable_out), // input wire [0:0]  probe28 
         .probe29(_rv32_id_top.jump_addr_out), // input wire [31:0]  probe29
 
-        .probe30(_rv32_id_top.wb_reg1_src_indicator), // input wire [31:0]  probe30 
-	    .probe31(_rv32_id_top.wb_reg2_src_indicator), // input wire [31:0]  probe31 
-        .probe32(0), // input wire [3:0]  probe32 
-        .probe33(0), // input wire [0:0]  probe33 
-        .probe34(0) // input wire [31:0]  probe34
+        .probe30(_dual_port_ram.d_addr), // input wire [31:0]  probe30 
+	    .probe31(_dual_port_ram.d_rdata), // input wire [31:0]  probe31 
+        .probe32(_dual_port_ram.d_be), // input wire [3:0]  probe32 
+        .probe33(_rv32_mem_top.memif_we), // input wire [0:0]  probe33 
+        .probe34(_dual_port_ram.d_wdata), // input wire [31:0]  probe34
+        .probe35(_rv32_mem_top.wb_from_alu_out), // input wire [0:0]  probe35 
+        .probe36(_rv32_mem_top.wb_from_io_out), // input wire [0:0]  probe36
+        .probe37(_dual_port_ram.d_we), // input wire [0:0]  probe37 
+        .probe38(0) // input wire [0:0]  probe38
     );
 
     //---dual port memory---------------------------------------------------
@@ -165,15 +169,15 @@ module lab8(
         .clk(`CLK_PIPELINE),
 
         // Instruction port (RO)
-        .i_addr(_rv32_if_top.memif_addr)
+        .i_addr(_rv32_if_top.memif_addr),
         // output reg [31:0] i_rdata,
         
         // Data port (RW)
-        // .d_addr(_rv32_mem_top.memif_addr),
+        .d_addr(_rv32_mem_top.memif_addr),
         // output reg [31:0] d_rdata,
-        // .d_we(_rv32_mem_top.memif_we),
-        // .d_be(_rv32_mem_top.memif_be),
-        // .d_wdata(_rv32_mem_top.memif_wdata)
+        .d_we(_rv32_mem_top.memif_we),
+        .d_be(_rv32_mem_top.memif_be),
+        .d_wdata(_rv32_mem_top.memif_wdata)
     );
     
     assign LED = _dual_port_ram.d_rdata;
