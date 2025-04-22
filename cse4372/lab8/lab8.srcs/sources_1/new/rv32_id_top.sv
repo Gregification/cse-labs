@@ -60,7 +60,12 @@ module rv32_id_top(
 
         // to if : regarding pc jumping
         output reg jump_enable_out,
-        output reg [31:0] jump_addr_out
+        output reg [31:0] jump_addr_out,
+
+        // to mem/io through ex
+        output reg memif_we_out,
+        output reg io_we_out,
+        output reg [3:0] mem_be_out
     );
 
     assign regif_rs1_reg = iw_in[19:15];
@@ -80,6 +85,35 @@ module rv32_id_top(
     wire    [31:0] i_B     = {{21{iw_in[31]}}, iw_in[31], iw_in[7], iw_in[30:25], iw_in[11:8]};
     wire    [31:0] i_I     = {{20{iw_in[31]}}, iw_in[31:20]};
     wire    [31:0] i_J     = {{12{iw_in[31]}}, iw_in[31], iw_in[19:12], iw_in[20], iw_in[30:21]};
+
+    // mem & io
+    always_ff @ (posedge clk) begin
+        io_we_out <= 0;
+        memif_we_out <= 0;
+
+        if(reset) begin
+            mem_be_out <= 4'b1111;
+        end else begin
+            // if is store operation
+            if (opcode == 7'b0100011) begin
+                if(iw_in[31] == 1) begin // is io address
+                    io_we_out <= 1;
+                    memif_we_out <= 0;
+                end else begin // is memory address
+                    io_we_out <= 0;
+                    memif_we_out <= 1;
+                end    
+            end
+
+            case (funct3)
+                3'b100,3'b000:mem_be_out <= 4'b0001; // LB : load byte U/S
+                3'b101,3'b001:mem_be_out <= 4'b0011; // LH : load halfword U/S
+                3'b010:mem_be_out <= 4'b1111;// LW : load word signed
+                default: mem_be_out <= 4'b0000;
+            endcase
+        end
+    end
+
 
     always_ff @ (posedge clk) begin
         jump_enable_out <= 0;
@@ -203,7 +237,6 @@ module rv32_id_top(
                     endcase // funct3
                 end // B type : white
             endcase // opcode
-
         end
     end
 

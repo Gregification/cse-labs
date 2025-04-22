@@ -33,6 +33,9 @@ module rv32_ex_top(
         input [31:0] rs2_data_in,
         input [4:0] wb_reg_in,
         input wb_enable_in,
+        input memif_we_in,
+        input io_we_in,
+        input [3:0] mem_be_in,
 
         //to id
         output [31:0] alu_raw,
@@ -42,7 +45,12 @@ module rv32_ex_top(
         output reg [31:0] iw_out,
         output reg [31:0] alu_out,
         output reg [4:0] wb_reg_out,
-        output reg wb_enable_out
+        output reg wb_enable_out,
+        output reg [31:0] rs2_data_out,
+        output reg [31:2] memif_addr_out,
+        output reg memif_we_out,
+        output reg io_we_out,
+        output reg [3:0] mem_be_out
     );
 
     always_ff @ (posedge(clk)) begin
@@ -54,6 +62,11 @@ module rv32_ex_top(
 
             wb_reg_out      <= 0;
             wb_enable_out   <= 0;
+
+            memif_addr_out <= 0;
+            memif_we_out <= 0;
+            io_we_out <= 0;
+            mem_be_out <= 0;
         end else begin
             pc_out <= pc_in;
             iw_out <= iw_in;
@@ -62,6 +75,11 @@ module rv32_ex_top(
 
             wb_reg_out      <= wb_reg_in;
             wb_enable_out   <= wb_enable_in;
+
+            memif_addr_out <= _alu32.alu_out;
+            memif_we_out <= memif_we_in;
+            io_we_out <= io_we_in;
+            mem_be_out <= mem_be_in;
         end
     end
     

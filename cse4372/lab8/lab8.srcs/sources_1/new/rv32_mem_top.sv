@@ -40,35 +40,40 @@ module rv32_mem_top(
         output reg [31:0] alu_out,
         output reg [4:0] wb_reg_out,
         output reg wb_enable_out,
-        output reg wb_from_alu_out,
-        output reg wb_from_io_out,
 
-        // to pipe control
-        output stall,
+        // memory interface for mem and io
+        input [31:2] mem_addr_in,
+        input [31:0] memif_rdata_in, // already registered from memory
+        input [31:0] io_rdata_in, // already registered from io
+        input memif_we_in,
+        input io_we_in,
+        input [3:0] mem_be_in,
 
-        // to mem interface
-        output reg [31:2] memif_addr,
-        input wire [31:0] memif_rdata, // already registered from memory
-        output reg memif_we,
-        output reg [3:0] memif_be,
-        output reg [31:0] memif_wdata,
-
-        // to io interface
-        output reg [31:2] io_addr,
-        input wire [31:0] io_rdata, // already registered from io
-        output reg io_we,
-        output reg [3:0] io_be,
-        output reg [31:0] io_wdata
+        output reg [31:2] mem_addr_out,
+        output wire [31:0] mem_wdata,
+        output [31:0] memif_rdata_out, // already registered from memory
+        output [31:0] io_rdata_out, // already registered from io
+        output reg memif_we_out,
+        output reg io_we_out,
+        output reg [3:0] mem_be_out,
+        output reg wb_from_alu_out
     );
+
+    assign memif_addr = alu_in;
+    assign io_addr = alu_in;
+    assign mem_wdata = rs2_data_in;
+    assign memif_rdata_out = memif_rdata_in;
+    assign io_rdata_out = io_rdata_in;
 
     // some iw components
     wire        [6:0]  opcode  = iw_in[6:0];
     wire    [2:0]  funct3  = iw_in[14:12];
 
     always_ff @ (posedge clk) begin
-        io_we <= 0;
-        memif_we <= 0;
-        wb_from_alu_out <= 1;
+        mem_addr_out <= mem_addr_in;
+        memif_we_out <= memif_we_in;
+        io_we_out <= io_we_in;
+        mem_be_out <= mem_be_in;
 
         if(reset) begin
             pc_out <= `PC_RESET;
@@ -88,55 +93,10 @@ module rv32_mem_top(
             wb_reg_out      <= wb_reg_in;
             wb_enable_out   <= wb_enable_in;
 
-            memif_addr <= alu_in;
-            io_addr <= alu_in;
-
-            memif_wdata <= rs2_data_in;
-            io_wdata <= rs2_data_in;
-
-            // if is store operation
-            if (opcode == 7'b0100011) begin
-                if(iw_in[31] == 1) begin // is io address
-                    io_we <= 1;
-                    memif_we <= 0;
-                end else begin // is memory address
-                    io_we <= 0;
-                    memif_we <= 1;
-                end    
-            end
-
-            // if is load operation
-            if (opcode == 7'b0000011) begin
+            if(opcode == 7'b0000011) // is load instruction
                 wb_from_alu_out <= 0;
-
-                if(iw_in[31] == 1) begin // is io address
-                    wb_from_io_out <= 1;
-                end else begin // is memory address
-                    wb_from_io_out <= 0;
-                end    
-            end
-
-            case (funct3)
-                3'b100,3'b000:
-                    begin // LB : load byte U/S
-                        io_be <= 4'b0001;
-                        memif_be <= 4'b0001;
-                    end
-                3'b101,3'b001:
-                    begin // LH : load halfword U/S
-                        io_be <= 4'b0011;
-                        memif_be <= 4'b0011;
-                    end
-                3'b010:begin // LW : load word signed
-                        io_be <= 4'b1111;
-                        memif_be <= 4'b1111;
-                    end
-                default: begin
-                    io_be <= 4'b0000;
-                    memif_be <= 4'b0000;
-                end
-            endcase
-
+            else
+                wb_from_alu_out <= 1;
         end
     end
     
