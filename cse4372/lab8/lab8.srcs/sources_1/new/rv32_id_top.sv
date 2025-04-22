@@ -90,6 +90,7 @@ module rv32_id_top(
     always_ff @ (posedge clk) begin
         io_we_out <= 0;
         memif_we_out <= 0;
+        mem_be_out <= 0;
 
         if(reset) begin
             mem_be_out <= 4'b1111;

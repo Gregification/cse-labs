@@ -49,7 +49,6 @@ module rv32_wb_top(
     wire isUnsigned;  // if loading unsigned value
     assign isUnsigned = (funct3 == 3'b101) || (funct3 == 3'b100);
 
-
     wire [31:0] shifted_mem_data;
     wire [31:0] mem_data;
     // assign shifted_mem_data = 

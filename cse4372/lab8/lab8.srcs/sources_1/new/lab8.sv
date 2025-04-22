@@ -157,10 +157,10 @@ module lab8(
         .probe32(_dual_port_ram.d_be), // input wire [3:0]  probe32 
         .probe33(_rv32_mem_top.memif_we_in), // input wire [0:0]  probe33 
         .probe34(_dual_port_ram.d_wdata), // input wire [31:0]  probe34
-        .probe35(0), // input wire [0:0]  probe35 
-        .probe36(0), // input wire [0:0]  probe36
+        .probe35(0), // input wire [31:0]  probe35 
+        .probe36(0), // input wire [31:0]  probe36
         .probe37(_dual_port_ram.d_we), // input wire [0:0]  probe37 
-        .probe38(0) // input wire [0:0]  probe38
+        .probe38(0) // input wire [31:0]  probe38
     );
 
     //---dual port memory---------------------------------------------------
@@ -173,7 +173,7 @@ module lab8(
         // output reg [31:0] i_rdata,
         
         // Data port (RW)
-        .d_addr(_rv32_mem_top.mem_addr_in[31:2]),
+        .d_addr(_rv32_mem_top.mem_addr_in),
         // output reg [31:0] d_rdata,
         .d_we(_rv32_mem_top.memif_we_in),
         .d_be(_rv32_mem_top.mem_be_in),
@@ -253,9 +253,9 @@ module lab8(
         .df_mem_wb_enable(_rv32_mem_top.wb_enable_in),
 
         // df from wb
-        .df_wb_wb_reg(_rv32_wb_top.wb_reg_in),
-        .df_wb_wb_data(_rv32_wb_top.alu_in),
-        .df_wb_wb_enable(_rv32_wb_top.wb_enable_in)
+        .df_wb_wb_reg(_rv32_wb_top.regif_wb_reg),
+        .df_wb_wb_data(_rv32_wb_top.regif_wb_data),
+        .df_wb_wb_enable(_rv32_wb_top.regif_wb_enable)
 
         // to id : regarding pc jumping
         // output reg jump_enable_out,

@@ -123,13 +123,13 @@ module ila_0 (
   (* X_INTERFACE_IGNORE = "true" *)
   input [31:0]probe34;
   (* X_INTERFACE_IGNORE = "true" *)
-  input [0:0]probe35;
+  input [31:0]probe35;
   (* X_INTERFACE_IGNORE = "true" *)
-  input [0:0]probe36;
+  input [31:0]probe36;
   (* X_INTERFACE_IGNORE = "true" *)
   input [0:0]probe37;
   (* X_INTERFACE_IGNORE = "true" *)
-  input [0:0]probe38;
+  input [31:0]probe38;
 
   // stub module has no contents
 
