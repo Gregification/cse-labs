@@ -157,10 +157,13 @@ module lab8(
         .probe32(_dual_port_ram.d_be), // input wire [3:0]  probe32 
         .probe33(_rv32_mem_top.memif_we_in), // input wire [0:0]  probe33 
         .probe34(_dual_port_ram.d_wdata), // input wire [31:0]  probe34
-        .probe35(0), // input wire [31:0]  probe35 
-        .probe36(0), // input wire [31:0]  probe36
+        .probe35(_rv32_wb_top.memif_rdata), // input wire [31:0]  probe35 
+        .probe36(_rv32_wb_top.io_rdata), // input wire [31:0]  probe36
         .probe37(_dual_port_ram.d_we), // input wire [0:0]  probe37 
-        .probe38(0) // input wire [31:0]  probe38
+        .probe38(_rv32_wb_top.wb_from_alu_in), // input wire [31:0]  probe38
+        .probe39(0), // input wire [0:0]  probe39 
+        .probe40(0), // input wire [0:0]  probe40 
+        .probe41(0) // input wire [31:0]  probe41
     );
 
     //---dual port memory---------------------------------------------------

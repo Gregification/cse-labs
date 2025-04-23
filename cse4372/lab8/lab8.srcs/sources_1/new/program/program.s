@@ -10,29 +10,45 @@
 
 _start:
 	nop
-
-	li t0, 0x00000001
-	lw t1, 0(t0)
-	add t4, t1, x0
-	add t4, t1, x0
-	add t4, t1, x0
-	add t4, t1, x0
-	add t4, t1, x0
+	nop
 	li t0, 0x00000002
+	# sw t0, 0(t0)
+	nop
+	nop
+	nop
+	nop
+	nop
 	lw t1, 0(t0)
+	nop
+	nop
+
+	lh t1, 0(t0)
+	nop
+	nop
+
+	lb t1, 0(t0)
+	nop
+	nop
+
+	lbu t1, 0(t0)
+	nop
+	nop
+
+	add t4, t1, x0
+	nop
+	li t0, 0x00000002
+	lh t1, 0(t0)
 	# add t2, t1, x0
 	# sh t3, 0(t2)
-	add t4, t1, x0
-	add t4, t1, x0
-	add t4, t1, x0
-	add t4, t1, x0
+	nop
+	nop
 	add t4, t1, x0
 	li t0, 0x00000003
-	lw t1, 0(t0)
+	lb t1, 0(t0)
 	# add t2, t3, x0
 	# lw t1, 0(t0)
-	add t4, t1, x0
-	add t4, t1, x0
+	nop
+	nop
 	add t4, t1, x0
 	add t4, t1, x0
 	add t4, t1, x0

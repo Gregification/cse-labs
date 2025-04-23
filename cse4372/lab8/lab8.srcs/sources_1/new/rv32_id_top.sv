@@ -119,6 +119,8 @@ module rv32_id_top(
     always_ff @ (posedge clk) begin
         jump_enable_out <= 0;
         jump_addr_out <= 0;
+        regif_rs1_data_out <= 0;
+        regif_rs2_data_out <= 0;
 
         if(reset) begin
             pc_out <= `PC_RESET;

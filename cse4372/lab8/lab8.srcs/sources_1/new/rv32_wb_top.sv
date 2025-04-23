@@ -51,19 +51,19 @@ module rv32_wb_top(
 
     wire [31:0] shifted_mem_data;
     wire [31:0] mem_data;
-    // assign shifted_mem_data = 
-    //     (mem_be[3] || mem_be[2]) ? mem_data[31:0] :
-    //     (mem_be[1]) ? 
-    //         (
-    //             isUnsigned ?   {16'b0           , mem_data[15:0]} :
-    //                            {{8{mem_data[15]}}, mem_data[15:0]}
-    //         ) :
-    //     (mem_be[0]) ? 
-    //         (
-    //             isUnsigned ?   {{24'b0}         , mem_data[7:0]} :
-    //                            {{24{mem_data[7]}}, mem_data[7:0]}
-    //         ) : mem_data[31:0];
-    assign shifted_mem_data = mem_data;
+    // assign shifted_mem_data = mem_data;
+    assign shifted_mem_data = 
+        (mem_be[3]) ? mem_data[31:0] :
+        (mem_be[1]) ? 
+            (
+                isUnsigned ?   {16'b0           , mem_data[15:0]} :
+                               {{8{mem_data[15]}}, mem_data[15:0]}
+            ) :
+        (mem_be[0]) ? 
+            (
+                isUnsigned ?   {{24'b0}         , mem_data[7:0]} :
+                               {{24{mem_data[7]}}, mem_data[7:0]}
+            ) : mem_data[31:0];
 
     assign regif_wb_enable = wb_enable_in;
     assign regif_wb_reg = wb_reg_in;
