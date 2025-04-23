@@ -97,13 +97,8 @@ module rv32_id_top(
         end else begin
             // if is store operation
             if (opcode == 7'b0100011) begin
-                if(iw_in[31] == 1) begin // is io address
-                    io_we_out <= 1;
-                    memif_we_out <= 0;
-                end else begin // is memory address
-                    io_we_out <= 0;
-                    memif_we_out <= 1;
-                end    
+                io_we_out <= 1;
+                memif_we_out <= 1;
             end
 
             case (funct3)

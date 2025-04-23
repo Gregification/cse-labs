@@ -50,7 +50,7 @@ module rv32_mem_top(
         input [3:0] mem_be_in,
 
         output reg [31:2] mem_addr_out,
-        output wire [31:0] mem_wdata,
+        output reg [31:0] mem_wdata,
         output [31:0] memif_rdata_out, // already registered from memory
         output [31:0] io_rdata_out, // already registered from io
         output reg memif_we_out,
@@ -59,21 +59,32 @@ module rv32_mem_top(
         output reg wb_from_alu_out
     );
 
-    assign memif_addr = alu_in;
     assign io_addr = alu_in;
-    assign mem_wdata = rs2_data_in;
     assign memif_rdata_out = memif_rdata_in;
-    assign io_rdata_out = io_rdata_in;
 
     // some iw components
     wire        [6:0]  opcode  = iw_in[6:0];
     wire    [2:0]  funct3  = iw_in[14:12];
 
+    always_comb begin
+        if (opcode == 7'b0100011) begin // if is store operation
+            if(mem_addr_in[31]) begin
+                io_we_out = 1;
+                memif_we_out = 0;
+            end else begin
+                io_we_out = 0;
+                memif_we_out = 1;
+            end
+        end else begin
+            io_we_out = 0;
+            memif_we_out = 0;
+        end
+    end
+
     always_ff @ (posedge clk) begin
-        mem_addr_out <= mem_addr_in;
-        memif_we_out <= memif_we_in;
-        io_we_out <= io_we_in;
+        mem_addr_out[31:2] <= mem_addr_in[31:2];
         mem_be_out <= mem_be_in;
+        mem_wdata <= rs2_data_in;
 
         if(reset) begin
             pc_out <= `PC_RESET;
@@ -83,6 +94,8 @@ module rv32_mem_top(
 
             wb_reg_out      <= 0;
             wb_enable_out   <= 0;
+
+            mem_wdata <= 0;
             
         end else begin
             pc_out <= pc_in;

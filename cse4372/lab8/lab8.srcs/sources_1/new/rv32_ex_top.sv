@@ -76,7 +76,7 @@ module rv32_ex_top(
             wb_reg_out      <= wb_reg_in;
             wb_enable_out   <= wb_enable_in;
 
-            memif_addr_out <= _alu32.alu_out;
+            memif_addr_out <= _alu32.alu_out[31:2];
             memif_we_out <= memif_we_in;
             io_we_out <= io_we_in;
             mem_be_out <= mem_be_in;

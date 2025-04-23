@@ -930,7 +930,7 @@ uint8_t p2CalcPacketCRC(p2Pkt const * p){
     uint8_t test;
 
     uint8_t i;
-    for(i = 0; i < sizeof(p2Pkt)-1; i++){
+    for(i = 0; i < (sizeof(p2PktHeader)-1 + p->header.data_length); i++){
         test = CRC_HB;
 
         while(test) {

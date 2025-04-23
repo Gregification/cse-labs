@@ -57,7 +57,7 @@ module rv32_wb_top(
         (mem_be[1]) ? 
             (
                 isUnsigned ?   {16'b0           , mem_data[15:0]} :
-                               {{8{mem_data[15]}}, mem_data[15:0]}
+                               {{16{mem_data[15]}}, mem_data[15:0]}
             ) :
         (mem_be[0]) ? 
             (

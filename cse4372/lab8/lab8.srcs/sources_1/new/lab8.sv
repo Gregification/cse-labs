@@ -161,9 +161,17 @@ module lab8(
         .probe36(_rv32_wb_top.io_rdata), // input wire [31:0]  probe36
         .probe37(_dual_port_ram.d_we), // input wire [0:0]  probe37 
         .probe38(_rv32_wb_top.wb_from_alu_in), // input wire [31:0]  probe38
-        .probe39(0), // input wire [0:0]  probe39 
-        .probe40(0), // input wire [0:0]  probe40 
-        .probe41(0) // input wire [31:0]  probe41
+        .probe39(_rv32_mem_top.mem_addr_in), // input wire [31:0]  probe39 
+        .probe40(0),//_rv32_mem_top.mem_addr_out), // input wire [31:0]  probe40 
+        .probe41(_io_memory.addr), // input wire [31:0]  probe41
+        .probe42(_io_memory.we), // input wire [31:0]  probe42 
+        .probe43(_io_memory.wdata), // input wire [31:0]  probe43 
+        .probe44(_io_memory.be), // input wire [3:0]  probe44 
+        .probe45(_io_memory.led_out), // input wire [9:0]  probe45 
+        .probe46(_io_memory.pb_in), // input wire [3:0]  probe46 
+        .probe47(_io_memory.sw_in), // input wire [11:0]  probe47 
+        .probe48(_io_memory.offset), // input wire [31:0]  probe48 
+        .probe49(_io_memory.rdata) // input wire [31:0]  probe49
     );
 
     //---dual port memory---------------------------------------------------
@@ -178,12 +186,29 @@ module lab8(
         // Data port (RW)
         .d_addr(_rv32_mem_top.mem_addr_in),
         // output reg [31:0] d_rdata,
-        .d_we(_rv32_mem_top.memif_we_in),
+        .d_we(_rv32_mem_top.memif_we_out),
         .d_be(_rv32_mem_top.mem_be_in),
         .d_wdata(_rv32_mem_top.mem_wdata)
     );
     
-    assign LED = _dual_port_ram.d_rdata;
+    io_memory _io_memory (
+        .clk(`CLK_PIPELINE),
+        
+        // access
+        .addr(_rv32_mem_top.mem_addr_in),
+        .we(_rv32_mem_top.io_we_out),
+        .be(_rv32_mem_top.mem_be_in),
+        .wdata(_rv32_mem_top.mem_wdata),
+        // output reg [31:0] rdata,
+
+        // // top routing outputs
+        // .led_out(LED),
+
+        // // top routing inputs
+        .pb_in(btns),
+        .sw_in(sws)
+    );
+    assign LED = _io_memory.led_out;
 
     //---registers----------------------------------------------------------
 
@@ -322,7 +347,7 @@ module lab8(
         // memory interface for mem and io
         .mem_addr_in(_rv32_ex_top.memif_addr_out),
         .memif_rdata_in(_dual_port_ram.d_rdata),
-        .io_rdata_in(0), // TODO : add io module
+        .io_rdata_in(_io_memory.rdata),
         .memif_we_in(_rv32_ex_top.memif_we_out),
         .io_we_in(_rv32_ex_top.io_we_out),
         .mem_be_in(_rv32_ex_top.mem_be_out)

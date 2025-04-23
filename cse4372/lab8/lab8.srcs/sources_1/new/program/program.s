@@ -10,9 +10,15 @@
 
 _start:
 	nop
+
+# test memory R/W
+	li t6, 0xaabb
+	li t0, 0x0000002c
+	lw t1, 0(t0)
 	nop
-	li t0, 0x00000002
-	# sw t0, 0(t0)
+	nop
+	sw t6, 0(t0)
+	nop
 	nop
 	nop
 	nop
@@ -31,6 +37,26 @@ _start:
 	nop
 
 	lbu t1, 0(t0)
+	nop
+	nop
+
+# test io R/W
+	addi t3, x0, 0
+	li t0, 0x80000000  	# led address
+	# li t2, 0xFFFFFFFF  	# xor mask
+	li t4, 0x2faf08		# 50e6 loop
+
+	addi t5, x0, 5
+
+ledloop:
+	addi t1, t1, 1
+	slli t2, t1, 15
+	sw t1, 0(t0)
+	nop
+	nop
+	blt t3, t4, ledloop
+
+	lw t1, 0(t0)
 	nop
 	nop
 
@@ -86,10 +112,6 @@ itterate:
 	addi t0, t0, 1 # itterate
 	slli t1, t1, 1 # do something
 	bne t2, t0, itterate
-
-	nop
-	nop
-	nop
 
 	ebreak
 .end
