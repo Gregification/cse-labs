@@ -593,7 +593,7 @@ int main(void)
 //        }
 //        putsUart0("\n\r");
 //    }
-    p2estate = P2ESTATE_AUTO;
+//    p2estate = P2ESTATE_AUTO;
     while (true)
     {
 
@@ -662,15 +662,18 @@ int main(void)
                                 break;
                             }
 
-//                            static uint16_t t_counter = 40;
+                            static bool t_latch;
+
                             if(!mqttsocket || (mqttsocket->state == TCP_CLOSED) || (mqttsocket->state == TCP_ESTABLISHED && mqttstate == MQTT_DISCONNECTED)){
-                                static bool t_latch = true;
-                                if(t_latch){
-                                    t_latch = false;
-                                    connectMqtt(data);
-                                } else{
-                                    // reboot
-                                    NVIC_APINT_R = NVIC_APINT_VECTKEY | NVIC_APINT_SYSRESETREQ;
+                                t_latch = false;
+                                connectMqtt(data);
+                                togglePinValue(GREEN_LED);
+                                putsUart0("\n\r");
+                                break;
+                            } else if(mqttsocket->state == TCP_ESTABLISHED && mqttstate == MQTT_CONNECTED){
+                                t_latch = true;
+                                if(!t_latch){
+                                    subscribeMqtt("cat");
                                 }
                             }
 

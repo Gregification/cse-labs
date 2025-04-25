@@ -8,52 +8,7 @@
 #include "project2_mqtt_wireless_translator.h"
 #include "stdio.h"
 
-struct {
-    P2_TYPE type;
-    char const topic[P2_MAX_MQTT_TOPIC_LEN];
-} p2PktType2TopicMap[] = {
-      {P2_TYPE_CMD_RESET,           ""},
-      {P2_TYPE_ENDPOINT_GLASS_BRAKE_SENSOR,  "glass_alarm"},
-      {P2_TYPE_ENDPOINT_WEATHER_STATION,     "weather"},
-};
-
-P2_TYPE p2TopicToType(char const * str, uint16_t maxLen){
-    putsUart0(str);
-    putsUart0("\n\r");
-    for(uint8_t i = 0; i < sizeof(p2PktType2TopicMap)/sizeof(p2PktType2TopicMap[0]); i++){
-        putsUart0("checking : ");
-        putsUart0(p2PktType2TopicMap[i].topic);
-        putsUart0("\n\r");
-
-        bool success = true;
-        for(uint8_t j = 0; j < P2_MAX_MQTT_TOPIC_LEN && j < maxLen; j++){
-            if(p2PktType2TopicMap[i].topic[j] != str[j]){
-
-                putcUart0(p2PktType2TopicMap[i].topic[j]);
-                putsUart0(" : ");
-                putcUart0(str[j]);
-                putsUart0("\n\r");
-
-                success = false;
-                break;
-            }
-        }
-
-        if(success)
-            return p2PktType2TopicMap[i].type;
-    }
-
-    return p2PktType2TopicMap[0].type;
-}
-
-char const * p2TypeToTopic(P2_TYPE type){
-    for(uint8_t i = 0; i < sizeof(p2PktType2TopicMap)/sizeof(p2PktType2TopicMap[0]); i++){
-        if(p2PktType2TopicMap[i].type == type)
-            return p2PktType2TopicMap[i].topic;
-    }
-
-    return p2PktType2TopicMap[0].topic;
-}
+bool isSame(char const * A, char const * B, uint16_t len);
 
 bool p2Mqtt2Wireless(
             uint8_t const * mqttDataStart,
@@ -61,18 +16,12 @@ bool p2Mqtt2Wireless(
             uint8_t const * mqttDataEnd,
             p2Pkt * pkt)
 {
-    switch(p2TopicToType((char const *)mqttDataStart, dataTopicLen)){
-        case P2_TYPE_ENDPOINT_GLASS_BRAKE_SENSOR:{
-                // no translation available
-            }break;
-
-        case P2_TYPE_ENDPOINT_WEATHER_STATION:{
-                // no translation available
-            }break;
-
-        default:
-            break;
+    if(isSame("cat", mqttDataStart, dataTopicLen)){
+        volatile uint8_t a = 90;
+        putsUart0("what the cat doing\n\r");
+//        return true;
     }
+    putsUart0("not same :(\n\r");
 
     return false;
 }
@@ -143,4 +92,12 @@ p2MWResult p2Wireless2Mqtt(
     ret.data_len = strLen(data_out);
 
     return ret;
+}
+
+bool isSame(char const * A, char const * B, uint16_t len){
+    for(uint16_t i = 0; i < len; i++){
+        if(A[i] != B[i] || A[i] == '\0' || B[i] == '\0')
+            return false;
+    }
+    return true;
 }
