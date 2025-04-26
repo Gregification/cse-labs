@@ -922,7 +922,6 @@ bool p2GetData(p2Pkt * pkt, bool * isValid){
 #define CRC_POLY    0x07
 #define CRC_HB      BV(7)
 uint8_t p2CalcPacketCRC(p2Pkt const * p){
-    return 0xAA;
     uint8_t const * data = (uint8_t *)p + 1;
 
     uint8_t crc = ~0;

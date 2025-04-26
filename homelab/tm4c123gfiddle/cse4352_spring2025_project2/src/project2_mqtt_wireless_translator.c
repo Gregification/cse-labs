@@ -5,6 +5,8 @@
  *      Author: turtl
  */
 
+#include <stdint.h>
+
 #include "project2_mqtt_wireless_translator.h"
 #include "stdio.h"
 
@@ -16,9 +18,16 @@ bool p2Mqtt2Wireless(
             uint8_t const * mqttDataEnd,
             p2Pkt * pkt)
 {
-    if(isSame("cat", mqttDataStart, dataTopicLen)){
-
-//        return true;
+    if(isSame("cat", (char const *)mqttDataStart, dataTopicLen)){
+        pkt->header.data_length = 5;
+        pkt->header.from_frame = P2_SYNC_FRAME_INDEX;
+        pkt->header.type = P2_TYPE_ENDPOINT_MAILBOX;
+        pkt->data[0] = 1;
+        pkt->data[0] = 2;
+        pkt->data[0] = 3;
+        pkt->data[0] = 4;
+        putsUart0("catmessage");
+        return true;
     }
 
     return false;
