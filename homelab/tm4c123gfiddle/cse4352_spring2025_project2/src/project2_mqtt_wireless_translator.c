@@ -18,7 +18,7 @@ bool p2Mqtt2Wireless(
             uint8_t const * mqttDataEnd,
             p2Pkt * pkt)
 {
-    if(isSame("cat", (char const *)mqttDataStart, dataTopicLen)){
+    if(isSame("test", (char const *)mqttDataStart, dataTopicLen)){
         pkt->header.data_length = 5;
         pkt->header.from_frame = P2_SYNC_FRAME_INDEX;
         pkt->header.type = P2_TYPE_ENDPOINT_MAILBOX;
@@ -26,7 +26,25 @@ bool p2Mqtt2Wireless(
         pkt->data[0] = 2;
         pkt->data[0] = 3;
         pkt->data[0] = 4;
-        putsUart0("catmessage");
+        putsUart0("test message received form ethernet \n\r");
+        return true;
+    }
+
+    if(isSame("13doorPin", (char const *)mqttDataStart, dataTopicLen)){
+        char const * dataStr = (char const *)mqttDataStart + dataTopicLen;
+        pkt->header.data_length = sizeof(p2PktEPDoorlock);
+        pkt->header.from_frame = P2_SYNC_FRAME_INDEX;
+        pkt->header.type = P2_TYPE_ENDPOINT_DOORLOCK;
+        P2DATAAS(p2PktEPDoorlock, *pkt)->pin_correct = (dataStr[0] == 'o');
+        return true;
+    }
+
+    if(isSame("Mailbox_Status", (char const *)mqttDataStart, dataTopicLen)){
+        uint8_t const * data = (uint8_t const *)mqttDataStart + dataTopicLen;
+        pkt->header.data_length = sizeof(p2PktEPMailbox);
+        pkt->header.from_frame = P2_SYNC_FRAME_INDEX;
+        pkt->header.type = P2_TYPE_ENDPOINT_MAILBOX;
+        P2DATAAS(p2PktEPMailbox, *pkt)->status = data[0];
         return true;
     }
 
@@ -77,17 +95,28 @@ p2MWResult p2Wireless2Mqtt(
 
         case P2_TYPE_ENDPOINT_MAILBOX:{
                 snprintf(topic_out, topic_max, "%s", "Mailbox_Status");
-                snprintf(data_out, data_max, "%s",
-                         P2DATAAS(p2PktEPMailbox, *pkt)->not_empty ? "delivered" : "picked up"
+                snprintf(data_out, data_max, "%d",
+                         P2DATAAS(p2PktEPMailbox, *pkt)->status
                      );
             }break;
 
         case P2_TYPE_ENDPOINT_DOORLOCK:{
-                publishMqtt("13breakin", P2DATAAS(p2PktEPDoorlock, *pkt)->break_in ? "detected" : "none");
+                publishMqtt("13doorPin",
+                         P2DATAAS(p2PktEPDoorlock, *pkt)->pin_correct ? "open" : "close"
+                     );
 
                 snprintf(topic_out, topic_max, "%s", "13doorStatus");
                 snprintf(data_out, data_max, "%s",
                          P2DATAAS(p2PktEPDoorlock, *pkt)->open ? "locked" : "unlocked"
+                     );
+            }break;
+
+        case P2_TYPE_ENDPOINT_THERMAL9:{
+                snprintf(topic_out, topic_max, "%s", "9personFound/");
+                snprintf(data_out,
+                         (data_max > sizeof(P2DATAAS(p2PktEPThermal9, *pkt)->str) ? sizeof(P2DATAAS(p2PktEPThermal9, *pkt)->str) : data_max),
+                                 "%2s",
+                         P2DATAAS(p2PktEPThermal9, *pkt)->str
                      );
             }break;
 

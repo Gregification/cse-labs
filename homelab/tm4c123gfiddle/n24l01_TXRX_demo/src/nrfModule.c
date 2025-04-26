@@ -156,8 +156,8 @@ void nrfTransmit(uint8_t * data, uint8_t len){
 }
 
 bool nrfIsDataAvaliable(){
-    bool ret = nrfIsReceivedPowerDetected() && nrfGetRXPayloadWidth();
-    return ret;
+//    return nrfIsReceivedPowerDetected() && nrfGetRXPayloadWidth();
+    return nrfGetRXPayloadWidth();
 }
 
 NRFStatus nrfGetStatus(){

@@ -75,7 +75,7 @@
 #define P2_T_INTER_FRAME_US     100e3
 #define P2_T_FRAME_US           (P2_T_FRAME_TX_US + P2_T_BUFFER_US + P2_T_INTER_FRAME_US)
 #define P2_T_MIN_TX_DELAY_US    500
-#define P2_FRAME_COUNT          32
+#define P2_FRAME_COUNT          4
 #define P2_SYNC_FRAME_INDEX     0
 #define P2_FRAME_DEFAULT_TTL    10
 
@@ -108,8 +108,9 @@ typedef enum {
     P2_TYPE_ENDPOINT_WEATHER_STATION,
     P2_TYPE_ENDPOINT_MAILBOX,
     P2_TYPE_ENDPOINT_DOORLOCK,
+    P2_TYPE_ENDPOINT_THERMAL9,
 
-    P2_TYPE_LAST = P2_TYPE_ENDPOINT_WEATHER_STATION
+    P2_TYPE_LAST = P2_TYPE_ENDPOINT_THERMAL9
 } P2_TYPE;
 
 //typedef struct {
@@ -145,8 +146,8 @@ typedef struct {
 } p2PktSynch;
 
 typedef struct {
-    bool low_power_device   : 1;
     unsigned int frame      : 7;
+    bool low_power_device   : 1;
 } p2PktJoinRq;
 
 typedef struct {
@@ -170,8 +171,8 @@ typedef struct {
 //---endpoints-----------------------------------------------------
 
 typedef struct __attribute__((packed)) {
-    bool alarm              : 1; // active high
     uint8_t battery_level   : 7; // [0,100]
+    bool alarm              : 1; // active high
 } p2PktEPGlassBreakSensor;
 
 typedef enum{
@@ -188,14 +189,21 @@ typedef struct __attribute__((packed)) {
 } p2PktEPWeatherStation;
 
 typedef struct __attribute__((packed)) {
-    bool not_empty;
+    bool not_empty : 8;
 } p2PktEPMailbox;
 
 typedef struct __attribute__((packed)) {
-    unsigned int    : 6; // reserved
+    unsigned int    : 3; // reserved
+    bool door_command_published : 1; // idk
+    bool pin_correct: 1;
     bool break_in   : 1;
+    bool door_closed: 1;
     bool open       : 1;
 } p2PktEPDoorlock;
+
+typedef struct {
+    char str[2];
+} p2PktEPThermal9;
 
 /**
  * calculates the CRC for a packet.

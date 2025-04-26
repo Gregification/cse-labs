@@ -516,9 +516,12 @@ void p2HostProcessPacket(p2Pkt const * pkt){
 
                 // if accepting
                 if(P2DATAAS(p2PktJoinResponse, p)->join_request_accepted){
-                    // make sure no double accepting
+                    // make sure not already accepting something to that frame
                     for(uint8_t i = 0; i < P2_MSG_QUEUE_SIZE; i++){
+                        // if another request was received
                         if(p2TXMsgQueue[i].enabled && p2TXMsgQueue[i].pkt.header.type == P2_TYPE_CMD_JOIN_RESPONSE){
+                            // deny all join requests to that position
+                            // we just change the flag on the existing packet in the queue
                             P2DATAAS(p2PktJoinResponse, p2TXMsgQueue[i].pkt)->join_request_accepted = false;
                             break;
                         }
@@ -848,10 +851,8 @@ void p2PrintPacket(p2Pkt const * p){
         case P2_TYPE_ENDPOINT_MAILBOX:{
                 putsUart0("MAILBOX,");
                 putsUart0("status: ");
-                if(P2DATAAS(p2PktEPMailbox, *p)->not_empty)
-                    putsUart0("mail delivered");
-                else
-                    putsUart0("mail picked up");
+                snprintf(str, sizeof(str), "%03d, ", P2DATAAS(p2PktEPMailbox, *p)->status);
+                putsUart0(str);
             }break;
         case P2_TYPE_ENDPOINT_DOORLOCK:{
                 putsUart0("DOORLOCK,");
@@ -859,6 +860,19 @@ void p2PrintPacket(p2Pkt const * p){
                 putsUart0(P2DATAAS(p2PktEPDoorlock, *p)->open ? "1, " : "0, ");
                 putsUart0("break in: ");
                 putsUart0(P2DATAAS(p2PktEPDoorlock, *p)->break_in ? "1" : "0");
+                putsUart0("door closed: ");
+                putsUart0(P2DATAAS(p2PktEPDoorlock, *p)->door_closed ? "1" : "0");
+                putsUart0("door cmd published: ");
+                putsUart0(P2DATAAS(p2PktEPDoorlock, *p)->door_command_published ? "1" : "0");
+                putsUart0("pin correct: ");
+                putsUart0(P2DATAAS(p2PktEPDoorlock, *p)->pin_correct ? "1" : "0");
+            }break;
+        case P2_TYPE_ENDPOINT_THERMAL9:{
+                putsUart0("THERMAL9,");
+                putsUart0("person found: ");
+                snprintf(str, sizeof(str), "%2s", P2DATAAS(p2PktEPThermal9, *p)->str);
+                putsUart0(str);
+
             }break;
         default:{
                 putsUart0("unknown (");
@@ -922,6 +936,7 @@ bool p2GetData(p2Pkt * pkt, bool * isValid){
 #define CRC_POLY    0x07
 #define CRC_HB      BV(7)
 uint8_t p2CalcPacketCRC(p2Pkt const * p){
+    return 0xAA;
     uint8_t const * data = (uint8_t *)p + 1;
 
     uint8_t crc = ~0;

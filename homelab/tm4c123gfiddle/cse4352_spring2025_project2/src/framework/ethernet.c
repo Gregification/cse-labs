@@ -662,19 +662,20 @@ int main(void)
                                 break;
                             }
 
-                            static bool t_latch;
+                            static bool t_latch = false;
 
-                            if(!mqttsocket || (mqttsocket->state == TCP_CLOSED) || (mqttsocket->state == TCP_ESTABLISHED && mqttstate == MQTT_DISCONNECTED)){
+                            if(!mqttsocket || (mqttsocket->state == TCP_CLOSED) || (mqttsocket->state == TCP_ESTABLISHED || mqttstate == MQTT_DISCONNECTED)){
                                 t_latch = false;
                                 connectMqtt(data);
-                                togglePinValue(GREEN_LED);
+                                togglePinValue(RED_LED);
                                 putsUart0("\n\r");
                                 break;
-                            } else if(mqttsocket->state == TCP_ESTABLISHED && mqttstate == MQTT_CONNECTED){
-                                t_latch = true;
+                            } else if(mqttsocket && mqttsocket->state == TCP_ESTABLISHED && mqttstate == MQTT_CONNECTED){
                                 if(!t_latch){
-                                    subscribeMqtt("cat");
+                                    subscribeMqtt("13doorPin");
+                                    subscribeMqtt("Mailbox_Status");
                                 }
+                                t_latch = true;
                             }
 
                             putsUart0("wireless: ");

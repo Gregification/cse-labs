@@ -805,7 +805,7 @@ void p2PrintPacket(p2Pkt const * p){
             putsUart0(str);
             break;
         case P2_TYPE_ENTRY_SYNCH_PKT:{
-                putsUart0("ENTRY_SYNCH_PKT ,");
+                putsUart0("SYNCH_PKT ,");
                 p2PktSynch * s = (p2PktSynch *)p->data;
                 putsUart0("of frame: ");
                 snprintf(str, sizeof(str), "%02d, ", s->frame);
@@ -859,6 +859,19 @@ void p2PrintPacket(p2Pkt const * p){
                 putsUart0(P2DATAAS(p2PktEPDoorlock, *p)->open ? "1, " : "0, ");
                 putsUart0("break in: ");
                 putsUart0(P2DATAAS(p2PktEPDoorlock, *p)->break_in ? "1" : "0");
+                putsUart0("door closed: ");
+                putsUart0(P2DATAAS(p2PktEPDoorlock, *p)->door_closed ? "1" : "0");
+                putsUart0("door cmd published: ");
+                putcUart0('0' + P2DATAAS(p2PktEPDoorlock, *p)->door_command_published);
+                putsUart0("pin correct: ");
+                putcUart0('0' + P2DATAAS(p2PktEPDoorlock, *p)->pin_correct);
+            }break;
+        case P2_TYPE_ENDPOINT_THERMAL9:{
+                putsUart0("THERMAL9,");
+                putsUart0("is open: ");
+                snprintf(str, sizeof(str), "%2s", P2DATAAS(p2PktEPThermal9, *p)->str);
+                putsUart0(str);
+
             }break;
         default:{
                 putsUart0("unknown (");
@@ -922,6 +935,7 @@ bool p2GetData(p2Pkt * pkt, bool * isValid){
 #define CRC_POLY    0x07
 #define CRC_HB      BV(7)
 uint8_t p2CalcPacketCRC(p2Pkt const * p){
+    return 0xAA;
     uint8_t const * data = (uint8_t *)p + 1;
 
     uint8_t crc = ~0;
