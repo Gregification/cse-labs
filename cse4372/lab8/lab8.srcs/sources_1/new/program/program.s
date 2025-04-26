@@ -104,6 +104,16 @@ itterate:
 	slli t1, t1, 1 # do something
 	bne t2, t0, itterate
 
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+
 	addi t1, x0, 1
 	li t0, 0x80000000  	# led address
 	li t4, 0x80000004	# pb address
