@@ -17,11 +17,9 @@ bool p2Mqtt2Wireless(
             p2Pkt * pkt)
 {
     if(isSame("cat", mqttDataStart, dataTopicLen)){
-        volatile uint8_t a = 90;
-        putsUart0("what the cat doing\n\r");
+
 //        return true;
     }
-    putsUart0("not same :(\n\r");
 
     return false;
 }
