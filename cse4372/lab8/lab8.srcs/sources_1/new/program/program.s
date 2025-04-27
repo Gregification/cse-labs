@@ -15,38 +15,30 @@ _start:
 	li t6, 0xccddaabb
 	li t0, 0x00000200
 	lw t1, 0(t0)
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
 	sw t6, 0(t0)
+	
 	lw t1, 0(t0)
 	add t2, t1, x0
 	add t2, t1, x0
 	add t2, t1, x0
 	add t2, t1, x0
 
+	lw t1, 0(t0)
+	addi t2, x0, 1
+	addi t2, x0, 2
+	addi t2, x0, 3
+	addi t2, x0, 4
+
 	lh t1, 0(t0)
-	nop
-	nop
 
 	lb t1, 0(t0)
-	nop
-	nop
 
 	lbu t1, 0(t0)
-	nop
-	nop
 
 # # test io R/W
 	lw t1, 0(t0)
-	nop
-	nop
 
 	add t4, t1, x0
-	nop
 	li t0, 0x00000002
 	lh t1, 0(t0)
 	# add t2, t1, x0

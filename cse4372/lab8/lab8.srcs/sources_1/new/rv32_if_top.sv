@@ -64,8 +64,6 @@ module rv32_if_top(
         end if( stall ) begin
             if(!stall_former) begin
                 pc <= pc - 4;
-            end else begin
-                pc <= pc + 4;
             end
             // do nothing
         end else if(jump_enable_in) begin
@@ -73,8 +71,15 @@ module rv32_if_top(
         end else begin
             pc <= pc + 4;
         end
+
+        // scuffed way to handle stalling.
+        //      requied or else the next instruciton after the stall is executed twice
+        //      because it'll take one clock to get out, and another to itterate -
+        //      all while the memeory already has the instruciton loaded into execute
+        if(stall_former && !stall)
+            pc <= pc + 8;
     end
 
-    assign pc_out = reset ? `PC_RESET : jump_enable_in ? (jump_addr_in - 4) : pc;
+    assign pc_out = reset ? `PC_RESET : jump_enable_in ? (jump_addr_in - 4) : (stall_former && !stall) ? (pc+4) : pc;
     
 endmodule
