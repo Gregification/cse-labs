@@ -65,7 +65,15 @@ module rv32_id_top(
         // to mem/io through ex
         output reg memif_we_out,
         output reg io_we_out,
-        output reg [3:0] mem_be_out
+        output reg [3:0] mem_be_out,
+
+        // register df from ex
+        input df_wb_from_mem_ex,
+
+        // register df from mem
+        input df_wb_from_mem_mem,
+
+        output reg stall
     );
 
     assign regif_rs1_reg = iw_in[19:15];
@@ -95,6 +103,7 @@ module rv32_id_top(
         if(reset) begin
             mem_be_out <= 4'b1111;
         end else begin
+
             // if is store operation
             if (opcode == 7'b0100011) begin
                 io_we_out <= 1;
@@ -110,6 +119,7 @@ module rv32_id_top(
         end
     end
 
+    assign stall = reset ? 0 : (df_wb_from_mem_ex || df_wb_from_mem_mem);
 
     always_ff @ (posedge clk) begin
         jump_enable_out <= 0;
@@ -129,13 +139,14 @@ module rv32_id_top(
 
             flood_latch <= 0;
 
-        end else if(flood_latch) begin
+        end else if(flood_latch || stall) begin
             iw_out <= `IW_RESET;
 
             wb_reg_out      <= 0;
             wb_enable_out   <= 0;
 
         end else begin
+
             pc_out <= pc_in;
 
             iw_out <= iw_in;

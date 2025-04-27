@@ -12,21 +12,21 @@ _start:
 	nop
 
 # test memory R/W
-	li t6, 0xaabb
-	li t0, 0x0000002c
+	li t6, 0xccddaabb
+	li t0, 0x00000200
 	lw t1, 0(t0)
+	nop
+	nop
+	nop
+	nop
 	nop
 	nop
 	sw t6, 0(t0)
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
 	lw t1, 0(t0)
-	nop
-	nop
+	add t2, t1, x0
+	add t2, t1, x0
+	add t2, t1, x0
+	add t2, t1, x0
 
 	lh t1, 0(t0)
 	nop

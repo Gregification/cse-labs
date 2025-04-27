@@ -50,7 +50,12 @@ module rv32_ex_top(
         output reg [31:2] memif_addr_out,
         output reg memif_we_out,
         output reg io_we_out,
-        output reg [3:0] mem_be_out
+        output reg [3:0] mem_be_out,
+        
+        // register df from wb (from mem_read)
+        input df_wb_from_mem_wb,
+        input [4:0] df_wb_reg,
+        input [31:0] df_wb_data
     );
 
     always_ff @ (posedge(clk)) begin

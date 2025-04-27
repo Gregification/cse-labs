@@ -99,7 +99,16 @@ module lab8(
         .sig_out(sws[11:0])
     );
 
-    assign reset = btns[0];
+    initial reset = 1;
+    reg r_latch;
+    initial r_latch = 1;
+    always_ff @ (posedge `CLK_ILA) begin
+        if (!r_latch) begin
+            reset <= btns[0];
+        end else if(btns[0]) begin
+            r_latch <= 0;
+        end
+    end
 
     //---ILA----------------------------------------------------------------
 
@@ -107,7 +116,7 @@ module lab8(
         .clk(`CLK_ILA), // input wire clk
 
         // reset <1->0> used as trigger 
-        .probe0(0), // input wire [0:0]  probe0  
+        .probe0(_rv32_id_top.stall), // input wire [0:0]  probe0  
         .probe1(reset), // input wire [0:0]  probe1 
         
         // if_top
@@ -167,11 +176,14 @@ module lab8(
         .probe42(_io_memory.we), // input wire [31:0]  probe42 
         .probe43(_io_memory.wdata), // input wire [31:0]  probe43 
         .probe44(_io_memory.be), // input wire [3:0]  probe44 
-        .probe45(_io_memory.led_out), // input wire [9:0]  probe45 
-        .probe46(_io_memory.pb_in), // input wire [3:0]  probe46 
-        .probe47(_io_memory.sw_in), // input wire [11:0]  probe47 
+        .probe45(_rv32_id_top.memif_we_out), // input wire [0:0]  probe45 
+        .probe46(_rv32_id_top.io_we_out), // input wire [0:0]  probe46
+        .probe47(_rv32_id_top.df_wb_from_mem_mem), // input wire [0:0]  probe47 
         .probe48(_io_memory.offset), // input wire [31:0]  probe48 
-        .probe49(_io_memory.rdata) // input wire [31:0]  probe49
+        .probe49(_io_memory.rdata), // input wire [31:0]  probe49
+
+        // mem RW stalling
+        .probe50(_rv32_id_top.df_wb_from_mem_ex) // input wire [0:0]  probe50 
     );
 
     //---dual port memory---------------------------------------------------
@@ -247,7 +259,10 @@ module lab8(
 
         // from id
         .jump_enable_in(_rv32_id_top.jump_enable_out),
-        .jump_addr_in(_rv32_id_top.jump_addr_out)
+        .jump_addr_in(_rv32_id_top.jump_addr_out),
+
+        .stall(_rv32_id_top.stall)
+        // .stall(0)
     );
 
     rv32_id_top _rv32_id_top (
@@ -283,7 +298,7 @@ module lab8(
         // df from wb
         .df_wb_wb_reg(_rv32_wb_top.regif_wb_reg),
         .df_wb_wb_data(_rv32_wb_top.regif_wb_data),
-        .df_wb_wb_enable(_rv32_wb_top.regif_wb_enable)
+        .df_wb_wb_enable(_rv32_wb_top.regif_wb_enable),
 
         // to id : regarding pc jumping
         // output reg jump_enable_out,
@@ -296,7 +311,15 @@ module lab8(
         // output reg [31:2] memif_addr,
         // output reg memif_we,
         // output reg io_we,
-        // output reg [3:0] mem_be
+        // output reg [3:0] mem_be,
+
+        // register df from ex
+        .df_wb_from_mem_ex(_rv32_ex_top.io_we_in || _rv32_ex_top.memif_we_in),
+
+        // register df from mem
+        .df_wb_from_mem_mem(_rv32_mem_top.io_we_in || _rv32_mem_top.memif_we_in)
+
+        // output stall
     );
     
     rv32_ex_top _rv32_ex_top (

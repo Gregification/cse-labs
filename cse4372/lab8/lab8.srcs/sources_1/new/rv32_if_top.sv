@@ -40,18 +40,32 @@ module rv32_if_top(
 
         // from id
         input wire jump_enable_in,
-        input wire [31:0] jump_addr_in
+        input wire [31:0] jump_addr_in,
+
+        input stall
     );
 
     reg [31:0] pc;
+    initial pc = `PC_RESET;
+
     assign memif_addr = pc_out[31:2];
 
     assign iw_out = memif_data; // memif_data is already registered comming out of memory
 
+    reg stall_former;
+    initial stall_former = 0;
+
     always_ff @ (posedge clk) begin
+        stall_former <= stall;
         // itterate pc
         if(reset) begin
             pc <= `PC_RESET;
+            stall_former <= 0;
+        end if( stall ) begin
+            if(stall_former) begin
+                pc <= pc - 4;
+            end
+            // do nothing
         end else if(jump_enable_in) begin
             pc <= jump_addr_in;
         end else begin
