@@ -6,4 +6,4 @@
 # post example
 # mosquitto_pub -h 127.0.0.1 -t "test topic" -m "ping pong"
 
-mosquitto -c ./basic1.conf -p 1883 -v
+mosquitto -c ./basic1.conf -v

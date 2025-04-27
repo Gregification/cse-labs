@@ -664,11 +664,12 @@ int main(void)
 
                             static bool t_latch = false;
 
-                            if(!mqttsocket || (mqttsocket->state == TCP_CLOSED) || (mqttsocket->state == TCP_ESTABLISHED || mqttstate == MQTT_DISCONNECTED)){
+                            if(!mqttsocket || (mqttsocket->state == TCP_CLOSED) || (mqttsocket->state == TCP_ESTABLISHED && mqttstate == MQTT_DISCONNECTED)){
                                 t_latch = false;
                                 connectMqtt(data);
-                                togglePinValue(RED_LED);
+                                setPinValue(RED_LED, 1);
                                 putsUart0("\n\r");
+                                setPinValue(RED_LED, 0);
                                 break;
                             } else if(mqttsocket && mqttsocket->state == TCP_ESTABLISHED && mqttstate == MQTT_CONNECTED){
                                 if(!t_latch){
@@ -822,7 +823,7 @@ int main(void)
                                         p2Pkt p;
                                         if(p2Mqtt2Wireless(dater, topic_len, packet_end, &p)){
                                             putsUart0("\n\r translated mqtt 2 wireless");
-                                            p2PushRXMsgQueue(p);
+                                            p2PushTXMsgQueue(p);
                                         } else {
                                             putsUart0("\n\r failed to translate mqtt 2 wireless");
                                         }
@@ -868,7 +869,7 @@ void dumpHelp(){
     putsUart0("\n\r");
     putsUart0(" ------------------------------------------------------------\n\r");
     putsUart0("\n\rCSE4352 spring2025 project 2 team 14. \n\r");
-    putsUart0("     last update: 4/18/2025 12:06pm \n\r");
+    putsUart0("     last update: 4/26/2025 11:06pm \n\r");
     putsUart0("     reach team 14 here: ygb5713@mavs , or IOT discord channel (link on lab whiteboard)\n\r");
     putsUart0(" ------------------------------------------------------------\n\r");
     putsUart0("\n\r");

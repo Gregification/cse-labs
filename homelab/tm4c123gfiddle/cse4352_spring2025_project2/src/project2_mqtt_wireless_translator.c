@@ -10,6 +10,9 @@
 #include "project2_mqtt_wireless_translator.h"
 #include "stdio.h"
 
+// spaghetti code
+bool skipNextMailBoxMqtt = false;
+
 bool isSame(char const * A, char const * B, uint16_t len);
 
 bool p2Mqtt2Wireless(
@@ -40,6 +43,10 @@ bool p2Mqtt2Wireless(
     }
 
     if(isSame("Mailbox_Status", (char const *)mqttDataStart, dataTopicLen)){
+        if(skipNextMailBoxMqtt){
+            skipNextMailBoxMqtt = false;
+            return false;
+        }
         uint8_t const * data = (uint8_t const *)mqttDataStart + dataTopicLen;
         pkt->header.data_length = sizeof(p2PktEPMailbox);
         pkt->header.from_frame = P2_SYNC_FRAME_INDEX;
@@ -94,6 +101,7 @@ p2MWResult p2Wireless2Mqtt(
             }break;
 
         case P2_TYPE_ENDPOINT_MAILBOX:{
+                skipNextMailBoxMqtt = true;
                 snprintf(topic_out, topic_max, "%s", "Mailbox_Status");
                 snprintf(data_out, data_max, "%d",
                          P2DATAAS(p2PktEPMailbox, *pkt)->status
