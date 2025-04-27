@@ -145,7 +145,7 @@ module ila_0 (
   (* X_INTERFACE_IGNORE = "true" *)
   input [31:0]probe39;
   (* X_INTERFACE_IGNORE = "true" *)
-  input [31:0]probe40;
+  input [0:0]probe40;
   (* X_INTERFACE_IGNORE = "true" *)
   input [31:0]probe41;
   (* X_INTERFACE_IGNORE = "true" *)

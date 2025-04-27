@@ -56,7 +56,10 @@ module rv32_mem_top(
         output reg memif_we_out,
         output reg io_we_out,
         output reg [3:0] mem_be_out,
-        output reg wb_from_alu_out
+        output reg wb_from_alu_out,
+
+        input df_wb_from_mem_in,
+        output reg df_wb_from_mem_out
     );
 
     assign io_addr = alu_in;
@@ -97,6 +100,7 @@ module rv32_mem_top(
 
             mem_wdata <= 0;
             
+            df_wb_from_mem_out <= 0;
         end else begin
             pc_out <= pc_in;
             iw_out <= iw_in;
@@ -110,6 +114,8 @@ module rv32_mem_top(
                 wb_from_alu_out <= 0;
             else
                 wb_from_alu_out <= 1;
+
+            df_wb_from_mem_out <= df_wb_from_mem_in;
         end
     end
     

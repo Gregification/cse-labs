@@ -62,8 +62,10 @@ module rv32_if_top(
             pc <= `PC_RESET;
             stall_former <= 0;
         end if( stall ) begin
-            if(stall_former) begin
+            if(!stall_former) begin
                 pc <= pc - 4;
+            end else begin
+                pc <= pc + 4;
             end
             // do nothing
         end else if(jump_enable_in) begin

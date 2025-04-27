@@ -171,7 +171,7 @@ module lab8(
         .probe37(_dual_port_ram.d_we), // input wire [0:0]  probe37 
         .probe38(_rv32_wb_top.wb_from_alu_in), // input wire [31:0]  probe38
         .probe39(_rv32_mem_top.mem_addr_in), // input wire [31:0]  probe39 
-        .probe40(0),//_rv32_mem_top.mem_addr_out), // input wire [31:0]  probe40 
+        .probe40(_rv32_id_top.force_stall), // input wire [0:0]  probe40 
         .probe41(_io_memory.addr), // input wire [31:0]  probe41
         .probe42(_io_memory.we), // input wire [31:0]  probe42 
         .probe43(_io_memory.wdata), // input wire [31:0]  probe43 
@@ -314,12 +314,14 @@ module lab8(
         // output reg [3:0] mem_be,
 
         // register df from ex
-        .df_wb_from_mem_ex(_rv32_ex_top.io_we_in || _rv32_ex_top.memif_we_in),
+        .df_wb_from_mem_ex(_rv32_ex_top.df_wb_from_mem_in),
 
         // register df from mem
-        .df_wb_from_mem_mem(_rv32_mem_top.io_we_in || _rv32_mem_top.memif_we_in)
+        .df_wb_from_mem_mem(_rv32_mem_top.df_wb_from_mem_in),
 
-        // output stall
+        .force_stall(_rv32_mem_top.memif_we_in || _rv32_mem_top.io_we_in || _rv32_ex_top.memif_we_in || _rv32_ex_top.io_we_in)
+        // output stall,
+        // output reg df_wb_from_mem_out,
     );
     
     rv32_ex_top _rv32_ex_top (
@@ -335,7 +337,7 @@ module lab8(
         .wb_enable_in(_rv32_id_top.wb_enable_out),
         .memif_we_in(_rv32_id_top.memif_we_out),
         .io_we_in(_rv32_id_top.io_we_out),
-        .mem_be_in(_rv32_id_top.mem_be_out)
+        .mem_be_in(_rv32_id_top.mem_be_out),
 
         //to id
         // output [31:0] alu_raw,
@@ -346,6 +348,10 @@ module lab8(
         // output reg [31:0] alu_out,
         // output reg [3:0] wb_reg_out,
         // output reg wb_enable_out
+
+        // df stall
+        .df_wb_from_mem_in(_rv32_id_top.df_wb_from_mem_out)
+        // output reg df_wb_from_mem_out,
     );
 
     rv32_mem_top _rv32_mem_top (
@@ -373,7 +379,7 @@ module lab8(
         .io_rdata_in(_io_memory.rdata),
         .memif_we_in(_rv32_ex_top.memif_we_out),
         .io_we_in(_rv32_ex_top.io_we_out),
-        .mem_be_in(_rv32_ex_top.mem_be_out)
+        .mem_be_in(_rv32_ex_top.mem_be_out),
 
         // output reg [31:2] mem_addr_out,
         // output [31:0] memif_rdata_out, // already registered from memory
@@ -381,7 +387,11 @@ module lab8(
         // output reg memif_we_out,
         // output reg io_we_out,
         // output reg [3:0] mem_be_out,
-        // output reg wb_from_alu_out
+        // output reg wb_from_alu_out,
+
+        // df stall
+        .df_wb_from_mem_in(_rv32_ex_top.df_wb_from_mem_out)
+        // output reg df_wb_from_mem_out,
     );
 
     rv32_wb_top _rv32_wb_top (

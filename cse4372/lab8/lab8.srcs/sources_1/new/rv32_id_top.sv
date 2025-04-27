@@ -73,7 +73,9 @@ module rv32_id_top(
         // register df from mem
         input df_wb_from_mem_mem,
 
-        output reg stall
+        input force_stall,
+        output reg stall,
+        output reg df_wb_from_mem_out
     );
 
     assign regif_rs1_reg = iw_in[19:15];
@@ -99,6 +101,7 @@ module rv32_id_top(
         io_we_out <= 0;
         memif_we_out <= 0;
         mem_be_out <= 0;
+        df_wb_from_mem_out <= 0;
 
         if(reset) begin
             mem_be_out <= 4'b1111;
@@ -106,8 +109,14 @@ module rv32_id_top(
 
             // if is store operation
             if (opcode == 7'b0100011) begin
+                // df_wb_from_mem_out <= 1;
                 io_we_out <= 1;
                 memif_we_out <= 1;
+            end
+
+            // if is load operaetion
+            if (opcode == 7'b0000011 && !stall) begin
+                df_wb_from_mem_out <= 1;
             end
 
             case (funct3)
@@ -119,7 +128,21 @@ module rv32_id_top(
         end
     end
 
-    assign stall = reset ? 0 : (df_wb_from_mem_ex || df_wb_from_mem_mem);
+    always_comb begin
+        stall = 0;
+
+        if(reset)
+            stall = 0;
+        else if(force_stall) begin
+            stall = 1;
+        end else if(df_wb_from_mem_ex) begin
+            if(regif_rs1_reg == df_ex_wb_reg || regif_rs2_reg == df_ex_wb_reg)
+                stall = 1;
+        end else if(df_wb_from_mem_mem) begin
+            if(regif_rs1_reg == df_mem_wb_reg || regif_rs2_reg == df_mem_wb_reg)
+                stall = 1;
+        end
+    end
 
     always_ff @ (posedge clk) begin
         jump_enable_out <= 0;
