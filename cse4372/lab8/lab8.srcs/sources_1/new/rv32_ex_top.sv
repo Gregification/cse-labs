@@ -56,9 +56,21 @@ module rv32_ex_top(
         input df_wb_from_mem_wb,
         input [4:0] df_wb_reg,
         input [31:0] df_wb_data,
+
         input df_wb_from_mem_in,
         output reg df_wb_from_mem_out
     );
+
+    // always_comb begin
+    //     if(reset)
+    //         rs2_data_out = 0;
+    //     else begin
+    //         if(wb_enable_in && df_wb_from_mem_wb && (df_wb_reg == wb_reg_in)) begin
+    //             rs2_data_out <= df_wb_data;
+    //         end else
+    //             rs2_data_out <= rs2_data_in;
+    //     end
+    // end
 
     always_ff @ (posedge(clk)) begin
         if(reset) begin
@@ -91,6 +103,11 @@ module rv32_ex_top(
             mem_be_out <= mem_be_in;
 
             df_wb_from_mem_out <= df_wb_from_mem_in;
+
+            if(wb_enable_in && df_wb_from_mem_wb && (df_wb_reg == wb_reg_in))
+                rs2_data_out <= df_wb_data;
+            else
+                rs2_data_out <= rs2_data_in;
         end
     end
     

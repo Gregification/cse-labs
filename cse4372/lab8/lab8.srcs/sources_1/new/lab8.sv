@@ -176,14 +176,16 @@ module lab8(
         .probe42(_io_memory.we), // input wire [31:0]  probe42 
         .probe43(_io_memory.wdata), // input wire [31:0]  probe43 
         .probe44(_io_memory.be), // input wire [3:0]  probe44 
-        .probe45(_rv32_id_top.memif_we_out), // input wire [0:0]  probe45 
-        .probe46(_rv32_id_top.io_we_out), // input wire [0:0]  probe46
+        .probe45(_rv32_ex_top.df_wb_from_mem_wb), // input wire [0:0]  probe45 
+        .probe46(_rv32_ex_top.df_wb_reg), // input wire [0:0]  probe46
         .probe47(_rv32_id_top.df_wb_from_mem_mem), // input wire [0:0]  probe47 
-        .probe48(_io_memory.offset), // input wire [31:0]  probe48 
+        .probe48(_rv32_ex_top.df_wb_data), // input wire [31:0]  probe48 
         .probe49(_io_memory.rdata), // input wire [31:0]  probe49
 
         // mem RW stalling
-        .probe50(_rv32_id_top.df_wb_from_mem_ex) // input wire [0:0]  probe50 
+        .probe50(_rv32_id_top.df_wb_from_mem_ex), // input wire [0:0]  probe50 
+        .probe51(_rv32_id_top.regif_rs2_data_out), // input wire [31:0]  probe51 
+	    .probe52(_rv32_ex_top.rs2_data_out) // input wire [31:0]  probe52
     );
 
     //---dual port memory---------------------------------------------------
@@ -348,6 +350,10 @@ module lab8(
         // output reg [31:0] alu_out,
         // output reg [3:0] wb_reg_out,
         // output reg wb_enable_out
+
+        .df_wb_from_mem_wb(_rv32_mem_top.wb_enable_in),
+        .df_wb_reg(_rv32_mem_top.wb_reg_in),
+        .df_wb_data(_rv32_mem_top.alu_in),
 
         // df stall
         .df_wb_from_mem_in(_rv32_id_top.df_wb_from_mem_out)
