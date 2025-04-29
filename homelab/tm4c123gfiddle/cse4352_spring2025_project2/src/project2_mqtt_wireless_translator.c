@@ -98,11 +98,7 @@ p2MWResult p2Wireless2Mqtt(
                     default: break;
                 }
 
-                    snprintf(data_out, data_max, "%s", P2DATAAS(p2PktEPWeatherStation, *pkt)->data);
-//                if(P2DATAAS(p2PktEPWeatherStation, *pkt)->data_type != P2WSDT_WIND_DIRECITON)
-//                else {
-//                    snprintf(data_out, 28, "%s", P2DATAAS(p2PktEPWeatherStation, *pkt)->data);
-//                }
+                snprintf(data_out, data_max, "%s", P2DATAAS(p2PktEPWeatherStation, *pkt)->data);
 
             }break;
 
@@ -132,7 +128,7 @@ p2MWResult p2Wireless2Mqtt(
 
                 snprintf(topic_out, topic_max, "%s", TOPIC_EP_DOOR_STATUS);
                 snprintf(data_out, data_max, "%s",
-                         (P2DATAAS(p2PktEPDoorlock, *pkt)->open) ? "unlocked" : (P2DATAAS(p2PktEPDoorlock, *pkt)->door_closed) ? "locked" : "womp"
+                         (P2DATAAS(p2PktEPDoorlock, *pkt)->open) ? "unlocked" : (P2DATAAS(p2PktEPDoorlock, *pkt)->door_closed) ? "locked" : "closed and locked"
                      );
 
                 former = *(P2DATAAS(p2PktEPDoorlock, *pkt));
