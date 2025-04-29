@@ -18,7 +18,7 @@
 #define TOPIC_EP_WEATHER_WIND_DIRECTION "4-wind-dir"
 #define TOPIC_EP_WEATHER_TEMPERATURE "4-temp"
 #define TOPIC_EP_WEATHER_HUMIDITY "4-hum"
-#define TOPIC_EP_WEATHER_PRESSURE "4-press"
+#define TOPIC_EP_WEATHER_PRESSURE "4-pres"
 #define TOPIC_EP_THERMAL_PERSON_FOUND "9personfound"
 
 #include <stdbool.h>

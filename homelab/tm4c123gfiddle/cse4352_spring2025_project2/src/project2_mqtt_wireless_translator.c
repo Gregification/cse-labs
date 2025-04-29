@@ -98,7 +98,10 @@ p2MWResult p2Wireless2Mqtt(
                     default: break;
                 }
 
-                snprintf(data_out, data_max, "%s", P2DATAAS(p2PktEPWeatherStation, *pkt)->data);
+                switch(P2DATAAS(p2PktEPWeatherStation, *pkt)->data_type){
+                    case P2WSDT_PRESSURE:       snprintf(data_out, 6, "%s", P2DATAAS(p2PktEPWeatherStation, *pkt)->data); break;
+                    default:                    snprintf(data_out, data_max, "%s", P2DATAAS(p2PktEPWeatherStation, *pkt)->data);
+                }
 
             }break;
 

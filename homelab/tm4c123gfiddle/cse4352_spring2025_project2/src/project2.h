@@ -185,7 +185,8 @@ typedef enum{
 
 typedef struct __attribute__((packed)) {
     p2EPWeatherStationDataType data_type  : 8;
-    char data[P2_MAX_DATA_SIZE - 1];
+    uint8_t data_len    : 8;
+    char data[P2_MAX_DATA_SIZE - 2];
 } p2PktEPWeatherStation;
 
 typedef struct __attribute__((packed)) {

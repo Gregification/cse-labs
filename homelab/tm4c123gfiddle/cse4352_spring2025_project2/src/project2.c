@@ -346,7 +346,7 @@ void p2ClientLoop(){
 
                                 switch(pkt.header.type){
 
-                                    // is response to join request
+                                    // is response to join response
                                     case P2_TYPE_CMD_JOIN_RESPONSE:
                                         // if is addressing the frame of interest
                                         if(P2DATAAS(p2PktJoinResponse, pkt)->frame == p2TxEndpoint){
@@ -355,7 +355,7 @@ void p2ClientLoop(){
                                             if(P2DATAAS(p2PktJoinResponse, pkt)->join_request_accepted){
                                                 p2StopFrameTimer();
                                                 p2State = P2_STATE_CLIENTING; // yippie
-                                                putsUart0("P2_STATE_CLIENTING transition, yuppie\n\r");
+                                                putsUart0("P2_STATE_CLIENTING transition, yippie\n\r");
                                                 p2CurrentFrame = P2_SYNC_FRAME_INDEX; // set to some invlaid frame
                                             }
                                             else
@@ -365,7 +365,7 @@ void p2ClientLoop(){
                                         }
                                         break;
 
-                                    // the beacon does not respond ... its ever slightly more over
+                                    // no response to join request, its over
                                     case P2_TYPE_ENTRY_SYNCH_PKT:
                                         response_timeout += 1;
                                         break;
@@ -411,7 +411,7 @@ void p2ClientLoop(){
                                 switch(pkt.header.type){
                                         // timing synchronization
                                         case P2_TYPE_ENTRY_SYNCH_PKT: {
-                                            // if is NOT form host
+                                            // if is NOT form host, ignore it
                                             if(pkt.header.from_frame != P2_SYNC_FRAME_INDEX)
                                                 break;
 
@@ -564,7 +564,7 @@ void p2HostProcessPacket(p2Pkt const * pkt){
 
         case P2_TYPE_CMD_JOIN_RESPONSE:
         case P2_TYPE_ENTRY_SYNCH_PKT:
-            // do nothing. should only occur if multiple hosts are running. systems screwed up anyways
+            // do nothing. should only occur if multiple hosts are running. system screwed up anyways if this happens
             break;
 
         case P2_TYPE_ENDPOINT_GLASS_BRAKE_SENSOR:
@@ -641,7 +641,7 @@ void p2ClientProcessPacket(p2Pkt const * pkt){
             break;
 
         case P2_TYPE_ENTRY_SYNCH_PKT:
-            // un oh, desync
+            // send junk to test with
             if(random32() & BV(5)){
                 putsUart0("queuing alarm!\n\r");
                 p2Pkt p;
@@ -758,6 +758,7 @@ void p2OnFrameTimeIsr(){
 }
 
 void p2PrintPacket(p2Pkt const * p){
+    // skip printing if packet is a dud. to declutter the terminal. logic done here for simplicity
     {
         uint8_t d = 1;
         for(uint8_t i = 1; i < sizeof(p2Pkt); i++){
