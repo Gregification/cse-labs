@@ -29,7 +29,7 @@
 
 // probe count defaults
 #define SI_PROBES_CONN     3   // connecting
-#define SI_PROBES_KEPAL    3   // keep-alives
+#define SI_PROBES_KEPAL    30   // keep-alives
 #define SI_PROBES_DCON     3   // disconnecting
 
 // probe timeouts
