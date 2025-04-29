@@ -98,11 +98,11 @@ p2MWResult p2Wireless2Mqtt(
                     default: break;
                 }
 
-                if(P2DATAAS(p2PktEPWeatherStation, *pkt)->data_type != P2WSDT_WIND_DIRECITON)
                     snprintf(data_out, data_max, "%s", P2DATAAS(p2PktEPWeatherStation, *pkt)->data);
-                else {
-                    snprintf(data_out, 3, "%s", P2DATAAS(p2PktEPWeatherStation, *pkt)->data);
-                }
+//                if(P2DATAAS(p2PktEPWeatherStation, *pkt)->data_type != P2WSDT_WIND_DIRECITON)
+//                else {
+//                    snprintf(data_out, 28, "%s", P2DATAAS(p2PktEPWeatherStation, *pkt)->data);
+//                }
 
             }break;
 

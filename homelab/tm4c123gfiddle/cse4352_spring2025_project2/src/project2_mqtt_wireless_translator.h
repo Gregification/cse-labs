@@ -28,7 +28,7 @@
 #include "framework/mqtt.h"
 
 #define P2_MAX_MQTT_TOPIC_LEN 100
-#define P2_MAX_MQTT_DATA_LEN 100
+#define P2_MAX_MQTT_DATA_LEN P2_MAX_DATA_SIZE
 
 // returns less than P2_TYPE_ENDPOINT_START if DNE
 P2_TYPE p2TopicToType(char const * str, uint16_t maxLen);

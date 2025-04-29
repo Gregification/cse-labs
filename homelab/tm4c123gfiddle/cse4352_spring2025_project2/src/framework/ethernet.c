@@ -593,7 +593,7 @@ int main(void)
 //        }
 //        putsUart0("\n\r");
 //    }
-//    p2estate = P2ESTATE_AUTO;
+    p2estate = P2ESTATE_AUTO;
     while (true)
     {
 
