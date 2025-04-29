@@ -21,7 +21,7 @@ bool p2Mqtt2Wireless(
             uint8_t const * mqttDataEnd,
             p2Pkt * pkt)
 {
-    if(isSame("test", (char const *)mqttDataStart, dataTopicLen)){
+    if(isSame(TOPIC_EP_TEST, (char const *)mqttDataStart, dataTopicLen)){
         pkt->header.data_length = 5;
         pkt->header.from_frame = P2_SYNC_FRAME_INDEX;
         pkt->header.type = P2_TYPE_ENDPOINT_MAILBOX;
@@ -33,7 +33,7 @@ bool p2Mqtt2Wireless(
         return true;
     }
 
-    if(isSame("13doorPin", (char const *)mqttDataStart, dataTopicLen)){
+    if(isSame(TOPIC_EP_DOOR_PIN, (char const *)mqttDataStart, dataTopicLen)){
         char const * dataStr = (char const *)mqttDataStart + dataTopicLen;
         pkt->header.data_length = sizeof(p2PktEPDoorlock);
         pkt->header.from_frame = P2_SYNC_FRAME_INDEX;
@@ -42,7 +42,7 @@ bool p2Mqtt2Wireless(
         return true;
     }
 
-    if(isSame("Mailbox-Status", (char const *)mqttDataStart, dataTopicLen)){
+    if(isSame(TOPIC_EP_MAILBOX_STATUS, (char const *)mqttDataStart, dataTopicLen)){
         if(skipNextMailBoxMqtt){
             skipNextMailBoxMqtt = false;
             return false;
@@ -80,7 +80,7 @@ p2MWResult p2Wireless2Mqtt(
 
     switch(pkt->header.type){
         case P2_TYPE_ENDPOINT_GLASS_BRAKE_SENSOR:{
-                snprintf(topic_out, topic_max, "%s", "glass_alarm");
+                snprintf(topic_out, topic_max, "%s", TOPIC_EP_GLASS_ALARM);
                 snprintf(data_out, data_max,
                          "alarm:%s,battery_level:%d",
                          P2DATAAS(p2PktEPGlassBreakSensor, *pkt)->alarm ? "1" : "0",
@@ -90,37 +90,56 @@ p2MWResult p2Wireless2Mqtt(
 
         case P2_TYPE_ENDPOINT_WEATHER_STATION:{
                 switch(P2DATAAS(p2PktEPWeatherStation, *pkt)->data_type){
-                    case P2WSDT_WIND_SPEED:     snprintf(topic_out, topic_max, "%s", "WIND_SPEED"); break;
-                    case P2WSDT_WIND_DIRECITON: snprintf(topic_out, topic_max, "%s", "WIND_DIRECITON"); break;
-                    case P2WSDT_TEMPERATURE:    snprintf(topic_out, topic_max, "%s", "TEMPERATURE"); break;
-                    case P2WSDT_HUMIDITY:       snprintf(topic_out, topic_max, "%s", "HUMIDITY"); break;
-                    case P2WSDT_PRESSURE:       snprintf(topic_out, topic_max, "%s", "PRESSURE"); break;
+                    case P2WSDT_WIND_SPEED:     snprintf(topic_out, topic_max, "%s", TOPIC_EP_WEATHER_WIND_SPEED); break;
+                    case P2WSDT_WIND_DIRECITON: snprintf(topic_out, topic_max, "%s", TOPIC_EP_WEATHER_WIND_DIRECTION); break;
+                    case P2WSDT_TEMPERATURE:    snprintf(topic_out, topic_max, "%s", TOPIC_EP_WEATHER_TEMPERATURE); break;
+                    case P2WSDT_HUMIDITY:       snprintf(topic_out, topic_max, "%s", TOPIC_EP_WEATHER_HUMIDITY); break;
+                    case P2WSDT_PRESSURE:       snprintf(topic_out, topic_max, "%s", TOPIC_EP_WEATHER_PRESSURE); break;
                     default: break;
                 }
-                snprintf(data_out, data_max, "%s", P2DATAAS(p2PktEPWeatherStation, *pkt)->data);
+
+                if(P2DATAAS(p2PktEPWeatherStation, *pkt)->data_type != P2WSDT_WIND_DIRECITON)
+                    snprintf(data_out, data_max, "%s", P2DATAAS(p2PktEPWeatherStation, *pkt)->data);
+                else {
+                    snprintf(data_out, 3, "%s", P2DATAAS(p2PktEPWeatherStation, *pkt)->data);
+                }
+
             }break;
 
         case P2_TYPE_ENDPOINT_MAILBOX:{
                 skipNextMailBoxMqtt = true;
-                snprintf(topic_out, topic_max, "%s", "Mailbox-Status");
+                snprintf(topic_out, topic_max, "%s", TOPIC_EP_MAILBOX_STATUS);
                 snprintf(data_out, data_max, "%d",
                          P2DATAAS(p2PktEPMailbox, *pkt)->status
                      );
             }break;
 
         case P2_TYPE_ENDPOINT_DOORLOCK:{
-                publishMqtt("13doorPin",
-                         P2DATAAS(p2PktEPDoorlock, *pkt)->pin_correct ? "open" : "close"
+                static p2PktEPDoorlock former;
+
+                if(P2DATAAS(p2PktEPDoorlock, *pkt)->open != former.open)
+                    publishMqtt(TOPIC_EP_DOOR_PIN,
+                             P2DATAAS(p2PktEPDoorlock, *pkt)->open ? "open" : "close"
+                         );
+
+                if(P2DATAAS(p2PktEPDoorlock, *pkt)->break_in)
+                    publishMqtt(TOPIC_EP_DOOR_STATUS,
+                             "break in detected"
+                         );
+
+                P2DATAAS(p2PktEPDoorlock, *pkt)->door_command_published = P2DATAAS(p2PktEPDoorlock, *pkt)->pin_correct;
+                p2PushTXMsgQueue(*pkt);
+
+                snprintf(topic_out, topic_max, "%s", TOPIC_EP_DOOR_STATUS);
+                snprintf(data_out, data_max, "%s",
+                         (P2DATAAS(p2PktEPDoorlock, *pkt)->open) ? "unlocked" : (P2DATAAS(p2PktEPDoorlock, *pkt)->door_closed) ? "locked" : "womp"
                      );
 
-                snprintf(topic_out, topic_max, "%s", "13doorStatus");
-                snprintf(data_out, data_max, "%s",
-                         P2DATAAS(p2PktEPDoorlock, *pkt)->open ? "locked" : "unlocked"
-                     );
+                former = *(P2DATAAS(p2PktEPDoorlock, *pkt));
             }break;
 
         case P2_TYPE_ENDPOINT_THERMAL9:{
-                snprintf(topic_out, topic_max, "%s", "9personFound/");
+                snprintf(topic_out, topic_max, "%s", TOPIC_EP_THERMAL_PERSON_FOUND);
                 snprintf(data_out,
                          (data_max > sizeof(P2DATAAS(p2PktEPThermal9, *pkt)->str) ? sizeof(P2DATAAS(p2PktEPThermal9, *pkt)->str) : data_max),
                                  "%2s",

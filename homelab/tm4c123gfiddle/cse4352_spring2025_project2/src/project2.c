@@ -570,6 +570,8 @@ void p2HostProcessPacket(p2Pkt const * pkt){
         case P2_TYPE_ENDPOINT_GLASS_BRAKE_SENSOR:
         case P2_TYPE_ENDPOINT_WEATHER_STATION:
         case P2_TYPE_ENDPOINT_MAILBOX:
+        case P2_TYPE_ENDPOINT_DOORLOCK:
+        case P2_TYPE_ENDPOINT_THERMAL9:
                 p2PushRXMsgQueue(*pkt);
             break;
 
@@ -756,6 +758,15 @@ void p2OnFrameTimeIsr(){
 }
 
 void p2PrintPacket(p2Pkt const * p){
+    {
+        uint8_t d = 1;
+        for(uint8_t i = 1; i < sizeof(p2Pkt); i++){
+            d += p->raw_arr[i] == p->raw_arr[0];
+        }
+        if(d == sizeof(p2Pkt))
+            return;
+    }
+
     putsUart0("{");
 
     char str[10];
@@ -858,13 +869,13 @@ void p2PrintPacket(p2Pkt const * p){
                 putsUart0("DOORLOCK,");
                 putsUart0("is open: ");
                 putsUart0(P2DATAAS(p2PktEPDoorlock, *p)->open ? "1, " : "0, ");
-                putsUart0("break in: ");
+                putsUart0(", break in: ");
                 putsUart0(P2DATAAS(p2PktEPDoorlock, *p)->break_in ? "1" : "0");
-                putsUart0("door closed: ");
+                putsUart0(", door closed: ");
                 putsUart0(P2DATAAS(p2PktEPDoorlock, *p)->door_closed ? "1" : "0");
-                putsUart0("door cmd published: ");
+                putsUart0(", door cmd published: ");
                 putsUart0(P2DATAAS(p2PktEPDoorlock, *p)->door_command_published ? "1" : "0");
-                putsUart0("pin correct: ");
+                putsUart0(", pin correct: ");
                 putsUart0(P2DATAAS(p2PktEPDoorlock, *p)->pin_correct ? "1" : "0");
             }break;
         case P2_TYPE_ENDPOINT_THERMAL9:{

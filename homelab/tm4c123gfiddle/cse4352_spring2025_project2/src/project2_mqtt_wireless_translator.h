@@ -8,6 +8,19 @@
 #ifndef SRC_PROJECT2_MQTT_WIRELESS_TRANSLATOR_H_
 #define SRC_PROJECT2_MQTT_WIRELESS_TRANSLATOR_H_
 
+#define TOPIC_EP_GLASS_ALARM "glass-alarm"
+#define TOPIC_EP_MAILBOX_STATUS "mailboxstatus"
+#define TOPIC_EP_DOOR_PIN "doorpin"
+#define TOPIC_EP_DOOR_STATUS "doorstatus"
+#define TOPIC_EP_DOOR_CMD "doorcommand"
+#define TOPIC_EP_TEST "test"
+#define TOPIC_EP_WEATHER_WIND_SPEED "4-wind-spd"
+#define TOPIC_EP_WEATHER_WIND_DIRECTION "4-wind-dir"
+#define TOPIC_EP_WEATHER_TEMPERATURE "4-temp"
+#define TOPIC_EP_WEATHER_HUMIDITY "4-hum"
+#define TOPIC_EP_WEATHER_PRESSURE "4-press"
+#define TOPIC_EP_THERMAL_PERSON_FOUND "9personfound"
+
 #include <stdbool.h>
 #include <stdint.h>
 
