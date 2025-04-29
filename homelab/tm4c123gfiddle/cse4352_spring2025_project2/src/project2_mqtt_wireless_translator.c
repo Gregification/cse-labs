@@ -136,11 +136,7 @@ p2MWResult p2Wireless2Mqtt(
 
         case P2_TYPE_ENDPOINT_THERMAL9:{
                 snprintf(topic_out, topic_max, "%s", TOPIC_EP_THERMAL_PERSON_FOUND);
-                snprintf(data_out,
-                         (data_max > sizeof(P2DATAAS(p2PktEPThermal9, *pkt)->str) ? sizeof(P2DATAAS(p2PktEPThermal9, *pkt)->str) : data_max),
-                                 "%2s",
-                         P2DATAAS(p2PktEPThermal9, *pkt)->str
-                     );
+                snprintf(data_out, data_max, "%2s", P2DATAAS(p2PktEPThermal9, *pkt)->str);
             }break;
 
         default:
