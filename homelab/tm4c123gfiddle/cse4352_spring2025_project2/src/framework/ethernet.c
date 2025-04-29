@@ -673,8 +673,9 @@ int main(void)
                                 break;
                             } else if(mqttsocket && mqttsocket->state == TCP_ESTABLISHED && mqttstate == MQTT_CONNECTED){
                                 if(!t_latch){
+                                    subscribeMqtt("test");
                                     subscribeMqtt("13doorPin");
-                                    subscribeMqtt("Mailbox_Status");
+                                    subscribeMqtt("Mailbox-Status");
                                 }
                                 t_latch = true;
                             }

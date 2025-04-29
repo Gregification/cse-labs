@@ -42,7 +42,7 @@ bool p2Mqtt2Wireless(
         return true;
     }
 
-    if(isSame("Mailbox_Status", (char const *)mqttDataStart, dataTopicLen)){
+    if(isSame("Mailbox-Status", (char const *)mqttDataStart, dataTopicLen)){
         if(skipNextMailBoxMqtt){
             skipNextMailBoxMqtt = false;
             return false;
@@ -102,7 +102,7 @@ p2MWResult p2Wireless2Mqtt(
 
         case P2_TYPE_ENDPOINT_MAILBOX:{
                 skipNextMailBoxMqtt = true;
-                snprintf(topic_out, topic_max, "%s", "Mailbox_Status");
+                snprintf(topic_out, topic_max, "%s", "Mailbox-Status");
                 snprintf(data_out, data_max, "%d",
                          P2DATAAS(p2PktEPMailbox, *pkt)->status
                      );
