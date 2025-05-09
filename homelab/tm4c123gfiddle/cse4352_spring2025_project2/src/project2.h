@@ -75,7 +75,7 @@
 #define P2_T_INTER_FRAME_US     100e3
 #define P2_T_FRAME_US           (P2_T_FRAME_TX_US + P2_T_BUFFER_US + P2_T_INTER_FRAME_US)
 #define P2_T_MIN_TX_DELAY_US    500
-#define P2_FRAME_COUNT          4
+#define P2_FRAME_COUNT          10
 #define P2_SYNC_FRAME_INDEX     0
 #define P2_FRAME_DEFAULT_TTL    10
 

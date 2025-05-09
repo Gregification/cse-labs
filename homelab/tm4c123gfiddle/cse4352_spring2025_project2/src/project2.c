@@ -184,24 +184,24 @@ void p2HostLoop(){
 
                                         p2HostProcessPacket(&pkt);
                                     } else {
-//                                        // packet from unexpected frame, send back a reset
-//                                        isValid = false;
-//                                        putsUart0("packet from unoccupied frame ");
-//                                        {
-//                                            char str[8];
-//                                            snprintf(str, sizeof(str), "%02d\n\r", pkt.header.from_frame);
-//                                            putsUart0(str);
-//                                        }
-//
-//                                        // fake receive a reset packet
-//                                        p2Pkt p;
-//                                        p.header.type = P2_TYPE_CMD_RESET;
-//                                        p.header.data_length = sizeof(p2PktReset);
-//                                        P2DATAAS(p2PktReset, p)->frame = pkt.header.from_frame;
-//                                        P2DATAAS(p2PktReset, p)->isEcho = false;
-//
-//                                        p.header.crc = p2CalcPacketCRC(&p);
-//                                        p2HostProcessPacket(&pkt);
+                                        // packet from unexpected frame, send back a reset
+                                        isValid = false;
+                                        putsUart0("packet from unoccupied frame ");
+                                        {
+                                            char str[8];
+                                            snprintf(str, sizeof(str), "%02d\n\r", pkt.header.from_frame);
+                                            putsUart0(str);
+                                        }
+
+                                        // fake receive a reset packet
+                                        p2Pkt p;
+                                        p.header.type = P2_TYPE_CMD_RESET;
+                                        p.header.data_length = sizeof(p2PktReset);
+                                        P2DATAAS(p2PktReset, p)->frame = pkt.header.from_frame;
+                                        P2DATAAS(p2PktReset, p)->isEcho = false;
+
+                                        p.header.crc = p2CalcPacketCRC(&p);
+                                        p2HostProcessPacket(&pkt);
                                     }
                                 }
                             }
