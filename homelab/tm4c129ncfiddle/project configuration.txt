@@ -1,0 +1,5 @@
+driver lib ".lib" file must be imported manually else driverlib funcitons are unresolved.
+driverlib may need to be built seperately
+
+TI's documentation about freeRTOS is out of date, their FS has changed, go though and copy from 
+	the "exampleFiddle" projects include. ensure what ever paths you use are not system specific
