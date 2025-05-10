@@ -61,6 +61,11 @@
 			<locationURI>COM_FREERTOS_LTS_DIR/FreeRTOS-Kernel/timers.c</locationURI>
 		</link>
 		<link>
+			<name>FreeRTOS/Kernal/source/portable/MemMang/heap_4.c</name>
+			<type>1</type>
+			<location>C:/ti/FreeRTOS-LTS/FreeRTOS/FreeRTOS-Kernel/portable/MemMang/heap_4.c</location>
+		</link>
+		<link>
 			<name>FreeRTOS/Kernal/source/portable/CCS/ARC_CM4F/port.c</name>
 			<type>1</type>
 			<locationURI>COM_FREERTOS_LTS_DIR/FreeRTOS-Kernel/portable/CCS/ARM_CM4F/port.c</locationURI>
