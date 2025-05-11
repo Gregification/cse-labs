@@ -53,8 +53,9 @@ int main(){
     system_init();
 
     /* --- POST on-chip ------------------------------------------- */
-
+    // fails here suggest error with
     // trust me bro
+    FATAL_ASSERT(System::CPU_FREQ == configCPU_CLOCK_HZ);
 
     /* --- Initialize off-chip ------------------------------------ */
 
@@ -83,11 +84,22 @@ int main(){
         GPIOPinTypeUART(GPIO_PORTA_BASE, GPIO_PIN_0 | GPIO_PIN_1);
 
         // init uart
+        UARTConfigSetExpClk(UART0_BASE,
+                16e6,
+                System::UART::UI_BAUD,
+                (UART_CONFIG_PAR_NONE | UART_CONFIG_STOP_ONE | UART_CONFIG_WLEN_8)
+            );
+
+        {
+            char str[] = PROJECT_NAME " " PROJECT_VERSION NEWLINE "\t - " PROJECT_DESCRIPTION NEWLINE "\t - compiled " __DATE__ " , " __TIME__ NEWLINE;
+            for(int i = 0; i < sizeof(str); i++)
+                UARTCharPut(UART0_BASE, str[i]);
+        }
 
     }
 
-    while(1)
-        ;
+    // go crazy
+    System::ShutdownHard("reached end of main");
 }
 
 /*-----------------------------------------------------------*/
