@@ -3,43 +3,88 @@
  *
  *  Created on: May 9, 2025
  *      Author: turtl
+ *
+ * do not touch the CSS project settings, this was a abomination to setup
  */
 
-#include "system.hpp"
+/*
+ * project files
+ *
+ * ProjectRoot/
+ * |
+ * |-- FreeRTOS/
+ * |   |-- Config/
+ * |   |   |-- FreeRTOSConfig.h
+ * |   |
+ * |   |-- Kernel/
+ * |   |   |-- source/              : freeRTOS core source files
+ * |   |
+ * |   |-- TCP/
+ * |       |-- source/              : freeRTOS+TCP source files
+ * |
+ * |-- src/
+ *     |-- Core/                    : Application entry point (main.c, system init)
+ *     |-- Drivers/                 : custom peripheral drivers. (HAL drivers come from DriverLib so arn't included here)
+ *     |-- Middleware/              : stacks like FatFS, etc.
+ *     |-- Tasks/                   : application tasks (e.g., sensor, comms)
+ *
+ */
 
-#include "inc/hw_sysctl.h"
-#include "driverlib/interrupt.h"
-#include "driverlib/rom.h"
-#include "driverlib/rom_map.h"
-#include "driverlib/sysctl.h"
+#include "Core/system.hpp"
+#include "Core/system_init.hpp"
 
-#include "FreeRTOS.h"
-#include "task.h"
+#include <inc/hw_sysctl.h>
+#include <inc/hw_memmap.h>
+#include <inc/hw_sysctl.h>
+#include <driverlib/gpio.h>
+#include <driverlib/interrupt.h>
+#include <driverlib/pin_map.h>
+#include <driverlib/rom.h>
+#include <driverlib/rom_map.h>
+#include <driverlib/sysctl.h>
+#include <driverlib/uart.h>
+#include <FreeRTOS.h>
+#include <task.h>
 
 int main(){
-    /*---init hardware-------------------------------------------*/
 
-    System::CPU_FREQ = SysCtlClockFreqSet((SYSCTL_XTAL_25MHZ |
-        SYSCTL_OSC_MAIN | SYSCTL_USE_PLL |
-        SYSCTL_CFG_VCO_240), configCPU_CLOCK_HZ);
+    /* --- Initialize on-chip ------------------------------------- */
 
-    MAP_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA);
-    MAP_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOB);
-    MAP_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOC);
-    MAP_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOD);
-    MAP_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOE);
-    MAP_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
-    MAP_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOG);
-    MAP_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOH);
-    MAP_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOJ);
-    MAP_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOK);
-    MAP_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOL);
-    MAP_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOM);
-    MAP_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPION);
-    MAP_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOP);
-    MAP_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOQ);
+    system_init();
 
-    vTaskStartScheduler();
+    /* --- POST on-chip ------------------------------------------- */
+
+    // trust me bro
+
+    /* --- Initialize off-chip ------------------------------------ */
+
+    /* --- POST off-chip ------------------------------------------ */
+
+    // trust me bro
+
+    /* --- Start -------------------------------------------------- */
+
+//    vTaskStartScheduler();
+
+
+    // uart testing
+    {
+        // configure pin muxing
+        GPIOPinConfigure(GPIO_PA0_U0RX);
+        GPIOPinConfigure(GPIO_PA1_U0TX);
+
+        // enable UART0
+        SysCtlPeripheralEnable(SYSCTL_PERIPH_UART0);
+
+        // use internal 16MHz oscillator as UART control source
+        UARTClockSourceSet(UART0_BASE, UART_CLOCK_PIOSC);
+
+        // select alternative pin function
+        GPIOPinTypeUART(GPIO_PORTA_BASE, GPIO_PIN_0 | GPIO_PIN_1);
+
+        // init uart
+
+    }
 
     while(1)
         ;
