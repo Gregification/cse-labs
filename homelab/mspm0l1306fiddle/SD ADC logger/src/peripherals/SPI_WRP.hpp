@@ -6,6 +6,7 @@
  *
  * target device : MSPM0L1306
  * uses DriverLib
+ * not intended for rtos
  */
 
 #ifndef SRC_SPI_WRP_HPP_
@@ -27,6 +28,8 @@
 
 class SPI_WRP {
 public:
+    static constexpr uint32_t DEFAULT_SPI_CLK = 16e6;
+
     SPI_Regs * spi_reg;
 
     SPI_WRP(SPI_Regs * reg = SPI0);
@@ -36,7 +39,7 @@ public:
      * defaults to:
      *      - CLK and CS are idle high, and CS is low for the entirety of the data transmit
      *      - transition on falling edge, sample on rising edge
-     *      - note that CS is only set after the first transmission
+     *      - note that CS should be setup external to this class
      */
     void init();
 

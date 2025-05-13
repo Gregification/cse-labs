@@ -31,7 +31,7 @@ namespace common {
      * sets
      *      - clock 32Mhz
      *      - brown out level @ 2.82V
-     *      - init GPIOA
+     *      - enable all ports
      */
     void init();
 };

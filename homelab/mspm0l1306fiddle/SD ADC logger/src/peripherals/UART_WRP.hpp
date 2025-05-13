@@ -6,6 +6,7 @@
  *
  * target device : MSPM0L1306
  * uses DriverLib
+ * not intended for rtos
  */
 
 #ifndef SRC_UART_WRP_HPP_
