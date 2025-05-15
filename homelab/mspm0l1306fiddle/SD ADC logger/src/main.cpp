@@ -55,9 +55,7 @@ int main(void) {
     DL_GPIO_enableOutput(GPIOA, CSpin);
     delay_cycles(50); // give CS time to stabilize
 
-
-
-    uart.puts(NEWLINE);
+    uart.puts("boo womp" NEWLINE);
 
     while(true);
 }
