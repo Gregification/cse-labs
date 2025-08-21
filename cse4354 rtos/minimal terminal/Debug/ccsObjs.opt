@@ -1,0 +1,6 @@
+"./tm4c123gh6pm_startup_ccs.obj"
+"./src/clock.obj"
+"./src/main.obj"
+"./src/uart0.obj"
+"../tm4c123gh6pm.cmd"
+-llibc.a
