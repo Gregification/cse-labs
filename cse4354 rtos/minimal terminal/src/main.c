@@ -91,7 +91,6 @@ void getsUart0(USER_DATA * ud){
     while(count <= MAX_CHARS){
         char c = getcUart0();
 
-        // 4.c
         if(c == 8 || c == 127){ // character is backspace
             if(count != 0){
                 count--;
@@ -100,12 +99,9 @@ void getsUart0(USER_DATA * ud){
             continue;
         }
 
-
-        // 4.d
         if(c == 13) //character is a carriage return
             break;
 
-        // 4.e
         if(c >= 32){ //character is printable char
             putcUart0(c);
 
