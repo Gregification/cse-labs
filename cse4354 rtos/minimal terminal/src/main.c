@@ -11,6 +11,7 @@
 #define DEBUG
 #define MAX_CHARS 80
 #define MAX_FIELDS 5
+#define NEWLINE "\n\r"
 
 typedef struct _USER_DATA {
         char buffer[MAX_CHARS+1];
@@ -48,10 +49,11 @@ int main(void)
 
     // Setup UART0 baud rate
     setUart0BaudRate(115200, 40e6);
+    putsUart0("\033[2J\033[H");
+    putsUart0("FALL 2025, CSE4354 RTOS, Nano Project, George Boone 1002055713" NEWLINE);
 
     USER_DATA data;
 
-    putsUart0("\033[2J\033[H");
 
     while(true){
         putcUart0('>');
@@ -82,7 +84,7 @@ int main(void)
             putsUart0("invalid command");
         }
 
-        putsUart0("\n\r");
+        putsUart0(NEWLINE);
     }
 }
 
@@ -117,17 +119,15 @@ void getsUart0(USER_DATA * ud){
 void parseFields(USER_DATA * ud){
 
     uint8_t i, j;// i for buffer, j for fields
-    i = j = 0;
 
     //assume former field was 'd'
     char cur = 'd';
 
-    for(; i < MAX_CHARS && j < MAX_FIELDS && ud->buffer[i] != '\0'; i++){
+    for(i = j = 0; i < MAX_CHARS && j < MAX_FIELDS && ud->buffer[i] != '\0'; i++){
         //the type of the former char is stored in the current buffer
         ud->fieldType[j] = cur;
 
         //classify current char
-        cur = 'd';
         if (     ud->buffer[i] <= 'z'
              &&  ud->buffer[i] >= 'A'
              && (ud->buffer[i] <= 'Z' || ud->buffer[i] >= 'a')
@@ -136,9 +136,7 @@ void parseFields(USER_DATA * ud){
         } else if (ud->buffer[i] <= '9' && ud->buffer[i] >= '0'){
             cur = 'n';
         }
-
-        //if is a delimiter : ignore
-        if(cur == 'd'){
+        else {//is a delimiter : ignore
             ud->buffer[i] = '\0';
             continue;
         }
@@ -169,13 +167,13 @@ void parseFields(USER_DATA * ud){
 
     #ifdef DEBUG
         for(i = 0; i < ud->fieldCount;i++){
-            putsUart0("\n\r");
+            putsUart0(NEWLINE);
             putcUart0(ud->fieldType[i]);
-            putsUart0("\n\r");
+            putsUart0(NEWLINE);
             char * s = getFieldString(ud, i);
             putsUart0(s);
         }
-        putsUart0("\n\r");
+        putsUart0(NEWLINE);
     #endif
 }
 
