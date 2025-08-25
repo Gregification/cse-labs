@@ -22,10 +22,11 @@
 #include <stdbool.h>
 #include "tm4c123gh6pm.h"
 #include "uart0.h"
+#include "gpio.h"
 
-// PortA masks
-#define UART_TX_MASK 2
-#define UART_RX_MASK 1
+// Pins
+#define UART_TX PORTA,1
+#define UART_RX PORTA,0
 
 //-----------------------------------------------------------------------------
 // Global variables
@@ -36,28 +37,22 @@
 //-----------------------------------------------------------------------------
 
 // Initialize UART0
-void initUart0()
+void initUart0(void)
 {
     // Enable clocks
     SYSCTL_RCGCUART_R |= SYSCTL_RCGCUART_R0;
-    SYSCTL_RCGCGPIO_R |= SYSCTL_RCGCGPIO_R0;
     _delay_cycles(3);
+    enablePort(PORTA);
 
     // Configure UART0 pins
-    GPIO_PORTA_DEN_R |= UART_TX_MASK | UART_RX_MASK;    // enable digital on UART0 pins
-    GPIO_PORTA_AFSEL_R |= UART_TX_MASK | UART_RX_MASK;  // use peripheral to drive PA0, PA1
-    GPIO_PORTA_PCTL_R &= ~(GPIO_PCTL_PA1_M | GPIO_PCTL_PA0_M); // clear bits 0-7
-    GPIO_PORTA_PCTL_R |= GPIO_PCTL_PA1_U0TX | GPIO_PCTL_PA0_U0RX;
-                                                        // select UART0 to drive pins PA0 and PA1: default, added for clarity
+    selectPinPushPullOutput(UART_TX);
+    selectPinDigitalInput(UART_RX);
+    setPinAuxFunction(UART_TX, GPIO_PCTL_PA1_U0TX);
+    setPinAuxFunction(UART_RX, GPIO_PCTL_PA0_U0RX);
 
-    // Configure UART0 to 115200 baud (assuming fcyc = 40 MHz), 8N1 format
+    // Configure UART0 with default baud rate
     UART0_CTL_R = 0;                                    // turn-off UART0 to allow safe programming
-    UART0_CC_R = UART_CC_CS_SYSCLK;                     // use system clock (40 MHz)
-    UART0_IBRD_R = 21;                                  // r = 40 MHz / (Nx115.2kHz), set floor(r)=21, where N=16
-    UART0_FBRD_R = 45;                                  // round(fract(r)*64)=45
-    UART0_LCRH_R = UART_LCRH_WLEN_8 | UART_LCRH_FEN;    // configure for 8N1 w/ 16-level FIFO
-    UART0_CTL_R = UART_CTL_TXE | UART_CTL_RXE | UART_CTL_UARTEN;
-                                                        // enable TX, RX, and module
+    UART0_CC_R = UART_CC_CS_SYSCLK;                     // use system clock (usually 40 MHz)
 }
 
 // Set baud rate as function of instruction cycle frequency
@@ -82,7 +77,7 @@ void putcUart0(char c)
 }
 
 // Blocking function that writes a string when the UART buffer is not full
-void putsUart0(char* str)
+void putsUart0(const char* str)
 {
     uint8_t i = 0;
     while (str[i] != '\0')
@@ -90,14 +85,14 @@ void putsUart0(char* str)
 }
 
 // Blocking function that returns with serial data once the buffer is not empty
-char getcUart0()
+char getcUart0(void)
 {
     while (UART0_FR_R & UART_FR_RXFE);               // wait if uart0 rx fifo empty
-    return UART0_DR_R & 0xFF;                        // get character from fifo, masking off the flags
+    return UART0_DR_R & 0xFF;                        // get character from fifo
 }
 
 // Returns the status of the receive buffer
-bool kbhitUart0()
+bool kbhitUart0(void)
 {
     return !(UART0_FR_R & UART_FR_RXFE);
 }

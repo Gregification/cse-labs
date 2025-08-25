@@ -11,9 +11,15 @@ GEN_CMDS__FLAG :=
 
 ORDERED_OBJS += \
 "./tm4c123gh6pm_startup_ccs.obj" \
-"./src/clock.obj" \
+"./src/common.obj" \
 "./src/main.obj" \
-"./src/uart0.obj" \
+"./src/rtos.obj" \
+"./src/loshlib/clock.obj" \
+"./src/loshlib/gpio.obj" \
+"./src/loshlib/kb_gpio.obj" \
+"./src/loshlib/nvic.obj" \
+"./src/loshlib/uart0.obj" \
+"./src/loshlib/wait.obj" \
 "../tm4c123gh6pm.cmd" \
 $(GEN_CMDS__FLAG) \
 -llibc.a \
@@ -27,8 +33,10 @@ RMDIR := RMDIR /S/Q
 -include sources.mk
 -include subdir_vars.mk
 -include src/subdir_vars.mk
+-include src/loshlib/subdir_vars.mk
 -include subdir_rules.mk
 -include src/subdir_rules.mk
+-include src/loshlib/subdir_rules.mk
 -include objects.mk
 
 ifneq ($(MAKECMDGOALS),clean)
@@ -139,15 +147,15 @@ all: $(OBJS) $(CMD_SRCS) $(GEN_CMDS)
 minimal\ terminal.out: $(OBJS) $(CMD_SRCS) $(GEN_CMDS)
 	@echo 'Building target: "$@"'
 	@echo 'Invoking: Arm Linker'
-	"C:/ti/ccs1281/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/bin/armcl" -mv7M4 --code_state=16 --float_support=FPv4SPD16 -me --define=ccs="ccs" --define=PART_TM4C123GH6PM -g --gcc --diag_warning=225 --diag_wrap=off --display_error_number --abi=eabi -z -m"minimal terminal.map" --heap_size=0 --stack_size=512 -i"C:/ti/ccs1281/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/lib" -i"C:/ti/ccs1281/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include" --reread_libs --diag_wrap=off --display_error_number --warn_sections --xml_link_info="minimal terminal_linkInfo.xml" --rom_model -o "minimal terminal.out" $(ORDERED_OBJS)
+	"C:/ti/ccs1281/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/bin/armcl" -mv7M4 --code_state=16 --float_support=FPv4SPD16 -me --define=ccs="ccs" --define=PART_TM4C123GH6PM -g --gcc --diag_warning=225 --diag_wrap=off --display_error_number --abi=eabi -z -m"minimal terminal.map" --heap_size=0 --stack_size=4092 -i"C:/ti/ccs1281/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/lib" -i"C:/ti/ccs1281/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include" --reread_libs --diag_wrap=off --display_error_number --warn_sections --xml_link_info="minimal terminal_linkInfo.xml" --rom_model -o "minimal terminal.out" $(ORDERED_OBJS)
 	@echo 'Finished building target: "$@"'
 	@echo ' '
 
 # Other Targets
 clean:
 	-$(RM) $(EXE_OUTPUTS__QUOTED)
-	-$(RM) "tm4c123gh6pm_startup_ccs.obj" "src\clock.obj" "src\main.obj" "src\uart0.obj" 
-	-$(RM) "tm4c123gh6pm_startup_ccs.d" "src\clock.d" "src\main.d" "src\uart0.d" 
+	-$(RM) "tm4c123gh6pm_startup_ccs.obj" "src\common.obj" "src\main.obj" "src\rtos.obj" "src\loshlib\clock.obj" "src\loshlib\gpio.obj" "src\loshlib\kb_gpio.obj" "src\loshlib\nvic.obj" "src\loshlib\uart0.obj" "src\loshlib\wait.obj" 
+	-$(RM) "tm4c123gh6pm_startup_ccs.d" "src\common.d" "src\main.d" "src\rtos.d" "src\loshlib\clock.d" "src\loshlib\gpio.d" "src\loshlib\kb_gpio.d" "src\loshlib\nvic.d" "src\loshlib\uart0.d" "src\loshlib\wait.d" 
 	-@echo 'Finished clean'
 	-@echo ' '
 

@@ -15,9 +15,12 @@ src/main.obj: C:/ti/ccs1281/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include/std
 src/main.obj: C:/ti/ccs1281/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include/string.h
 src/main.obj: C:/ti/ccs1281/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include/xlocale/_string.h
 src/main.obj: C:/ti/ccs1281/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include/stdlib.h
-src/main.obj: ../src/clock.h
-src/main.obj: ../src/uart0.h
+src/main.obj: ../src/loshlib/clock.h
+src/main.obj: ../src/loshlib/uart0.h
+src/main.obj: ../src/loshlib/gpio.h
 src/main.obj: ../src/tm4c123gh6pm.h
+src/main.obj: ../src/common.h
+src/main.obj: ../src/rtos.h
 
 ../src/main.c:
 
@@ -49,9 +52,15 @@ C:/ti/ccs1281/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include/xlocale/_string.h
 
 C:/ti/ccs1281/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include/stdlib.h:
 
-../src/clock.h:
+../src/loshlib/clock.h:
 
-../src/uart0.h:
+../src/loshlib/uart0.h:
+
+../src/loshlib/gpio.h:
 
 ../src/tm4c123gh6pm.h:
+
+../src/common.h:
+
+../src/rtos.h:
 

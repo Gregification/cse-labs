@@ -6,33 +6,33 @@ SHELL = cmd.exe
 
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
-../src/clock.c \
+../src/common.c \
 ../src/main.c \
-../src/uart0.c 
+../src/rtos.c 
 
 C_DEPS += \
-./src/clock.d \
+./src/common.d \
 ./src/main.d \
-./src/uart0.d 
+./src/rtos.d 
 
 OBJS += \
-./src/clock.obj \
+./src/common.obj \
 ./src/main.obj \
-./src/uart0.obj 
+./src/rtos.obj 
 
 OBJS__QUOTED += \
-"src\clock.obj" \
+"src\common.obj" \
 "src\main.obj" \
-"src\uart0.obj" 
+"src\rtos.obj" 
 
 C_DEPS__QUOTED += \
-"src\clock.d" \
+"src\common.d" \
 "src\main.d" \
-"src\uart0.d" 
+"src\rtos.d" 
 
 C_SRCS__QUOTED += \
-"../src/clock.c" \
+"../src/common.c" \
 "../src/main.c" \
-"../src/uart0.c" 
+"../src/rtos.c" 
 
 
