@@ -47,4 +47,8 @@ PID pidof(const char name[]);
  * return true on success */
 bool run(const char name[]);
 
+void yield();
+
+void shell();
+
 #endif /* SRC_RTOS_H_ */
