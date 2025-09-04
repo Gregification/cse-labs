@@ -1,29 +1,22 @@
-// Clock Library
+// EEPROM functions
 // Jason Losh
 
 //-----------------------------------------------------------------------------
 // Hardware Target
 //-----------------------------------------------------------------------------
 
-// Target Platform: EK-TM4C123GXL
 // Target uC:       TM4C123GH6PM
 // System Clock:    -
 
-// Hardware configuration:
-// 16 MHz external crystal oscillator
-
-//-----------------------------------------------------------------------------
-// Device includes, defines, and assembler directives
-//-----------------------------------------------------------------------------
-
-#ifndef CLOCK_H_
-#define CLOCK_H_
+#ifndef EEPROM_H_
+#define EEPROM_H_
 
 //-----------------------------------------------------------------------------
 // Subroutines
 //-----------------------------------------------------------------------------
 
-void initSystemClockTo40Mhz(void);
+void initEeprom(void);
+void writeEeprom(uint16_t add, uint32_t data);
+uint32_t readEeprom(uint16_t add);
 
 #endif
-

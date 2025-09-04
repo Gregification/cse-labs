@@ -1,4 +1,4 @@
-// Clock Library
+// Timer Service Library
 // Jason Losh
 
 //-----------------------------------------------------------------------------
@@ -7,23 +7,38 @@
 
 // Target Platform: EK-TM4C123GXL
 // Target uC:       TM4C123GH6PM
-// System Clock:    -
+// System Clock:    40 MHz
 
 // Hardware configuration:
-// 16 MHz external crystal oscillator
+// Timer 4
 
 //-----------------------------------------------------------------------------
 // Device includes, defines, and assembler directives
 //-----------------------------------------------------------------------------
 
-#ifndef CLOCK_H_
-#define CLOCK_H_
+#ifndef TIMER_H_
+#define TIMER_H_
+
+typedef void (*_callback)();
+
+// ----------------------------------------------------------------------------
+//  Globals
+// ----------------------------------------------------------------------------
+
+#define TIMER_TICK_UNIT_S 2     // every X seconds systick++
+
+volatile uint16_t systick;
 
 //-----------------------------------------------------------------------------
 // Subroutines
 //-----------------------------------------------------------------------------
 
-void initSystemClockTo40Mhz(void);
+void initTimer();
+bool startOneshotTimer(_callback callback, uint32_t seconds);
+bool startPeriodicTimer(_callback callback, uint32_t seconds);
+bool stopTimer(_callback callback);
+bool restartTimer(_callback callback);
+void tickIsr();
+uint32_t random32();
 
 #endif
-

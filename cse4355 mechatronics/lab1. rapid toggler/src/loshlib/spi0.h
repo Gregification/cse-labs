@@ -1,4 +1,4 @@
-// Clock Library
+// SPI0 library
 // Jason Losh
 
 //-----------------------------------------------------------------------------
@@ -10,20 +10,31 @@
 // System Clock:    -
 
 // Hardware configuration:
-// 16 MHz external crystal oscillator
+// SPI0 Interface:
+//   MOSI on PA5 (SSI0Tx)
+//   MISO on PA4 (SSI0Rx)
+//   ~CS on PA3  (SSI0Fss)
+//   SCLK on PA2 (SSI0Clk)
 
 //-----------------------------------------------------------------------------
 // Device includes, defines, and assembler directives
 //-----------------------------------------------------------------------------
 
-#ifndef CLOCK_H_
-#define CLOCK_H_
+#ifndef SPI0_H_
+#define SPI0_H_
+
+#define USE_SSI0_FSS 1
+#define USE_SSI0_RX  2
 
 //-----------------------------------------------------------------------------
 // Subroutines
 //-----------------------------------------------------------------------------
 
-void initSystemClockTo40Mhz(void);
+void initSpi0(uint32_t pinMask);
+void setSpi0BaudRate(uint32_t clockRate, uint32_t fcyc);
+void setSpi0Mode(uint8_t polarity, uint8_t phase);
+void writeSpi0Data(uint32_t data);
+uint32_t readSpi0Data();
 
 #endif
 

@@ -10,7 +10,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "tm4c123gh6pm.h"
+#include "loshlib/tm4c123gh6pm.h"
 
 #define BV(X) (1 << (X))
 #define ARRANDN(ARR) ARR,sizeof(ARR)
