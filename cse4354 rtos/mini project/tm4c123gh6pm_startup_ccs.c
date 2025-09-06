@@ -55,10 +55,6 @@ extern uint32_t __STACK_TOP;
 //
 //*****************************************************************************
 // To be added by user
-void _MPUFaultHandler();
-void _BusFaultHandler();
-void _UsageFaultHandler();
-void _PendSVFaultHandler();
 
 //*****************************************************************************
 //
