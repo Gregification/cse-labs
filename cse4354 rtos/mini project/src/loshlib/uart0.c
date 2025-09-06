@@ -24,6 +24,8 @@
 #include "uart0.h"
 #include "gpio.h"
 
+#include "rtos.h"
+
 // Pins
 #define UART_TX PORTA,1
 #define UART_RX PORTA,0

@@ -13,6 +13,11 @@
 
 typedef uint32_t PID;
 
+PID pid; // current processes ID
+
+#define PID_STR_LEN 10
+
+
 /** process status */
 void ps();
 

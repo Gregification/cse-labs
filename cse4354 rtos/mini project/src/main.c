@@ -1,8 +1,8 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "loshlib/clock.h"
 #include "loshlib/uart0.h"
@@ -44,7 +44,47 @@ int main(void)
     // Setup UART0 baud rate
     setUart0BaudRate(115200, F_CPU);
     putsUart0("\033[2J\033[H\033[0m");
-    putsUart0("FALL 2025, CSE4354 RTOS, Nano Project, George Boone 1002055713" NEWLINE);
+    putsUart0("FALL 2025, CSE4354 RTOS, Mini Project, George Boone 1002055713" NEWLINE);
 
     shell();
+}
+
+
+/*** handlers ****************************************************************/
+
+static char strBuff[PID_STR_LEN];
+void _HardFaultHandlerISR(){
+    putsUart0("Hard fault in process ");
+    snprintf(ARRANDN(strBuff), "%d" NEWLINE, pid);
+    putsUart0(strBuff);
+}
+
+void _MPUFaultHandlerISR(){
+    putsUart0("MPU fault in process ");
+    snprintf(ARRANDN(strBuff), "%d" NEWLINE, pid);
+    putsUart0(strBuff);
+}
+
+void _BusFaultHandlerISR(){
+    putsUart0("Bus fault in process ");
+    snprintf(ARRANDN(strBuff), "%d" NEWLINE, pid);
+    putsUart0(strBuff);
+}
+
+void _UsageFaultHandlerISR(){
+    putsUart0("Usage fault in process ");
+    snprintf(ARRANDN(strBuff), "%d" NEWLINE, pid);
+    putsUart0(strBuff);
+}
+
+void _PendSVFaultHandlerISR(){
+    putsUart0("Pendsv fault in process ");
+    snprintf(ARRANDN(strBuff), "%d", pid);
+    putsUart0(strBuff);
+
+    if(NVIC_FAULT_STAT_R & (NVIC_FAULT_STAT_DERR | NVIC_FAULT_STAT_IERR)){
+        NVIC_FAULT_STAT_R &= ~(NVIC_FAULT_STAT_DERR | NVIC_FAULT_STAT_IERR);
+        putsUart0(", called from MPU");
+    }
+    putsUart0(NEWLINE);
 }
