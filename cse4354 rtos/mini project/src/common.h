@@ -26,5 +26,6 @@
 
 /** returns 0 if equal */
 bool strCmp(const char *, const char *);
+void printu32(uint32_t);
 
 #endif /* SRC_COMMON_H_ */

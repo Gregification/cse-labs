@@ -56,7 +56,7 @@ void yield();
 
 void shell();
 
-void setPSP(void * p);
+extern void setPSP(void * p);
 
 /* see /110 for stack offset diagram */
 uint32_t * getPSP();
