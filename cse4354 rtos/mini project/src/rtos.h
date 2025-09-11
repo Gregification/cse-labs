@@ -56,4 +56,9 @@ void yield();
 
 void shell();
 
+void setPSP(void * p);
+
+/* see /110 for stack offset diagram */
+uint32_t * getPSP();
+
 #endif /* SRC_RTOS_H_ */

@@ -28,6 +28,12 @@ void initHw()
     selectPinPushPullOutput(LED_RED);
     selectPinPushPullOutput(LED_GREEN);
     selectPinPushPullOutput(LED_BLUE);
+
+    // enable the low indexed system IRQ's
+    NVIC_SYS_HND_CTRL_R |=              // /173
+                NVIC_SYS_HND_CTRL_USAGE
+            |   NVIC_SYS_HND_CTRL_BUS
+            |   NVIC_SYS_HND_CTRL_MEM;
 }
 
 
