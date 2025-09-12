@@ -319,3 +319,18 @@ bool isCommand(USER_DATA * ud, const char strCmd[], uint8_t minArgs) {
     return 0 == strCmp(strCmd, ud->buffer);
 }
 
+uint32_t getR0() {
+    return getPSP()[1];
+}
+
+/*__asm("WMS_LOOP0:   MOV  R1, #6");          // 1
+    __asm("WMS_LOOP1:   SUB  R1, #1");          // 6
+    __asm("             CBZ  R1, WMS_DONE1");   // 5+1*3
+    __asm("             NOP");                  // 5
+    __asm("             NOP");                  // 5
+    __asm("             B    WMS_LOOP1");       // 5*2 (speculative, so P=1)
+    __asm("WMS_DONE1:   SUB  R0, #1");          // 1
+    __asm("             CBZ  R0, WMS_DONE0");   // 1
+    __asm("             NOP");                  // 1
+    __asm("             B    WMS_LOOP0");       // 1*2 (speculative, so P=1)
+    __asm("WMS_DONE0:");                        // ---*/

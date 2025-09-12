@@ -32,6 +32,7 @@ void initHw()
                 NVIC_SYS_HND_CTRL_USAGE
             |   NVIC_SYS_HND_CTRL_BUS
             |   NVIC_SYS_HND_CTRL_MEM;
+    NVIC_EN0_R |=
 }
 
 
@@ -50,10 +51,18 @@ int main(void)
     putsUart0("\033[2J\033[H\033[0m");
     putsUart0("FALL 2025, CSE4354 RTOS, Mini Project, George Boone 1002055713" NEWLINE);
 
-    while(1){
-        printu32(getPSP());
-        putsUart0(NEWLINE);
+    {
+        uint32_t newpsp = 0x2000300;
+        setPSP(&newpsp);
     }
+
+    uint32_t *psp = getPSP();
+    printu32(psp[0]);
+    putsUart0(NEWLINE);
+
+    volatile int x, y;
+    x = 1, y = 0;
+    x /= y;
 
     shell();
 }
@@ -65,24 +74,32 @@ void _HardFaultHandlerISR(){
     putsUart0("Hard fault in process ");
     printu32(pid);
     putsUart0(NEWLINE);
+
+    while(1);
 }
 
 void _MPUFaultHandlerISR(){
     putsUart0("MPU fault in process ");
     printu32(pid);
     putsUart0(NEWLINE);
+
+    while(1);
 }
 
 void _BusFaultHandlerISR(){
     putsUart0("Bus fault in process ");
     printu32(pid);
     putsUart0(NEWLINE);
+
+    while(1);
 }
 
 void _UsageFaultHandlerISR(){
     putsUart0("Usage fault in process ");
     printu32(pid);
     putsUart0(NEWLINE);
+
+    while(1);
 }
 
 void _PendSVFaultHandlerISR(){
@@ -95,4 +112,6 @@ void _PendSVFaultHandlerISR(){
         putsUart0(", called from MPU");
     }
     putsUart0(NEWLINE);
+
+    while(1);
 }

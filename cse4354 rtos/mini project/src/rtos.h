@@ -56,9 +56,13 @@ void yield();
 
 void shell();
 
-extern void setPSP(void * p);
+void setPSP(void * p);
 
 /* see /110 for stack offset diagram */
-uint32_t * getPSP();
+extern uint32_t * getPSP();
+
+uint32_t getR0();
+
+void setASP();
 
 #endif /* SRC_RTOS_H_ */
