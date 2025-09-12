@@ -15,7 +15,7 @@ bool strCmp(const char * a, const char * b) {
     return b[i] - a[i];
 }
 
-void printu32(uint32_t v) {
+void printu32d(uint32_t v) {
     char str[10];
     int i = 0;
     for(i = 0; v > 0; i++){
@@ -24,5 +24,23 @@ void printu32(uint32_t v) {
     }
     for(; i >= 0; --i){
         putcUart0(str[i]);
+    }
+}
+
+void printu32h(uint32_t v) {
+    int started = 0;
+
+    int i;
+    putsUart0("0x");
+    for (i = 28; i >= 0; i -= 4) {
+        uint8_t B = (v >> i) & 0xF;
+
+        if (B != 0 || started || i == 0) {
+            started = 1;
+            if (B < 10)
+                putcUart0('0' + B);
+            else
+                putcUart0('A' + (B - 10));
+        }
     }
 }
