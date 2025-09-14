@@ -320,14 +320,33 @@ uint32_t getR0() {
     return getPSP()[1];
 }
 
-/*__asm("WMS_LOOP0:   MOV  R1, #6");          // 1
-    __asm("WMS_LOOP1:   SUB  R1, #1");          // 6
-    __asm("             CBZ  R1, WMS_DONE1");   // 5+1*3
-    __asm("             NOP");                  // 5
-    __asm("             NOP");                  // 5
-    __asm("             B    WMS_LOOP1");       // 5*2 (speculative, so P=1)
-    __asm("WMS_DONE1:   SUB  R0, #1");          // 1
-    __asm("             CBZ  R0, WMS_DONE0");   // 1
-    __asm("             NOP");                  // 1
-    __asm("             B    WMS_LOOP0");       // 1*2 (speculative, so P=1)
-    __asm("WMS_DONE0:");                        // ---*/
+void dumpPSPRegsFromMSP() {
+    uint32_t * psp = getPSP();
+    putsUart0("\tPSP:\t");
+    printu32h((uint32_t)psp);
+    putsUart0(NEWLINE);
+    putsUart0("\tR0:\t");
+    printu32h(psp[0]);
+    putsUart0(NEWLINE);
+    putsUart0("\tR1:\t");
+    printu32h(psp[1]);
+    putsUart0(NEWLINE);
+    putsUart0("\tR2:\t");
+    printu32h(psp[2]);
+    putsUart0(NEWLINE);
+    putsUart0("\tR3:\t");
+    printu32h(psp[3]);
+    putsUart0(NEWLINE);
+    putsUart0("\tR12:\t");
+    printu32h(psp[4]);
+    putsUart0(NEWLINE);
+    putsUart0("\tLR:\t");
+    printu32h(psp[5]);
+    putsUart0(NEWLINE);
+    putsUart0("\tPC:\t");
+    printu32h(psp[6]);
+    putsUart0(NEWLINE);
+    putsUart0("\txPSR:\t");
+    printu32h(psp[7]);
+    putsUart0(NEWLINE);
+}

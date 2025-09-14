@@ -63,6 +63,8 @@ extern uint32_t * getPSP();
 
 uint32_t getR0();
 
-void setASP();
+extern void setASP();
+
+void dumpPSPRegsFromMSP();
 
 #endif /* SRC_RTOS_H_ */

@@ -31,7 +31,6 @@ void initHw()
     NVIC_SYS_HND_CTRL_R |=              // /173
                 NVIC_SYS_HND_CTRL_USAGE
             |   NVIC_SYS_HND_CTRL_BUS
-            |   NVIC_SYS_HND_CTRL_PNDSV
             |   NVIC_SYS_HND_CTRL_MEM;
 
     NVIC_CFG_CTRL_R |=                  // /168
@@ -44,7 +43,6 @@ void initHw()
 // Main
 //-----------------------------------------------------------------------------
 
-void div0();
 int main(void)
 {
     pid = 123;
@@ -62,7 +60,7 @@ int main(void)
 
     /* set & get PSP */
     {
-        uint32_t newpsp = 0x2000300;
+        uint32_t newpsp = 0x20008000;
         setPSP(&newpsp);
 
         uint32_t *psp = getPSP();
@@ -87,12 +85,25 @@ int main(void)
 //        *bogous = 10;
 //    }
 
-    /* pend SV trigger */
-//    {// TODO
-//        NVIC_INT_CTRL_R |= NVIC_INT_CTRL_ISR_PEND;
+    /* hard fault */
+//    {
+//        // leaves junk data in R0
+//        volatile int a = 0xBEE;
+//        a += 90;
+//
+//        // disable bus fault handler
+//        NVIC_SYS_HND_CTRL_R &= ~NVIC_SYS_HND_CTRL_BUS; // /173
+//
+//        // cause bus fault
+//        volatile uint32_t * bogous = (uint32_t *)0xFFFFFFFC;
+//        *bogous = 10;
 //    }
 
 
+    /* pend SV trigger */
+    {
+        NVIC_INT_CTRL_R |= NVIC_INT_CTRL_PEND_SV;  // /160
+    }
 
     shell();
 }
@@ -106,6 +117,8 @@ void _HardFaultHandlerISR(){
     printu32d(pid);
     putsUart0(NEWLINE);
 
+    dumpPSPRegsFromMSP();
+
     while(1);
 }
 
@@ -113,6 +126,12 @@ void _MPUFaultHandlerISR(){
     putsUart0(CLIERROR);
     putsUart0("MPU fault in process ");
     printu32d(pid);
+    putsUart0(NEWLINE);
+
+    dumpPSPRegsFromMSP();
+
+    putsUart0("PSP:");
+    printu32h(pid);
     putsUart0(NEWLINE);
 
     while(1);
