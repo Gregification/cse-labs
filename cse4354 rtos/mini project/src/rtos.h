@@ -61,10 +61,17 @@ void setPSP(void * p);
 /* see /110 for stack offset diagram */
 extern uint32_t * getPSP();
 
+extern uint32_t * getMSP(); // not sure if this is right, dosen't the interrupt run with MSP??
+
 uint32_t getR0();
 
 extern void setASP();
 
 void dumpPSPRegsFromMSP();
+
+//NVIC_FAULT_STAT_R /177
+void dumpFaultStatReg(uint32_t copyOfFaultStat);
+
+void * malloc_heap(int size);
 
 #endif /* SRC_RTOS_H_ */

@@ -59,15 +59,14 @@ int main(void)
     putsUart0(CLIRESET);
 
     /* set & get PSP */
-    {
-        uint32_t newpsp = 0x20008000;
-        setPSP(&newpsp);
-
-        uint32_t *psp = getPSP();
-        printu32h(psp[0]);
-        putsUart0(NEWLINE);
-    }
-
+//    {
+//        uint32_t newpsp = 0x20008000;
+//        setPSP(&newpsp);
+//
+//        uint32_t *psp = getPSP();
+//        printu32h(psp[0]);
+//        putsUart0(NEWLINE);
+//    }
 
     /* Usage faults */
 //    { // unaligned
@@ -80,17 +79,13 @@ int main(void)
 //    }
 
     /* Bus fault */
-//    { // Imprecise data
+//    { // Imprecise data /180
 //        volatile uint32_t * bogous = (uint32_t *)0xFFFFFFFC;
 //        *bogous = 10;
 //    }
 
     /* hard fault */
 //    {
-//        // leaves junk data in R0
-//        volatile int a = 0xBEE;
-//        a += 90;
-//
 //        // disable bus fault handler
 //        NVIC_SYS_HND_CTRL_R &= ~NVIC_SYS_HND_CTRL_BUS; // /173
 //
@@ -99,11 +94,15 @@ int main(void)
 //        *bogous = 10;
 //    }
 
-
     /* pend SV trigger */
-    {
-        NVIC_INT_CTRL_R |= NVIC_INT_CTRL_PEND_SV;  // /160
-    }
+//    {
+//        NVIC_INT_CTRL_R |= NVIC_INT_CTRL_PEND_SV;  // /160
+//    }
+
+    /* memory manager fault */
+//    {
+//        NVIC_SYS_HND_CTRL_R |= NVIC_SYS_HND_CTRL_MEMP; // /174
+//    }
 
     shell();
 }
@@ -128,11 +127,19 @@ void _MPUFaultHandlerISR(){
     printu32d(pid);
     putsUart0(NEWLINE);
 
+    putsUart0("\tMSP:\t");
+    printu32h((uint32_t)getMSP());
+    putsUart0(NEWLINE);
     dumpPSPRegsFromMSP();
 
-    putsUart0("PSP:");
-    printu32h(pid);
-    putsUart0(NEWLINE);
+    // /177 . Memory Management Fault bits 7:0
+    {
+        uint32_t fault_stats = NVIC_FAULT_STAT_R;
+        putsUart0("\tfault_stats:\t");
+        printu32h(fault_stats);
+        putsUart0(NEWLINE);
+        dumpFaultStatReg(fault_stats & 0xFF);
+    }
 
     while(1);
 }
@@ -143,47 +150,13 @@ void _BusFaultHandlerISR(){
     printu32d(pid);
     putsUart0(NEWLINE);
 
-    // /177 . bits 15:8
-    if(NVIC_FAULT_STAT_R & NVIC_FAULT_STAT_IBUS){
-        putsUart0("\tIBUS");
+    // /177 . Bus Fault bits 15:8
+    {
+        uint32_t fault_stats = NVIC_FAULT_STAT_R;
+        putsUart0("\tfault_stats:\t");
+        printu32h(fault_stats);
         putsUart0(NEWLINE);
-    }
-    if(NVIC_FAULT_STAT_R & NVIC_FAULT_STAT_PRECISE){
-        putsUart0("\tPERCISION DATA. instr addr: ");
-        printu32h(getR0());// double check data sheet, IT maybe the value of PC not R0.
-        putsUart0(NEWLINE);
-    }
-    if(NVIC_FAULT_STAT_R & NVIC_FAULT_STAT_IMPRE){
-        putsUart0("\tIMPRECISE DATA");
-        putsUart0(NEWLINE);
-    }
-    if(NVIC_FAULT_STAT_R & NVIC_FAULT_STAT_BUSTKE){
-        putsUart0("\tUNSTACK");
-        putsUart0(NEWLINE);
-    }
-    if(NVIC_FAULT_STAT_R & NVIC_FAULT_STAT_BSTKE){
-        putsUart0("\tSTACK");
-        putsUart0(NEWLINE);
-    }
-    if(NVIC_FAULT_STAT_R & NVIC_FAULT_STAT_BLSPERR){
-        putsUart0("\tFloating point lazy state preservation");
-        putsUart0(NEWLINE);
-    }
-    if(NVIC_FAULT_STAT_R & NVIC_FAULT_STAT_BFARV){
-        putsUart0("\tADDR REGISTER VALID");
-        putsUart0(NEWLINE);
-    }
-    if(NVIC_FAULT_STAT_R & NVIC_FAULT_STAT_UNDEF){
-        putsUart0("\tUNDEFINED INSTR USAGE");
-        putsUart0(NEWLINE);
-    }
-    if(NVIC_FAULT_STAT_R & NVIC_FAULT_STAT_INVSTAT){
-        putsUart0("\tINVALID STATE USAGE");
-        putsUart0(NEWLINE);
-    }
-    if(NVIC_FAULT_STAT_R & NVIC_FAULT_STAT_INVPC){
-        putsUart0("\tINVALID PC LOAD USAGE");
-        putsUart0(NEWLINE);
+        dumpFaultStatReg(fault_stats & (0xFF << 8));
     }
 
     putsUart0(CLIRESET);
@@ -197,18 +170,13 @@ void _UsageFaultHandlerISR(){
     printu32d(pid);
     putsUart0(NEWLINE);
 
-    // /177 . bits 31:16
-    if(NVIC_FAULT_STAT_R & NVIC_FAULT_STAT_DIV0){
-        putsUart0("\tDIV0");
+    // /177 . Usage Fault bits 31:16
+    {
+        uint32_t fault_stats = NVIC_FAULT_STAT_R;
+        putsUart0("\tfault_stats:\t");
+        printu32h(fault_stats);
         putsUart0(NEWLINE);
-    }
-    if(NVIC_FAULT_STAT_R & NVIC_FAULT_STAT_UNALIGN){
-        putsUart0("\tUNALIGNED");
-        putsUart0(NEWLINE);
-    }
-    if(NVIC_FAULT_STAT_R & NVIC_FAULT_STAT_NOCP){
-        putsUart0("\tNO COPROCESSOR");
-        putsUart0(NEWLINE);
+        dumpFaultStatReg(fault_stats & ((uint32_t)0xFFFF << 16));
     }
 
     putsUart0(CLIRESET);

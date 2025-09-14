@@ -325,6 +325,9 @@ void dumpPSPRegsFromMSP() {
     putsUart0("\tPSP:\t");
     printu32h((uint32_t)psp);
     putsUart0(NEWLINE);
+    putsUart0("\tMSP:\t");
+    printu32h((uint32_t)getMSP());
+    putsUart0(NEWLINE);
     putsUart0("\tR0:\t");
     printu32h(psp[0]);
     putsUart0(NEWLINE);
@@ -349,4 +352,90 @@ void dumpPSPRegsFromMSP() {
     putsUart0("\txPSR:\t");
     printu32h(psp[7]);
     putsUart0(NEWLINE);
+}
+
+void dumpFaultStatReg(uint32_t stat) {
+    // /177
+    if(stat & NVIC_FAULT_STAT_DIV0){
+        putsUart0("\tDivide-by-Zero Usage Fault");
+        putsUart0(NEWLINE);
+    }
+    if(stat & NVIC_FAULT_STAT_UNALIGN){
+        putsUart0("\tUnaligned Access Usage Fault");
+        putsUart0(NEWLINE);
+    }
+    if(stat & NVIC_FAULT_STAT_NOCP){
+        putsUart0("\tNo Coprocessor Usage Fault");
+        putsUart0(NEWLINE);
+    }
+    if(stat & NVIC_FAULT_STAT_INVPC){
+        putsUart0("\tInvalid PC Load Usage Fault");
+        putsUart0(NEWLINE);
+    }
+    if(stat & NVIC_FAULT_STAT_INVSTAT){
+        putsUart0("\tInvalid State Usage Fault");
+        putsUart0(NEWLINE);
+    }
+    if(stat & NVIC_FAULT_STAT_UNDEF){
+        putsUart0("\tUndefined Instruction Usage Fault");
+        putsUart0(NEWLINE);
+    }
+    if(stat & NVIC_FAULT_STAT_BFARV){
+        putsUart0("\tBus Fault Address Register Valid");
+        putsUart0(NEWLINE);
+    }
+    if(stat & NVIC_FAULT_STAT_BLSPERR){
+        putsUart0("\tFloating point lazy state preservation (Bus Fault)");
+        putsUart0(NEWLINE);
+    }
+    if(stat & NVIC_FAULT_STAT_BSTKE){
+        putsUart0("\tStack Bus Fault");
+        putsUart0(NEWLINE);
+    }
+    if(stat & NVIC_FAULT_STAT_BUSTKE){
+        putsUart0("\tUnstack Bus Fault");
+        putsUart0(NEWLINE);
+    }
+    if(stat & NVIC_FAULT_STAT_IMPRE){
+        putsUart0("\tImprecise Data Bus Error");
+        putsUart0(NEWLINE);
+    }
+    if(stat & NVIC_FAULT_STAT_PRECISE){
+        putsUart0("\tPrecise Data Bus Error");
+        putsUart0(NEWLINE);
+    }
+    if(stat & NVIC_FAULT_STAT_IBUS){
+        putsUart0("\tInstruction Bus Error");
+        putsUart0(NEWLINE);
+    }
+    if(stat & NVIC_FAULT_STAT_MMARV){
+        putsUart0("\tMemory Management Fault Address Register Valid");
+        putsUart0(NEWLINE);
+    }
+    if(stat & NVIC_FAULT_STAT_MLSPERR){
+        putsUart0("\tMemory Management Fault on Floating-Point Lazy State Preservation");
+        putsUart0(NEWLINE);
+    }
+    if(stat & NVIC_FAULT_STAT_MSTKE){
+        putsUart0("\tStack Access Violation (Memory Management Fault)");
+        putsUart0(NEWLINE);
+    }
+    if(stat & NVIC_FAULT_STAT_MUSTKE){
+        putsUart0("\tUnstack Access Violation (Memory Management Fault)");
+        putsUart0(NEWLINE);
+    }
+    if(stat & NVIC_FAULT_STAT_DERR){
+        putsUart0("\tData Access Violation");
+        putsUart0(NEWLINE);
+    }
+    if(stat & NVIC_FAULT_STAT_IERR){
+        putsUart0("\tInstruction Access Violation");
+        putsUart0(NEWLINE);
+    }
+
+    putsUart0(CLIRESET);
+}
+
+void * malloc_heap(int size) {
+    return 0; // TODO
 }

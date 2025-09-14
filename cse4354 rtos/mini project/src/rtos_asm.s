@@ -1,6 +1,7 @@
 	.def setPSP
 	.def getPSP
 	.def setASP
+	.def getMSP
 
 .thumb
 .text
@@ -11,6 +12,10 @@ setPSP:
 
 getPSP:
 			MRS R0, PSP
+			BX 	LR
+
+getMSP:
+			MRS R0, MSP
 			BX 	LR
 
 setASP: ; RMW, set bit 1 (ASP). /88
