@@ -35,6 +35,15 @@ void initHw();
 #define LED PORTF,4
 
 
+typedef struct STEP {
+    uint16_t a1;
+    uint16_t a2;
+    uint16_t b1;
+    uint16_t b2;
+    uint16_t pwmA;
+    uint16_t pwmB;
+} STEP;
+
 void setPWMA(uint16_t val){
     PWM0_0_CMPA_R &= ~0xFFFF;
     PWM0_0_CMPA_R |= val; // set pwmA comp value
@@ -44,14 +53,14 @@ void setPWMB(uint16_t val){
     PWM0_0_CMPB_R |= val; // set pwmB comp value
 }
 
-void setDirs(uint16_t arr[6]){
-    setPinValue(CA_DIR_1, arr[0]);
-    setPinValue(CA_DIR_2, arr[1]);
-    setPinValue(CB_DIR_1, arr[2]);
-    setPinValue(CB_DIR_2, arr[3]);
+void setDirs(STEP s){
+    setPinValue(CA_DIR_1, s.a1);
+    setPinValue(CA_DIR_2, s.a2);
+    setPinValue(CB_DIR_1, s.b1);
+    setPinValue(CB_DIR_2, s.b2);
 
-    setPWMA(arr[4]);
-    setPWMB(arr[5]);
+    setPWMA(s.pwmA);
+    setPWMB(s.pwmB);
 }
 
 void printu32d(uint32_t v) {
@@ -163,19 +172,72 @@ int main(void)
     setPWMA(PWMMAX);
     setPWMB(PWMMAX);
 
-    static uint16_t steps[][6] = {
-            (uint16_t[]){1,0,0,0,    PWMMAX                 , PWMMAX                },
-            (uint16_t[]){0,0,1,0,    PWMMAX                 , PWMMAX                },
-            (uint16_t[]){0,1,0,0,    PWMMAX                 , PWMMAX                },
-            (uint16_t[]){0,0,0,1,    PWMMAX                 , PWMMAX                },
-        };
+//    (uint16_t[]){0,0,0,0,    PWMMAX                 , PWMMAX                }, //
+//    static uint16_t steps[][6] = {
+//            (uint16_t[]){1,0,0,0,    PWMMAX                 , PWMMAX                },
+//            (uint16_t[]){0,0,1,0,    PWMMAX                 , PWMMAX                },
+//            (uint16_t[]){0,1,0,0,    PWMMAX                 , PWMMAX                },
+//            (uint16_t[]){0,0,0,1,    PWMMAX                 , PWMMAX                },
+//        };
+#define STEP_COUNT 32
+    static STEP steps[STEP_COUNT];
+
+    {
+        int x;
+        for(x = 0; x < STEP_COUNT; x++){
+            double d = x * (3.14159*0.5)/(double)STEP_COUNT;
+            steps[x].a1 = sin(d) > 0;
+            steps[x].a2 = sin(d) < 0;
+            steps[x].b1 = cos(d) > 0;
+            steps[x].b2 = cos(d) < 0;
+            steps[x].pwmA *= sin(d);
+            steps[x].pwmB *= cos(d);
+
+            switch(x / (STEP_COUNT / 4)){
+                case 0: steps[x].a1 = 1; break;
+                case 1: steps[x].b1 = 1; break;
+                case 2: steps[x].a2 = 1; break;
+                case 3: steps[x].b2 = 1; break;
+            }
+
+            if(x % (STEP_COUNT / 4) != 0){
+                switch(x / (STEP_COUNT / 4)){
+                    case 0: steps[x].b1 = 1; break;
+                    case 1: steps[x].a2 = 1; break;
+                    case 2: steps[x].b2 = 1; break;
+                    case 3: steps[x].a1 = 1; break;
+                }
+            }
+//            steps[x] = base;
+//
+//            int num_substeps = (STEP_COUNT / 4);
+//            double ds = x % num_substeps;
+//            steps[x].pwmA *= sin(ds * 90.0/num_substeps * 2.0*3.14159);
+//            steps[x].pwmB *= cos(ds * 90.0/num_substeps * 2.0*3.14159);
+//            switch(x / (STEP_COUNT / 4)){
+//                // pwmA go to %0, pwmB go to %100
+//                case 0:
+//                case 2:
+//                    steps[x].pwmA *= 1.0-sin((x%num_substeps) * 90.0/(double)num_substeps * 0.50*3.14159);
+//                    steps[x].pwmB *= cos((x%num_substeps) * 90.0/(double)num_substeps * 0.50*3.14159);
+//                    break;
+//                // pwmA go to %100, pwmB go to %0
+//                case 1:
+//                case 3:
+//                    steps[x].pwmA *= sin((x%num_substeps) * 90.0/(double)num_substeps * 0.5*3.14159);
+//                    steps[x].pwmB *= 1.0-cos((x%num_substeps) * 90.0/(double)num_substeps * 0.5*3.14159);
+//                    break;
+//            }
+        }
+    }
+
     int step = 0;
     int d = 1;
-#define MOD 4
+#define STEPTIME 200e3
 
     while(1){
-        setDirs(steps[step % MOD]);
-        waitMicrosecond(200e3);
+        setDirs(steps[step % STEP_COUNT]);
+        waitMicrosecond(STEPTIME);
 
         setPinValue(LED, getPinValue(SENSE));
 
@@ -193,10 +255,10 @@ int main(void)
 
     d *= -1;
     {
-        int targ = 22;
+        int targ = 22 * (STEP_COUNT/4);
         for(; targ != 0; targ--){
-            setDirs(steps[step % MOD]);
-            waitMicrosecond(200e3);
+            setDirs(steps[step % STEP_COUNT]);
+            waitMicrosecond(STEPTIME);
 
             step += d;
         }
@@ -235,10 +297,10 @@ int main(void)
                putsUart0(str);
            }
 
-           int targ = (angle / 1.8) + zero;
+           int targ = ((double)angle / (1.8/2)) + zero;
            while(step != targ){
-               setDirs(steps[step % MOD]);
-               waitMicrosecond(200e3);
+               setDirs(steps[step % STEP_COUNT]);
+               waitMicrosecond(STEPTIME);
 
                if(step > targ)
                    step--;
