@@ -57,7 +57,7 @@ void parseFields(USER_DATA * ud){
              && (ud->buffer[i] <= 'Z' || ud->buffer[i] >= 'a')
         ){
             cur = 'a';
-        } else if (ud->buffer[i] <= '9' && ud->buffer[i] >= '0'){
+        } else if ((ud->buffer[i] <= '9' && ud->buffer[i] >= '0') || (ud->buffer[i] == '+') || (ud->buffer[i] == '-')){
             cur = 'n';
         } else {//is a delimiter
             // if end of a argument
