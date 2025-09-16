@@ -55,9 +55,6 @@ extern uint32_t __STACK_TOP;
 //
 //*****************************************************************************
 // To be added by user
-void onLowLimTrigger();
-void onHighLimTrigger();
-void sysint(); // is acutally timeer 4, not systick
 
 //*****************************************************************************
 //
@@ -85,11 +82,11 @@ void (* const g_pfnVectors[])(void) =
     IntDefaultHandler,                      // Debug monitor handler
     0,                                      // Reserved
     IntDefaultHandler,                      // The PendSV handler
-    sysint,                      // The SysTick handler
-    onLowLimTrigger  ,                      // GPIO Port A
+    IntDefaultHandler,                      // The SysTick handler
+    IntDefaultHandler,                      // GPIO Port A
     IntDefaultHandler,                      // GPIO Port B
     IntDefaultHandler,                      // GPIO Port C
-    onHighLimTrigger ,                      // GPIO Port D
+    IntDefaultHandler,                      // GPIO Port D
     IntDefaultHandler,                      // GPIO Port E
     IntDefaultHandler,                      // UART0 Rx and Tx
     IntDefaultHandler,                      // UART1 Rx and Tx
@@ -156,8 +153,8 @@ void (* const g_pfnVectors[])(void) =
     0,                                      // Reserved
     IntDefaultHandler,                      // I2C2 Master and Slave
     IntDefaultHandler,                      // I2C3 Master and Slave
-    sysint,                      // Timer 4 subtimer A
-    sysint,                      // Timer 4 subtimer B
+    IntDefaultHandler,                      // Timer 4 subtimer A
+    IntDefaultHandler,                      // Timer 4 subtimer B
     0,                                      // Reserved
     0,                                      // Reserved
     0,                                      // Reserved

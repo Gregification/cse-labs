@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "loshlib/tm4c123gh6pm.h"
 #include "loshlib/clock.h"
 #include "loshlib/uart0.h"
 #include "loshlib/gpio.h"
@@ -24,8 +25,6 @@ void initHw();
 #define PIN1              PORTC,5
 #define PIN2              PORTC,6
 
-uint32_t systick;
-uint32_t getElapsedTicks(uint32_t prevTimerVal, uint32_t currentTimerVal);
 int main(void)
 {
     /*** Initialize hardware *********************************/
@@ -33,64 +32,63 @@ int main(void)
     initHw();
     initUart0();
 
-//    disableNvicInterrupt(INT_GPIOA);
-//    disableNvicInterrupt(INT_GPIOD);
-
     selectPinDigitalInput(PIN1);
     selectPinDigitalInput(PIN2);
     selectPinPushPullOutput(SW);
-//
-//    selectPinInterruptRisingEdge(LOWLIM_SENSE);
-//    selectPinInterruptRisingEdge(HIGHLIM_SENSE);
-//
-//    enablePinInterrupt(LOWLIM_SENSE);
-//    enablePinInterrupt(HIGHLIM_SENSE);
-//
-//    enableNvicInterrupt(INT_GPIOA);
-//    enableNvicInterrupt(INT_GPIOD);
+
+
+    /*** PWM *************************************************/
+
+    // enable clock
+    SYSCTL_RCGC0_R |= SYSCTL_RCGC0_PWM0;
+    _delay_cycles(16);
+
+
+    //m0 : pwm0 : g0 : pin 1 : PB6
+    GPIO_PORTB_DEN_R    |= BV(6);
+    GPIO_PORTB_AFSEL_R  |= BV(6);
+    GPIO_PORTB_PCTL_R   &= ~GPIO_PCTL_PB6_M;
+    GPIO_PORTB_PCTL_R   |= GPIO_PCTL_PB6_M0PWM0;
+    GPIO_PORTB_DR8R_R   |= BV(6);
+    GPIO_PORTB_DEN_R    |= BV(7);
+    GPIO_PORTB_AFSEL_R  |= BV(7);
+    GPIO_PORTB_DR8R_R   |= BV(7);
+    GPIO_PORTB_PCTL_R   &= ~GPIO_PCTL_PB7_M;
+    GPIO_PORTB_PCTL_R   |= GPIO_PCTL_PB7_M0PWM1;
+
+    SYSCTL_RCC_R |= SYSCTL_RCC_USEPWMDIV;   // enable clock divisor as clock source
+    SYSCTL_RCC_R &= ~SYSCTL_RCC_PWMDIV_M;   // clear clock divider
+    SYSCTL_RCC_R |= SYSCTL_RCC_PWMDIV_4;   // set clock divider, clock source 4MHz
+
+    // what to do if counter is X value options /1282
+    PWM0_0_CTL_R |= PWM_0_CTL_ENABLE;
+    PWM0_0_GENA_R &= ~0xFFF;                    // clear 11:0 , clear all settings
+    PWM0_0_GENA_R |= PWM_0_GENA_ACTLOAD_ONE;    // count == load
+    PWM0_0_GENA_R |= PWM_0_GENA_ACTCMPAD_ZERO;  // count == cmpA
+    PWM0_0_GENB_R &= ~0xFFF;                    // clear 11:0 , clear all settings
+    PWM0_0_GENB_R |= PWM_0_GENB_ACTLOAD_ZERO;   // count == load
+    PWM0_0_GENB_R |= PWM_0_GENB_ACTCMPBD_ONE;   // count == cmpB
+    PWM0_0_LOAD_R |= 0xFFFF;                    // set load value /1278
+
+    PWM0_0_CMPA_R &= ~PWM_0_CMPA_M;             // clear pwmA comp value /1280
+    PWM0_0_CMPA_R |= (uint16_t)(0xFFFF * 0.25); // set pwmA comp value
+    PWM0_0_CMPB_R &= ~PWM_0_CMPB_M;             // clear pwmA comp value /1280
+    PWM0_0_CMPB_R |= (uint16_t)(0xFFFF * 0.25); // set pwmA comp value
+
+    PWM0_CTL_R &= ~PWM_0_CTL_MODE;          // 0: count down from load value then wrap around , 1: count up then down /1270
+    PWM0_CTL_R |= PWM_0_CTL_ENABLE;         // enable generator
+    PWM0_ENABLE_R |= PWM_ENABLE_PWM0EN;     // enable PWM1a /1248
+    PWM0_ENABLE_R |= PWM_ENABLE_PWM1EN;     // enable PWM1b
+
 
     /*********************************************************/
 
     setUart0BaudRate(115200, F_CPU);
     putsUart0("\033[2J\033[H\033[0m");
-    putsUart0("FALL 2025, CSE4355 Mechatronics, Lab 1" NEWLINE);
-    putsUart0("\tGeorge Boone 1002055713" NEWLINE);
-    putsUart0("\tthe other guy ( i forgot )" NEWLINE);
-    putsUart0("************************************************" NEWLINE);
-    putsUart0("LOW LIMIT switch input   : PA3" NEWLINE);
-    putsUart0("HIGH LIMIT switch input  : PD7" NEWLINE);
+    putsUart0("FALL 2025, CSE4355 Mechatronics, Lab 2" NEWLINE);
 
-    uint32_t prevTimerVal = 0;
     while(1){
-        static bool toggle = false;
 
-        uint32_t currentTimerVal = TIMER1_TAR_R;
-        if(toggle && getPinValue(PIN1)) {
-            toggle = false;
-            uint32_t elapsedTicks = getElapsedTicks(prevTimerVal, currentTimerVal);
-            float dt = (float)elapsedTicks / 40000000;
-            prevTimerVal = currentTimerVal;
-            char str[30];
-            snprintf(ARRANDN(str), "ttt: %10f\n\r", dt);
-            putsUart0(str);
-
-            systick = 0;
-            setPinValue(SW, 0);
-        }
-
-        if (!toggle && getPinValue(PIN2)) {
-            {
-                toggle = true;
-                uint32_t elapsedTicks = getElapsedTicks(prevTimerVal, currentTimerVal);
-                float dt = (float)elapsedTicks / 40000000;
-                prevTimerVal = currentTimerVal;
-                char str[30];
-                snprintf(ARRANDN(str), "ttb: %10f\n\r", dt);
-                putsUart0(str);
-            }
-            systick = 0;
-            setPinValue(SW, 1);
-        }
     }
 
 }
@@ -114,71 +112,5 @@ void initHw()
     selectPinPushPullOutput(LED_GREEN);
     selectPinPushPullOutput(LED_BLUE);
 
-    systick = 50;
 
-    // Enable clocks
-    SYSCTL_RCGCTIMER_R |= SYSCTL_RCGCTIMER_R4;
-    _delay_cycles(3);
-    // Configure Timer 4 for 1 sec tick
-//    TIMER4_CTL_R &= ~TIMER_CTL_TAEN;                 // turn-off timer before reconfiguring
-//    TIMER4_CFG_R = TIMER_CFG_32_BIT_TIMER;           // configure as 32-bit timer (A+B)
-//    TIMER4_TAMR_R = TIMER_TAMR_TAMR_PERIOD;          // configure for periodic mode (count down)
-//    TIMER4_TAILR_R = F_CPU / 1e3;                       // set load value (1e6 Hz rate)
-//    TIMER4_CTL_R |= TIMER_CTL_TAEN;                  // turn-on timer
-//    TIMER4_IMR_R |= TIMER_IMR_TATOIM;                // turn-on interrupt
-//    NVIC_EN2_R |= 1 << (INT_TIMER4A-80);             // turn-on interrupt 86 (TIMER4A)
-    // Enable Timer1 Clock
-       SYSCTL_RCGCTIMER_R |= SYSCTL_RCGCTIMER_R1;
-       // Dummy read/wait to ensure clock is active
-       while ((SYSCTL_PRTIMER_R & SYSCTL_PRTIMER_R1) == 0)
-       {
-       };
-
-       // Disable Timer A during configuration
-       TIMER1_CTL_R &= ~TIMER_CTL_TAEN;
-
-       // Configure for 32-bit timer mode
-       TIMER1_CFG_R = TIMER_CFG_32_BIT_TIMER;
-
-       // Configure Timer A for Periodic mode, default down-count
-       TIMER1_TAMR_R = TIMER_TAMR_TAMR_PERIOD;
-
-       // Set the load value to maximum for longest period before wrap-around
-       TIMER1_TAILR_R = 0xFFFFFFFF;
-
-       // Clear any interrupts (we are polling the value)
-       TIMER1_IMR_R = 0;
-       TIMER1_ICR_R = TIMER_ICR_TATOCINT; // Clear timeout flag just in case
-
-       // Enable Timer A
-       TIMER1_CTL_R |= TIMER_CTL_TAEN;
-}
-
-void sysint(){
-    systick++;
-}
-
-uint32_t getElapsedTicks(uint32_t prevTimerVal, uint32_t currentTimerVal)
-{
-    uint32_t elapsedTicks = 0;
-    if (currentTimerVal <= prevTimerVal) {
-        elapsedTicks = prevTimerVal - currentTimerVal;
-    } else {
-        elapsedTicks = prevTimerVal + (0XFFFFFFFF - currentTimerVal + 1);
-    }
-    return elapsedTicks;
-}
-
-
-void onLowLimTrigger() {
-    //clearPinInterrupt(LOWLIM_SENSE);
-//    togglePinValue(LED_RED);
-//
-//    setPinValue(SW, 1);
-}
-
-void onHighLimTrigger() {
-//    clearPinInterrupt(HIGHLIM_SENSE);
-//    togglePinValue(LED_BLUE);
-//    setPinValue(SW, 0);
 }
