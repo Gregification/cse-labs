@@ -164,16 +164,17 @@ int main(void)
     setPWMB(PWMMAX);
 
     static uint16_t steps[][6] = {
-            (uint16_t[]){1,0,0,0,    PWMMAX, PWMMAX},
-            (uint16_t[]){0,0,1,0,    PWMMAX, PWMMAX},
-            (uint16_t[]){0,1,0,0,    PWMMAX, PWMMAX},
-            (uint16_t[]){0,0,0,1,    PWMMAX, PWMMAX},
+            (uint16_t[]){1,0,0,0,    PWMMAX                 , PWMMAX                },
+            (uint16_t[]){0,0,1,0,    PWMMAX                 , PWMMAX                },
+            (uint16_t[]){0,1,0,0,    PWMMAX                 , PWMMAX                },
+            (uint16_t[]){0,0,0,1,    PWMMAX                 , PWMMAX                },
         };
     int step = 0;
     int d = 1;
+#define MOD 4
 
     while(1){
-        setDirs(steps[step % 4]);
+        setDirs(steps[step % MOD]);
         waitMicrosecond(200e3);
 
         setPinValue(LED, getPinValue(SENSE));
@@ -192,9 +193,9 @@ int main(void)
 
     d *= -1;
     {
-        int targ = 25;
+        int targ = 22;
         for(; targ != 0; targ--){
-            setDirs(steps[step % 4]);
+            setDirs(steps[step % MOD]);
             waitMicrosecond(200e3);
 
             step += d;
@@ -236,7 +237,7 @@ int main(void)
 
            int targ = (angle / 1.8) + zero;
            while(step != targ){
-               setDirs(steps[step % 4]);
+               setDirs(steps[step % MOD]);
                waitMicrosecond(200e3);
 
                if(step > targ)
