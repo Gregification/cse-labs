@@ -25,6 +25,15 @@ void initHw();
 #define PIN1              PORTC,5
 #define PIN2              PORTC,6
 
+void setPWM0(uint16_t val){
+    PWM0_0_CMPA_R &= ~0xFFFF;
+    PWM0_0_CMPA_R |= val; // set pwmA comp value
+}
+void setPWM1(uint16_t val){
+    PWM0_0_CMPB_R &= ~0xFFFF;
+    PWM0_0_CMPB_R |= val; // set pwmB comp value
+}
+
 int main(void)
 {
     /*** Initialize hardware *********************************/
@@ -68,12 +77,13 @@ int main(void)
     PWM0_0_GENB_R &= ~0xFFF;                    // clear 11:0 , clear all settings
     PWM0_0_GENB_R |= PWM_0_GENB_ACTLOAD_ZERO;   // count == load
     PWM0_0_GENB_R |= PWM_0_GENB_ACTCMPBD_ONE;   // count == cmpB
+
     PWM0_0_LOAD_R |= 0xFFFF;                    // set load value /1278
 
     PWM0_0_CMPA_R &= ~PWM_0_CMPA_M;             // clear pwmA comp value /1280
     PWM0_0_CMPA_R |= (uint16_t)(0xFFFF * 0.25); // set pwmA comp value
-    PWM0_0_CMPB_R &= ~PWM_0_CMPB_M;             // clear pwmA comp value /1280
-    PWM0_0_CMPB_R |= (uint16_t)(0xFFFF * 0.25); // set pwmA comp value
+    PWM0_0_CMPB_R &= ~PWM_0_CMPB_M;             // clear pwmB comp value /1280
+    PWM0_0_CMPB_R |= (uint16_t)(0xFFFF * 0.25); // set pwmB comp value
 
     PWM0_CTL_R &= ~PWM_0_CTL_MODE;          // 0: count down from load value then wrap around , 1: count up then down /1270
     PWM0_CTL_R |= PWM_0_CTL_ENABLE;         // enable generator
@@ -82,6 +92,7 @@ int main(void)
 
 
     /*********************************************************/
+
 
     setUart0BaudRate(115200, F_CPU);
     putsUart0("\033[2J\033[H\033[0m");
