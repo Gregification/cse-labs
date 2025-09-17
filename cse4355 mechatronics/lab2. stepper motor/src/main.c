@@ -179,7 +179,7 @@ int main(void)
 //            (uint16_t[]){0,1,0,0,    PWMMAX                 , PWMMAX                },
 //            (uint16_t[]){0,0,0,1,    PWMMAX                 , PWMMAX                },
 //        };
-#define STEP_COUNT 32
+    #define STEP_COUNT 32
     static STEP steps[STEP_COUNT];
 
     {
