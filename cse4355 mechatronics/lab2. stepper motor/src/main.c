@@ -185,49 +185,14 @@ int main(void)
     {
         int x;
         for(x = 0; x < STEP_COUNT; x++){
-            double d = x * (3.14159*0.5)/(double)STEP_COUNT;
-            steps[x].a1 = sin(d) > 0;
-            steps[x].a2 = sin(d) < 0;
-            steps[x].b1 = cos(d) > 0;
-            steps[x].b2 = cos(d) < 0;
-            steps[x].pwmA *= sin(d);
-            steps[x].pwmB *= cos(d);
+            double angle = x * 2 * M_PI / STEP_COUNT;
+            steps[x].a1 *= cos(angle) > 0 ? cos(angle) : 0;
+            steps[x].a2 *= cos(angle) > 0 ? 0 : -cos(angle);
+            steps[x].b1 *= sin(angle) > 0 ? sin(angle) : 0;
+            steps[x].b2 *= sin(angle) > 0 ? 0 : -sin(angle);
 
-            switch(x / (STEP_COUNT / 4)){
-                case 0: steps[x].a1 = 1; break;
-                case 1: steps[x].b1 = 1; break;
-                case 2: steps[x].a2 = 1; break;
-                case 3: steps[x].b2 = 1; break;
-            }
-
-            if(x % (STEP_COUNT / 4) != 0){
-                switch(x / (STEP_COUNT / 4)){
-                    case 0: steps[x].b1 = 1; break;
-                    case 1: steps[x].a2 = 1; break;
-                    case 2: steps[x].b2 = 1; break;
-                    case 3: steps[x].a1 = 1; break;
-                }
-            }
-//            steps[x] = base;
-//
-//            int num_substeps = (STEP_COUNT / 4);
-//            double ds = x % num_substeps;
-//            steps[x].pwmA *= sin(ds * 90.0/num_substeps * 2.0*3.14159);
-//            steps[x].pwmB *= cos(ds * 90.0/num_substeps * 2.0*3.14159);
-//            switch(x / (STEP_COUNT / 4)){
-//                // pwmA go to %0, pwmB go to %100
-//                case 0:
-//                case 2:
-//                    steps[x].pwmA *= 1.0-sin((x%num_substeps) * 90.0/(double)num_substeps * 0.50*3.14159);
-//                    steps[x].pwmB *= cos((x%num_substeps) * 90.0/(double)num_substeps * 0.50*3.14159);
-//                    break;
-//                // pwmA go to %100, pwmB go to %0
-//                case 1:
-//                case 3:
-//                    steps[x].pwmA *= sin((x%num_substeps) * 90.0/(double)num_substeps * 0.5*3.14159);
-//                    steps[x].pwmB *= 1.0-cos((x%num_substeps) * 90.0/(double)num_substeps * 0.5*3.14159);
-//                    break;
-//            }
+            steps[x].pwmA = fabs(sin(0.0 * 2*M_PI/STEP_COUNT));
+            steps[x].pwmB = fabs(sin(0.0 * 2*M_PI/STEP_COUNT));
         }
     }
 
