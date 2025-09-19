@@ -36,6 +36,7 @@ SECTIONS
     .init_array : > FLASH
 
     .vtable :   > 0x20000000
+    .taskmem:	> 0x20000000
     .data   :   > SRAM
     .bss    :   > SRAM
     .sysmem :   > SRAM

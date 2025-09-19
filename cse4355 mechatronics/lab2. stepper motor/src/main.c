@@ -22,7 +22,8 @@ void initHw();
 //-----------------------------------------------------------------------------
 // Main
 //-----------------------------------------------------------------------------
-#define PWMMAX ((uint16_t)0xFFFF)
+//#define PWMMAX ((uint16_t)0xFFFF)
+#define PWMMAX ((uint16_t)0x1)
 
 #define CA_DIR_1 PORTA,6
 #define CA_DIR_2 PORTA,7
@@ -40,8 +41,10 @@ typedef struct STEP {
     uint16_t a2;
     uint16_t b1;
     uint16_t b2;
-    uint16_t pwmA;
-    uint16_t pwmB;
+//    uint16_t pwmA;
+//    uint16_t pwmB;
+    double pwmA;
+    double pwmB;
 } STEP;
 
 void setPWMA(uint16_t val){

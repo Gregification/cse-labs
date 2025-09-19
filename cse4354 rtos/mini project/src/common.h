@@ -24,9 +24,12 @@
 #define CLIRESET "\033[0m"
 #define CLICLEAR "\033[2J\033[H\033[0m"
 
-#define LED_RED     PORTF,1
-#define LED_GREEN   PORTF,3
+#define LED_RED     PORTE,0
+#define LED_GREEN   PORTA,4
 #define LED_BLUE    PORTF,2
+#define LED_ORANGE  PORTA,2
+#define LED_YELLOW  PORTA,3
+
 #define SW1         PORTF,4
 #define SW2         PORTF,0
 

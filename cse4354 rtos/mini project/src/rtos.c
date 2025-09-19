@@ -31,6 +31,10 @@ char * getFieldString(USER_DATA *, uint8_t fieldNumber);
 uint32_t getFieldInteger(USER_DATA *, uint8_t fieldNumber);
 
 
+#pragma DATA_SECTION(g_pfnVectors, ".taskmem")
+volatile uint32_t taskMem[1024 * 20];
+
+
 /** process status */
 void ps() {
     putsUart0("PS called");

@@ -26,6 +26,8 @@ void initHw()
     selectPinPushPullOutput(LED_RED);
     selectPinPushPullOutput(LED_GREEN);
     selectPinPushPullOutput(LED_BLUE);
+    selectPinPushPullOutput(LED_ORANGE);
+    selectPinPushPullOutput(LED_YELLOW);
 
     // enable various fault handlers
     NVIC_SYS_HND_CTRL_R |=              // /173
@@ -43,6 +45,12 @@ void initHw()
 // Main
 //-----------------------------------------------------------------------------
 
+#define I_TRIGGER_USAGE     PORTA,0
+#define I_TRIGGER_BUS       PORTA,0
+#define I_TRIGGER_HARD      PORTA,0
+#define I_TRIGGER_MEM       PORTA,0
+#define I_TRIGGER_PENDSV    PORTA,0
+
 int main(void)
 {
     pid = 123;
@@ -50,6 +58,12 @@ int main(void)
     // Initialize hardware
     initHw();
     initUart0();
+
+    selectPinDigitalInput(I_TRIGGER_BUS);
+    selectPinDigitalInput(I_TRIGGER_USAGE);
+    selectPinDigitalInput(I_TRIGGER_HARD);
+    selectPinDigitalInput(I_TRIGGER_MEM);
+    selectPinDigitalInput(I_TRIGGER_PENDSV);
 
     // Setup UART0 baud rate
     setUart0BaudRate(115200, F_CPU);
@@ -68,41 +82,51 @@ int main(void)
 //        putsUart0(NEWLINE);
 //    }
 
-    /* Usage faults */
-//    { // unaligned
-//        volatile uint32_t * bogous = (uint32_t *)0xFFFFFFFF;
-//        *bogous = 10;
-//    }
-//    { // div by 0
-//        volatile int x = 0, y = 0;
-//        x /= y;
-//    }
+    while(1){
+        if(getPinValue(I_TRIGGER_BUS)){
+            { // Imprecise data /180
+                volatile uint32_t * bogous = (uint32_t *)0xFFFFFFFC;
+                *bogous = 10;
+            }
 
-    /* Bus fault */
-//    { // Imprecise data /180
-//        volatile uint32_t * bogous = (uint32_t *)0xFFFFFFFC;
-//        *bogous = 10;
-//    }
+            while(1);
+        }
+        if(getPinValue(I_TRIGGER_HARD)){
+            {
+                // disable bus fault handler
+                NVIC_SYS_HND_CTRL_R &= ~NVIC_SYS_HND_CTRL_BUS; // /173
 
-    /* hard fault */
-//    {
-//        // disable bus fault handler
-//        NVIC_SYS_HND_CTRL_R &= ~NVIC_SYS_HND_CTRL_BUS; // /173
-//
-//        // cause bus fault
-//        volatile uint32_t * bogous = (uint32_t *)0xFFFFFFFC;
-//        *bogous = 10;
-//    }
+                // cause bus fault
+                volatile uint32_t * bogous = (uint32_t *)0xFFFFFFFC;
+                *bogous = 10;
+            }
+            while(1);
+        }
+        if(getPinValue(I_TRIGGER_MEM)){
+            {
+                NVIC_SYS_HND_CTRL_R |= NVIC_SYS_HND_CTRL_MEMP; // /174
+            }
+            while(1);
+        }
+        if(getPinValue(I_TRIGGER_PENDSV)){
+            {
+                NVIC_INT_CTRL_R |= NVIC_INT_CTRL_PEND_SV;  // /160
+            }
 
-    /* pend SV trigger */
-//    {
-//        NVIC_INT_CTRL_R |= NVIC_INT_CTRL_PEND_SV;  // /160
-//    }
-
-    /* memory manager fault */
-//    {
-//        NVIC_SYS_HND_CTRL_R |= NVIC_SYS_HND_CTRL_MEMP; // /174
-//    }
+            while(1);
+        }
+        if(getPinValue(I_TRIGGER_USAGE)){
+            { // unaligned
+                volatile uint32_t * bogous = (uint32_t *)0xFFFFFFFF;
+                *bogous = 10;
+            }
+            { // div by 0
+                volatile int x = 0, y = 0;
+                x /= y;
+            }
+            while(1);
+        }
+    }
 
     shell();
 }
