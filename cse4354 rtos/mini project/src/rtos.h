@@ -72,6 +72,11 @@ void dumpPSPRegsFromMSP();
 //NVIC_FAULT_STAT_R /177
 void dumpFaultStatReg(uint32_t copyOfFaultStat);
 
-void * malloc_heap(int size);
+void * malloc_heap(unsigned int size_bytes);
+void free_heap(void * ptr);
+
+void dumpHeapOwnershipTable();
+
+void configMPU();
 
 #endif /* SRC_RTOS_H_ */

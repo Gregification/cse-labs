@@ -7,6 +7,7 @@
  *****************************************************************************/
 
 --retain=g_pfnVectors
+--retain=heap
 
 MEMORY
 {
@@ -36,7 +37,7 @@ SECTIONS
     .init_array : > FLASH
 
     .vtable :   > 0x20000000
-    .taskmem:	> 0x20000000
+    .heap	:	> 0x20001000
     .data   :   > SRAM
     .bss    :   > SRAM
     .sysmem :   > SRAM

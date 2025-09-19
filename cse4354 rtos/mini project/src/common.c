@@ -16,6 +16,11 @@ bool strCmp(const char * a, const char * b) {
 }
 
 void printu32d(uint32_t v) {
+    if(v == 0){
+        putcUart0('0');
+        return;
+    }
+
     char str[10];
     int i = 0;
     for(i = 0; v > 0; i++){

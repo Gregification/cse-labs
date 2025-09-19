@@ -30,9 +30,39 @@ bool isCommand(USER_DATA *, const char strCmd[], uint8_t minArgs);
 char * getFieldString(USER_DATA *, uint8_t fieldNumber);
 uint32_t getFieldInteger(USER_DATA *, uint8_t fieldNumber);
 
+/*** memory control ******************************************/
+/* 32KiB memory available.
+ * memory split into 32 1024B chunks, first 4 are reserved for OS, remaining 28 are for tasks.
+ * access control style
+ *  - background deny default
+ *  - additive regions
+ *
+ * references
+ *  - 2.4.3/95 behavior of memory accesses
+ *  - 2.4.5/97 bit banding
+ *  - 3.1.4/125 MPU
+ *  - 3.1.4.1/126 Updating an MPU Region
+ */
 
-#pragma DATA_SECTION(g_pfnVectors, ".taskmem")
-volatile uint32_t taskMem[1024 * 20];
+#define MPU_REGION_COUNT 28
+#define MPU_REGION_SIZE_B 1024
+
+#pragma DATA_SECTION(heap, ".heap")
+volatile uint8_t heap[MPU_REGION_COUNT * MPU_REGION_SIZE_B];
+
+/** Heap Ownership Table */
+struct {
+    uint32_t owner_pid;
+    unsigned int len;   // length of allocation, only base pointer has non-zero value.
+} HOT[MPU_REGION_COUNT];
+
+/** TMPL
+ * contains MPU masks to apply when task switching
+ */
+uint64_t tmpl[MPU_REGION_COUNT];
+
+
+/*************************************************************/
 
 
 /** process status */
@@ -217,7 +247,6 @@ void shell_loop(USER_DATA * data) {
 
        putsUart0(NEWLINE);
 }
-
 
 void getsUart0(USER_DATA * ud){
     uint8_t count = 0;
@@ -440,6 +469,101 @@ void dumpFaultStatReg(uint32_t stat) {
     putsUart0(CLIRESET);
 }
 
-void * malloc_heap(int size) {
-    return 0; // TODO
+void * malloc_heap(unsigned int size) {
+    int regions = size / MPU_REGION_SIZE_B;
+
+    // cheese allocate
+    for(int baseR = 0; baseR < MPU_REGION_COUNT - regions; baseR++){
+
+        if(HOT[baseR].owner_pid == NULL) { // if region unoccupied
+
+            // check if enough memory exists from the base
+            int d;
+            for(d = 1; d <= regions; d++)
+                if(HOT[baseR + d].owner_pid != NULL)
+                    break;
+
+            if(d <= regions) { // not enough memory from this base
+                baseR += d;
+                continue;
+            }
+
+            // allocate
+            for(d = baseR; d <= (baseR + regions); d++) {
+                HOT[d].owner_pid = pid;
+                HOT[d].len = 0;
+            }
+            HOT[baseR].len = regions+1;
+
+            return (void *)(heap + (baseR * MPU_REGION_SIZE_B));
+        }
+    }
+
+    // nothing available D:, explode
+    return NULL;
+}
+
+void free_heap(void * ptr) {
+    // --- find the region it corresponds to ------------------
+
+    for(unsigned int r = 0; r < MPU_REGION_COUNT; r++){
+
+        // ".len > 0" : '.len==0' means its not a base pointer
+        if((HOT[r].len > 0) && (HOT[r].owner_pid == pid)){
+
+            /* valid pointers will be aligned to MPU_REGION_SIZE_B
+             * so check for that */
+            if(ptr == (heap + (r * MPU_REGION_SIZE_B))){
+                // is valid
+
+                // remove ownership
+                for(int i = 1; i < HOT[r].len; i++){
+                    HOT[r+i].owner_pid = NULL;
+                    HOT[r+i].len = NULL;
+                }
+                HOT[r].len = NULL;
+
+                return;
+            }
+        }
+    }
+
+
+    // --- explode! -------------------------------------------
+
+    putsUart0(CLIRESET CLIERROR);
+    putsUart0(NEWLINE);
+    putsUart0("rtos.c -> free_heap failed!");
+    putsUart0(NEWLINE "\tpid:");
+    printu32h(pid);
+    putsUart0(NEWLINE "\tptr:");
+    printu32h((uint32_t)ptr);
+
+    dumpHeapOwnershipTable();
+
+    putsUart0(NEWLINE CLIRESET);
+
+    NVIC_SYS_HND_CTRL_R |= NVIC_SYS_HND_CTRL_MEMP; // trigger MPU fault /174
+}
+
+void configMPU() {
+    // set background to "allow all"
+    {
+
+    }
+}
+
+void dumpHeapOwnershipTable(){
+    putsUart0("\tRegion\tLEN\tPID\tBase addr");
+    for(unsigned int r = 0; r < MPU_REGION_COUNT; r++){
+        putsUart0(NEWLINE "\t");
+        printu32d(r);
+        putsUart0("\t");
+        printu32d(HOT[r].len);
+        putsUart0("\t");
+        printu32h(HOT[r].owner_pid);
+        putsUart0("\t");
+        printu32h((uint32_t)(heap + r * MPU_REGION_SIZE_B));
+    }
+    putsUart0(NEWLINE);
 }

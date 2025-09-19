@@ -82,6 +82,11 @@ int main(void)
 //        putsUart0(NEWLINE);
 //    }
 
+    void* p = malloc_heap(1024*2);
+    free_heap(p);
+    putsUart0("yippie!" NEWLINE);
+    dumpHeapOwnershipTable();
+
     while(1){
         if(getPinValue(I_TRIGGER_BUS)){
             { // Imprecise data /180
