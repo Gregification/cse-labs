@@ -76,39 +76,37 @@ int main(void)
     putsUart0("FALL 2025, CSE4354 RTOS, Mini Project, George Boone 1002055713" NEWLINE);
     putsUart0(CLIRESET);
 
-    /* set & get PSP */
-    {
-//        uint32_t * newpsp = (uint32_t *)0x20008000;
-//        setPSP(newpsp);
-        setPSP(testFunc);
+    setPSP(testFunc);
 
-//        uint32_t *psp = getPSP();
-//        printu32h(psp[0]);
-//        putsUart0(NEWLINE);
+    uint32_t * p = malloc_heap(1024);
+    dumpHeapOwnershipTable();
+    if(!p){
+        putsUart0(CLIERROR "malloc failed D:");
+        while(1);
     }
 
     allowFlashAccess();
-//    allowPeripheralAccess();
-//    setupSramAccess();
+    setupMPU();
+    allowPeripheralAccess();
+    setupSramAccess();
+
     {
-        NVIC_MPU_CTRL_R |= NVIC_MPU_CTRL_PRIVDEFEN; // enable +ALL as background rule /188
-        NVIC_MPU_CTRL_R |= NVIC_MPU_CTRL_ENABLE;    // enable MPU /188
-        NVIC_MPU_CTRL_R &= ~NVIC_MPU_CTRL_HFNMIENA; // disable MPU during faults /188
-//        NVIC_MPU_CTRL_R |= NVIC_MPU_CTRL_HFNMIENA;  // enable MPU during faults /188
+        dumpAccessTable();
+        uint64_t mask = createNoSramAccessMask();
+        addSramAccessWindow(&mask, p, 1024);
+        dumpSramAccessMaskTable(mask);
+//        applySramAccessMask(mask);
+
     }
 
+    p[0] = 67;
     setTMPL();
 
     {
-        if(heap[0] > heap[1]){
-            heap[0] = 10;
-        }
-        else{
-            heap[1] = 5;
-        }
+//        free_heap(p);
     }
 
-    putsUart0("---" NEWLINE);
+//    putsUart0("---" NEWLINE);
 //    void* p = malloc_heap(1024);
 //    free_heap(p);
 //    putsUart0("yippie!" NEWLINE);

@@ -11,7 +11,16 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#define MPU_REGIONS_BKGND 0
+#define MPU_REGIONS_FLASH 1
+#define MPU_REGIONS_SRAM_START 2
+
 typedef uint32_t PID;
+
+typedef union {
+    uint8_t masks[4]; // bit high --> access allowed
+    uint64_t raw;
+} SRDBitMask;
 
 PID pid; // current processes ID
 
@@ -81,9 +90,18 @@ void free_heap(void * ptr);
 
 void dumpHeapOwnershipTable();
 
+void setupMPU();
+void dumpAccessTable();
+void dumpSramAccessMaskTable(uint64_t mask);
+
 void allowFlashAccess();
 void allowPeripheralAccess();
 
 void setupSramAccess();
+
+uint64_t createNoSramAccessMask();
+void applySramAccessMask(uint64_t srdBitMask);
+
+void addSramAccessWindow(uint64_t * srdBitMask, uint32_t *baseAdd, uint32_t size_in_bytes);
 
 #endif /* SRC_RTOS_H_ */
