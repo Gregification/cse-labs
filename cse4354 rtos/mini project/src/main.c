@@ -51,9 +51,13 @@ void initHw()
 #define I_TRIGGER_MEM       PORTA,0
 #define I_TRIGGER_PENDSV    PORTA,0
 
+void testFunc(){
+    while(1);
+}
+
 int main(void)
 {
-    pid = 123;
+    pid = 0x123;
 
     // Initialize hardware
     initHw();
@@ -73,22 +77,51 @@ int main(void)
     putsUart0(CLIRESET);
 
     /* set & get PSP */
-//    {
-//        uint32_t newpsp = 0x20008000;
-//        setPSP(&newpsp);
-//
+    {
+//        uint32_t * newpsp = (uint32_t *)0x20008000;
+//        setPSP(newpsp);
+        setPSP(testFunc);
+
 //        uint32_t *psp = getPSP();
 //        printu32h(psp[0]);
 //        putsUart0(NEWLINE);
-//    }
+    }
 
-    void* p = malloc_heap(1024*2);
-    free_heap(p);
-    putsUart0("yippie!" NEWLINE);
-    dumpHeapOwnershipTable();
+    allowFlashAccess();
+//    allowPeripheralAccess();
+//    setupSramAccess();
+    {
+        NVIC_MPU_CTRL_R |= NVIC_MPU_CTRL_PRIVDEFEN; // enable +ALL as background rule /188
+        NVIC_MPU_CTRL_R |= NVIC_MPU_CTRL_ENABLE;    // enable MPU /188
+        NVIC_MPU_CTRL_R &= ~NVIC_MPU_CTRL_HFNMIENA; // disable MPU during faults /188
+//        NVIC_MPU_CTRL_R |= NVIC_MPU_CTRL_HFNMIENA;  // enable MPU during faults /188
+    }
+
+    setTMPL();
+
+    {
+        if(heap[0] > heap[1]){
+            heap[0] = 10;
+        }
+        else{
+            heap[1] = 5;
+        }
+    }
+
+    putsUart0("---" NEWLINE);
+//    void* p = malloc_heap(1024);
+//    free_heap(p);
+//    putsUart0("yippie!" NEWLINE);
+//    dumpHeapOwnershipTable();
+
+
+    putsUart0(CLIHIGHLIGHT);
+    putsUart0("--- starting super loop ---" NEWLINE);
+    putsUart0(CLIRESET);
 
     while(1){
         if(getPinValue(I_TRIGGER_BUS)){
+            putsUart0("triggering bus fault" NEWLINE);
             { // Imprecise data /180
                 volatile uint32_t * bogous = (uint32_t *)0xFFFFFFFC;
                 *bogous = 10;
@@ -97,6 +130,7 @@ int main(void)
             while(1);
         }
         if(getPinValue(I_TRIGGER_HARD)){
+            putsUart0("triggering hard fault" NEWLINE);
             {
                 // disable bus fault handler
                 NVIC_SYS_HND_CTRL_R &= ~NVIC_SYS_HND_CTRL_BUS; // /173
@@ -108,12 +142,14 @@ int main(void)
             while(1);
         }
         if(getPinValue(I_TRIGGER_MEM)){
+            putsUart0("triggering mem fault" NEWLINE);
             {
                 NVIC_SYS_HND_CTRL_R |= NVIC_SYS_HND_CTRL_MEMP; // /174
             }
             while(1);
         }
         if(getPinValue(I_TRIGGER_PENDSV)){
+            putsUart0("triggering pendsv" NEWLINE);
             {
                 NVIC_INT_CTRL_R |= NVIC_INT_CTRL_PEND_SV;  // /160
             }
@@ -121,6 +157,7 @@ int main(void)
             while(1);
         }
         if(getPinValue(I_TRIGGER_USAGE)){
+            putsUart0("triggering usage fault" NEWLINE);
             { // unaligned
                 volatile uint32_t * bogous = (uint32_t *)0xFFFFFFFF;
                 *bogous = 10;
@@ -132,60 +169,76 @@ int main(void)
             while(1);
         }
     }
-
-    shell();
 }
 
 
 /*** handlers ****************************************************************/
 
 void _HardFaultHandlerISR(){
+    setPinValue(LED_BLUE, 1);
+
     putsUart0(CLIERROR);
     putsUart0("Hard fault in process ");
-    printu32d(pid);
+    printu32h(pid);
     putsUart0(NEWLINE);
 
     dumpPSPRegsFromMSP();
+    dumpFaultStatReg(NVIC_FAULT_STAT_R);
 
     while(1);
 }
 
 void _MPUFaultHandlerISR(){
+    setPinValue(LED_GREEN, 1);
+
     putsUart0(CLIERROR);
     putsUart0("MPU fault in process ");
-    printu32d(pid);
+    printu32h(pid);
     putsUart0(NEWLINE);
 
-    putsUart0("\tMSP:\t");
-    printu32h((uint32_t)getMSP());
-    putsUart0(NEWLINE);
     dumpPSPRegsFromMSP();
 
     // /177 . Memory Management Fault bits 7:0
     {
         uint32_t fault_stats = NVIC_FAULT_STAT_R;
+        uint32_t fault_addr = (NVIC_MM_ADDR_R & NVIC_MM_ADDR_M) >> NVIC_MM_ADDR_S;
+        if(fault_stats | NVIC_FAULT_STAT_MMARV){
+            putsUart0("\tfault_addr:\t");
+            printu32h(fault_addr);
+            putsUart0(NEWLINE);
+        }
         putsUart0("\tfault_stats:\t");
         printu32h(fault_stats);
         putsUart0(NEWLINE);
         dumpFaultStatReg(fault_stats & 0xFF);
+//        dumpFaultStatReg(fault_stats);
     }
 
     while(1);
 }
 
 void _BusFaultHandlerISR(){
+    setPinValue(LED_ORANGE, 1);
+
     putsUart0(CLIERROR);
     putsUart0("Bus fault in process ");
-    printu32d(pid);
+    printu32h(pid);
     putsUart0(NEWLINE);
 
     // /177 . Bus Fault bits 15:8
     {
         uint32_t fault_stats = NVIC_FAULT_STAT_R;
+        uint32_t fault_addr = (NVIC_FAULT_ADDR_R & NVIC_FAULT_ADDR_M) >> NVIC_FAULT_ADDR_S;
+        if(fault_stats | NVIC_FAULT_STAT_BFARV){
+            putsUart0("\tfault_addr:\t");
+            printu32h(fault_addr);
+            putsUart0(NEWLINE);
+        }
         putsUart0("\tfault_stats:\t");
         printu32h(fault_stats);
         putsUart0(NEWLINE);
         dumpFaultStatReg(fault_stats & (0xFF << 8));
+//        dumpFaultStatReg(fault_stats);
     }
 
     putsUart0(CLIRESET);
@@ -194,9 +247,11 @@ void _BusFaultHandlerISR(){
 }
 
 void _UsageFaultHandlerISR(){
+    setPinValue(LED_RED, 1);
+
     putsUart0(CLIERROR);
     putsUart0("Usage fault in process ");
-    printu32d(pid);
+    printu32h(pid);
     putsUart0(NEWLINE);
 
     // /177 . Usage Fault bits 31:16
@@ -206,6 +261,7 @@ void _UsageFaultHandlerISR(){
         printu32h(fault_stats);
         putsUart0(NEWLINE);
         dumpFaultStatReg(fault_stats & ((uint32_t)0xFFFF << 16));
+//        dumpFaultStatReg(fault_stats);
     }
 
     putsUart0(CLIRESET);
@@ -213,10 +269,12 @@ void _UsageFaultHandlerISR(){
     while(1);
 }
 
-void _PendSVFaultHandlerISR(){
+void _PendSVHandlerISR(){
+    setPinValue(LED_YELLOW, 1);
+
     putsUart0(CLIERROR);
-    putsUart0("Pendsv fault in process ");
-    printu32d(pid);
+    putsUart0("PendSV in progress");
+    printu32h(pid);
     putsUart0(NEWLINE);
 
     if(NVIC_FAULT_STAT_R & (NVIC_FAULT_STAT_DERR | NVIC_FAULT_STAT_IERR)){

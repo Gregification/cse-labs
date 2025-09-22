@@ -59,7 +59,7 @@ void _HardFaultHandlerISR();
 void _MPUFaultHandlerISR();
 void _BusFaultHandlerISR();
 void _UsageFaultHandlerISR();
-void _PendSVFaultHandlerISR();
+void _PendSVHandlerISR();
 
 //*****************************************************************************
 //
@@ -86,7 +86,7 @@ void (* const g_pfnVectors[])(void) =
     IntDefaultHandler,                      // SVCall handler
     IntDefaultHandler,                      // Debug monitor handler
     0,                                      // Reserved
-    _PendSVFaultHandlerISR,                 // The PendSV handler
+    _PendSVHandlerISR,                      // The PendSV handler
     IntDefaultHandler,                      // The SysTick handler
     IntDefaultHandler,                      // GPIO Port A
     IntDefaultHandler,                      // GPIO Port B

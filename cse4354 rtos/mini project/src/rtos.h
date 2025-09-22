@@ -15,6 +15,7 @@ typedef uint32_t PID;
 
 PID pid; // current processes ID
 
+extern volatile uint8_t heap[];
 
 /** process status */
 void ps();
@@ -65,7 +66,10 @@ extern uint32_t * getMSP(); // not sure if this is right, dosen't the interrupt 
 
 uint32_t getR0();
 
+// SP reg /78
+// CONTROL reg /88
 extern void setASP();
+extern void setTMPL();
 
 void dumpPSPRegsFromMSP();
 
@@ -77,6 +81,9 @@ void free_heap(void * ptr);
 
 void dumpHeapOwnershipTable();
 
-void configMPU();
+void allowFlashAccess();
+void allowPeripheralAccess();
+
+void setupSramAccess();
 
 #endif /* SRC_RTOS_H_ */

@@ -389,79 +389,79 @@ void dumpPSPRegsFromMSP() {
 
 void dumpFaultStatReg(uint32_t stat) {
     // /177
-    if(stat & NVIC_FAULT_STAT_DIV0){
+    if(stat & NVIC_FAULT_STAT_DIV0){ //:25
         putsUart0("\tDivide-by-Zero Usage Fault");
         putsUart0(NEWLINE);
     }
-    if(stat & NVIC_FAULT_STAT_UNALIGN){
+    if(stat & NVIC_FAULT_STAT_UNALIGN){ //:24
         putsUart0("\tUnaligned Access Usage Fault");
         putsUart0(NEWLINE);
     }
-    if(stat & NVIC_FAULT_STAT_NOCP){
+    if(stat & NVIC_FAULT_STAT_NOCP){//:19
         putsUart0("\tNo Coprocessor Usage Fault");
         putsUart0(NEWLINE);
     }
-    if(stat & NVIC_FAULT_STAT_INVPC){
+    if(stat & NVIC_FAULT_STAT_INVPC){//:18
         putsUart0("\tInvalid PC Load Usage Fault");
         putsUart0(NEWLINE);
     }
-    if(stat & NVIC_FAULT_STAT_INVSTAT){
+    if(stat & NVIC_FAULT_STAT_INVSTAT){//:17
         putsUart0("\tInvalid State Usage Fault");
         putsUart0(NEWLINE);
     }
-    if(stat & NVIC_FAULT_STAT_UNDEF){
+    if(stat & NVIC_FAULT_STAT_UNDEF){//:16
         putsUart0("\tUndefined Instruction Usage Fault");
         putsUart0(NEWLINE);
     }
-    if(stat & NVIC_FAULT_STAT_BFARV){
+    if(stat & NVIC_FAULT_STAT_BFARV){//:15
         putsUart0("\tBus Fault Address Register Valid");
         putsUart0(NEWLINE);
     }
-    if(stat & NVIC_FAULT_STAT_BLSPERR){
+    if(stat & NVIC_FAULT_STAT_BLSPERR){//:13
         putsUart0("\tFloating point lazy state preservation (Bus Fault)");
         putsUart0(NEWLINE);
     }
-    if(stat & NVIC_FAULT_STAT_BSTKE){
+    if(stat & NVIC_FAULT_STAT_BSTKE){//:12
         putsUart0("\tStack Bus Fault");
         putsUart0(NEWLINE);
     }
-    if(stat & NVIC_FAULT_STAT_BUSTKE){
+    if(stat & NVIC_FAULT_STAT_BUSTKE){//:11
         putsUart0("\tUnstack Bus Fault");
         putsUart0(NEWLINE);
     }
-    if(stat & NVIC_FAULT_STAT_IMPRE){
+    if(stat & NVIC_FAULT_STAT_IMPRE){//:10
         putsUart0("\tImprecise Data Bus Error");
         putsUart0(NEWLINE);
     }
-    if(stat & NVIC_FAULT_STAT_PRECISE){
+    if(stat & NVIC_FAULT_STAT_PRECISE){//:9
         putsUart0("\tPrecise Data Bus Error");
         putsUart0(NEWLINE);
     }
-    if(stat & NVIC_FAULT_STAT_IBUS){
+    if(stat & NVIC_FAULT_STAT_IBUS){//:8
         putsUart0("\tInstruction Bus Error");
         putsUart0(NEWLINE);
     }
-    if(stat & NVIC_FAULT_STAT_MMARV){
+    if(stat & NVIC_FAULT_STAT_MMARV){//:7
         putsUart0("\tMemory Management Fault Address Register Valid");
         putsUart0(NEWLINE);
     }
-    if(stat & NVIC_FAULT_STAT_MLSPERR){
+    if(stat & NVIC_FAULT_STAT_MLSPERR){//:5
         putsUart0("\tMemory Management Fault on Floating-Point Lazy State Preservation");
         putsUart0(NEWLINE);
     }
-    if(stat & NVIC_FAULT_STAT_MSTKE){
+    if(stat & NVIC_FAULT_STAT_MSTKE){//:4
         putsUart0("\tStack Access Violation (Memory Management Fault)");
         putsUart0(NEWLINE);
     }
-    if(stat & NVIC_FAULT_STAT_MUSTKE){
+    if(stat & NVIC_FAULT_STAT_MUSTKE){//:3
         putsUart0("\tUnstack Access Violation (Memory Management Fault)");
         putsUart0(NEWLINE);
     }
-    if(stat & NVIC_FAULT_STAT_DERR){
+    if(stat & NVIC_FAULT_STAT_DERR){//:1
         putsUart0("\tData Access Violation");
         putsUart0(NEWLINE);
     }
-    if(stat & NVIC_FAULT_STAT_IERR){
+    if(stat & NVIC_FAULT_STAT_IERR){//:0
         putsUart0("\tInstruction Access Violation");
         putsUart0(NEWLINE);
     }
@@ -508,8 +508,8 @@ void free_heap(void * ptr) {
 
     for(unsigned int r = 0; r < MPU_REGION_COUNT; r++){
 
-        // ".len > 0" : '.len==0' means its not a base pointer
-        if((HOT[r].len > 0) && (HOT[r].owner_pid == pid)){
+        // ".len != 0" : '.len==0' means its not a base pointer
+        if((HOT[r].len != 0) && (HOT[r].owner_pid == pid)){
 
             /* valid pointers will be aligned to MPU_REGION_SIZE_B
              * so check for that */
@@ -521,6 +521,7 @@ void free_heap(void * ptr) {
                     HOT[r+i].owner_pid = NULL;
                     HOT[r+i].len = NULL;
                 }
+                HOT[r].owner_pid = NULL;
                 HOT[r].len = NULL;
 
                 return;
@@ -531,26 +532,19 @@ void free_heap(void * ptr) {
 
     // --- explode! -------------------------------------------
 
-    putsUart0(CLIRESET CLIERROR);
-    putsUart0(NEWLINE);
+    putsUart0(CLIRESET CLIERROR NEWLINE);
     putsUart0("rtos.c -> free_heap failed!");
     putsUart0(NEWLINE "\tpid:");
     printu32h(pid);
     putsUart0(NEWLINE "\tptr:");
     printu32h((uint32_t)ptr);
+    putsUart0(NEWLINE);
 
     dumpHeapOwnershipTable();
 
-    putsUart0(NEWLINE CLIRESET);
+    putsUart0(CLIRESET);
 
     NVIC_SYS_HND_CTRL_R |= NVIC_SYS_HND_CTRL_MEMP; // trigger MPU fault /174
-}
-
-void configMPU() {
-    // set background to "allow all"
-    {
-
-    }
 }
 
 void dumpHeapOwnershipTable(){
@@ -566,4 +560,277 @@ void dumpHeapOwnershipTable(){
         printu32h((uint32_t)(heap + r * MPU_REGION_SIZE_B));
     }
     putsUart0(NEWLINE);
+}
+
+void allowFlashAccess() {
+    __asm(" ISB");
+    const unsigned int region = 7;
+
+    //  device memory map table 2.4/92
+
+    NVIC_MPU_BASE_R &= ~NVIC_MPU_BASE_VALID; // use NVIC_MPU_NUMBER for region number /191
+    NVIC_MPU_NUMBER_R &= ~NVIC_MPU_NUMBER_M; // clear region select
+    NVIC_MPU_NUMBER_R |= (region << NVIC_MPU_NUMBER_S) & NVIC_MPU_NUMBER_M;         // select region /189
+
+    NVIC_MPU_ATTR_R &= ~NVIC_MPU_ATTR_ENABLE; // disable region /193
+
+    NVIC_MPU_BASE_R &= ~NVIC_MPU_BASE_ADDR_M; // clear base addr
+    NVIC_MPU_BASE_R |= (0 << NVIC_MPU_BASE_ADDR_S) & NVIC_MPU_BASE_ADDR_M;         // set region base address /190
+
+    /* region size N = log2(SIZE_B) - 1 ; see 3-10/192
+     * N=17 -> 1024*256 == size of FLASH */
+    NVIC_MPU_ATTR_R &= ~NVIC_MPU_ATTR_SIZE_M;               // clear /192
+    NVIC_MPU_ATTR_R |= (17 << 1) & NVIC_MPU_ATTR_SIZE_M;    // set size /192
+
+    // set type extension mask,S,C,and B to what TI says for the memory type
+    NVIC_MPU_ATTR_R &= ~NVIC_MPU_ATTR_TEX_M;    // clear TEX /192
+    NVIC_MPU_ATTR_R |= (0b000 << 19) & NVIC_MPU_ATTR_TEX_M; // set TEX 3-6/130
+    NVIC_MPU_ATTR_R &= ~NVIC_MPU_ATTR_SHAREABLE;// 3-6/130
+    NVIC_MPU_ATTR_R |= NVIC_MPU_ATTR_CACHEABLE; // 3-6/130
+    NVIC_MPU_ATTR_R &= ~NVIC_MPU_ATTR_BUFFRABLE;// 3-6/130
+
+    // set instruction access
+    NVIC_MPU_ATTR_R &= ~NVIC_MPU_ATTR_XN;       // enable instruction access 28:/193
+
+    // set access privilege
+    NVIC_MPU_ATTR_R &= ~NVIC_MPU_ATTR_AP_M;     // clear /193
+    NVIC_MPU_ATTR_R |= (0b011 & 0b111) << 24;   // set AP /193 3-5/129
+    // 0b011 : P:RW, U:RW
+
+    // set sub-region enable, sub-regions automatically made when region larger than 256b /128
+    NVIC_MPU_ATTR_R &= ~NVIC_MPU_ATTR_SRD_M;        // enable all sub-regions /193
+//    NVIC_MPU_ATTR_R |= (0b1111'1111 & 0xFF) << 8;   // disable sub regions (0:enable, 1:disable)
+
+    NVIC_MPU_ATTR_R |= NVIC_MPU_ATTR_ENABLE;    // enable region /193
+
+    __asm(" ISB");
+}
+
+void allowPeripheralAccess() {
+    __asm(" ISB");
+    const unsigned int region = 1;
+
+    //  device memory map table 2.4/92
+
+    NVIC_MPU_BASE_R &= ~NVIC_MPU_BASE_VALID; // use NVIC_MPU_NUMBER for region number /191
+    NVIC_MPU_NUMBER_R &= ~NVIC_MPU_NUMBER_M; // clear region select
+    NVIC_MPU_NUMBER_R |= (region << NVIC_MPU_NUMBER_S) & NVIC_MPU_NUMBER_M;         // select region /189
+    NVIC_MPU_ATTR_R &= ~NVIC_MPU_ATTR_ENABLE; // disable region /193
+
+    NVIC_MPU_BASE_R &= ~NVIC_MPU_BASE_ADDR_M; // clear base addr
+    NVIC_MPU_BASE_R |= (0x4000'0000 << NVIC_MPU_BASE_ADDR_S) & NVIC_MPU_BASE_ADDR_M;         // set region base address /190
+
+    /* region size N = log2(SIZE_B) - 1 ; see 3-10/192
+     * N=17 -> 1024*256 == size of FLASH */
+    NVIC_MPU_ATTR_R &= ~NVIC_MPU_ATTR_SIZE_M;               // clear /192
+    NVIC_MPU_ATTR_R |= (25 << 1) & NVIC_MPU_ATTR_SIZE_M;    // set size /192
+
+    // set type extension mask,S,C,and B to what TI says for the memory type
+    NVIC_MPU_ATTR_R &= ~NVIC_MPU_ATTR_TEX_M;    // clear TEX /192
+    NVIC_MPU_ATTR_R |= 0b000 << 19;             // set TEX 3-6/130
+    NVIC_MPU_ATTR_R |= NVIC_MPU_ATTR_SHAREABLE; // 3-6/130
+    NVIC_MPU_ATTR_R &= ~NVIC_MPU_ATTR_CACHEABLE;// 3-6/130
+    NVIC_MPU_ATTR_R &= ~NVIC_MPU_ATTR_BUFFRABLE;// 3-6/130 : deviates form datasheet
+
+    // set instruction access
+    NVIC_MPU_ATTR_R &= ~NVIC_MPU_ATTR_XN;       // clear 28:/193
+    NVIC_MPU_ATTR_R |= NVIC_MPU_ATTR_XN;        // enable instruction access
+
+    // set access privilege
+    NVIC_MPU_ATTR_R &= NVIC_MPU_ATTR_AP_M;      // clear /193
+    NVIC_MPU_ATTR_R |= (0b011 & 0b111) << 24;   // set AP /193 3-5/129
+    // 0b011 : P+RW, U+RW
+
+    // set sub-region enable, sub-regions automatically made when region larger than 256b /128
+    NVIC_MPU_ATTR_R &= ~NVIC_MPU_ATTR_SRD_M;        // disable all sub-regions /193
+    NVIC_MPU_ATTR_R |= (0b1111'1111 & 0xFF) << 8;   // enable what ever
+
+    NVIC_MPU_ATTR_R |= NVIC_MPU_ATTR_ENABLE;    // enable region /193
+
+    __asm(" ISB");
+}
+
+void setupSramAccess(){
+    int region = 2;
+
+    {
+        //  device memory map table 2.4/92
+        __asm(" ISB");
+
+        NVIC_MPU_BASE_R &= ~NVIC_MPU_BASE_VALID; // use NVIC_MPU_NUMBER for region number /191
+        NVIC_MPU_NUMBER_R &= ~NVIC_MPU_NUMBER_M; // clear region select
+        NVIC_MPU_NUMBER_R |= (region << NVIC_MPU_NUMBER_S) & NVIC_MPU_NUMBER_M; // select region /189
+        NVIC_MPU_ATTR_R &= ~NVIC_MPU_ATTR_ENABLE; // disable region /193
+
+        NVIC_MPU_BASE_R &= ~NVIC_MPU_BASE_ADDR_M; // clear base addr
+        NVIC_MPU_BASE_R |= (0x2000'0000 << NVIC_MPU_BASE_ADDR_S) & NVIC_MPU_BASE_ADDR_M; // set region base address /190
+
+        /* region size N = log2(SIZE_B) - 1 ; see 3-10/192
+         * N=12 -> 1024*8 */
+        NVIC_MPU_ATTR_R &= ~NVIC_MPU_ATTR_SIZE_M;               // clear /192
+        NVIC_MPU_ATTR_R |= (12 << 1) & NVIC_MPU_ATTR_SIZE_M;    // set size /192
+
+        // set type extension mask,S,C,and B to what TI says for the memory type
+        NVIC_MPU_ATTR_R &= ~NVIC_MPU_ATTR_TEX_M;    // clear TEX /192
+        NVIC_MPU_ATTR_R |= 0b000 << 19;             // set TEX 3-6/130
+        NVIC_MPU_ATTR_R |= NVIC_MPU_ATTR_SHAREABLE; // 3-6/130
+        NVIC_MPU_ATTR_R |= NVIC_MPU_ATTR_CACHEABLE; // 3-6/130
+        NVIC_MPU_ATTR_R &= ~NVIC_MPU_ATTR_BUFFRABLE;// 3-6/130
+
+        // set instruction access
+        NVIC_MPU_ATTR_R &= ~NVIC_MPU_ATTR_XN;       // clear 28:/193
+        NVIC_MPU_ATTR_R |= NVIC_MPU_ATTR_XN;        // enable instruction access
+
+        // set access privilege
+        NVIC_MPU_ATTR_R &= NVIC_MPU_ATTR_AP_M;      // clear /193
+//        NVIC_MPU_ATTR_R |= (0b001 & 0b111) << 24;   // set AP /193 3-5/129
+        // 0b001 : P+RW, U+na
+        NVIC_MPU_ATTR_R |= (0b011 & 0b111) << 24;   // set AP /193 3-5/129
+
+        // set sub-region enable, sub-regions automatically made when region larger than 256b /128
+        NVIC_MPU_ATTR_R &= ~NVIC_MPU_ATTR_SRD_M;        // disable all sub-regions /193
+//        NVIC_MPU_ATTR_R |= (0b0000'0000 & 0xFF) << 8;   // enable what ever
+        NVIC_MPU_ATTR_R |= (0b1111'1111 & 0xFF) << 8;   // enable what ever
+
+        NVIC_MPU_ATTR_R |= NVIC_MPU_ATTR_ENABLE;    // enable region /193
+
+        __asm(" ISB");
+    }
+    region++;
+
+    {
+        //  device memory map table 2.4/92
+        __asm(" ISB");
+
+        NVIC_MPU_BASE_R &= ~NVIC_MPU_BASE_VALID; // use NVIC_MPU_NUMBER for region number /191
+        NVIC_MPU_NUMBER_R &= ~NVIC_MPU_NUMBER_M; // clear region select
+        NVIC_MPU_NUMBER_R |= (region << NVIC_MPU_NUMBER_S) & NVIC_MPU_NUMBER_M; // select region /189
+        NVIC_MPU_ATTR_R &= ~NVIC_MPU_ATTR_ENABLE; // disable region /193
+
+        NVIC_MPU_BASE_R &= ~NVIC_MPU_BASE_ADDR_M; // clear base addr
+        NVIC_MPU_BASE_R |= (0x2000'2000 << NVIC_MPU_BASE_ADDR_S) & NVIC_MPU_BASE_ADDR_M; // set region base address /190
+
+        /* region size N = log2(SIZE_B) - 1 ; see 3-10/192
+         * N=12 -> 1024*8 */
+        NVIC_MPU_ATTR_R &= ~NVIC_MPU_ATTR_SIZE_M;               // clear /192
+        NVIC_MPU_ATTR_R |= (12 << 1) & NVIC_MPU_ATTR_SIZE_M;    // set size /192
+
+        // set type extension mask,S,C,and B to what TI says for the memory type
+        NVIC_MPU_ATTR_R &= ~NVIC_MPU_ATTR_TEX_M;    // clear TEX /192
+        NVIC_MPU_ATTR_R |= 0b000 << 19;             // set TEX 3-6/130
+        NVIC_MPU_ATTR_R |= NVIC_MPU_ATTR_SHAREABLE; // 3-6/130
+        NVIC_MPU_ATTR_R |= NVIC_MPU_ATTR_CACHEABLE; // 3-6/130
+        NVIC_MPU_ATTR_R &= ~NVIC_MPU_ATTR_BUFFRABLE;// 3-6/130
+
+        // set instruction access
+        NVIC_MPU_ATTR_R &= ~NVIC_MPU_ATTR_XN;       // clear 28:/193
+        NVIC_MPU_ATTR_R |= NVIC_MPU_ATTR_XN;        // enable instruction access
+
+        // set access privilege
+        NVIC_MPU_ATTR_R &= NVIC_MPU_ATTR_AP_M;      // clear /193
+//        NVIC_MPU_ATTR_R |= (0b001 & 0b111) << 24;   // set AP /193 3-5/129
+        // 0b001 : P+RW, U+na
+        NVIC_MPU_ATTR_R |= (0b011 & 0b111) << 24;   // set AP /193 3-5/129
+
+        // set sub-region enable, sub-regions automatically made when region larger than 256b /128
+        NVIC_MPU_ATTR_R &= ~NVIC_MPU_ATTR_SRD_M;        // disable all sub-regions /193
+//        NVIC_MPU_ATTR_R |= (0b0000'0000 & 0xFF) << 8;   // enable what ever
+        NVIC_MPU_ATTR_R |= (0b1111'1111 & 0xFF) << 8;   // enable what ever
+
+        NVIC_MPU_ATTR_R |= NVIC_MPU_ATTR_ENABLE;    // enable region /193
+
+        __asm(" ISB");
+    }
+    region++;
+
+    {
+        //  device memory map table 2.4/92
+        __asm(" ISB");
+
+        NVIC_MPU_BASE_R &= ~NVIC_MPU_BASE_VALID; // use NVIC_MPU_NUMBER for region number /191
+        NVIC_MPU_NUMBER_R &= ~NVIC_MPU_NUMBER_M; // clear region select
+        NVIC_MPU_NUMBER_R |= (region << NVIC_MPU_NUMBER_S) & NVIC_MPU_NUMBER_M; // select region /189
+        NVIC_MPU_ATTR_R &= ~NVIC_MPU_ATTR_ENABLE; // disable region /193
+
+        NVIC_MPU_BASE_R &= ~NVIC_MPU_BASE_ADDR_M; // clear base addr
+        NVIC_MPU_BASE_R |= (0x2000'4000 << NVIC_MPU_BASE_ADDR_S) & NVIC_MPU_BASE_ADDR_M; // set region base address /190
+
+        /* region size N = log2(SIZE_B) - 1 ; see 3-10/192
+         * N=12 -> 1024*8 */
+        NVIC_MPU_ATTR_R &= ~NVIC_MPU_ATTR_SIZE_M;               // clear /192
+        NVIC_MPU_ATTR_R |= (12 << 1) & NVIC_MPU_ATTR_SIZE_M;    // set size /192
+
+        // set type extension mask,S,C,and B to what TI says for the memory type
+        NVIC_MPU_ATTR_R &= ~NVIC_MPU_ATTR_TEX_M;    // clear TEX /192
+        NVIC_MPU_ATTR_R |= 0b000 << 19;             // set TEX 3-6/130
+        NVIC_MPU_ATTR_R |= NVIC_MPU_ATTR_SHAREABLE; // 3-6/130
+        NVIC_MPU_ATTR_R |= NVIC_MPU_ATTR_CACHEABLE; // 3-6/130
+        NVIC_MPU_ATTR_R &= ~NVIC_MPU_ATTR_BUFFRABLE;// 3-6/130
+
+        // set instruction access
+        NVIC_MPU_ATTR_R &= ~NVIC_MPU_ATTR_XN;       // clear 28:/193
+        NVIC_MPU_ATTR_R |= NVIC_MPU_ATTR_XN;        // enable instruction access
+
+        // set access privilege
+        NVIC_MPU_ATTR_R &= NVIC_MPU_ATTR_AP_M;      // clear /193
+//        NVIC_MPU_ATTR_R |= (0b001 & 0b111) << 24;   // set AP /193 3-5/129
+        // 0b001 : P+RW, U+na
+        NVIC_MPU_ATTR_R |= (0b011 & 0b111) << 24;   // set AP /193 3-5/129
+
+        // set sub-region enable, sub-regions automatically made when region larger than 256b /128
+        NVIC_MPU_ATTR_R &= ~NVIC_MPU_ATTR_SRD_M;        // disable all sub-regions /193
+//        NVIC_MPU_ATTR_R |= (0b0000'0000 & 0xFF) << 8;   // enable what ever
+        NVIC_MPU_ATTR_R |= (0b1111'1111 & 0xFF) << 8;   // enable what ever
+
+        NVIC_MPU_ATTR_R |= NVIC_MPU_ATTR_ENABLE;    // enable region /193
+
+        __asm(" ISB");
+    }
+    region++;
+
+    {
+        //  device memory map table 2.4/92
+        __asm(" ISB");
+
+        NVIC_MPU_BASE_R &= ~NVIC_MPU_BASE_VALID; // use NVIC_MPU_NUMBER for region number /191
+        NVIC_MPU_NUMBER_R &= ~NVIC_MPU_NUMBER_M; // clear region select
+        NVIC_MPU_NUMBER_R |= (region << NVIC_MPU_NUMBER_S) & NVIC_MPU_NUMBER_M; // select region /189
+        NVIC_MPU_ATTR_R &= ~NVIC_MPU_ATTR_ENABLE; // disable region /193
+
+        NVIC_MPU_BASE_R &= ~NVIC_MPU_BASE_ADDR_M; // clear base addr
+        NVIC_MPU_BASE_R |= (0x2000'6000 << NVIC_MPU_BASE_ADDR_S) & NVIC_MPU_BASE_ADDR_M; // set region base address /190
+
+        /* region size N = log2(SIZE_B) - 1 ; see 3-10/192
+         * N=12 -> 1024*8 */
+        NVIC_MPU_ATTR_R &= ~NVIC_MPU_ATTR_SIZE_M;               // clear /192
+        NVIC_MPU_ATTR_R |= (12 << 1) & NVIC_MPU_ATTR_SIZE_M;    // set size /192
+
+        // set type extension mask,S,C,and B to what TI says for the memory type
+        NVIC_MPU_ATTR_R &= ~NVIC_MPU_ATTR_TEX_M;    // clear TEX /192
+        NVIC_MPU_ATTR_R |= 0b000 << 19;             // set TEX 3-6/130
+        NVIC_MPU_ATTR_R |= NVIC_MPU_ATTR_SHAREABLE; // 3-6/130
+        NVIC_MPU_ATTR_R |= NVIC_MPU_ATTR_CACHEABLE; // 3-6/130
+        NVIC_MPU_ATTR_R &= ~NVIC_MPU_ATTR_BUFFRABLE;// 3-6/130
+
+        // set instruction access
+        NVIC_MPU_ATTR_R &= ~NVIC_MPU_ATTR_XN;       // clear 28:/193
+        NVIC_MPU_ATTR_R |= NVIC_MPU_ATTR_XN;        // enable instruction access
+
+        // set access privilege
+        NVIC_MPU_ATTR_R &= NVIC_MPU_ATTR_AP_M;      // clear /193
+//        NVIC_MPU_ATTR_R |= (0b001 & 0b111) << 24;   // set AP /193 3-5/129
+        // 0b001 : P+RW, U+na
+        NVIC_MPU_ATTR_R |= (0b011 & 0b111) << 24;   // set AP /193 3-5/129
+
+        // set sub-region enable, sub-regions automatically made when region larger than 256b /128
+        NVIC_MPU_ATTR_R &= ~NVIC_MPU_ATTR_SRD_M;        // disable all sub-regions /193
+//        NVIC_MPU_ATTR_R |= (0b0000'0000 & 0xFF) << 8;   // enable what ever
+        NVIC_MPU_ATTR_R |= (0b1111'1111 & 0xFF) << 8;   // enable what ever
+
+        NVIC_MPU_ATTR_R |= NVIC_MPU_ATTR_ENABLE;    // enable region /193
+
+        __asm(" ISB");
+    }
+    region++;
+
 }

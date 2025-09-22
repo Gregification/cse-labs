@@ -38,4 +38,10 @@ bool strCmp(const char *, const char *);
 void printu32d(uint32_t);
 void printu32h(uint32_t);
 
+/* should be the same as whats used in the linker cmd file */
+#define FLASH_BASE  0x00000000
+#define FLASH_SIZE  0x00040000
+#define SRAM_BASE   0x20000000
+#define SRAM_SIZE   0x00008000
+
 #endif /* SRC_COMMON_H_ */
