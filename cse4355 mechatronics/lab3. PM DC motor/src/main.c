@@ -1,7 +1,6 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <stdio.h>
 #include <math.h>
 
 #include "loshlib/tm4c123gh6pm.h"
@@ -97,12 +96,35 @@ void printu32h(uint32_t v) {
     }
 }
 
+uint32_t getElapsedTicks(uint32_t prevTimerVal, uint32_t currentTimerVal);
 int main(void)
 {
     /*** Initialize hardware *********************************/
 
     initHw();
     initUart0();
+
+    // config timer A for stop watch calculations
+    {
+       // Disable Timer A during configuration
+       TIMER1_CTL_R &= ~TIMER_CTL_TAEN;
+
+       // Configure for 32-bit timer mode
+       TIMER1_CFG_R = TIMER_CFG_32_BIT_TIMER;
+
+       // Configure Timer A for Periodic mode, default down-count
+       TIMER1_TAMR_R = TIMER_TAMR_TAMR_PERIOD;
+
+       // Set the load value to maximum for longest period before wrap-around
+       TIMER1_TAILR_R = 0xFFFFFFFF;
+
+       // Clear any interrupts (we are polling the value)
+       TIMER1_IMR_R = 0;
+       TIMER1_ICR_R = TIMER_ICR_TATOCINT; // Clear timeout flag just in case
+
+       // Enable Timer A
+       TIMER1_CTL_R |= TIMER_CTL_TAEN;
+    }
 
 //    selectPinDigitalInput(PIN1);
 //    selectPinDigitalInput(PIN2);
@@ -171,6 +193,9 @@ int main(void)
     putsUart0("\033[2J\033[H\033[0m");
     putsUart0("FALL 2025, CSE4355 Mechatronics, Lab 2" NEWLINE);
 
+
+    /*********************************************************/
+
 //    setPinValue(CA_EN, 1);
 //    setPinValue(CB_EN, 1);
     setPWMA(PWMMAX);
@@ -185,7 +210,9 @@ int main(void)
 //            (uint16_t[]){0,0,0,1,    PWMMAX                 , PWMMAX                },
 //        };
 
-    #define STEP_COUNT 8
+    #define STEP_COUNT 4
+    #define STEPTIME 1000e3
+
     STEP steps[STEP_COUNT];
     {
         int x;
@@ -207,55 +234,26 @@ int main(void)
             steps[x].pwmA = fabs(sin(rad)) * (double)PWMMAX;
             steps[x].pwmB = fabs(cos(rad)) * (double)PWMMAX;
 
-//            if(steps[x].pwmA == 0)
-//                steps[x].pwmA = PWMMAX;
-//            if(steps[x].pwmB == 0)
-//                steps[x].pwmB = PWMMAX;
-
-//            putsUart0(" ");
-//            printu32h(x);
-//            putsUart0("  ");
-//            printu32h(steps[x].a1);
-//            putsUart0(" ");
-//            printu32h(steps[x].a2);
-//            putsUart0(" ");
-//            printu32h(steps[x].b1);
-//            putsUart0(" ");
-//            printu32h(steps[x].b2);
-//            putsUart0(" \t");
-//            printu32d(steps[x].pwmA * 100 / PWMMAX);
-//            putsUart0("\t");
-//            printu32d(steps[x].pwmB * 100 / PWMMAX);
-//            putsUart0(NEWLINE);
+            putsUart0(" ");
+            printu32h(x);
+            putsUart0("  ");
+            printu32h(steps[x].a1);
+            putsUart0(" ");
+            printu32h(steps[x].a2);
+            putsUart0(" ");
+            printu32h(steps[x].b1);
+            putsUart0(" ");
+            printu32h(steps[x].b2);
+            putsUart0(" \t");
+            printu32d(steps[x].pwmA * 100 / PWMMAX);
+            putsUart0("\t");
+            printu32d(steps[x].pwmB * 100 / PWMMAX);
+            putsUart0(NEWLINE);
         }
     }
 
-    {
-//        int i;
-////        putsUart0("\ta1\ta2\tb1\tb2\tpwmA\tpwmB" NEWLINE);
-//        putsUart0(NEWLINE);
-//        for(i = 0; i < STEP_COUNT; i++){
-//            putsUart0(" ");
-//            printu32h(i);
-//            putsUart0("  ");
-//            printu32h(steps[i].a1);
-//            putsUart0(" ");
-//            printu32h(steps[i].a2);
-//            putsUart0(" ");
-//            printu32h(steps[i].b1);
-//            putsUart0(" ");
-//            printu32h(steps[i].b2);
-//            putsUart0(" \t");
-//            printu32h(steps[i].pwmA);
-//            putsUart0("\t");
-//            printu32h(steps[i].pwmB);
-//            putsUart0(NEWLINE);
-//        }
-    }
-
-    int step = 0;
+    uint64_t step = 0xFFFFFFF;
     int d = 1;
-#define STEPTIME 80e3
 
     while(1){
         setDirs(steps[step % STEP_COUNT]);
@@ -271,7 +269,7 @@ int main(void)
 
     d *= -1;
     {
-        int targ = 22 * (STEP_COUNT/4);
+        int targ = 19 * (STEP_COUNT/4) + 1;
         for(; targ != 0; targ--){
             setDirs(steps[step % STEP_COUNT]);
             waitMicrosecond(STEPTIME);
@@ -281,6 +279,12 @@ int main(void)
     }
     const int zero = step;
 
+
+
+
+
+
+//    while(1);
     USER_DATA data;
 
     while(true){
@@ -301,20 +305,26 @@ int main(void)
            valid = true;
            double angle = getFieldInteger(&data, 1);
            double a = getFieldInteger(&data, 2);
-//           while(a > 1)
-//               a /= 10.0;
+           while(a > 1)
+               a /= 10.0;
+           if(angle > 0)
+               angle += a;
+           if(angle < 0)
+              angle -= a;
 
-//           angle += a;
+           double stepAngle = 1.8*4.0 / (double)STEP_COUNT;
+           double numStepsToTake_ang = angle / stepAngle;// / (2.0 * 3.14159);
+           int targ = round(numStepsToTake_ang) + zero;
+           int d = (targ >= step) ? 1 : -1;
+           while (step != targ) {
+               int index = step % STEP_COUNT;
+               if (index < 0)
+                   index += STEP_COUNT;  // Ensure positive modulo
 
-           int targ = ((double)angle / (1.8/STEP_COUNT)) + zero;
-           while(step != targ){
-               setDirs(steps[step % STEP_COUNT]);
+               setDirs(steps[index]);
                waitMicrosecond(STEPTIME);
 
-               if(step > targ)
-                   step--;
-               else
-                   step++;
+               step += d;
            }
 
        }
@@ -350,4 +360,15 @@ void initHw()
     selectPinPushPullOutput(LED_BLUE);
 
 
+}
+
+uint32_t getElapsedTicks(uint32_t prevTimerVal, uint32_t currentTimerVal)
+{
+    uint32_t elapsedTicks = 0;
+    if (currentTimerVal <= prevTimerVal) {
+        elapsedTicks = prevTimerVal - currentTimerVal;
+    } else {
+        elapsedTicks = prevTimerVal + (0XFFFFFFFF - currentTimerVal + 1);
+    }
+    return elapsedTicks;
 }

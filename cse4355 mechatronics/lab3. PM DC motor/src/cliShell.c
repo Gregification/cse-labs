@@ -6,6 +6,7 @@
  */
 
 #include "cliShell.h"
+#include <stdio.h>
 
 #include "common.h"
 #include "loshlib/uart0.h"
