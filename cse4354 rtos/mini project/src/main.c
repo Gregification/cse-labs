@@ -29,6 +29,8 @@ void initHw()
     selectPinPushPullOutput(LED_ORANGE);
     selectPinPushPullOutput(LED_YELLOW);
 
+    while(1);
+
     // enable various fault handlers
     NVIC_SYS_HND_CTRL_R |=              // /173
                 NVIC_SYS_HND_CTRL_USAGE
@@ -113,14 +115,13 @@ int main(void)
 //        addSramAccessWindow(&mask, p, 1024);
 //        dumpSramAccessMaskTable(mask);
 //        applySramAccessMask(mask);
-
     }
 
-    {
-        free_heap(p);
-        putsUart0("post free" NEWLINE);
-        dumpAccessTable();
-    }
+//    {
+//        free_heap(p);
+//        putsUart0("post free" NEWLINE);
+//        dumpAccessTable();
+//    }
 
     setTMPL();
     {
