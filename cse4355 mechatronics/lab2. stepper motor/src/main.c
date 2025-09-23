@@ -22,8 +22,8 @@ void initHw();
 //-----------------------------------------------------------------------------
 // Main
 //-----------------------------------------------------------------------------
-//#define PWMMAX ((uint16_t)0xFFFF)
-#define PWMMAX ((uint16_t)0x1)
+#define PWMMAX ((uint16_t)0xFFFF)
+//#define PWMMAX ((uint16_t)0x100)
 
 #define CA_DIR_1 PORTA,6
 #define CA_DIR_2 PORTA,7
@@ -41,10 +41,8 @@ typedef struct STEP {
     uint16_t a2;
     uint16_t b1;
     uint16_t b2;
-//    uint16_t pwmA;
-//    uint16_t pwmB;
-    double pwmA;
-    double pwmB;
+    uint16_t pwmA;
+    uint16_t pwmB;
 } STEP;
 
 void setPWMA(uint16_t val){
@@ -67,6 +65,11 @@ void setDirs(STEP s){
 }
 
 void printu32d(uint32_t v) {
+    if(v == 0){
+        putcUart0('0');
+        return;
+    }
+
     char str[10];
     int i = 0;
     for(i = 0; v > 0; i++){
@@ -82,7 +85,7 @@ void printu32h(uint32_t v) {
     int started = 0;
 
     int i;
-    putsUart0("0x");
+//    putsUart0("0x");
     for (i = 28; i >= 0; i -= 4) {
         uint8_t B = (v >> i) & 0xF;
 
@@ -139,7 +142,7 @@ int main(void)
 
     SYSCTL_RCC_R |= SYSCTL_RCC_USEPWMDIV;   // enable clock divisor as clock source
     SYSCTL_RCC_R &= ~SYSCTL_RCC_PWMDIV_M;   // clear clock divider
-    SYSCTL_RCC_R |= SYSCTL_RCC_PWMDIV_4;   // set clock divider, clock source 4MHz
+    SYSCTL_RCC_R |= SYSCTL_RCC_PWMDIV_2;   // set clock divider, clock source 4MHz
 
     // what to do if counter is X value options /1282
     PWM0_0_CTL_R |= PWM_0_CTL_ENABLE;
@@ -176,26 +179,58 @@ int main(void)
     setPWMB(PWMMAX);
 
 //    (uint16_t[]){0,0,0,0,    PWMMAX                 , PWMMAX                }, //
+//    #define STEP_COUNT 4
 //    static uint16_t steps[][6] = {
 //            (uint16_t[]){1,0,0,0,    PWMMAX                 , PWMMAX                },
 //            (uint16_t[]){0,0,1,0,    PWMMAX                 , PWMMAX                },
 //            (uint16_t[]){0,1,0,0,    PWMMAX                 , PWMMAX                },
 //            (uint16_t[]){0,0,0,1,    PWMMAX                 , PWMMAX                },
 //        };
+
     #define STEP_COUNT 32
     static STEP steps[STEP_COUNT];
-
     {
         int x;
         for(x = 0; x < STEP_COUNT; x++){
-            double angle = x * 2 * M_PI / STEP_COUNT;
-            steps[x].a1 *= cos(angle) > 0 ? cos(angle) : 0;
-            steps[x].a2 *= cos(angle) > 0 ? 0 : -cos(angle);
-            steps[x].b1 *= sin(angle) > 0 ? sin(angle) : 0;
-            steps[x].b2 *= sin(angle) > 0 ? 0 : -sin(angle);
+            double rad = x * 2.0*(double)M_PI/(double)STEP_COUNT;
 
-            steps[x].pwmA = fabs(sin(0.0 * 2*M_PI/STEP_COUNT));
-            steps[x].pwmB = fabs(sin(0.0 * 2*M_PI/STEP_COUNT));
+            if(x % (STEP_COUNT / 4) == 0){
+                steps[x].a1 = cos(rad) > 0 ? cos(rad) : 0;
+                steps[x].a2 = cos(rad) > 0 ? 0 : -cos(rad);
+                steps[x].b1 = sin(rad) > 0 ? sin(rad) : 0;
+                steps[x].b2 = sin(rad) > 0 ? 0 : -sin(rad);
+            } else {
+                steps[x].a1 = cos(rad) > 0 ? 1 : 0;
+                steps[x].a2 = cos(rad) > 0 ? 0 : 1;
+                steps[x].b1 = sin(rad) > 0 ? 1 : 0;
+                steps[x].b2 = sin(rad) > 0 ? 0 : 1;
+            }
+
+            steps[x].pwmB = fabs(cos(rad)) * (double)PWMMAX;
+            steps[x].pwmA = fabs(sin(rad)) * (double)PWMMAX;
+        }
+    }
+
+    {
+        int i;
+//        putsUart0("\ta1\ta2\tb1\tb2\tpwmA\tpwmB" NEWLINE);
+        putsUart0(NEWLINE);
+        for(i = 0; i < STEP_COUNT; i++){
+            putsUart0(" ");
+            printu32h(i);
+            putsUart0("  ");
+            printu32h(steps[i].a1);
+            putsUart0(" ");
+            printu32h(steps[i].a2);
+            putsUart0(" ");
+            printu32h(steps[i].b1);
+            putsUart0(" ");
+            printu32h(steps[i].b2);
+            putsUart0(" \t");
+            printu32h(steps[i].pwmA);
+            putsUart0("\t");
+            printu32h(steps[i].pwmB);
+            putsUart0(NEWLINE);
         }
     }
 
@@ -256,12 +291,19 @@ int main(void)
 
        bool valid = false;
 
-       if(isCommand(&data, "goto", 1)){
+       if(isCommand(&data, "goto", 2)){
            valid = true;
-           int angle = getFieldInteger(&data, 1);
+           double angle = getFieldInteger(&data, 1);
+           {
+               int a = getFieldInteger(&data, 1);
+               int i = 0, b = a;
+               for(i = 1; b != 0; i++)
+                   b /= 10;
+               angle += a / (i * 10);
+           }
            {
                char str[50];
-               snprintf(ARRANDN(str), "%d" NEWLINE, angle);
+               snprintf(ARRANDN(str), "%f" NEWLINE, angle);
                putsUart0(str);
            }
 
