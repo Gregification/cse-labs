@@ -1,8 +1,6 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <string.h>
-#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 
@@ -206,8 +204,13 @@ int main(void)
                 steps[x].b2 = sin(rad) > 0 ? 0 : 1;
             }
 
-            steps[x].pwmA = fabs(cos(rad)) * (double)PWMMAX;
-            steps[x].pwmB = fabs(sin(rad)) * (double)PWMMAX;
+            steps[x].pwmA = fabs(sin(rad)) * (double)PWMMAX;
+            steps[x].pwmB = fabs(cos(rad)) * (double)PWMMAX;
+
+            if(steps[x].pwmA == 0)
+                steps[x].pwmA = PWMMAX;
+            if(steps[x].pwmB == 0)
+                steps[x].pwmB = PWMMAX;
 
             putsUart0(" ");
             printu32h(x);
@@ -220,9 +223,9 @@ int main(void)
             putsUart0(" ");
             printu32h(steps[x].b2);
             putsUart0(" \t");
-            printu32d(fabs(cos(rad)) * 100.0);
+            printu32d(steps[x].pwmA * 100 / PWMMAX);
             putsUart0("\t");
-            printu32d(fabs(sin(rad)) * 100.0);
+            printu32d(steps[x].pwmB * 100 / PWMMAX);
             putsUart0(NEWLINE);
         }
     }
@@ -252,7 +255,7 @@ int main(void)
 
     int step = 0;
     int d = 1;
-#define STEPTIME 300e3
+#define STEPTIME 200e3
 
     while(1){
         setDirs(steps[step % STEP_COUNT]);
@@ -264,12 +267,6 @@ int main(void)
             break;
         }
         step += d;
-    }
-
-    {
-        char str[50];
-        snprintf(ARRANDN(str), "zeroed @: %d" NEWLINE, step);
-        putsUart0(str);
     }
 
     d *= -1;
@@ -284,14 +281,7 @@ int main(void)
     }
     const int zero = step;
 
-    {
-        char str[50];
-        snprintf(ARRANDN(str), "stopped @: %d" NEWLINE, step);
-        putsUart0(str);
-    }
-
     USER_DATA data;
-
 
     while(true){
        putsUart0("\033[38;2;0;255;0m>");
