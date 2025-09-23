@@ -21,6 +21,9 @@
 #define CLIERROR "\033[38;2;255;0;0m"
 #define CLIHIGHLIGHT "\033[38;2;255;255;0m"
 #define CLIGOOD "\033[38;2;0;255;0m"
+#define CLIYES "\033[38;2;0;255;255m"
+#define CLINO "\033[38;2;255;0;255m"
+#define CLIWARN "\033[38;2;255;100;0m"
 #define CLIRESET "\033[0m"
 #define CLICLEAR "\033[2J\033[H\033[0m"
 

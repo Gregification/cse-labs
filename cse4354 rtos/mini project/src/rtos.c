@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include "rtos.h"
 #include "common.h"
+#include <stdbool.h>
 
 #include "loshlib/uart0.h"
 #include "loshlib/gpio.h"
@@ -33,7 +34,7 @@ uint32_t getFieldInteger(USER_DATA *, uint8_t fieldNumber);
 /* 32KiB memory available.
  * memory split into 32 1024B chunks, first 4 are reserved for OS, remaining 28 are for tasks.
  * access control style
- *  - background deny default
+ *  - background accept default
  *  - additive regions
  *
  * references
@@ -45,20 +46,21 @@ uint32_t getFieldInteger(USER_DATA *, uint8_t fieldNumber);
 
 #define MPU_REGION_COUNT 28
 #define MPU_REGION_SIZE_B 1024
+#define MAX_TASKS 10
 
 #pragma DATA_SECTION(heap, ".heap")
 volatile uint8_t heap[MPU_REGION_COUNT * MPU_REGION_SIZE_B];
 
 /** Heap Ownership Table */
 struct {
-    uint32_t owner_pid;
+    PID owner_pid;
     unsigned int len;   // length of allocation, only base pointer has non-zero value.
 } HOT[MPU_REGION_COUNT];
 
-/** TMPL
- * contains MPU masks to apply when task switching
- */
-uint64_t tmpl[MPU_REGION_COUNT];
+struct {
+    PID pid;
+    SRDBitMask mask;
+} accessMasks[MAX_TASKS];
 
 
 /*************************************************************/
@@ -472,6 +474,25 @@ void * malloc_heap(unsigned int size) {
     if(!size)
         return NULL;
 
+    // find what access mask to update
+    unsigned int am_i = 0;
+    for(am_i = 0; am_i < MAX_TASKS; am_i++)
+        if(accessMasks[am_i].pid == pid)
+            break;
+    if(am_i == MAX_TASKS) { // pid dosent already have a mask
+        // find empty space for mask
+        for(am_i = 0; am_i < MAX_TASKS; am_i++)
+            if(accessMasks[am_i].pid == NULL) {
+                accessMasks[am_i].pid = pid;
+                addSramAccessWindow(&accessMasks[am_i].mask.raw, (uint32_t*)SRAM_BASE, 1024*4);
+                break;
+            }
+
+        if(am_i == MAX_TASKS) // if no space available
+            return NULL;
+    }
+
+
     int regions = (size-1) / MPU_REGION_SIZE_B;
 
     // cheese allocate
@@ -494,8 +515,17 @@ void * malloc_heap(unsigned int size) {
             for(d = baseR; d <= (baseR + regions); d++) {
                 HOT[d].owner_pid = pid;
                 HOT[d].len = 0;
+                accessMasks[am_i].mask.masks[(baseR + regions)/8] |= BV((baseR + regions) % 8);
             }
             HOT[baseR].len = regions+1;
+
+            addSramAccessWindow(&accessMasks[am_i].mask.raw, (heap + (baseR * MPU_REGION_SIZE_B)), size);
+
+//            putsUart0("malloc resulting mask (");
+//            printu32d(am_i);
+//            putsUart0("):" NEWLINE " enbl: ");
+//            dumpSramAccessMaskTable(accessMasks[am_i].mask.raw);
+            applySramAccessMask(accessMasks[am_i].mask.raw);
 
             return (void *)(heap + (baseR * MPU_REGION_SIZE_B));
         }
@@ -518,26 +548,40 @@ void free_heap(void * ptr) {
             if(ptr == (heap + (r * MPU_REGION_SIZE_B))){
                 // is valid
 
+                int am_i;
+                // find the appropriate mask to update (if it even exists (it should))
+                for(am_i = 0; am_i < MAX_TASKS; am_i++)
+                    if(accessMasks[am_i].pid == pid)
+                        break;
+
                 // update ownership
                 for(int i = 1; i < HOT[r].len; i++){
                     HOT[r+i].owner_pid = NULL;
                     HOT[r+i].len = NULL;
 
                     // update access
-                    {
-                        NVIC_MPU_BASE_R &= ~NVIC_MPU_BASE_VALID;            // use NVIC_MPU_NUMBER for region number /191
-                        NVIC_MPU_NUMBER_R &= ~NVIC_MPU_NUMBER_M;            // clear region select
-                        NVIC_MPU_NUMBER_R |= ((r/8) << NVIC_MPU_NUMBER_S) & NVIC_MPU_NUMBER_M;   // select region /189
-
-                        NVIC_MPU_ATTR_R &= ~NVIC_MPU_ATTR_ENABLE;           // disable region /193
-
-                        NVIC_MPU_ATTR_R |= BV(r%8) << 8;                    // apply sub-region mask
-
-                        NVIC_MPU_ATTR_R |= NVIC_MPU_ATTR_ENABLE;            // enable region /193
-                    }
+                    if(am_i != MAX_TASKS)
+                        accessMasks[am_i].mask.masks[(4 + r + i)/8] &= ~BV((r + i) % 8);
                 }
                 HOT[r].owner_pid = NULL;
                 HOT[r].len = NULL;
+
+                if(am_i != MAX_TASKS){
+//                    putsUart0("free edit mask on ");
+//                    printu32d(am_i);
+//                    putsUart0(NEWLINE);
+                    accessMasks[am_i].mask.masks[(4 + r)/8] &= ~BV((4 + r) % 8);
+                } else {
+//                    putsUart0("free has no mask to edit PID:");
+//                    printu32d(pid);
+//                    putsUart0(NEWLINE);
+                }
+
+//                putsUart0("free resulting mask:" NEWLINE);
+//                dumpAccessTable();
+
+                if(am_i != MAX_TASKS)
+                    applySramAccessMask(accessMasks[am_i].mask.raw);
 
                 return;
             }
@@ -578,6 +622,11 @@ void dumpHeapOwnershipTable(){
 }
 
 void setupMPU(){
+    for(int i = 0; i < MAX_TASKS; i++){
+        accessMasks[i].mask.raw = createNoSramAccessMask();
+        accessMasks[i].pid = NULL;
+    }
+
     { // default all access rule
         __asm(" ISB");
 
@@ -590,7 +639,7 @@ void setupMPU(){
         NVIC_MPU_ATTR_R &= ~NVIC_MPU_ATTR_ENABLE; // disable region /193
 
         NVIC_MPU_BASE_R &= ~NVIC_MPU_BASE_ADDR_M; // clear base addr
-        NVIC_MPU_BASE_R |= (0 << NVIC_MPU_BASE_ADDR_S) & NVIC_MPU_BASE_ADDR_M;         // set region base address /190
+        NVIC_MPU_BASE_R |= 0 & NVIC_MPU_BASE_ADDR_M;         // set region base address /190
 
         /* region size N = log2(SIZE_B) - 1 ; see 3-10/192
          * N=17 -> 1024*256 == size of FLASH */
@@ -630,7 +679,7 @@ void setupMPU(){
 }
 
 void dumpAccessTable() {
-    putsUart0("\tApplied Region Sub-Region Enabled?" NEWLINE);
+    putsUart0("\tApplied Region Sub-Region raw" NEWLINE);
     for(int r = 0; r < 8; r++){
         putsUart0("\t");
         printu32d(r);
@@ -642,17 +691,35 @@ void dumpAccessTable() {
 
         if(NVIC_MPU_ATTR_R & NVIC_MPU_ATTR_ENABLE) {
             for(int sr = 0; sr < 8; sr++){
-                printu32d((NVIC_MPU_ATTR_R & (BV(sr) << 8)) == 0);
+                {
+                    bool enabled = (NVIC_MPU_ATTR_R & (BV(sr) << 8)) == 0;
+                    bool restriction;
+                    if((r >= MPU_REGIONS_SRAM_START) && (r < (MPU_REGIONS_SRAM_START + 4)))
+                        restriction = enabled;
+                    else if(r == MPU_REGIONS_FLASH || r == MPU_REGIONS_BKGND)
+                        restriction = !enabled;
+                    else {
+                        putsUart0(CLIERROR);
+                        putsUart0("no case for region!");
+                    }
+
+                    if(restriction)putsUart0(CLINO);
+                    else        putsUart0(CLIYES);
+                }
+                printu32d((NVIC_MPU_ATTR_R & (BV(sr) << 8)) != 0);
+                putsUart0(CLIRESET);
                 putsUart0(" ");
             }
         } else {
+            putsUart0(CLINO);
             for(int sr = 0; sr < 8; sr++){
                 putsUart0("- ");
             }
+            putsUart0(CLIRESET);
         }
 
         putsUart0("\t");
-        printu32h((NVIC_MPU_BASE_R & NVIC_MPU_BASE_ADDR_M) >> NVIC_MPU_BASE_ADDR_S);
+        printu32h(NVIC_MPU_BASE_R & NVIC_MPU_BASE_ADDR_M);
         putsUart0(NEWLINE);
     }
 }
@@ -660,7 +727,7 @@ void dumpAccessTable() {
 void dumpSramAccessMaskTable(uint64_t mask) {
     SRDBitMask * m = (SRDBitMask *)&mask;
 
-    putsUart0("\tRegion Sub-Region Enabled? mask" NEWLINE);
+    putsUart0("\tRegion Sub-Region raw" NEWLINE);
     for(int dr = 0; dr < 4; dr++){
         const unsigned int r = dr + MPU_REGIONS_SRAM_START;
 
@@ -670,6 +737,7 @@ void dumpSramAccessMaskTable(uint64_t mask) {
 
         for(int sr = 0; sr < 8; sr++){
             printu32d((m->masks[dr] & BV(sr)) != 0);
+            putsUart0(CLIRESET);
             putsUart0(" ");
         }
 
@@ -678,7 +746,7 @@ void dumpSramAccessMaskTable(uint64_t mask) {
         NVIC_MPU_NUMBER_R |= (r << NVIC_MPU_NUMBER_S) & NVIC_MPU_NUMBER_M;         // select region /189
 
         putsUart0("\t");
-        printu32h((NVIC_MPU_BASE_R & NVIC_MPU_BASE_ADDR_M) >> NVIC_MPU_BASE_ADDR_S);
+        printu32h(NVIC_MPU_BASE_R & NVIC_MPU_BASE_ADDR_M);// >> NVIC_MPU_BASE_ADDR_S);
         putsUart0(NEWLINE);
     }
 }
@@ -696,7 +764,7 @@ void allowFlashAccess() {
     NVIC_MPU_ATTR_R &= ~NVIC_MPU_ATTR_ENABLE; // disable region /193
 
     NVIC_MPU_BASE_R &= ~NVIC_MPU_BASE_ADDR_M; // clear base addr
-    NVIC_MPU_BASE_R |= (0 << NVIC_MPU_BASE_ADDR_S) & NVIC_MPU_BASE_ADDR_M;         // set region base address /190
+    NVIC_MPU_BASE_R |= 0 & NVIC_MPU_BASE_ADDR_M;         // set region base address /190
 
     /* region size N = log2(SIZE_B) - 1 ; see 3-10/192
      * N=17 -> 1024*256 == size of FLASH */
@@ -748,7 +816,7 @@ void setupSramAccess(){
         NVIC_MPU_ATTR_R &= ~NVIC_MPU_ATTR_ENABLE; // disable region /193
 
         NVIC_MPU_BASE_R &= ~NVIC_MPU_BASE_ADDR_M; // clear base addr
-        NVIC_MPU_BASE_R |= (0x2000'0000 << NVIC_MPU_BASE_ADDR_S) & NVIC_MPU_BASE_ADDR_M;         // set region base address /190
+        NVIC_MPU_BASE_R |= 0x2000'0000 & NVIC_MPU_BASE_ADDR_M;         // set region base address /190
 
         /* region size N = log2(SIZE_B) - 1 ; see 3-10/192
          * N=12 -> 1024*8 */
@@ -792,7 +860,7 @@ void setupSramAccess(){
         NVIC_MPU_ATTR_R &= ~NVIC_MPU_ATTR_ENABLE; // disable region /193
 
         NVIC_MPU_BASE_R &= ~NVIC_MPU_BASE_ADDR_M; // clear base addr
-        NVIC_MPU_BASE_R |= (0x2000'2000 << NVIC_MPU_BASE_ADDR_S) & NVIC_MPU_BASE_ADDR_M;         // set region base address /190
+        NVIC_MPU_BASE_R |= 0x2000'2000 & NVIC_MPU_BASE_ADDR_M;         // set region base address /190
 
         /* region size N = log2(SIZE_B) - 1 ; see 3-10/192
          * N=12 -> 1024*8 */
@@ -836,7 +904,7 @@ void setupSramAccess(){
         NVIC_MPU_ATTR_R &= ~NVIC_MPU_ATTR_ENABLE; // disable region /193
 
         NVIC_MPU_BASE_R &= ~NVIC_MPU_BASE_ADDR_M; // clear base addr
-        NVIC_MPU_BASE_R |= (0x2000'4000 << NVIC_MPU_BASE_ADDR_S) & NVIC_MPU_BASE_ADDR_M;         // set region base address /190
+        NVIC_MPU_BASE_R |= 0x2000'4000 & NVIC_MPU_BASE_ADDR_M;         // set region base address /190
 
         /* region size N = log2(SIZE_B) - 1 ; see 3-10/192
          * N=12 -> 1024*8 */
@@ -880,7 +948,7 @@ void setupSramAccess(){
         NVIC_MPU_ATTR_R &= ~NVIC_MPU_ATTR_ENABLE; // disable region /193
 
         NVIC_MPU_BASE_R &= ~NVIC_MPU_BASE_ADDR_M; // clear base addr
-        NVIC_MPU_BASE_R |= (0x2000'6000 << NVIC_MPU_BASE_ADDR_S) & NVIC_MPU_BASE_ADDR_M;         // set region base address /190
+        NVIC_MPU_BASE_R |= 0x2000'6000 & NVIC_MPU_BASE_ADDR_M;         // set region base address /190
 
         /* region size N = log2(SIZE_B) - 1 ; see 3-10/192
          * N=12 -> 1024*8 */
@@ -931,7 +999,7 @@ void applySramAccessMask(uint64_t srdBitMask) {
         NVIC_MPU_ATTR_R &= ~NVIC_MPU_ATTR_ENABLE;           // disable region /193
 
         NVIC_MPU_ATTR_R &= ~NVIC_MPU_ATTR_SRD_M;            // clear existing
-        NVIC_MPU_ATTR_R |= ~mask->masks[dr] << 8;           // apply mask
+        NVIC_MPU_ATTR_R |= (mask->masks[dr] & 0xFF) << 8;           // apply mask
 
         NVIC_MPU_ATTR_R |= NVIC_MPU_ATTR_ENABLE;            // enable region /193
     }

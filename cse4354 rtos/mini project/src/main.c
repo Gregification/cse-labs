@@ -74,39 +74,61 @@ int main(void)
     putsUart0(CLICLEAR);
     putsUart0(CLIGOOD);
     putsUart0("FALL 2025, CSE4354 RTOS, Mini Project, George Boone 1002055713" NEWLINE);
+    putsUart0(CLIRESET CLIERROR);
+    putsUart0("\terror" NEWLINE);
+    putsUart0(CLIRESET CLIHIGHLIGHT);
+    putsUart0("\thighlight" NEWLINE);
+    putsUart0(CLIRESET CLIGOOD);
+    putsUart0("\tgood" NEWLINE);
+    putsUart0(CLIRESET CLIYES);
+    putsUart0("\tyes" NEWLINE);
+    putsUart0(CLIRESET CLINO);
+    putsUart0("\tno" NEWLINE);
+    putsUart0(CLIRESET CLIWARN);
+    putsUart0("\twarn" NEWLINE);
     putsUart0(CLIRESET);
 
     setPSP(testFunc);
 
+
+    setupMPU();
+    allowFlashAccess();
+    allowPeripheralAccess();
+    setupSramAccess();
+
+    putsUart0("pre malloc" NEWLINE);
+    dumpAccessTable();
     uint32_t * p = malloc_heap(1024);
-    dumpHeapOwnershipTable();
     if(!p){
         putsUart0(CLIERROR "malloc failed D:");
         while(1);
     }
-
-    allowFlashAccess();
-    setupMPU();
-    allowPeripheralAccess();
-    setupSramAccess();
+    putsUart0("post malloc" NEWLINE);
+    dumpAccessTable();
 
     {
-        dumpAccessTable();
-        uint64_t mask = createNoSramAccessMask();
+//        uint64_t mask = createNoSramAccessMask();
 //        addSramAccessWindow(&mask, (uint32_t*)SRAM_BASE, 1024*4);
 //        dumpSramAccessMaskTable(mask);
 //        addSramAccessWindow(&mask, p, 1024);
-        dumpSramAccessMaskTable(mask);
-        applySramAccessMask(mask);
+//        dumpSramAccessMaskTable(mask);
+//        applySramAccessMask(mask);
 
+    }
+
+    {
+        free_heap(p);
+        putsUart0("post free" NEWLINE);
+        dumpAccessTable();
     }
 
     setTMPL();
-    p[0] = 67;
-
     {
-//        free_heap(p);
+        putsUart0("start heap IO ... ");
+        p[0] = p[1];
+        putsUart0(CLIGOOD "DONE" CLIRESET NEWLINE);
     }
+
 
 //    putsUart0("---" NEWLINE);
 //    void* p = malloc_heap(1024);
