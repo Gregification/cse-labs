@@ -187,7 +187,7 @@ int main(void)
 //            (uint16_t[]){0,0,0,1,    PWMMAX                 , PWMMAX                },
 //        };
 
-    #define STEP_COUNT 32
+    #define STEP_COUNT 16
     static STEP steps[STEP_COUNT];
     {
         int x;
@@ -208,35 +208,51 @@ int main(void)
 
             steps[x].pwmA = fabs(cos(rad)) * (double)PWMMAX;
             steps[x].pwmB = fabs(sin(rad)) * (double)PWMMAX;
-        }
-    }
 
-    {
-        int i;
-//        putsUart0("\ta1\ta2\tb1\tb2\tpwmA\tpwmB" NEWLINE);
-        putsUart0(NEWLINE);
-        for(i = 0; i < STEP_COUNT; i++){
             putsUart0(" ");
-            printu32h(i);
+            printu32h(x);
             putsUart0("  ");
-            printu32h(steps[i].a1);
+            printu32h(steps[x].a1);
             putsUart0(" ");
-            printu32h(steps[i].a2);
+            printu32h(steps[x].a2);
             putsUart0(" ");
-            printu32h(steps[i].b1);
+            printu32h(steps[x].b1);
             putsUart0(" ");
-            printu32h(steps[i].b2);
+            printu32h(steps[x].b2);
             putsUart0(" \t");
-            printu32h(steps[i].pwmA);
+            printu32d(fabs(cos(rad)) * 100.0);
             putsUart0("\t");
-            printu32h(steps[i].pwmB);
+            printu32d(fabs(sin(rad)) * 100.0);
             putsUart0(NEWLINE);
         }
     }
 
+    {
+//        int i;
+////        putsUart0("\ta1\ta2\tb1\tb2\tpwmA\tpwmB" NEWLINE);
+//        putsUart0(NEWLINE);
+//        for(i = 0; i < STEP_COUNT; i++){
+//            putsUart0(" ");
+//            printu32h(i);
+//            putsUart0("  ");
+//            printu32h(steps[i].a1);
+//            putsUart0(" ");
+//            printu32h(steps[i].a2);
+//            putsUart0(" ");
+//            printu32h(steps[i].b1);
+//            putsUart0(" ");
+//            printu32h(steps[i].b2);
+//            putsUart0(" \t");
+//            printu32h(steps[i].pwmA);
+//            putsUart0("\t");
+//            printu32h(steps[i].pwmB);
+//            putsUart0(NEWLINE);
+//        }
+    }
+
     int step = 0;
     int d = 1;
-#define STEPTIME 200e3
+#define STEPTIME 300e3
 
     while(1){
         setDirs(steps[step % STEP_COUNT]);
