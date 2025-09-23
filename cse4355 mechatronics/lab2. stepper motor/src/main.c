@@ -185,7 +185,8 @@ int main(void)
 //        };
 
     #define STEP_COUNT 4
-#define STEPTIME 500e3
+    #define STEPTIME 1000e3
+
     STEP steps[STEP_COUNT];
     {
         int x;
@@ -207,11 +208,6 @@ int main(void)
             steps[x].pwmA = fabs(sin(rad)) * (double)PWMMAX;
             steps[x].pwmB = fabs(cos(rad)) * (double)PWMMAX;
 
-//            if(steps[x].pwmA == 0)
-//                steps[x].pwmA = PWMMAX;
-//            if(steps[x].pwmB == 0)
-//                steps[x].pwmB = PWMMAX;
-
             putsUart0(" ");
             printu32h(x);
             putsUart0("  ");
@@ -230,30 +226,7 @@ int main(void)
         }
     }
 
-    {
-//        int i;
-////        putsUart0("\ta1\ta2\tb1\tb2\tpwmA\tpwmB" NEWLINE);
-//        putsUart0(NEWLINE);
-//        for(i = 0; i < STEP_COUNT; i++){
-//            putsUart0(" ");
-//            printu32h(i);
-//            putsUart0("  ");
-//            printu32h(steps[i].a1);
-//            putsUart0(" ");
-//            printu32h(steps[i].a2);
-//            putsUart0(" ");
-//            printu32h(steps[i].b1);
-//            putsUart0(" ");
-//            printu32h(steps[i].b2);
-//            putsUart0(" \t");
-//            printu32h(steps[i].pwmA);
-//            putsUart0("\t");
-//            printu32h(steps[i].pwmB);
-//            putsUart0(NEWLINE);
-//        }
-    }
-
-    int step = 0;
+    uint64_t step = 0xFFFFFFF;
     int d = 1;
 
     while(1){
@@ -270,7 +243,7 @@ int main(void)
 
     d *= -1;
     {
-        int targ = 20 * (STEP_COUNT/4);
+        int targ = 19 * (STEP_COUNT/4) + 1;
         for(; targ != 0; targ--){
             setDirs(steps[step % STEP_COUNT]);
             waitMicrosecond(STEPTIME);
@@ -308,8 +281,9 @@ int main(void)
            if(angle < 0)
               angle -= a;
 
-           int boffset = round((angle / ((1.799 / (double)STEP_COUNT)))/(2.0 * 3.14159));
-           int targ = boffset + zero;
+           double stepAngle = 1.8*4.0 / (double)STEP_COUNT;
+           double numStepsToTake_ang = angle / stepAngle;// / (2.0 * 3.14159);
+           int targ = round(numStepsToTake_ang) + zero;
            int d = (targ >= step) ? 1 : -1;
            while (step != targ) {
                int index = step % STEP_COUNT;
