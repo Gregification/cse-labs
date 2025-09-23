@@ -93,14 +93,16 @@ int main(void)
     {
         dumpAccessTable();
         uint64_t mask = createNoSramAccessMask();
-        addSramAccessWindow(&mask, p, 1024);
+//        addSramAccessWindow(&mask, (uint32_t*)SRAM_BASE, 1024*4);
+//        dumpSramAccessMaskTable(mask);
+//        addSramAccessWindow(&mask, p, 1024);
         dumpSramAccessMaskTable(mask);
-//        applySramAccessMask(mask);
+        applySramAccessMask(mask);
 
     }
 
-    p[0] = 67;
     setTMPL();
+    p[0] = 67;
 
     {
 //        free_heap(p);
