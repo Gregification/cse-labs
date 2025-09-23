@@ -1,6 +1,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include <math.h>
 
 #include "loshlib/tm4c123gh6pm.h"
@@ -184,8 +185,7 @@ int main(void)
 //            (uint16_t[]){0,0,0,1,    PWMMAX                 , PWMMAX                },
 //        };
 
-    #define STEP_COUNT 4
-#define STEPTIME 500e3
+    #define STEP_COUNT 8
     STEP steps[STEP_COUNT];
     {
         int x;
@@ -212,21 +212,21 @@ int main(void)
 //            if(steps[x].pwmB == 0)
 //                steps[x].pwmB = PWMMAX;
 
-            putsUart0(" ");
-            printu32h(x);
-            putsUart0("  ");
-            printu32h(steps[x].a1);
-            putsUart0(" ");
-            printu32h(steps[x].a2);
-            putsUart0(" ");
-            printu32h(steps[x].b1);
-            putsUart0(" ");
-            printu32h(steps[x].b2);
-            putsUart0(" \t");
-            printu32d(steps[x].pwmA * 100 / PWMMAX);
-            putsUart0("\t");
-            printu32d(steps[x].pwmB * 100 / PWMMAX);
-            putsUart0(NEWLINE);
+//            putsUart0(" ");
+//            printu32h(x);
+//            putsUart0("  ");
+//            printu32h(steps[x].a1);
+//            putsUart0(" ");
+//            printu32h(steps[x].a2);
+//            putsUart0(" ");
+//            printu32h(steps[x].b1);
+//            putsUart0(" ");
+//            printu32h(steps[x].b2);
+//            putsUart0(" \t");
+//            printu32d(steps[x].pwmA * 100 / PWMMAX);
+//            putsUart0("\t");
+//            printu32d(steps[x].pwmB * 100 / PWMMAX);
+//            putsUart0(NEWLINE);
         }
     }
 
@@ -255,6 +255,7 @@ int main(void)
 
     int step = 0;
     int d = 1;
+#define STEPTIME 80e3
 
     while(1){
         setDirs(steps[step % STEP_COUNT]);
@@ -270,7 +271,7 @@ int main(void)
 
     d *= -1;
     {
-        int targ = 20 * (STEP_COUNT/4);
+        int targ = 22 * (STEP_COUNT/4);
         for(; targ != 0; targ--){
             setDirs(steps[step % STEP_COUNT]);
             waitMicrosecond(STEPTIME);
@@ -280,7 +281,6 @@ int main(void)
     }
     const int zero = step;
 
-//    while(1);
     USER_DATA data;
 
     while(true){
@@ -301,25 +301,20 @@ int main(void)
            valid = true;
            double angle = getFieldInteger(&data, 1);
            double a = getFieldInteger(&data, 2);
-           while(a > 1)
-               a /= 10.0;
-           if(angle > 0)
-               angle += a;
-           if(angle < 0)
-              angle -= a;
+//           while(a > 1)
+//               a /= 10.0;
 
-           int boffset = round((angle / ((1.799 / (double)STEP_COUNT)))/(2.0 * 3.14159));
-           int targ = boffset + zero;
-           int d = (targ >= step) ? 1 : -1;
-           while (step != targ) {
-               int index = step % STEP_COUNT;
-               if (index < 0)
-                   index += STEP_COUNT;  // Ensure positive modulo
+//           angle += a;
 
-               setDirs(steps[index]);
+           int targ = ((double)angle / (1.8/STEP_COUNT)) + zero;
+           while(step != targ){
+               setDirs(steps[step % STEP_COUNT]);
                waitMicrosecond(STEPTIME);
 
-               step += d;
+               if(step > targ)
+                   step--;
+               else
+                   step++;
            }
 
        }
