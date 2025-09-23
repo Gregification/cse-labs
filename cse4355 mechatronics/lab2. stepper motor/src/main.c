@@ -206,8 +206,8 @@ int main(void)
                 steps[x].b2 = sin(rad) > 0 ? 0 : 1;
             }
 
-            steps[x].pwmB = fabs(cos(rad)) * (double)PWMMAX;
-            steps[x].pwmA = fabs(sin(rad)) * (double)PWMMAX;
+            steps[x].pwmA = fabs(cos(rad)) * (double)PWMMAX;
+            steps[x].pwmB = fabs(sin(rad)) * (double)PWMMAX;
         }
     }
 
