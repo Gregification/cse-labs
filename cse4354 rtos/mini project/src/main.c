@@ -106,7 +106,7 @@ int main(void)
 
     putsUart0("pre malloc p1" NEWLINE);
     dumpAccessTable();
-    uint32_t * p1 = malloc_heap(1054*6);
+    uint32_t * p1 = malloc_heap(1054*12);
     if(!p1){
         putsUart0(CLIERROR "malloc failed D:");
         dumpHeapOwnershipTable();
@@ -145,6 +145,18 @@ int main(void)
         free_heap(p2);
         putsUart0("post free p2" NEWLINE);
         dumpAccessTable();
+        dumpHeapOwnershipTable();
+    }
+
+    {
+        putsUart0("attempting 1024*27 malloc ... ");
+        uint32_t * pt = malloc_heap(1024*28);
+        if(!pt){
+            putsUart0(CLIERROR "malloc failed D:");
+            dumpHeapOwnershipTable();
+            while(1);
+        }
+        putsUart0(CLIGOOD "DONE" CLIRESET NEWLINE);
         dumpHeapOwnershipTable();
     }
 
