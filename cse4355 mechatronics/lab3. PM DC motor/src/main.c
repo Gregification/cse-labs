@@ -75,8 +75,9 @@ int ccp_count = 0;
 void timer2A_IRQ(){
     togglePinValue(LED_GREEN);
 
-  //  printu32d(ccp_count);
-//putsUart0(NEWLINE);
+//    printu32d(ccp_count);
+//    putsUart0(NEWLINE);
+    ccp_count = 0;
 
     TIMER2_ICR_R = TIMER_ICR_TATOCINT;
 }
@@ -90,7 +91,6 @@ void timer3A_IRQ(){
 void portA_IRQ(){
     ccp_count++;
     clearPinInterrupt(CCP_IN);
-
 }
 
 uint32_t getElapsedTicks(uint32_t prevTimerVal, uint32_t currentTimerVal);
@@ -101,34 +101,35 @@ int main(void)
     initHw();
     initUart0();
 
-    selectPinDigitalInput(CCP_IN);
     selectPinPushPullOutput(SYNC);
     selectPinPushPullOutput(LED_RED);
     selectPinPushPullOutput(LED_GREEN);
 
-    enablePinInterrupt(CCP_IN);
+    selectPinDigitalInput(CCP_IN);
+    disableNvicInterrupt(INT_GPIOA);
     selectPinInterruptRisingEdge(CCP_IN);
-    selectPinInterruptHighLevel(CCP_IN);
+    enablePinInterrupt(CCP_IN);
+    enableNvicInterrupt(INT_GPIOA);
+
+    selectPinDigitalInput(SW1);
+    setPinCommitControl(SW2);
+    enablePinPulldown(SW2);
+    selectPinDigitalInput(SW2);
 
     /*** TIMER ***********************************************/
     SYSCTL_RCGCTIMER_R |= SYSCTL_RCGCTIMER_R1;
     _delay_cycles(3);
     // Disable Timer A during configuration
    TIMER1_CTL_R &= ~TIMER_CTL_TAEN;
-
    // Configure for 32-bit timer mode
    TIMER1_CFG_R = TIMER_CFG_32_BIT_TIMER;
-
    // Configure Timer A for Periodic mode, default down-count
    TIMER1_TAMR_R = TIMER_TAMR_TAMR_PERIOD;
-
    // Set the load value to maximum for longest period before wrap-around
    TIMER1_TAILR_R = 0xFFFFFFFF;
-
    // Clear any interrupts (we are polling the value)
    TIMER1_IMR_R = 0;
    TIMER1_ICR_R = TIMER_ICR_TATOCINT; // Clear timeout flag just in case
-
    // Enable Timer A
    TIMER1_CTL_R |= TIMER_CTL_TAEN;
 
@@ -213,18 +214,45 @@ int main(void)
     setPWMB(PWMMAX * 0.0);
 
     uint32_t prevTimerVal = 0;
+#define BTN_WAIT 100e3
     while(1){
-        static bool rotate = false;
-        uint32_t currentTimerVal = TIMER1_TAR_R;
-        if (rotate) {
-            rotate = false;
-            uint32_t elapsedTicks = getElapsedTicks(prevTimerVal, currentTimerVal);
-            float dt = (float)elapsedTicks/ 40000000;
-            char str[30];
-            snprintf(ARRANDN(str), "ttb: %10f\n\r", dt);
-            putsUart0(str);
+        static double duty = 0.5;
 
+        if(getPinValue(SW1) == 0){
+            putsUart0("sw1. duty + 0.1" NEWLINE);
+            duty += 0.1;
+
+            if(duty > 1)
+                duty = 1;
+
+            setPWMA(PWMMAX * duty);
+
+            waitMicrosecond(BTN_WAIT);
         }
+
+        if(getPinValue(SW2) == 0){
+            putsUart0("sw2. duty - 0.1" NEWLINE);
+            duty -= 0.1;
+
+            if(duty < 0)
+                duty = 0;
+
+            setPWMA(PWMMAX * duty);
+            waitMicrosecond(BTN_WAIT);
+        }
+
+//        static bool rotate = false;
+//        uint32_t currentTimerVal = TIMER1_TAR_R;
+//        if (rotate) {
+//            rotate = false;
+//            uint32_t elapsedTicks = getElapsedTicks(prevTimerVal, currentTimerVal);
+//            float dt = (float)elapsedTicks/ 40000000;
+//            prevTimerVal = currentTimerVal;
+//            char str[30];
+//            snprintf(ARRANDN(str), "ttb: %10f\n\r", dt);
+//            putsUart0(str);
+//
+//        }
     }
 
 
