@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <math.h>
+#include <stdio.h>
 
 #include "loshlib/tm4c123gh6pm.h"
 #include "loshlib/clock.h"
@@ -22,25 +23,9 @@ void initHw();
 #define PWMMAX ((uint16_t)0xFFFF)
 //#define PWMMAX ((uint16_t)0x100)
 
-#define CA_DIR_1 PORTA,6
-#define CA_DIR_2 PORTA,7
-#define CB_DIR_1 PORTE,3
-#define CB_DIR_2 PORTF,1
-#define CA_EN PORTB,4
-#define CB_EN PORTE,1
+#define CCP_IN PORTA,6
+#define SYNC PORTA,7
 
-#define SENSE PORTB,5
-#define LED PORTF,4
-
-
-typedef struct STEP {
-    uint16_t a1;
-    uint16_t a2;
-    uint16_t b1;
-    uint16_t b2;
-    uint16_t pwmA;
-    uint16_t pwmB;
-} STEP;
 
 void setPWMA(uint16_t val){
     PWM0_0_CMPA_R &= ~0xFFFF;
@@ -49,16 +34,6 @@ void setPWMA(uint16_t val){
 void setPWMB(uint16_t val){
     PWM0_0_CMPB_R &= ~0xFFFF;
     PWM0_0_CMPB_R |= val; // set pwmB comp value
-}
-
-void setDirs(STEP s){
-    setPinValue(CA_DIR_1, s.a1);
-    setPinValue(CA_DIR_2, s.a2);
-    setPinValue(CB_DIR_1, s.b1);
-    setPinValue(CB_DIR_2, s.b2);
-
-    setPWMA(s.pwmA);
-    setPWMB(s.pwmB);
 }
 
 void printu32d(uint32_t v) {
@@ -96,6 +71,28 @@ void printu32h(uint32_t v) {
     }
 }
 
+int ccp_count = 0;
+void timer2A_IRQ(){
+    togglePinValue(LED_GREEN);
+
+  //  printu32d(ccp_count);
+//putsUart0(NEWLINE);
+
+    TIMER2_ICR_R = TIMER_ICR_TATOCINT;
+}
+
+void timer3A_IRQ(){
+    togglePinValue(LED_RED);
+    togglePinValue(SYNC);
+    TIMER3_ICR_R = TIMER_ICR_TATOCINT;
+}
+
+void portA_IRQ(){
+    ccp_count++;
+    clearPinInterrupt(CCP_IN);
+
+}
+
 uint32_t getElapsedTicks(uint32_t prevTimerVal, uint32_t currentTimerVal);
 int main(void)
 {
@@ -104,42 +101,58 @@ int main(void)
     initHw();
     initUart0();
 
-    // config timer A for stop watch calculations
-    {
-       // Disable Timer A during configuration
-       TIMER1_CTL_R &= ~TIMER_CTL_TAEN;
+    selectPinDigitalInput(CCP_IN);
+    selectPinPushPullOutput(SYNC);
+    selectPinPushPullOutput(LED_RED);
+    selectPinPushPullOutput(LED_GREEN);
 
-       // Configure for 32-bit timer mode
-       TIMER1_CFG_R = TIMER_CFG_32_BIT_TIMER;
+    enablePinInterrupt(CCP_IN);
+    selectPinInterruptRisingEdge(CCP_IN);
+    selectPinInterruptHighLevel(CCP_IN);
 
-       // Configure Timer A for Periodic mode, default down-count
-       TIMER1_TAMR_R = TIMER_TAMR_TAMR_PERIOD;
+    /*** TIMER ***********************************************/
+    SYSCTL_RCGCTIMER_R |= SYSCTL_RCGCTIMER_R1;
+    _delay_cycles(3);
+    // Disable Timer A during configuration
+   TIMER1_CTL_R &= ~TIMER_CTL_TAEN;
 
-       // Set the load value to maximum for longest period before wrap-around
-       TIMER1_TAILR_R = 0xFFFFFFFF;
+   // Configure for 32-bit timer mode
+   TIMER1_CFG_R = TIMER_CFG_32_BIT_TIMER;
 
-       // Clear any interrupts (we are polling the value)
-       TIMER1_IMR_R = 0;
-       TIMER1_ICR_R = TIMER_ICR_TATOCINT; // Clear timeout flag just in case
+   // Configure Timer A for Periodic mode, default down-count
+   TIMER1_TAMR_R = TIMER_TAMR_TAMR_PERIOD;
 
-       // Enable Timer A
-       TIMER1_CTL_R |= TIMER_CTL_TAEN;
-    }
+   // Set the load value to maximum for longest period before wrap-around
+   TIMER1_TAILR_R = 0xFFFFFFFF;
 
-//    selectPinDigitalInput(PIN1);
-//    selectPinDigitalInput(PIN2);
-//    selectPinPushPullOutput(SW);
-    selectPinPushPullOutput(CA_DIR_1);
-    selectPinPushPullOutput(CA_DIR_2);
-    selectPinPushPullOutput(CB_DIR_1);
-    selectPinPushPullOutput(CB_DIR_2);
-    selectPinPushPullOutput(CA_EN);
-    selectPinPushPullOutput(CB_EN);
+   // Clear any interrupts (we are polling the value)
+   TIMER1_IMR_R = 0;
+   TIMER1_ICR_R = TIMER_ICR_TATOCINT; // Clear timeout flag just in case
 
-    selectPinPushPullOutput(LED);
+   // Enable Timer A
+   TIMER1_CTL_R |= TIMER_CTL_TAEN;
 
-    selectPinDigitalInput(SENSE);
+    // Enable clocks
+    SYSCTL_RCGCTIMER_R |= SYSCTL_RCGCTIMER_R2;
+    _delay_cycles(3);
+    // Configure Timer 4 for 1 sec tick
+    TIMER2_CTL_R &= ~TIMER_CTL_TAEN;                 // turn-off timer before reconfiguring
+    TIMER2_CFG_R = TIMER_CFG_32_BIT_TIMER;           // configure as 32-bit timer (A+B)
+    TIMER2_TAMR_R = TIMER_TAMR_TAMR_PERIOD;          // configure for periodic mode (count down)
+    TIMER2_TAILR_R = F_CPU/50.0;                         // set load value (1 Hz rate)
+    TIMER2_CTL_R |= TIMER_CTL_TAEN;                  // turn-on timer
+    TIMER2_IMR_R |= TIMER_IMR_TATOIM;                // turn-on interrupt
+    NVIC_EN0_R |= 1 << (INT_TIMER2A-16);             // turn-on interrupt 86 (TIMER4A)
 
+    SYSCTL_RCGCTIMER_R |= SYSCTL_RCGCTIMER_R3;
+    _delay_cycles(3);
+    TIMER3_CTL_R &= ~TIMER_CTL_TAEN;                 // turn-off timer before reconfiguring
+    TIMER3_CFG_R = TIMER_CFG_32_BIT_TIMER;           // configure as 32-bit timer (A+B)
+    TIMER3_TAMR_R = TIMER_TAMR_TAMR_PERIOD;          // configure for periodic mode (count down)
+    TIMER3_TAILR_R = F_CPU/25.0;                         // set load value (1 Hz rate)
+    TIMER3_CTL_R |= TIMER_CTL_TAEN;                  // turn-on timer
+    TIMER3_IMR_R |= TIMER_IMR_TATOIM;                // turn-on interrupt
+    NVIC_EN1_R |= 1 << (INT_TIMER3A-32 - 16);             // turn-on interrupt 86 (TIMER4A)
 
     /*** PWM *************************************************/
 
@@ -196,98 +209,29 @@ int main(void)
 
     /*********************************************************/
 
-//    setPinValue(CA_EN, 1);
-//    setPinValue(CB_EN, 1);
-    setPWMA(PWMMAX);
-    setPWMB(PWMMAX);
+    setPWMA(PWMMAX * 0.5);
+    setPWMB(PWMMAX * 0.0);
 
-//    (uint16_t[]){0,0,0,0,    PWMMAX                 , PWMMAX                }, //
-//    #define STEP_COUNT 4
-//    static uint16_t steps[][6] = {
-//            (uint16_t[]){1,0,0,0,    PWMMAX                 , PWMMAX                },
-//            (uint16_t[]){0,0,1,0,    PWMMAX                 , PWMMAX                },
-//            (uint16_t[]){0,1,0,0,    PWMMAX                 , PWMMAX                },
-//            (uint16_t[]){0,0,0,1,    PWMMAX                 , PWMMAX                },
-//        };
-
-    #define STEP_COUNT 4
-    #define STEPTIME 1000e3
-
-    STEP steps[STEP_COUNT];
-    {
-        int x;
-        for(x = 0; x < STEP_COUNT; x++){
-            double rad = x * 2.0*(double)M_PI/(double)STEP_COUNT;
-
-            if(x % (STEP_COUNT / 4) == 0){
-                steps[x].a1 = cos(rad) > 0 ? cos(rad) : 0;
-                steps[x].a2 = cos(rad) > 0 ? 0 : -cos(rad);
-                steps[x].b1 = sin(rad) > 0 ? sin(rad) : 0;
-                steps[x].b2 = sin(rad) > 0 ? 0 : -sin(rad);
-            } else {
-                steps[x].a1 = cos(rad) > 0 ? 1 : 0;
-                steps[x].a2 = cos(rad) > 0 ? 0 : 1;
-                steps[x].b1 = sin(rad) > 0 ? 1 : 0;
-                steps[x].b2 = sin(rad) > 0 ? 0 : 1;
-            }
-
-            steps[x].pwmA = fabs(sin(rad)) * (double)PWMMAX;
-            steps[x].pwmB = fabs(cos(rad)) * (double)PWMMAX;
-
-            putsUart0(" ");
-            printu32h(x);
-            putsUart0("  ");
-            printu32h(steps[x].a1);
-            putsUart0(" ");
-            printu32h(steps[x].a2);
-            putsUart0(" ");
-            printu32h(steps[x].b1);
-            putsUart0(" ");
-            printu32h(steps[x].b2);
-            putsUart0(" \t");
-            printu32d(steps[x].pwmA * 100 / PWMMAX);
-            putsUart0("\t");
-            printu32d(steps[x].pwmB * 100 / PWMMAX);
-            putsUart0(NEWLINE);
-        }
-    }
-
-    uint64_t step = 0xFFFFFFF;
-    int d = 1;
-
+    uint32_t prevTimerVal = 0;
     while(1){
-        setDirs(steps[step % STEP_COUNT]);
-        waitMicrosecond(STEPTIME);
+        static bool rotate = false;
+        uint32_t currentTimerVal = TIMER1_TAR_R;
+        if (rotate) {
+            rotate = false;
+            uint32_t elapsedTicks = getElapsedTicks(prevTimerVal, currentTimerVal);
+            float dt = (float)elapsedTicks/ 40000000;
+            char str[30];
+            snprintf(ARRANDN(str), "ttb: %10f\n\r", dt);
+            putsUart0(str);
 
-        setPinValue(LED, getPinValue(SENSE));
-
-        if(getPinValue(SENSE)){
-            break;
-        }
-        step += d;
-    }
-
-    d *= -1;
-    {
-        int targ = 19 * (STEP_COUNT/4) + 1;
-        for(; targ != 0; targ--){
-            setDirs(steps[step % STEP_COUNT]);
-            waitMicrosecond(STEPTIME);
-
-            step += d;
         }
     }
-    const int zero = step;
 
-
-
-
-
-
-//    while(1);
-    USER_DATA data;
 
     while(true){
+
+
+        static USER_DATA data;
        putsUart0("\033[38;2;0;255;0m>");
        putsUart0("\033[38;2;220;200;1m");
 
@@ -312,21 +256,6 @@ int main(void)
            if(angle < 0)
               angle -= a;
 
-           double stepAngle = 1.8*4.0 / (double)STEP_COUNT;
-           double numStepsToTake_ang = angle / stepAngle;// / (2.0 * 3.14159);
-           int targ = round(numStepsToTake_ang) + zero;
-           int d = (targ >= step) ? 1 : -1;
-           while (step != targ) {
-               int index = step % STEP_COUNT;
-               if (index < 0)
-                   index += STEP_COUNT;  // Ensure positive modulo
-
-               setDirs(steps[index]);
-               waitMicrosecond(STEPTIME);
-
-               step += d;
-           }
-
        }
        if(isCommand(&data, "pkill", 1)){
            valid = true;
@@ -336,6 +265,8 @@ int main(void)
            putsUart0("invalid command");
 
        putsUart0(NEWLINE);
+
+
    }
 
 }
