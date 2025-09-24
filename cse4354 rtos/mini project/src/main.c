@@ -104,14 +104,25 @@ int main(void)
     allowPeripheralAccess();
     setupSramAccess();
 
-    putsUart0("pre malloc" NEWLINE);
+    putsUart0("pre malloc p1" NEWLINE);
     dumpAccessTable();
-    uint32_t * p = malloc_heap(1024);
-    if(!p){
+    uint32_t * p1 = malloc_heap(1054*6);
+    if(!p1){
         putsUart0(CLIERROR "malloc failed D:");
+        dumpHeapOwnershipTable();
         while(1);
     }
-    putsUart0("post malloc" NEWLINE);
+    putsUart0("post malloc p1" NEWLINE);
+    putsUart0("pre malloc p2" NEWLINE);
+    dumpAccessTable();
+
+    uint32_t * p2 = malloc_heap(1);
+    if(!p2){
+        putsUart0(CLIERROR "malloc failed D:");
+        dumpHeapOwnershipTable();
+        while(1);
+    }
+    putsUart0("post malloc p2" NEWLINE);
     dumpAccessTable();
 
     {
@@ -123,17 +134,28 @@ int main(void)
 //        applySramAccessMask(mask);
     }
 
-//    {
-//        free_heap(p);
-//        putsUart0("post free" NEWLINE);
-//        dumpAccessTable();
-//    }
+    {
+        putsUart0("pre free p1" NEWLINE);
+        free_heap(p1);
+        putsUart0("post free p1" NEWLINE);
+        putsUart0("pre free p2" NEWLINE);
+        dumpAccessTable();
+        dumpHeapOwnershipTable();
 
-//    setASP();
+        free_heap(p2);
+        putsUart0("post free p2" NEWLINE);
+        dumpAccessTable();
+        dumpHeapOwnershipTable();
+    }
+
     setTMPL();
     {
-        putsUart0("start heap IO ... ");
-        p[0] = p[1];
+        putsUart0("start p1 heap IO ... ");
+        p1[0] = p1[1];
+        putsUart0(CLIGOOD "DONE" CLIRESET NEWLINE);
+
+        putsUart0("start p2 heap IO ... ");
+        p2[1] = p2[0];
         putsUart0(CLIGOOD "DONE" CLIRESET NEWLINE);
     }
 

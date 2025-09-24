@@ -561,7 +561,7 @@ void free_heap(void * ptr) {
 
                     // update access
                     if(am_i != MAX_TASKS)
-                        accessMasks[am_i].mask.masks[(4 + r + i)/8] &= ~BV((r + i) % 8);
+                        accessMasks[am_i].mask.masks[(4 + r + i)/8] &= ~BV((4 + r + i) % 8);
                 }
                 HOT[r].owner_pid = NULL;
                 HOT[r].len = NULL;
