@@ -29,8 +29,6 @@ void initHw()
     selectPinPushPullOutput(LED_ORANGE);
     selectPinPushPullOutput(LED_YELLOW);
 
-    while(1);
-
     // enable various fault handlers
     NVIC_SYS_HND_CTRL_R |=              // /173
                 NVIC_SYS_HND_CTRL_USAGE
@@ -92,6 +90,14 @@ int main(void)
 
     setPSP(testFunc);
 
+//    { // register dump confirmation
+//        setPSP((uint32_t *)heap);
+//        for(int i = 0; i < 10; i++)
+//            ((uint32_t *)heap)[i] = 0xABCD'EF00 + i;
+//
+//        // force MPU error
+//        NVIC_SYS_HND_CTRL_R |= NVIC_SYS_HND_CTRL_MEMP; // /174
+//    }
 
     setupMPU();
     allowFlashAccess();
@@ -123,6 +129,7 @@ int main(void)
 //        dumpAccessTable();
 //    }
 
+//    setASP();
     setTMPL();
     {
         putsUart0("start heap IO ... ");
