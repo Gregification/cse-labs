@@ -50,7 +50,7 @@ void initHw()
 #define I_TRIGGER_BUS       PORTD,6
 #define I_TRIGGER_HARD      PORTC,4
 #define I_TRIGGER_MEM       PORTF,3
-#define I_TRIGGER_PENDSV    PORTC,5
+#define I_TRIGGER_PENDSV    PORTC,5u
 
 void testFunc(){
     while(1);
