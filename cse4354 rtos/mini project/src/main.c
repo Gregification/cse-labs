@@ -45,11 +45,12 @@ void initHw()
 // Main
 //-----------------------------------------------------------------------------
 
-#define I_TRIGGER_USAGE     PORTA,0
-#define I_TRIGGER_BUS       PORTA,0
-#define I_TRIGGER_HARD      PORTA,0
-#define I_TRIGGER_MEM       PORTA,0
-#define I_TRIGGER_PENDSV    PORTA,0
+#define O_TRIGGER_ENABLE    PORTF,4
+#define I_TRIGGER_USAGE     PORTC,7
+#define I_TRIGGER_BUS       PORTD,6
+#define I_TRIGGER_HARD      PORTC,4
+#define I_TRIGGER_MEM       PORTF,3
+#define I_TRIGGER_PENDSV    PORTC,5
 
 void testFunc(){
     while(1);
@@ -63,6 +64,7 @@ int main(void)
     initHw();
     initUart0();
 
+    selectPinPushPullOutput(O_TRIGGER_ENABLE);
     selectPinDigitalInput(I_TRIGGER_BUS);
     selectPinDigitalInput(I_TRIGGER_USAGE);
     selectPinDigitalInput(I_TRIGGER_HARD);
@@ -160,7 +162,7 @@ int main(void)
         dumpHeapOwnershipTable();
     }
 
-    setTMPL();
+//    setTMPL();
     {
         putsUart0("start p1 heap IO ... ");
         p1[0] = p1[1];
@@ -171,17 +173,11 @@ int main(void)
         putsUart0(CLIGOOD "DONE" CLIRESET NEWLINE);
     }
 
-
-//    putsUart0("---" NEWLINE);
-//    void* p = malloc_heap(1024);
-//    free_heap(p);
-//    putsUart0("yippie!" NEWLINE);
-//    dumpHeapOwnershipTable();
-
-
     putsUart0(CLIHIGHLIGHT);
     putsUart0("--- starting super loop ---" NEWLINE);
     putsUart0(CLIRESET);
+
+    setPinValue(O_TRIGGER_ENABLE, true);
 
     while(1){
         if(getPinValue(I_TRIGGER_BUS)){
@@ -209,6 +205,9 @@ int main(void)
             putsUart0("triggering mem fault" NEWLINE);
             {
                 NVIC_SYS_HND_CTRL_R |= NVIC_SYS_HND_CTRL_MEMP; // /174
+                uint64_t mask = createNoSramAccessMask();
+                applySramAccessMask(mask);
+                heap[0] = heap[1];
             }
             while(1);
         }
@@ -222,10 +221,10 @@ int main(void)
         }
         if(getPinValue(I_TRIGGER_USAGE)){
             putsUart0("triggering usage fault" NEWLINE);
-            { // unaligned
-                volatile uint32_t * bogous = (uint32_t *)0xFFFFFFFF;
-                *bogous = 10;
-            }
+//            { // unaligned
+//                volatile uint32_t * bogous = (uint32_t *)0xFFFFFFFF;
+//                *bogous = 10;
+//            }
             { // div by 0
                 volatile int x = 0, y = 0;
                 x /= y;
