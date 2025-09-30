@@ -25,6 +25,7 @@ void initHw();
 
 #define CCP_IN PORTA,6
 #define SYNC PORTA,7
+#define AIN0 PORTE,3
 
 
 void setPWMA(uint16_t val){
@@ -75,8 +76,8 @@ int ccp_count = 0;
 void timer2A_IRQ(){
     togglePinValue(LED_GREEN);
 
-//    printu32d(ccp_count);
-//    putsUart0(NEWLINE);
+    printu32d(ccp_count);
+    putsUart0(NEWLINE);
     ccp_count = 0;
 
     TIMER2_ICR_R = TIMER_ICR_TATOCINT;
@@ -85,6 +86,9 @@ void timer2A_IRQ(){
 void timer3A_IRQ(){
     togglePinValue(LED_RED);
     togglePinValue(SYNC);
+    //setPinValue(SYNC, 1);
+    //setPWMA(0);
+    //setPinValue(SYNC, 0);
     TIMER3_ICR_R = TIMER_ICR_TATOCINT;
 }
 
@@ -112,8 +116,9 @@ int main(void)
     enableNvicInterrupt(INT_GPIOA);
 
     selectPinDigitalInput(SW1);
+    enablePinPullup(SW1);
     setPinCommitControl(SW2);
-    enablePinPulldown(SW2);
+    enablePinPullup(SW2);
     selectPinDigitalInput(SW2);
 
     /*** TIMER ***********************************************/
@@ -214,12 +219,13 @@ int main(void)
     setPWMB(PWMMAX * 0.0);
 
     uint32_t prevTimerVal = 0;
-#define BTN_WAIT 100e3
+#define BTN_WAIT 300e3
     while(1){
         static double duty = 0.5;
 
         if(getPinValue(SW1) == 0){
-            putsUart0("sw1. duty + 0.1" NEWLINE);
+            putsUart0("+++++sw1. duty + 0.1\t");
+
             duty += 0.1;
 
             if(duty > 1)
@@ -227,18 +233,26 @@ int main(void)
 
             setPWMA(PWMMAX * duty);
 
+            putsUart0("New Duty Cycle: ");
+            printu32d(duty*100);
+            putsUart0("\n");
             waitMicrosecond(BTN_WAIT);
         }
 
         if(getPinValue(SW2) == 0){
-            putsUart0("sw2. duty - 0.1" NEWLINE);
+            putsUart0("-----sw2. duty - 0.1\t");
             duty -= 0.1;
 
             if(duty < 0)
                 duty = 0;
 
             setPWMA(PWMMAX * duty);
+
+            putsUart0("New Duty Cycle: ");
+            printu32d(duty*100);
+            putsUart0("\n");
             waitMicrosecond(BTN_WAIT);
+
         }
 
 //        static bool rotate = false;
@@ -318,6 +332,10 @@ void initHw()
     selectPinPushPullOutput(LED_GREEN);
     selectPinPushPullOutput(LED_BLUE);
 
+    // Enable ADC module 0,
+    SYSCTL_RCGCADC_R |= SYSCTL_RCGCADC_R0;
+    SYSCTL_RCGCGPIO_R |= SYSCTL_RCGCGPIO_R4;
+    GPIO_PORTE_AFSEL_R |=
 
 }
 
