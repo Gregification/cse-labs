@@ -346,12 +346,6 @@ void initHw()
     selectPinPushPullOutput(LED_RED);
     selectPinPushPullOutput(LED_GREEN);
     selectPinPushPullOutput(LED_BLUE);
-
-    // Enable ADC module 0,
-    SYSCTL_RCGCADC_R |= SYSCTL_RCGCADC_R0;
-    SYSCTL_RCGCGPIO_R |= SYSCTL_RCGCGPIO_R4;
-    GPIO_PORTE_AFSEL_R |=
-
 }
 
 uint32_t getElapsedTicks(uint32_t prevTimerVal, uint32_t currentTimerVal)
