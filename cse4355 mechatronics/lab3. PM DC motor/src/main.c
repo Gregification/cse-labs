@@ -21,7 +21,7 @@ void initHw();
 //-----------------------------------------------------------------------------
 // Main
 //-----------------------------------------------------------------------------
-#define PWMMAX ((uint16_t)0xFFFF)
+#define PWMMAX ((uint16_t)0x8FF)
 //#define PWMMAX ((uint16_t)0x100)
 
 #define CCP_IN PORTA,6
@@ -39,18 +39,28 @@ void setPWMB(uint16_t val){
 }
 
 void printu32d(uint32_t v) {
-    if(v == 0){
+    // This handles the special case of 0
+    if (v == 0) {
         putcUart0('0');
         return;
     }
 
+    // A 32-bit unsigned int will have at most 10 digits
     char str[10];
     int i = 0;
-    for(i = 0; v > 0; i++){
+
+    // This loop extracts digits in reverse order
+    // Example: 123 -> str becomes {'3', '2', '1', ...}
+    for (i = 0; v > 0; i++) {
         str[i] = '0' + (v % 10);
         v /= 10;
     }
-    for(; i >= 0; --i){
+    // After the loop, 'i' is the digit count (e.g., 3 for 123).
+    // The valid indices are 0, 1, and 2.
+
+    // FIX: Start the loop at i-1 (the last valid index)
+    // and print backwards to get the correct order.
+    for (i = i - 1; i >= 0; --i) {
         putcUart0(str[i]);
     }
 }
@@ -74,22 +84,39 @@ void printu32h(uint32_t v) {
 }
 
 int ccp_count = 0;
-void timer2A_IRQ(){
+double rpm;
+void timer2A_IRQ(){ // rpm
     togglePinValue(LED_GREEN);
 
-    printu32d(ccp_count);
-    putsUart0(NEWLINE);
-    ccp_count = 0;
+    int count = ccp_count;
 
+    rpm = count * 60;
+
+    ccp_count = 0;
     TIMER2_ICR_R = TIMER_ICR_TATOCINT;
 }
 
-void timer3A_IRQ(){
+double duty = 0.5;
+double emf;
+
+void timer3A_IRQ(){ // emf maker
     togglePinValue(LED_RED);
     togglePinValue(SYNC);
-    //setPinValue(SYNC, 1);
-    //setPWMA(0);
-    //setPinValue(SYNC, 0);
+
+    {
+        uint32_t former = PWM0_0_CMPA_R;
+        setPinValue(SYNC, 1);
+        setPWMA(0);
+
+        waitMicrosecond(500);
+        setPinValue(SYNC, 0);
+        uint16_t raw = readAdc0Ss3();
+
+        setPWMA(former);
+
+        double voltage = ((raw + 0.5) / 4096.0) * 3.3;
+        emf = voltage * 1000;
+    }
     TIMER3_ICR_R = TIMER_ICR_TATOCINT;
 }
 
@@ -114,7 +141,7 @@ int main(void)
     disableNvicInterrupt(INT_GPIOA);
     selectPinInterruptRisingEdge(CCP_IN);
     enablePinInterrupt(CCP_IN);
-//    enableNvicInterrupt(INT_GPIOA);
+    enableNvicInterrupt(INT_GPIOA);
 
     selectPinDigitalInput(SW1);
     enablePinPullup(SW1);
@@ -146,7 +173,7 @@ int main(void)
     TIMER2_CTL_R &= ~TIMER_CTL_TAEN;                 // turn-off timer before reconfiguring
     TIMER2_CFG_R = TIMER_CFG_32_BIT_TIMER;           // configure as 32-bit timer (A+B)
     TIMER2_TAMR_R = TIMER_TAMR_TAMR_PERIOD;          // configure for periodic mode (count down)
-    TIMER2_TAILR_R = F_CPU/50.0;                         // set load value (1 Hz rate)
+    TIMER2_TAILR_R = F_CPU/60.0;                         // set load value (1 Hz rate)
     TIMER2_CTL_R |= TIMER_CTL_TAEN;                  // turn-on timer
     TIMER2_IMR_R |= TIMER_IMR_TATOIM;                // turn-on interrupt
     NVIC_EN0_R |= 1 << (INT_TIMER2A-16);             // turn-on interrupt 86 (TIMER4A)
@@ -156,7 +183,7 @@ int main(void)
     TIMER3_CTL_R &= ~TIMER_CTL_TAEN;                 // turn-off timer before reconfiguring
     TIMER3_CFG_R = TIMER_CFG_32_BIT_TIMER;           // configure as 32-bit timer (A+B)
     TIMER3_TAMR_R = TIMER_TAMR_TAMR_PERIOD;          // configure for periodic mode (count down)
-    TIMER3_TAILR_R = F_CPU/25.0;                         // set load value (1 Hz rate)
+    TIMER3_TAILR_R = F_CPU/50.0;                         // set load value (1 Hz rate)
     TIMER3_CTL_R |= TIMER_CTL_TAEN;                  // turn-on timer
     TIMER3_IMR_R |= TIMER_IMR_TATOIM;                // turn-on interrupt
     NVIC_EN1_R |= 1 << (INT_TIMER3A-32 - 16);             // turn-on interrupt 86 (TIMER4A)
@@ -187,8 +214,8 @@ int main(void)
     // what to do if counter is X value options /1282
     PWM0_0_CTL_R |= PWM_0_CTL_ENABLE;
     PWM0_0_GENA_R &= ~0xFFF;                    // clear 11:0 , clear all settings
-    PWM0_0_GENA_R |= PWM_0_GENA_ACTLOAD_ONE;    // count == load
-    PWM0_0_GENA_R |= PWM_0_GENA_ACTCMPAD_ZERO;  // count == cmpA
+    PWM0_0_GENA_R |= PWM_0_GENA_ACTLOAD_ZERO;    // count == load
+    PWM0_0_GENA_R |= PWM_0_GENA_ACTCMPAD_ONE;  // count == cmpA
     PWM0_0_GENB_R &= ~0xFFF;                    // clear 11:0 , clear all settings
     PWM0_0_GENB_R |= PWM_0_GENB_ACTLOAD_ONE;    // count == load
     PWM0_0_GENB_R |= PWM_0_GENB_ACTCMPBD_ZERO;  // count == cmpB
@@ -209,7 +236,7 @@ int main(void)
     /*** ADC *************************************************/
 
     initAdc0Ss3();
-    setAdc0Ss3Log2AverageCount(3);
+    setAdc0Ss3Log2AverageCount(1);
     setAdc0Ss3Mux(0);
 
 
@@ -222,66 +249,56 @@ int main(void)
     putsUart0("FALL 2025, CSE4355 Mechatronics, Lab 2" NEWLINE);
 
 
-    while(1){
-            putsUart0("adc : ");
-            printu32h(readAdc0Ss3());
-            putsUart0(NEWLINE);
-        }
 
     /*********************************************************/
 
     setPWMA(PWMMAX * 0.5);
     setPWMB(PWMMAX * 0.0);
+    duty = 1;
 
     uint32_t prevTimerVal = 0;
 #define BTN_WAIT 300e3
+    uint16_t raw = 0;
+    float voltage = 0.0;
     while(1){
-        static double duty = 0.5;
+        putsUart0("\tDuty %: ");
+        printu32d(duty * 100);
+        putsUart0("\tRPM: ");
+        printu32d(rpm);
+        putsUart0("\tEMF(mV): ");
+        printu32d(10000.0 - (emf * 5));
+        putsUart0("\tRPM EMF: ");
+        printu32d(-0.492 * emf + 849.2);
+        putsUart0("\n");
 
         if(getPinValue(SW1) == 0){
-            putsUart0("+++++sw1. duty + 0.1\t");
+            duty += 0.05;
 
-            duty += 0.1;
-
-            if(duty > 1)
+            if(duty >= 1){
                 duty = 1;
-
+                setPWMA(PWMMAX-1);
+                PWM0_0_GENA_R |= PWM_0_GENA_ACTLOAD_ONE;
+            }
+            else{
+                PWM0_0_GENA_R |= PWM_0_GENA_ACTLOAD_ZERO;
             setPWMA(PWMMAX * duty);
+            }
 
-            putsUart0("New Duty Cycle: ");
-            printu32d(duty*100);
-            putsUart0("\n");
             waitMicrosecond(BTN_WAIT);
         }
 
         if(getPinValue(SW2) == 0){
-            putsUart0("-----sw2. duty - 0.1\t");
-            duty -= 0.1;
+            duty -= 0.05;
 
             if(duty < 0)
                 duty = 0;
 
             setPWMA(PWMMAX * duty);
 
-            putsUart0("New Duty Cycle: ");
-            printu32d(duty*100);
-            putsUart0("\n");
             waitMicrosecond(BTN_WAIT);
 
         }
 
-//        static bool rotate = false;
-//        uint32_t currentTimerVal = TIMER1_TAR_R;
-//        if (rotate) {
-//            rotate = false;
-//            uint32_t elapsedTicks = getElapsedTicks(prevTimerVal, currentTimerVal);
-//            float dt = (float)elapsedTicks/ 40000000;
-//            prevTimerVal = currentTimerVal;
-//            char str[30];
-//            snprintf(ARRANDN(str), "ttb: %10f\n\r", dt);
-//            putsUart0(str);
-//
-//        }
     }
 
 
