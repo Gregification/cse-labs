@@ -10,6 +10,7 @@
 #include "loshlib/gpio.h"
 #include "loshlib/wait.h"
 #include "loshlib/nvic.h"
+#include "loshlib/adc0.h"
 
 #include "common.h"
 #include "cliShell.h"
@@ -113,7 +114,7 @@ int main(void)
     disableNvicInterrupt(INT_GPIOA);
     selectPinInterruptRisingEdge(CCP_IN);
     enablePinInterrupt(CCP_IN);
-    enableNvicInterrupt(INT_GPIOA);
+//    enableNvicInterrupt(INT_GPIOA);
 
     selectPinDigitalInput(SW1);
     enablePinPullup(SW1);
@@ -205,6 +206,14 @@ int main(void)
     PWM0_ENABLE_R |= PWM_ENABLE_PWM1EN;     // enable PWM1b
 
 
+    /*** ADC *************************************************/
+
+    initAdc0Ss3();
+    setAdc0Ss3Log2AverageCount(3);
+    setAdc0Ss3Mux(0);
+
+
+
     /*********************************************************/
 
 
@@ -212,6 +221,12 @@ int main(void)
     putsUart0("\033[2J\033[H\033[0m");
     putsUart0("FALL 2025, CSE4355 Mechatronics, Lab 2" NEWLINE);
 
+
+    while(1){
+            putsUart0("adc : ");
+            printu32h(readAdc0Ss3());
+            putsUart0(NEWLINE);
+        }
 
     /*********************************************************/
 
