@@ -46,11 +46,11 @@ void initHw()
 //-----------------------------------------------------------------------------
 
 #define O_TRIGGER_ENABLE    PORTF,4
-#define I_TRIGGER_USAGE     PORTC,7
-#define I_TRIGGER_BUS       PORTD,6
-#define I_TRIGGER_HARD      PORTC,4
-#define I_TRIGGER_MEM       PORTF,3
-#define I_TRIGGER_PENDSV    PORTC,5u
+#define I_TRIGGER_USAGE     PORTC,4
+#define I_TRIGGER_BUS       PORTC,5
+#define I_TRIGGER_HARD      PORTC,6
+#define I_TRIGGER_MEM       PORTC,7
+#define I_TRIGGER_PENDSV    PORTD,6
 
 void testFunc(){
     while(1);
