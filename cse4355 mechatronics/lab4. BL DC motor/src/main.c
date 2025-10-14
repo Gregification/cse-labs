@@ -24,16 +24,22 @@ void initHw();
 #define PWMMAX ((uint16_t)0x8FF)
 //#define PWMMAX ((uint16_t)0x100)
 
-#define CCP_IN PORTA,6
-#define SYNC PORTA,7
-#define AIN0 PORTE,3
+#define sen1 PORTD,1
+#define sen2 PORTD,2
+#define sen3 PORTD,3
+#define outA PORTB,1
+#define outB PORTE,4
+#define outC PORTE,5
+#define enA PORTE,1
+#define enB PORTE,2
+#define enC PORTE,3
 
 
-void setPWMA(uint16_t val){
+void setPWMA(uint16_t val){ // PB6
     PWM0_0_CMPA_R &= ~0xFFFF;
     PWM0_0_CMPA_R |= val; // set pwmA comp value
 }
-void setPWMB(uint16_t val){
+void setPWMB(uint16_t val){ // PB7
     PWM0_0_CMPB_R &= ~0xFFFF;
     PWM0_0_CMPB_R |= val; // set pwmB comp value
 }
@@ -69,7 +75,7 @@ void printu32h(uint32_t v) {
     int started = 0;
 
     int i;
-//    putsUart0("0x");
+    putsUart0("0x");
     for (i = 28; i >= 0; i -= 4) {
         uint8_t B = (v >> i) & 0xF;
 
@@ -86,43 +92,42 @@ void printu32h(uint32_t v) {
 int ccp_count = 0;
 double rpm;
 void timer2A_IRQ(){ // rpm
-    togglePinValue(LED_GREEN);
-
-    int count = ccp_count;
-
-    rpm = count * 60;
-
-    ccp_count = 0;
-    TIMER2_ICR_R = TIMER_ICR_TATOCINT;
+//    togglePinValue(LED_GREEN);
+//
+//    int count = ccp_count;
+//
+//    rpm = count * 60;
+//
+//    ccp_count = 0;
+//    TIMER2_ICR_R = TIMER_ICR_TATOCINT;
 }
 
 double duty = 0.5;
-double emf;
 
 void timer3A_IRQ(){ // emf maker
-    togglePinValue(LED_RED);
-    togglePinValue(SYNC);
-
-    {
-        uint32_t former = PWM0_0_CMPA_R;
-        setPinValue(SYNC, 1);
-        setPWMA(0);
-
-        waitMicrosecond(500);
-        setPinValue(SYNC, 0);
-        uint16_t raw = readAdc0Ss3();
-
-        setPWMA(former);
-
-        double voltage = ((raw + 0.5) / 4096.0) * 3.3;
-        emf = voltage * 1000;
-    }
-    TIMER3_ICR_R = TIMER_ICR_TATOCINT;
+//    togglePinValue(LED_RED);
+//    togglePinValue(SYNC);
+//
+//    {
+//        uint32_t former = PWM0_0_CMPA_R;
+//        setPinValue(SYNC, 1);
+//        setPWMA(0);
+//
+//        waitMicrosecond(500);
+//        setPinValue(SYNC, 0);
+//        uint16_t raw = readAdc0Ss3();
+//
+//        setPWMA(former);
+//
+//        double voltage = ((raw + 0.5) / 4096.0) * 3.3;
+//        emf = voltage * 1000;
+//    }
+//    TIMER3_ICR_R = TIMER_ICR_TATOCINT;
 }
 
 void portA_IRQ(){
-    ccp_count++;
-    clearPinInterrupt(CCP_IN);
+//    ccp_count++;
+//    clearPinInterrupt(CCP_IN);
 }
 
 uint32_t getElapsedTicks(uint32_t prevTimerVal, uint32_t currentTimerVal);
@@ -133,21 +138,24 @@ int main(void)
     initHw();
     initUart0();
 
-    selectPinPushPullOutput(SYNC);
+    selectPinPushPullOutput(outA);
+    selectPinPushPullOutput(outB);
+    selectPinPushPullOutput(outB);
+    selectPinPushPullOutput(enA);
+    selectPinPushPullOutput(enB);
+    selectPinPushPullOutput(enB);
     selectPinPushPullOutput(LED_RED);
     selectPinPushPullOutput(LED_GREEN);
 
-    selectPinDigitalInput(CCP_IN);
-    disableNvicInterrupt(INT_GPIOA);
-    selectPinInterruptRisingEdge(CCP_IN);
-    enablePinInterrupt(CCP_IN);
-    enableNvicInterrupt(INT_GPIOA);
+    selectPinDigitalInput(sen1);
+    selectPinDigitalInput(sen2);
+    selectPinDigitalInput(sen3);
 
-    selectPinDigitalInput(SW1);
-    enablePinPullup(SW1);
-    setPinCommitControl(SW2);
-    enablePinPullup(SW2);
-    selectPinDigitalInput(SW2);
+//    selectPinDigitalInput(SW1);
+//    enablePinPullup(SW1);
+//    setPinCommitControl(SW2);
+//    enablePinPullup(SW2);
+//    selectPinDigitalInput(SW2);
 
     /*** TIMER ***********************************************/
     SYSCTL_RCGCTIMER_R |= SYSCTL_RCGCTIMER_R1;
@@ -176,7 +184,7 @@ int main(void)
     TIMER2_TAILR_R = F_CPU/60.0;                         // set load value (1 Hz rate)
     TIMER2_CTL_R |= TIMER_CTL_TAEN;                  // turn-on timer
     TIMER2_IMR_R |= TIMER_IMR_TATOIM;                // turn-on interrupt
-    NVIC_EN0_R |= 1 << (INT_TIMER2A-16);             // turn-on interrupt 86 (TIMER4A)
+//    NVIC_EN0_R |= 1 << (INT_TIMER2A-16);             // turn-on interrupt 86 (TIMER4A)
 
     SYSCTL_RCGCTIMER_R |= SYSCTL_RCGCTIMER_R3;
     _delay_cycles(3);
@@ -186,7 +194,7 @@ int main(void)
     TIMER3_TAILR_R = F_CPU/50.0;                         // set load value (1 Hz rate)
     TIMER3_CTL_R |= TIMER_CTL_TAEN;                  // turn-on timer
     TIMER3_IMR_R |= TIMER_IMR_TATOIM;                // turn-on interrupt
-    NVIC_EN1_R |= 1 << (INT_TIMER3A-32 - 16);             // turn-on interrupt 86 (TIMER4A)
+//    NVIC_EN1_R |= 1 << (INT_TIMER3A-32 - 16);             // turn-on interrupt 86 (TIMER4A)
 
     /*** PWM *************************************************/
 
@@ -252,53 +260,36 @@ int main(void)
 
     /*********************************************************/
 
-    setPWMA(PWMMAX * 0.5);
+    setPWMA(PWMMAX * 0.0);
     setPWMB(PWMMAX * 0.0);
-    duty = 1;
 
-    uint32_t prevTimerVal = 0;
-#define BTN_WAIT 300e3
-    uint16_t raw = 0;
-    float voltage = 0.0;
+    typedef enum {
+        H, L, N
+    } TRI;
+    typedef struct {
+        TRI a,b,c;
+        bool s1,s2,s3;
+    } STEP;
+
+    uint8_t step = 0;
+    STEP steps[] = {
+            {N,N,N,  1,0,1},   //
+
+        };
+
     while(1){
-        putsUart0("\tDuty %: ");
-        printu32d(duty * 100);
-        putsUart0("\tRPM: ");
-        printu32d(rpm);
-        putsUart0("\tEMF(mV): ");
-        printu32d(10000.0 - (emf * 5));
-        putsUart0("\tRPM EMF: ");
-        printu32d(-0.492 * emf + 849.2);
-        putsUart0("\n");
+        setPinValue(enA, steps[step].a != N);
+        setPinValue(outA, steps[step].a == H);
 
-        if(getPinValue(SW1) == 0){
-            duty += 0.05;
+        setPinValue(enA, steps[step].a != N);
+        setPinValue(outA, steps[step].a == H);
 
-            if(duty >= 1){
-                duty = 1;
-                setPWMA(PWMMAX-1);
-                PWM0_0_GENA_R |= PWM_0_GENA_ACTLOAD_ONE;
-            }
-            else{
-                PWM0_0_GENA_R |= PWM_0_GENA_ACTLOAD_ZERO;
-            setPWMA(PWMMAX * duty);
-            }
 
-            waitMicrosecond(BTN_WAIT);
-        }
+        waitMicrosecond(1e6);
 
-        if(getPinValue(SW2) == 0){
-            duty -= 0.05;
-
-            if(duty < 0)
-                duty = 0;
-
-            setPWMA(PWMMAX * duty);
-
-            waitMicrosecond(BTN_WAIT);
-
-        }
-
+        step++;
+        step %= sizeof(steps)/sizeof(steps[0]);
+        togglePinValue(LED_RED);
     }
 
 
