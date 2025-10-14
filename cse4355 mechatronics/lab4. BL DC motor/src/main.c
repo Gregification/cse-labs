@@ -264,8 +264,8 @@ int main(void)
     setPWMB(PWMMAX * 0.0);
 
     typedef enum {
-        H, L, N
-    } TRI;
+        H, L, N // high, low, netural
+    } TRI; // tri state
     typedef struct {
         TRI a,b,c;
         bool s1,s2,s3;
@@ -273,17 +273,23 @@ int main(void)
 
     uint8_t step = 0;
     STEP steps[] = {
-            {N,N,N,  1,0,1},   //
-
+            {N,N,N,  0,0,0},   //
+            {N,N,N,  0,0,0},   //
+            {N,N,N,  0,0,0},   //
+            {N,N,N,  0,0,0},   //
+            {N,N,N,  0,0,0},   //
+            {N,N,N,  0,0,0},   //
         };
 
     while(1){
         setPinValue(enA, steps[step].a != N);
         setPinValue(outA, steps[step].a == H);
 
-        setPinValue(enA, steps[step].a != N);
-        setPinValue(outA, steps[step].a == H);
+        setPinValue(enB, steps[step].b != N);
+        setPinValue(outB, steps[step].b == H);
 
+        setPinValue(enC, steps[step].c != N);
+        setPinValue(outC, steps[step].c == H);
 
         waitMicrosecond(1e6);
 
