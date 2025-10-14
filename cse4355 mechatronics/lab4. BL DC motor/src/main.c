@@ -140,10 +140,10 @@ int main(void)
 
     selectPinPushPullOutput(outA);
     selectPinPushPullOutput(outB);
-    selectPinPushPullOutput(outB);
+    selectPinPushPullOutput(outC);
     selectPinPushPullOutput(enA);
     selectPinPushPullOutput(enB);
-    selectPinPushPullOutput(enB);
+    selectPinPushPullOutput(enC);
     selectPinPushPullOutput(LED_RED);
     selectPinPushPullOutput(LED_GREEN);
 
@@ -273,12 +273,12 @@ int main(void)
 
     uint8_t step = 0;
     STEP steps[] = {
-            {H,N,L,  0,0,1},   //
-            {H,L,N,  0,0,0},   //
-            {N,L,H,  1,0,0},   //
-            {L,N,H,  1,1,0},   //
-            {L,H,N,  1,1,1},   //
-            {N,H,L,  0,1,1},   //
+            {H,L,N,  0,0,1},   //
+            {H,N,L,  0,0,0},   //
+            {N,H,L,  1,0,0},   //
+            {L,H,N,  1,1,0},   //
+            {L,N,H,  1,1,1},   //
+            {N,L,H,  0,1,1},   //
         };
 
     while(1){
@@ -291,10 +291,10 @@ int main(void)
         setPinValue(enC, steps[step].c != N);
         setPinValue(outC, steps[step].c == H);
 
-        waitMicrosecond(1e6);
+        waitMicrosecond(0.5e6);
 
         step++;
-        step %= sizeof(steps)/sizeof(steps[0]);
+        step %= 6;
         togglePinValue(LED_RED);
     }
 
