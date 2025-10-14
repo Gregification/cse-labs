@@ -282,8 +282,8 @@ int main(void)
         };
 
     while(1){
-        setPinValue(enA, steps[step].a != N);
-        setPinValue(outA, steps[step].a == H);
+        setPinValue(enA, steps[step].a != N); // 1 if not floating
+        setPinValue(outA, steps[step].a == H); // 1 if high
 
         setPinValue(enB, steps[step].b != N);
         setPinValue(outB, steps[step].b == H);
