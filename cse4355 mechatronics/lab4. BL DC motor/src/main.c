@@ -89,17 +89,11 @@ void printu32h(uint32_t v) {
     }
 }
 
-int ccp_count = 0;
-double rpm;
+uint64_t ccp_count = 0;
 void timer2A_IRQ(){ // rpm
 //    togglePinValue(LED_GREEN);
-//
-//    int count = ccp_count;
-//
-//    rpm = count * 60;
-//
-//    ccp_count = 0;
-//    TIMER2_ICR_R = TIMER_ICR_TATOCINT;
+    ccp_count++;
+    TIMER2_ICR_R = TIMER_ICR_TATOCINT;
 }
 
 double duty = 0.5;
@@ -181,10 +175,10 @@ int main(void)
     TIMER2_CTL_R &= ~TIMER_CTL_TAEN;                 // turn-off timer before reconfiguring
     TIMER2_CFG_R = TIMER_CFG_32_BIT_TIMER;           // configure as 32-bit timer (A+B)
     TIMER2_TAMR_R = TIMER_TAMR_TAMR_PERIOD;          // configure for periodic mode (count down)
-    TIMER2_TAILR_R = F_CPU/60.0;                         // set load value (1 Hz rate)
+    TIMER2_TAILR_R = F_CPU/1000.0;                         // set load value (1 Hz rate)
     TIMER2_CTL_R |= TIMER_CTL_TAEN;                  // turn-on timer
     TIMER2_IMR_R |= TIMER_IMR_TATOIM;                // turn-on interrupt
-//    NVIC_EN0_R |= 1 << (INT_TIMER2A-16);             // turn-on interrupt 86 (TIMER4A)
+    NVIC_EN0_R |= 1 << (INT_TIMER2A-16);             // turn-on interrupt 86 (TIMER4A)
 
     SYSCTL_RCGCTIMER_R |= SYSCTL_RCGCTIMER_R3;
     _delay_cycles(3);
@@ -273,15 +267,17 @@ int main(void)
 
     uint8_t step = 0;
     STEP steps[] = {
-            {H,L,N,  0,0,1},   //
-            {H,N,L,  0,0,0},   //
-            {N,H,L,  1,0,0},   //
-            {L,H,N,  1,1,0},   //
-            {L,N,H,  1,1,1},   //
-            {N,L,H,  0,1,1},   //
+            {H,L,N,  0,0,0},
+            {H,N,L,  0,0,0},
+            {N,H,L,  0,0,0},
+            {L,H,N,  0,0,0},
+            {L,N,H,  0,0,0},
+            {N,L,H,  0,0,0},
         };
 
+    uint32_t last_time;
     while(1){
+
         setPinValue(enA, steps[step].a != N);
         setPinValue(outA, steps[step].a == H);
 
@@ -291,10 +287,33 @@ int main(void)
         setPinValue(enC, steps[step].c != N);
         setPinValue(outC, steps[step].c == H);
 
-        waitMicrosecond(0.5e6);
+        waitMicrosecond(7.5e3); // slip delay
+        waitMicrosecond(1e6);
 
-        step++;
-        step %= 6;
+//        printu32d(ccp_count);
+//        ccp_count = 0;
+//        putsUart0(NEWLINE);
+
+        uint8_t nxt_step = (step + 1) % 6;
+        printu32d(step);
+        putsUart0(" : ");
+        printu32d(getPinValue(sen1));
+        putsUart0(" ");
+        printu32d(getPinValue(sen2));
+        putsUart0(" ");
+        printu32d(getPinValue(sen3));
+        putsUart0(" ");
+        putsUart0(NEWLINE);
+
+//        if(
+//                   (steps[nxt_step].s1 == getPinValue(sen1))
+//                && (steps[nxt_step].s2 == getPinValue(sen2))
+//                && (steps[nxt_step].s3 == getPinValue(sen3))
+//            ) {
+            step = nxt_step;
+//            waitMicrosecond(7.5e3);
+//        }
+
         togglePinValue(LED_RED);
     }
 
