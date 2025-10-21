@@ -267,17 +267,16 @@ int main(void)
 
     uint8_t step = 0;
     STEP steps[] = {
-            {H,L,N,  0,0,0},
-            {H,N,L,  0,0,0},
-            {N,H,L,  0,0,0},
-            {L,H,N,  0,0,0},
-            {L,N,H,  0,0,0},
-            {N,L,H,  0,0,0},
+            {H,L,N,  0,0,1},
+            {H,N,L,  0,1,1},
+            {N,H,L,  0,1,0},
+            {L,H,N,  1,1,0},
+            {L,N,H,  1,0,0},
+            {N,L,H,  1,0,1},
         };
 
     uint32_t last_time;
     while(1){
-
         setPinValue(enA, steps[step].a != N);
         setPinValue(outA, steps[step].a == H);
 
@@ -287,34 +286,71 @@ int main(void)
         setPinValue(enC, steps[step].c != N);
         setPinValue(outC, steps[step].c == H);
 
-        waitMicrosecond(7.5e3); // slip delay
-        waitMicrosecond(1e6);
-
-//        printu32d(ccp_count);
-//        ccp_count = 0;
-//        putsUart0(NEWLINE);
+//        waitMicrosecond(3e3); // slip delay
+//        waitMicrosecond(1e6);
 
         uint8_t nxt_step = (step + 1) % 6;
-        printu32d(step);
-        putsUart0(" : ");
-        printu32d(getPinValue(sen1));
-        putsUart0(" ");
-        printu32d(getPinValue(sen2));
-        putsUart0(" ");
-        printu32d(getPinValue(sen3));
-        putsUart0(" ");
-        putsUart0(NEWLINE);
 
-//        if(
-//                   (steps[nxt_step].s1 == getPinValue(sen1))
-//                && (steps[nxt_step].s2 == getPinValue(sen2))
-//                && (steps[nxt_step].s3 == getPinValue(sen3))
-//            ) {
+//        printu32d(step);
+//        putsUart0(" : ");
+//        putsUart0(steps[step].a == H ? "H" : steps[step].a == L ? "L" : "N");
+//        putsUart0(" ");
+//        putsUart0(steps[step].b == H ? "H" : steps[step].b == L ? "L" : "N");
+//        putsUart0(" ");
+//        putsUart0(steps[step].c == H ? "H" : steps[step].c == L ? "L" : "N");
+//        putsUart0(" : ");
+//        printu32d(steps[nxt_step].s1);
+//        putsUart0(" ");
+//        printu32d(steps[nxt_step].s2);
+//        putsUart0(" ");
+//        printu32d(steps[nxt_step].s3);
+//        putsUart0(" ");
+//        putsUart0(" : ");
+//        printu32d(getPinValue(sen1));
+//        putsUart0(" ");
+//        printu32d(getPinValue(sen2));
+//        putsUart0(" ");
+//        printu32d(getPinValue(sen3));
+//        putsUart0(" ");
+//        putsUart0(NEWLINE);
+
+        static int targ_count = 5;
+
+        static bool sw1L;
+        if(getPinValue(SW1)){
+            if(!sw1L){
+                sw1L = true;
+                targ_count++;
+            }
+        } else {
+            sw1L = false;
+        }
+
+        static bool sw2L;
+        if(getPinValue(SW1)){
+            if(!sw1L){
+                sw1L = true;
+                targ_count--;
+            }
+        } else {
+            sw1L = false;
+        }
+
+        if(
+                   (steps[step].s1 == getPinValue(sen1))
+                && (steps[step].s2 == getPinValue(sen2))
+                && (steps[step].s3 == getPinValue(sen3))
+            ) {
+
+            if(targ_count > ccp_count)
+                continue;
+
             step = nxt_step;
-//            waitMicrosecond(7.5e3);
-//        }
 
-        togglePinValue(LED_RED);
+            printu32d(ccp_count);
+            ccp_count = 0;
+            putsUart0(NEWLINE);
+        }
     }
 
 
