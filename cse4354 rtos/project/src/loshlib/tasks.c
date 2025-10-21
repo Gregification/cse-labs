@@ -19,6 +19,7 @@
 #include "wait.h"
 #include "kernel.h"
 #include "tasks.h"
+#include "uart0.h"
 
 #include "common.h"
 
@@ -83,12 +84,19 @@ uint8_t readPbs(void)
 // the idle task is implemented for this purpose
 void idle(void)
 {
+//    putsUart0("idle task start" NEWLINE);
+
+    int i = 0;
+
     while(true)
     {
         setPinValue(ORANGE_LED, 1);
         waitMicrosecond(1000);
         setPinValue(ORANGE_LED, 0);
         yield();
+        putsUart0(NEWLINE "idle i: ");
+        printu32h(i++);
+        sleep(MS_TO_TICKS(1e3));
     }
 }
 

@@ -116,7 +116,10 @@ void initRtos(void)
     }
 
     // init systick
-
+    NVIC_ST_RELOAD_R    = ((int)(4e6/TICK_RATE_HZ - 1) << NVIC_ST_RELOAD_S) & NVIC_ST_RELOAD_M; // 1mS
+    NVIC_ST_CURRENT_R   = ((int)(4e6/TICK_RATE_HZ - 1) << NVIC_ST_CURRENT_S) & NVIC_ST_CURRENT_M;
+    NVIC_ST_CTRL_R     &= ~NVIC_ST_CTRL_CLK_SRC; // use POSIC == 16e6 / 4 = 4e6
+    NVIC_ST_CTRL_R     |= NVIC_ST_CTRL_INTEN; // enable interrupt when counter is 0
 }
 
 // REQUIRED: Implement prioritization to NUM_PRIORITIES
@@ -135,11 +138,23 @@ uint8_t rtosScheduler(void)
     return task;
 }
 
+void _startRtos_force_new_stack(_fn);
 // REQUIRED: modify this function to start the operating system
 // by calling scheduler, set srd bits, setting PSP, ASP bit, call fn with fn add in R0
 // fn set TMPL bit, and PC <= fn
 void startRtos(void)
 {
+    taskCurrent = rtosScheduler();
+    applySramAccessMask(tcb[taskCurrent].srd);
+    setPSP(tcb[taskCurrent].sp);
+    NVIC_ST_CTRL_R     |= NVIC_ST_CTRL_ENABLE; // enable SysTick
+    setASP();
+
+    _startRtos_force_new_stack((_fn)tcb[taskCurrent].pid);
+}
+void _startRtos_force_new_stack(_fn func){
+    setTMPL();
+    func();
 }
 
 // REQUIRED:
@@ -164,11 +179,38 @@ bool createThread(_fn fn, const char name[], uint8_t priority, uint32_t stackByt
             // find first available tcb record
             i = 0;
             while (tcb[i].state != STATE_INVALID) {i++;}
+            pid = tcb[i].pid = fn;
+            tcb[i].sp = mallocHeap(stackBytes);
+            if(tcb[i].sp == 0){
+                return false;
+            }
+            tcb[i].sp = (uint8_t *)(tcb[i].sp) + stackBytes;
+            tcb[i].sp = (uint8_t *)(tcb[i].sp) + 4; // instr fetch decrements then fetchs, so needs 4B offset before hand.
+
+            // find srd, malloc puts it in "accessMasks"
+            {
+                uint8_t accessMask_i;
+                for(accessMask_i = 0; accessMask_i < (sizeof(accessMasks)-1)/sizeof(accessMasks[0]); accessMask_i++){
+                    if(accessMasks[accessMask_i].pid == tcb[i].pid)
+                        break;
+                }
+                if(accessMasks[accessMask_i].pid != tcb[i].pid){
+                    return false;
+                }
+                tcb[i].srd = accessMasks[accessMask_i].mask.raw;
+            }
+
             tcb[i].state = STATE_UNRUN;
-            tcb[i].pid = fn;
-            tcb[i].sp = 0;
             tcb[i].priority = priority;
-            tcb[i].srd = 0;
+
+            // copy name
+            {
+                uint8_t j;
+                for(j = 0; j < sizeof(tcb[i].name)-1; j++){
+                    tcb[i].name[j] = name[j];
+                }
+                tcb[i].name[j] = '\0';
+            }
 
             // increment task count
             taskCount++;
@@ -198,12 +240,17 @@ void setThreadPriority(_fn fn, uint8_t priority)
 // REQUIRED: modify this function to yield execution back to scheduler using pendsv
 void yield(void)
 {
+    SVIC_ASM_PendSV;
+    __asm__(" BX LR");
 }
 
 // REQUIRED: modify this function to support 1ms system timer
 // execution yielded back to scheduler until time elapses using pendsv
 void sleep(uint32_t tick)
 {
+    tcb[taskCurrent].state = STATE_DELAYED;
+    tcb[taskCurrent].ticks = tick;
+    yield();
 }
 
 // REQUIRED: modify this function to wait a semaphore using pendsv
@@ -230,18 +277,53 @@ void unlock(int8_t mutex)
 // REQUIRED: in preemptive code, add code to request task switch
 void systickIsr(void)
 {
+    putsUart0("st" NEWLINE);
+
+    // decrement task timers
+    {
+        uint8_t i;
+        for(i = 0; i < MAX_TASKS; i++){
+            if(tcb[i].pid != 0){
+                if(tcb[i].state == STATE_DELAYED){
+                    if(tcb[i].ticks == 0) {
+                        tcb[i].state = STATE_READY;
+                    } else
+                        tcb[i].ticks--;
+                }
+            }
+        }
+    }
+
+//    if(preemption)
+//        SVIC_ASM_PendSV;
 }
 
 // REQUIRED: in coop and preemptive, modify this function to add support for task switching
 // REQUIRED: process UNRUN and READY tasks differently
 void pendSvIsr(void)
 {
+    // save stacks values of current task
+    __asm__(" PUSH {LR}");
+    __asm__(" PUSH {R4,R5,R6,R7,R8,R9,R10,R11}");
+    tcb[taskCurrent].sp = getPSP();
+
+    // change tasks
+    taskCurrent = rtosScheduler();
+
+    // restore stack values of new task
+    setPSP(tcb[taskCurrent].sp);
+    __asm__(" POP {R11,R10,R9,R8,R7,R6,R5,R4}");
+    __asm__(" POP {LR}");
 }
 
 // REQUIRED: modify this function to add support for the service call
 // REQUIRED: in preemptive code, add code to handle synchronization primitives
 void svCallIsr(void)
 {
+    // TODO: recover SVC args :( where are the docs over this?? ARM?? where??
+
+    // trigger PendSV
+    NVIC_INT_CTRL_R |= NVIC_INT_CTRL_PEND_SV;  // /160
 }
 
 
@@ -367,7 +449,7 @@ void _HardFaultHandlerISR(){
 
     putsUart0(CLIERROR);
     putsUart0("Hard fault in process ");
-    printu32h(pid);
+    printu32h((uint32_t)pid);
     putsUart0(NEWLINE);
 
     dumpPSPRegsFromMSP();
@@ -381,7 +463,7 @@ void _MPUFaultHandlerISR(){
 
     putsUart0(CLIERROR);
     putsUart0("MPU fault in process ");
-    printu32h(pid);
+    printu32h((uint32_t)pid);
     putsUart0(NEWLINE);
 
     dumpPSPRegsFromMSP();
@@ -410,7 +492,7 @@ void _BusFaultHandlerISR(){
 
     putsUart0(CLIERROR);
     putsUart0("Bus fault in process ");
-    printu32h(pid);
+    printu32h((uint32_t)pid);
     putsUart0(NEWLINE);
 
     // /177 . Bus Fault bits 15:8
@@ -439,7 +521,7 @@ void _UsageFaultHandlerISR(){
 
     putsUart0(CLIERROR);
     putsUart0("Usage fault in process ");
-    printu32h(pid);
+    printu32h((uint32_t)pid);
     putsUart0(NEWLINE);
 
     // /177 . Usage Fault bits 31:16
@@ -457,19 +539,6 @@ void _UsageFaultHandlerISR(){
     while(1);
 }
 
-void _PendSVHandlerISR(){
-    setPinValue(LED_YELLOW, 1);
-
-    putsUart0(CLIERROR);
-    putsUart0("PendSV in progress");
-    printu32h(pid);
-    putsUart0(NEWLINE);
-
-    if(NVIC_FAULT_STAT_R & (NVIC_FAULT_STAT_DERR | NVIC_FAULT_STAT_IERR)){
-        NVIC_FAULT_STAT_R &= ~(NVIC_FAULT_STAT_DERR | NVIC_FAULT_STAT_IERR);
-        putsUart0(", called from MPU");
-    }
-    putsUart0(NEWLINE);
-
-    while(1);
-}
+#if 4'000'000 / TICK_RATE_HZ >= 0xFF'FFFF
+    #error "SysTick too fast"
+#endif

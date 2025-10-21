@@ -58,6 +58,12 @@ int main(void)
     initRtos();
 
     // Setup UART0 baud rate
+    setUart0BaudRate(115200, F_CPU);
+    putsUart0(CLIRESET CLICLEAR CLIGOOD);
+    putsUart0("FALL 2025, CSE4354 RTOS, Main Project, George Boone 1002055713");
+    putsUart0(NEWLINE CLIRESET);
+
+    // Setup UART0 baud rate
     setUart0BaudRate(115200, 40e6);
 
     // Initialize mutexes and semaphores

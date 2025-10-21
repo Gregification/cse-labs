@@ -40,9 +40,17 @@ typedef void (*_fn)();
 // tasks
 #define MAX_TASKS 12
 
-typedef uint32_t PID;
+#define TICK_RATE_HZ 1000
+#define MS_TO_TICKS(X) ((X) * TICK_RATE_HZ / 1000)
+
+typedef void * PID;
 
 PID pid; // current processes ID
+
+enum SVC_I {
+    SVC_I_PendSV = 0x1
+} ;
+#define SVIC_ASM_PendSV __asm__(" SVC #0x1"); // trigger pendSV
 
 //-----------------------------------------------------------------------------
 // Subroutines
@@ -73,8 +81,15 @@ void svCallIsr(void);
 //NVIC_FAULT_STAT_R /177
 void dumpFaultStatReg(uint32_t copyOfFaultStat);
 void dumpPSPRegsFromMSP();
+
+void setPSP(void * p);
 /* see /110 for stack offset diagram */
 extern uint32_t * getPSP();
 extern uint32_t * getMSP(); // not sure if this is right, dosen't the interrupt run with MSP??
+
+// SP reg /78
+// CONTROL reg /88
+extern void setASP();
+extern void setTMPL();
 
 #endif

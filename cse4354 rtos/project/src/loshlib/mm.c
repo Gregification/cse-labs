@@ -159,7 +159,7 @@ void freeHeap(void *address_from_malloc)
     putsUart0(CLIRESET CLIERROR NEWLINE);
     putsUart0("rtos.c -> free_heap failed!");
     putsUart0(NEWLINE "\tpid:");
-    printu32h(pid);
+    printu32h((uint32_t)pid);
     putsUart0(NEWLINE "\tptr:");
     printu32h((uint32_t)address_from_malloc);
     putsUart0(NEWLINE);
@@ -324,7 +324,7 @@ void dumpHeapOwnershipTable(){
         putsUart0("\t");
         printu32d(HOT[r].len);
         putsUart0("\t");
-        printu32h(HOT[r].owner_pid);
+        printu32h((uint32_t)(HOT[r].owner_pid));
         putsUart0("\t");
         printu32h((uint32_t)(heap + r * MPU_REGION_SIZE_B));
     }
