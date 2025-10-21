@@ -34,6 +34,7 @@ void initHw();
 #define enB PORTE,2
 #define enC PORTE,3
 
+int targ_count = 10;
 
 void setPWMA(uint16_t val){ // PB6
     PWM0_0_CMPA_R &= ~0xFFFF;
@@ -98,25 +99,13 @@ void timer2A_IRQ(){ // rpm
 
 double duty = 0.5;
 
-void timer3A_IRQ(){ // emf maker
-//    togglePinValue(LED_RED);
-//    togglePinValue(SYNC);
-//
-//    {
-//        uint32_t former = PWM0_0_CMPA_R;
-//        setPinValue(SYNC, 1);
-//        setPWMA(0);
-//
-//        waitMicrosecond(500);
-//        setPinValue(SYNC, 0);
-//        uint16_t raw = readAdc0Ss3();
-//
-//        setPWMA(former);
-//
-//        double voltage = ((raw + 0.5) / 4096.0) * 3.3;
-//        emf = voltage * 1000;
-//    }
-//    TIMER3_ICR_R = TIMER_ICR_TATOCINT;
+static unsigned int delay = 1e6;
+
+void timer3A_IRQ(){
+    if(getPinValue(SW1) == 0)
+        delay = delay * 0.9 - 1;
+
+    TIMER3_ICR_R = TIMER_ICR_TATOCINT;
 }
 
 void portA_IRQ(){
@@ -145,8 +134,10 @@ int main(void)
     selectPinDigitalInput(sen2);
     selectPinDigitalInput(sen3);
 
-//    selectPinDigitalInput(SW1);
-//    enablePinPullup(SW1);
+    selectPinDigitalInput(SW1);
+    enablePinPullup(SW1);
+    enablePinInterrupt(SW1);
+
 //    setPinCommitControl(SW2);
 //    enablePinPullup(SW2);
 //    selectPinDigitalInput(SW2);
@@ -175,7 +166,7 @@ int main(void)
     TIMER2_CTL_R &= ~TIMER_CTL_TAEN;                 // turn-off timer before reconfiguring
     TIMER2_CFG_R = TIMER_CFG_32_BIT_TIMER;           // configure as 32-bit timer (A+B)
     TIMER2_TAMR_R = TIMER_TAMR_TAMR_PERIOD;          // configure for periodic mode (count down)
-    TIMER2_TAILR_R = F_CPU/1000.0;                         // set load value (1 Hz rate)
+    TIMER2_TAILR_R = F_CPU/10e3;                         // set load value (1 Hz rate)
     TIMER2_CTL_R |= TIMER_CTL_TAEN;                  // turn-on timer
     TIMER2_IMR_R |= TIMER_IMR_TATOIM;                // turn-on interrupt
     NVIC_EN0_R |= 1 << (INT_TIMER2A-16);             // turn-on interrupt 86 (TIMER4A)
@@ -185,10 +176,10 @@ int main(void)
     TIMER3_CTL_R &= ~TIMER_CTL_TAEN;                 // turn-off timer before reconfiguring
     TIMER3_CFG_R = TIMER_CFG_32_BIT_TIMER;           // configure as 32-bit timer (A+B)
     TIMER3_TAMR_R = TIMER_TAMR_TAMR_PERIOD;          // configure for periodic mode (count down)
-    TIMER3_TAILR_R = F_CPU/50.0;                         // set load value (1 Hz rate)
+    TIMER3_TAILR_R = F_CPU/5.0;                         // set load value (1 Hz rate)
     TIMER3_CTL_R |= TIMER_CTL_TAEN;                  // turn-on timer
     TIMER3_IMR_R |= TIMER_IMR_TATOIM;                // turn-on interrupt
-//    NVIC_EN1_R |= 1 << (INT_TIMER3A-32 - 16);             // turn-on interrupt 86 (TIMER4A)
+    NVIC_EN1_R |= 1 << (INT_TIMER3A-32 - 16);             // turn-on interrupt 86 (TIMER4A)
 
     /*** PWM *************************************************/
 
@@ -275,7 +266,8 @@ int main(void)
             {N,L,H,  1,0,1},
         };
 
-    uint32_t last_time;
+    targ_count = 100;
+
     while(1){
         setPinValue(enA, steps[step].a != N);
         setPinValue(outA, steps[step].a == H);
@@ -314,43 +306,34 @@ int main(void)
 //        putsUart0(" ");
 //        putsUart0(NEWLINE);
 
-        static int targ_count = 5;
+//        if(
+//                   (steps[step].s1 == getPinValue(sen1))
+//                && (steps[step].s2 == getPinValue(sen2))
+//                && (steps[step].s3 == getPinValue(sen3))
+//            ) {
+//
+//            // find stall speed
+//            {
+//                if(ccp_count > targ_count)
+//                    targ_count--;
+//            }
 
-        static bool sw1L;
-        if(getPinValue(SW1)){
-            if(!sw1L){
-                sw1L = true;
-                targ_count++;
-            }
-        } else {
-            sw1L = false;
-        }
+            // set target speed
+//            {
+//                targ_count = 10;
+//            }
 
-        static bool sw2L;
-        if(getPinValue(SW1)){
-            if(!sw1L){
-                sw1L = true;
-                targ_count--;
-            }
-        } else {
-            sw1L = false;
-        }
+        waitMicrosecond(delay);
 
-        if(
-                   (steps[step].s1 == getPinValue(sen1))
-                && (steps[step].s2 == getPinValue(sen2))
-                && (steps[step].s3 == getPinValue(sen3))
-            ) {
-
-            if(targ_count > ccp_count)
-                continue;
+//            if(targ_count > ccp_count)
+//                continue;
 
             step = nxt_step;
 
             printu32d(ccp_count);
             ccp_count = 0;
             putsUart0(NEWLINE);
-        }
+//        }
     }
 
 
