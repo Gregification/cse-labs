@@ -149,11 +149,10 @@ void startRtos(void)
     setPSP(tcb[taskCurrent].sp);
     NVIC_ST_CTRL_R     |= NVIC_ST_CTRL_ENABLE; // enable SysTick
     setASP();
-
+    setTMPL();
     _startRtos_force_new_stack((_fn)tcb[taskCurrent].pid);
 }
 void _startRtos_force_new_stack(_fn func){
-    setTMPL();
     func();
 }
 
@@ -277,8 +276,6 @@ void unlock(int8_t mutex)
 // REQUIRED: in preemptive code, add code to request task switch
 void systickIsr(void)
 {
-    putsUart0("st" NEWLINE);
-
     // decrement task timers
     {
         uint8_t i;
@@ -303,8 +300,11 @@ void systickIsr(void)
 void pendSvIsr(void)
 {
     // save stacks values of current task
-    __asm__(" PUSH {LR}");
-    __asm__(" PUSH {R4,R5,R6,R7,R8,R9,R10,R11}");
+    __asm volatile(
+            " MRS R0, PSP               \n" // get PSP
+            " STMDB R0!, {R4-R11, LR}   \n" // push to PSP
+            " MSR PSP, R0               \n" // update PSP
+        );
     tcb[taskCurrent].sp = getPSP();
 
     // change tasks
@@ -312,8 +312,13 @@ void pendSvIsr(void)
 
     // restore stack values of new task
     setPSP(tcb[taskCurrent].sp);
-    __asm__(" POP {R11,R10,R9,R8,R7,R6,R5,R4}");
-    __asm__(" POP {LR}");
+//    applySramAccessMask(tcb[taskCurrent].srd);
+    __asm volatile(
+            " MRS R0, PSP               \n" // get PSP
+            " LDMIA R0!, {R4-R11, LR}   \n" // pop from PSP
+            " MSR PSP, R0               \n" // update PSP
+            " BX LR                     \n"
+        );
 }
 
 // REQUIRED: modify this function to add support for the service call

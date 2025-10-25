@@ -93,10 +93,13 @@ void idle(void)
         setPinValue(ORANGE_LED, 1);
         waitMicrosecond(1000);
         setPinValue(ORANGE_LED, 0);
+        if(i == 0x7A){
+            int volatile a = 0;
+        }
         yield();
         putsUart0(NEWLINE "idle i: ");
         printu32h(i++);
-        sleep(MS_TO_TICKS(1e3));
+//        sleep(MS_TO_TICKS(1e3));
     }
 }
 

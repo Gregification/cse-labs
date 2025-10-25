@@ -1,0 +1,43 @@
+
+
+!CONFIGURATION: 'Debug__TICLANG' (com.ti.ccstudio.buildDefinitions.TMS470.Debug.1534344082) [Sat Oct 25 13:07:32 CDT 2025]
+
+	!TOOL: 'Arm Compiler' (com.ti.ccstudio.buildDefinitions.TMS470_TICLANG_4.0.exe.compilerDebug.569915088)
+
+		!NOTE: Source-tool setting '--float_support=FPv4SPD16 -mv7M4' has been migrated to target-tool setting '-mfloat-abi=hard -mfpu=fpv4-sp-d16'
+
+		!NOTE: Source-tool setting '--c99 --relaxed_ansi' has been migrated to target-tool setting '-std=gnu9x'
+
+		!NOTE: Source-tool default '--c++14 --relaxed_ansi' has been migrated to target-tool setting '-std=gnu++14'
+
+		!NOTE: Source-tool setting '-mv7M4' has been migrated to target-tool setting '-march=thumbv7em -mcpu=cortex-m4'
+
+		!NOTE: Source-tool default '--endian=little' has been migrated to target-tool setting '-mlittle-endian'
+
+		!NOTE: Source-tool setting '--code_state=16' has been migrated to target-tool setting '-mthumb'
+
+		!NOTE: Source-tool default '-Ooff' has been migrated to target-tool setting '-O0'
+			tiarmclang's -O0 option disables optimization
+
+		!NOTE: Source-tool setting: 
+				--include_path="${PROJECT_ROOT}" --include_path="${PROJECT_ROOT}/src" --include_path="${CG_TOOL_ROOT}/include" 
+			has been migrated to target-tool setting: 
+				-I"${PROJECT_ROOT}" -I"${PROJECT_ROOT}/src" -I"${CG_TOOL_ROOT}/include"
+
+		!NOTE: Source-tool setting '--define=ccs="ccs" --define=PART_TM4C123GH6PM' has been migrated to target-tool setting '-Dccs="ccs" -DPART_TM4C123GH6PM'
+
+		!NOTE: Source-tool setting '-g' has been migrated to target-tool setting '-gdwarf-3'
+
+		!NOTE: Source-tool default '--wchar_t=16' has been migrated to target-tool setting '-fno-short-wchar'
+			tiarmclang does not support 16-bit wchar_t in its runtime libraries; the --wchar_t=16 option will map to tiarmclang's -fno-short-wchar option (32-bit wchar_t type assumed)
+
+		!NOTE: Source-tool default '--common=on' has been migrated to target-tool setting '-fcommon'
+
+		!NOTE: Source-tool default '' has been migrated to target-tool setting '-Werror=ti-pragmas -Werror=ti-macros -Werror=ti-intrinsics'
+			use of legacy TI pragmas will be flagged as errors
+			use of legacy TI pre-defined macro symbols will be flagged as errors
+			use of legacy TI intrinsics will be flagged as errors
+
+		!WARNING: The following source-tool settings were not migrated because no migration rules have been defined - please migrate these settings manually, if applicable: 
+				--gcc --diag_warning=225 --diag_wrap=off --display_error_number
+
