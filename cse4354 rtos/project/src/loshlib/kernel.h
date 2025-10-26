@@ -47,10 +47,7 @@ typedef void * PID;
 
 PID pid; // current processes ID
 
-enum SVC_I {
-    SVC_I_PendSV = 0x1
-} ;
-#define SVIC_ASM_PendSV __asm__(" SVC #0x1"); // trigger pendSV
+#define SVIC_ASM_PendSV __asm(" SVC #0x1"); // trigger pendSV
 
 //-----------------------------------------------------------------------------
 // Subroutines

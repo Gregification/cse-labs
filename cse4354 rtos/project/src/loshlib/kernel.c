@@ -240,7 +240,7 @@ void setThreadPriority(_fn fn, uint8_t priority)
 void yield(void)
 {
     SVIC_ASM_PendSV;
-    __asm__(" BX LR");
+    __asm(" BX LR");
 }
 
 // REQUIRED: modify this function to support 1ms system timer
@@ -297,8 +297,12 @@ void systickIsr(void)
 
 // REQUIRED: in coop and preemptive, modify this function to add support for task switching
 // REQUIRED: process UNRUN and READY tasks differently
-void pendSvIsr(void)
+__attribute__((naked))  void pendSvIsr(void)
 {
+    /* reason for " ___attribute__((naked)) "
+     * between when pendSV is invoked and it actually running MSP is decremented by 2. something about the alignment is causing that
+     */
+
     // save stacks values of current task
     __asm volatile(
             " MRS R0, PSP               \n" // get PSP
@@ -312,7 +316,7 @@ void pendSvIsr(void)
 
     // restore stack values of new task
     setPSP(tcb[taskCurrent].sp);
-//    applySramAccessMask(tcb[taskCurrent].srd);
+    applySramAccessMask(tcb[taskCurrent].srd);
     __asm volatile(
             " MRS R0, PSP               \n" // get PSP
             " LDMIA R0!, {R4-R11, LR}   \n" // pop from PSP
