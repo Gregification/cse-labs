@@ -99,7 +99,7 @@ void idle(void)
         yield();
         putsUart0(NEWLINE "idle i: ");
         printu32h(i++);
-//        sleep(MS_TO_TICKS(1e3));
+        sleep(MS_TO_TICKS(1e3));
     }
 }
 

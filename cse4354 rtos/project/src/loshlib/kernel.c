@@ -116,10 +116,10 @@ void initRtos(void)
     }
 
     // init systick
-    NVIC_ST_RELOAD_R    = ((int)(4e6/TICK_RATE_HZ - 1) << NVIC_ST_RELOAD_S) & NVIC_ST_RELOAD_M; // 1mS
-    NVIC_ST_CURRENT_R   = ((int)(4e6/TICK_RATE_HZ - 1) << NVIC_ST_CURRENT_S) & NVIC_ST_CURRENT_M;
+    NVIC_ST_RELOAD_R    = ((int)(40e6/TICK_RATE_HZ - 1) << NVIC_ST_RELOAD_S) & NVIC_ST_RELOAD_M; // 1mS
+    NVIC_ST_CURRENT_R   = 0; // isr triggers on 1->0, 0 will cause it to wait 1 full cycle
     NVIC_ST_CTRL_R     &= ~NVIC_ST_CTRL_CLK_SRC; // use POSIC == 16e6 / 4 = 4e6
-    NVIC_ST_CTRL_R     |= NVIC_ST_CTRL_INTEN; // enable interrupt when counter is 0
+    NVIC_ST_CTRL_R     |= NVIC_ST_CTRL_INTEN; // enable interrupt generation when counter is 0
 }
 
 // REQUIRED: Implement prioritization to NUM_PRIORITIES
@@ -145,10 +145,10 @@ void _startRtos_force_new_stack(_fn);
 void startRtos(void)
 {
     taskCurrent = rtosScheduler();
-    applySramAccessMask(tcb[taskCurrent].srd);
     setPSP(tcb[taskCurrent].sp);
-    NVIC_ST_CTRL_R     |= NVIC_ST_CTRL_ENABLE; // enable SysTick
+    applySramAccessMask(tcb[taskCurrent].srd);
     setASP();
+    NVIC_ST_CTRL_R     |= NVIC_ST_CTRL_ENABLE; // enable SysTick
     setTMPL();
     _startRtos_force_new_stack((_fn)tcb[taskCurrent].pid);
 }
@@ -247,8 +247,8 @@ void yield(void)
 // execution yielded back to scheduler until time elapses using pendsv
 void sleep(uint32_t tick)
 {
-    tcb[taskCurrent].state = STATE_DELAYED;
     tcb[taskCurrent].ticks = tick;
+    tcb[taskCurrent].state = STATE_DELAYED;
     yield();
 }
 
@@ -276,31 +276,35 @@ void unlock(int8_t mutex)
 // REQUIRED: in preemptive code, add code to request task switch
 void systickIsr(void)
 {
+    putsUart0("st" NEWLINE);
     // decrement task timers
-    {
-        uint8_t i;
-        for(i = 0; i < MAX_TASKS; i++){
-            if(tcb[i].pid != 0){
-                if(tcb[i].state == STATE_DELAYED){
-                    if(tcb[i].ticks == 0) {
-                        tcb[i].state = STATE_READY;
-                    } else
-                        tcb[i].ticks--;
-                }
-            }
-        }
-    }
+//    {
+//        uint8_t i;
+//        for(i = 0; i < MAX_TASKS; i++){
+//            if(tcb[i].pid != 0){
+//                if(tcb[i].state == STATE_DELAYED){
+//                    if(tcb[i].ticks == 0) {
+//                        tcb[i].state = STATE_READY;
+//                    } else
+//                        tcb[i].ticks--;
+//                }
+//            }
+//        }
+//    }
 
 //    if(preemption)
 //        SVIC_ASM_PendSV;
+
+
 }
 
 // REQUIRED: in coop and preemptive, modify this function to add support for task switching
 // REQUIRED: process UNRUN and READY tasks differently
-__attribute__((naked))  void pendSvIsr(void)
+__attribute__((naked)) void pendSvIsr(void)
 {
     /* reason for " ___attribute__((naked)) "
-     * between when pendSV is invoked and it actually running MSP is decremented by 2. something about the alignment is causing that
+     *  between when pendSV is invoked and it actually running MSP is decremented by 2.
+     *  something about the alignment & how compiler attempts to fix it is causing that
      */
 
     // save stacks values of current task
