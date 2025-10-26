@@ -55,6 +55,7 @@ extern uint32_t __STACK_TOP;
 //
 //*****************************************************************************
 // To be added by user
+void timer1A_IRQ();
 void timer2A_IRQ();
 void timer3A_IRQ();
 void portA_IRQ();
@@ -108,7 +109,7 @@ void (* const g_pfnVectors[])(void) =
     IntDefaultHandler,                      // Watchdog timer
     IntDefaultHandler,                      // Timer 0 subtimer A
     IntDefaultHandler,                      // Timer 0 subtimer B
-    IntDefaultHandler,                      // Timer 1 subtimer A
+    timer1A_IRQ,                            // Timer 1 subtimer A
     IntDefaultHandler,                      // Timer 1 subtimer B
     timer2A_IRQ,                            // Timer 2 subtimer A
     IntDefaultHandler,                      // Timer 2 subtimer B

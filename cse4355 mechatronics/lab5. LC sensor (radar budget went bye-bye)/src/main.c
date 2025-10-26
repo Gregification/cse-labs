@@ -27,8 +27,6 @@ void initHw();
 #define DEINT_TRIGGER PORTD,2
 
 
-int targ_count = 10;
-
 void setPWMA(uint16_t val){ // PB6
     PWM0_0_CMPA_R &= ~0xFFFF;
     PWM0_0_CMPA_R |= val; // set pwmA comp value
@@ -38,7 +36,29 @@ void setPWMB(uint16_t val){ // PB7
     PWM0_0_CMPB_R |= val; // set pwmB comp value
 }
 
-/*** timer 2A *********************************/
+/*** timer 1A *********************************/
+void inline resetEdgeCounts_1(){
+    TIMER1_TAV_R = 0;
+}
+
+uint32_t inline getEdgeCounts_1(){
+    return TIMER1_TAV_R = 0;
+}
+
+void inline startEdgeCounter_1(){
+    TIMER1_CTL_R |= TIMER_CTL_TAEN;
+}
+
+void inline stopEdgeCounter_1(){
+    TIMER1_CTL_R &= ~TIMER_CTL_TAEN;
+}
+
+void timer1A_IRQ(){
+    stopEdgeCounter_1();
+    TIMER1_ICR_R = TIMER_ICR_TATOCINT;
+}
+
+/*** wide timer 2A ****************************/
 void inline startTimer_w0(){
     WTIMER0_CTL_R |= TIMER_CTL_TAEN;                 // turn on timer
 }
@@ -116,63 +136,68 @@ int main(void)
 //    selectPinDigitalInput(SW2);
 
     /*** TIMER ***********************************************/
+
+    // 32b (effective 24b) timer for input edge timing
     SYSCTL_RCGCTIMER_R |= SYSCTL_RCGCTIMER_R1;
     _delay_cycles(3);
-    // Disable Timer A during configuration
-   TIMER1_CTL_R &= ~TIMER_CTL_TAEN;
-   // Configure for 32-bit timer mode
-   TIMER1_CFG_R = TIMER_CFG_32_BIT_TIMER;
-   // Configure Timer A for Periodic mode, default down-count
-   TIMER1_TAMR_R = TIMER_TAMR_TAMR_PERIOD;
-   // Set the load value to maximum for longest period before wrap-around
-   TIMER1_TAILR_R = 0xFFFFFFFF;
-   // Clear any interrupts (we are polling the value)
-   TIMER1_IMR_R = 0;
-   TIMER1_ICR_R = TIMER_ICR_TATOCINT; // Clear timeout flag just in case
-   // Enable Timer A
-   TIMER1_CTL_R |= TIMER_CTL_TAEN;
+    TIMER1_CTL_R &= ~TIMER_CTL_TAEN;                // turn-off timer before reconfiguring
+    TIMER1_CFG_R = TIMER_CFG_32_BIT_TIMER;          // configure as 32-bit timer (A+B)
+    TIMER1_TAMR_R |= TIMER_TAMR_TAMR_CAP;           // configure for capture mode
+    TIMER1_TAMR_R |= TIMER_TAMR_TACDIR;             // count up
+    TIMER1_TAMR_R &= ~TIMER_TAMR_TACMR;             // use edge-count mode
+    TIMER1_TAILR_R = F_CPU/10e3;                    // set load value (1 Hz rate)
+    TIMER1_CTL_R |= TIMER_CTL_TAEVENT_POS;          // trigger on positive edge
+    TIMER1_TAILR_R      = 3;                       // upper bound during count up
+    TIMER1_TAMATCHR_R   = 1;                        // edges to count = TAILR - TAMATCH
+    TIMER1_TAPMR_R      &= ~TIMER_TAPMR_TAPSMRH_M;  // no prescaler on matching 15:8
+    TIMER1_TAPMR_R      &= ~TIMER_TAPMR_TAPSMR_M;   // no prescaler on matching 7:0
+//    TIMER1_CTL_R |= TIMER_CTL_TAEN;                 // turn-on timer
+//    TIMER1_IMR_R |= TIMER_IMR_TATOIM;               // turn-on interrupt
+//    NVIC_EN0_R |= 1 << (INT_TIMER1A-16);            // turn-on interrupt 86 (TIMER4A)
+    { // setup PF2 as input for edge counting
+        GPIO_PORTF_DEN_R    &= ~BV(2);              // input
+        GPIO_PORTF_AFSEL_R  |= BV(2);               // use alternative function
+        GPIO_PORTF_PCTL_R   |= GPIO_PCTL_PF2_T1CCP0;// Timer 1 input 0
+        GPIO_PORTF_DEN_R    |= BV(2);               // as digital input
+    }
 
-    // Enable clocks
+    // 32b timer for periodic interrupts
     SYSCTL_RCGCTIMER_R |= SYSCTL_RCGCTIMER_R2;
     _delay_cycles(3);
     // Configure Timer 4 for 1 sec tick
-    TIMER2_CTL_R &= ~TIMER_CTL_TAEN;                 // turn-off timer before reconfiguring
-    TIMER2_CFG_R = TIMER_CFG_32_BIT_TIMER;           // configure as 32-bit timer (A+B)
-    TIMER2_TAMR_R = TIMER_TAMR_TAMR_PERIOD;          // configure for periodic mode (count down)
-    TIMER2_TAILR_R = F_CPU/10e3;                         // set load value (1 Hz rate)
-    TIMER2_CTL_R |= TIMER_CTL_TAEN;                  // turn-on timer
-//    TIMER2_IMR_R |= TIMER_IMR_TATOIM;                // turn-on interrupt
-//    NVIC_EN0_R |= 1 << (INT_TIMER2A-16);             // turn-on interrupt 86 (TIMER4A)
+    TIMER2_CTL_R &= ~TIMER_CTL_TAEN;                // turn-off timer before reconfiguring
+    TIMER2_CFG_R = TIMER_CFG_32_BIT_TIMER;          // configure as 32-bit timer (A+B)
+    TIMER2_TAMR_R = TIMER_TAMR_TAMR_PERIOD;         // configure for periodic mode (count down)
+    TIMER2_TAILR_R = F_CPU/10e3;                    // set load value (1 Hz rate)
+    TIMER2_CTL_R |= TIMER_CTL_TAEN;                 // turn-on timer
+//    TIMER2_IMR_R |= TIMER_IMR_TATOIM;               // turn-on interrupt
+//    NVIC_EN0_R |= 1 << (INT_TIMER2A-16);            // turn-on interrupt 86 (TIMER4A)
 
+    // 32b timer for periodic interrupts
     SYSCTL_RCGCTIMER_R |= SYSCTL_RCGCTIMER_R3;
     _delay_cycles(3);
-    TIMER3_CTL_R &= ~TIMER_CTL_TAEN;                 // turn-off timer before reconfiguring
-    TIMER3_CFG_R = TIMER_CFG_32_BIT_TIMER;           // configure as 64-bit timer (A+B)
-    TIMER3_TAMR_R = TIMER_TAMR_TAMR_PERIOD;          // configure for periodic mode (count down)
-    TIMER3_TAILR_R = F_CPU/5.0;                         // set load value (1 Hz rate)
-    TIMER3_CTL_R |= TIMER_CTL_TAEN;                  // turn-on timer
-//    TIMER3_IMR_R |= TIMER_IMR_TATOIM;                // turn-on interrupt
-//    NVIC_EN1_R |= 1 << (INT_TIMER3A-32 - 16);             // turn-on interrupt 86 (TIMER4A)
+    TIMER3_CTL_R &= ~TIMER_CTL_TAEN;                // turn-off timer before reconfiguring
+    TIMER3_CFG_R = TIMER_CFG_32_BIT_TIMER;          // configure as 64-bit timer (A+B)
+    TIMER3_TAMR_R = TIMER_TAMR_TAMR_PERIOD;         // configure for periodic mode (count down)
+    TIMER3_TAILR_R = F_CPU/5.0;                     // set load value (1 Hz rate)
+    TIMER3_CTL_R |= TIMER_CTL_TAEN;                 // turn-on timer
+//    TIMER3_IMR_R |= TIMER_IMR_TATOIM;               // turn-on interrupt
+//    NVIC_EN1_R |= 1 << (INT_TIMER3A-32 - 16);       // turn-on interrupt 86 (TIMER4A)
 
-    //64b wide timer for timing keeping
+    //64b wide timer for delta timing
     SYSCTL_RCGCWTIMER_R |= SYSCTL_RCGCWTIMER_R0;
     _delay_cycles(3);
     WTIMER0_CTL_R &= ~TIMER_CTL_TAEN;               // turn-off timer before reconfiguring
     WTIMER0_CFG_R = TIMER_CFG_32_BIT_TIMER;         // configure as 64-bit timer (A+B)
     WTIMER0_TAMR_R |= TIMER_TAMR_TAMR_PERIOD;       // configure
     WTIMER0_TAMR_R |= TIMER_TAMR_TACDIR;            // count up
-    WTIMER0_TAILR_R = ~(uint64_t)0;                 // set load value 31:0
-    WTIMER0_TBILR_R = ~(uint64_t)0;                 // set load value 63:32
-//    WTIMER3_IMR_R |= TIMER_IMR_TATOIM;              // turn-on interrupt
-//    NVIC_EN1_R |= 1 << (INT_WTIMER0A-32 - 16);      // turn-on interrupt 86 (TIMER4A)
-    // ^^^ MAYBE WRONG INTERRUPT REGISTER, not used anyways
+    WTIMER0_TAILR_R = ~0;                           // set load value [31:0]
+    WTIMER0_TBILR_R = ~0;                           // set load value [63:32]
 
     /*** PWM *************************************************/
 
-    // enable clock
     SYSCTL_RCGC0_R |= SYSCTL_RCGC0_PWM0;
     _delay_cycles(16);
-
 
     //m0 : pwm0 : g0 : pin 1 : PB6
     GPIO_PORTB_DEN_R    |= BV(6);
@@ -188,13 +213,13 @@ int main(void)
 
     SYSCTL_RCC_R |= SYSCTL_RCC_USEPWMDIV;   // enable clock divisor as clock source
     SYSCTL_RCC_R &= ~SYSCTL_RCC_PWMDIV_M;   // clear clock divider
-    SYSCTL_RCC_R |= SYSCTL_RCC_PWMDIV_2;   // set clock divider, clock source 4MHz
+    SYSCTL_RCC_R |= SYSCTL_RCC_PWMDIV_2;    // set clock divider, clock source 4MHz
 
     // what to do if counter is X value options /1282
     PWM0_0_CTL_R |= PWM_0_CTL_ENABLE;
     PWM0_0_GENA_R &= ~0xFFF;                    // clear 11:0 , clear all settings
-    PWM0_0_GENA_R |= PWM_0_GENA_ACTLOAD_ZERO;    // count == load
-    PWM0_0_GENA_R |= PWM_0_GENA_ACTCMPAD_ONE;  // count == cmpA
+    PWM0_0_GENA_R |= PWM_0_GENA_ACTLOAD_ZERO;   // count == load
+    PWM0_0_GENA_R |= PWM_0_GENA_ACTCMPAD_ONE;   // count == cmpA
     PWM0_0_GENB_R &= ~0xFFF;                    // clear 11:0 , clear all settings
     PWM0_0_GENB_R |= PWM_0_GENB_ACTLOAD_ONE;    // count == load
     PWM0_0_GENB_R |= PWM_0_GENB_ACTCMPBD_ZERO;  // count == cmpB
@@ -202,9 +227,9 @@ int main(void)
     PWM0_0_LOAD_R |= PWMMAX;                    // set load value /1278
 
     PWM0_0_CMPA_R &= ~PWM_0_CMPA_M;             // clear pwmA comp value /1280
-    PWM0_0_CMPA_R |= (uint16_t)(PWMMAX * 0.0); // set pwmA comp value
+    PWM0_0_CMPA_R |= (uint16_t)(PWMMAX * 0.0);  // set pwmA comp value
     PWM0_0_CMPB_R &= ~PWM_0_CMPB_M;             // clear pwmB comp value /1280
-    PWM0_0_CMPB_R |= (uint16_t)(PWMMAX * 0.0); // set pwmB comp value
+    PWM0_0_CMPB_R |= (uint16_t)(PWMMAX * 0.0);  // set pwmB comp value
 
     PWM0_CTL_R &= ~PWM_0_CTL_MODE;          // 0: count down from load value then wrap around , 1: count up then down /1270
     PWM0_CTL_R |= PWM_0_CTL_ENABLE;         // enable generator
@@ -235,7 +260,7 @@ int main(void)
 
     NVIC_EN0_R = 1 << (INT_COMP0-16);           // turn-on interrupt 41 (Analog Comparator 0)
 
-    // gpio setup for PC6. uC.10-3/658
+    // gpio setup for PC7. uC.10-3/658
     GPIO_PORTC_AFSEL_R  &= BV(6);
     GPIO_PORTC_DIR_R    &= BV(6);
     GPIO_PORTC_DEN_R    &= BV(6);
@@ -256,25 +281,26 @@ int main(void)
     setPWMB(PWMMAX * 0.0);
 
     // part 1 : Capacitance meter
-    while(1) {
+    // RC circuit, known R
+    while(0) {
         putsUart0("part 1 C meter: ");
 
         resetTimer_w0();
-        setPinValue(DEINT_TRIGGER, 1);
+        setPinValue(DEINT_TRIGGER, 1); // discharge C
 
         // wait for button press
         while(getPinValue(SW1) != 0)
             ;
-        putsUart0("waiting on charge ... ");
+        putsUart0("charging ... ");
 
         startTimer_w0();
         armCmp0();
-        setPinValue(DEINT_TRIGGER, 0);
+        setPinValue(DEINT_TRIGGER, 0); // charge C
 
         while(isTimerRunning_w0())
             ;
 
-        setPinValue(DEINT_TRIGGER, 1);
+        setPinValue(DEINT_TRIGGER, 1); // discharge C
 
         putu64d(getTime_w0());
         putsUart0("\t");
@@ -286,9 +312,14 @@ int main(void)
     }
 
     // part 2 : Inductor meter
+    // colpitts oscillator based
+    startEdgeCounter_1();
     while(1) {
-        putsUart0("part 2: meow" NEWLINE);
+        putsUart0("part 2: ");
+        putu32d(getEdgeCounts_1());
+        putsUart0(NEWLINE);
         waitMicrosecond(1e6);
+
     }
 }
 
