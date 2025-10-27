@@ -59,6 +59,7 @@ void timer1A_IRQ();
 void timer2A_IRQ();
 void timer3A_IRQ();
 void portA_IRQ();
+void wtimer1A_IRQ();
 void AnalogCmp0Int();
 
 //*****************************************************************************
@@ -184,7 +185,7 @@ void (* const g_pfnVectors[])(void) =
     IntDefaultHandler,                      // Timer 5 subtimer B
     IntDefaultHandler,                      // Wide Timer 0 subtimer A
     IntDefaultHandler,                      // Wide Timer 0 subtimer B
-    IntDefaultHandler,                      // Wide Timer 1 subtimer A
+    wtimer1A_IRQ,                      // Wide Timer 1 subtimer A
     IntDefaultHandler,                      // Wide Timer 1 subtimer B
     IntDefaultHandler,                      // Wide Timer 2 subtimer A
     IntDefaultHandler,                      // Wide Timer 2 subtimer B
