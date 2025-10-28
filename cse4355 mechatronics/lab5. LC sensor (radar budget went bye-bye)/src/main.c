@@ -18,17 +18,17 @@
 
 void initHw();
 
-volatile uint32_t previous_time = 0;
-volatile uint32_t period = 0;
-
 //-----------------------------------------------------------------------------
 // Main
 //-----------------------------------------------------------------------------
 #define PWMMAX ((uint16_t)0x8FF)
 //#define PWMMAX ((uint16_t)0x100)
 
+// part 1
 #define DEINT_TRIGGER PORTD,2
 
+// part 2
+#define FREQ_PIN_IN PORTA,5
 
 void setPWMA(uint16_t val){ // PB6
     PWM0_0_CMPA_R &= ~0xFFFF;
@@ -112,15 +112,16 @@ void timer3A_IRQ(){
     TIMER3_ICR_R = TIMER_ICR_TATOCINT;
 }
 
-void portA_IRQ(){
-//    clearPinInterrupt(CCP_IN);
-}
+unsigned int count = 0;
 
-void wtimer1A_IRQ(){
-    uint32_t current_time = WTIMER1_TAR_R;
-    period = current_time - previous_time;
-    previous_time = current_time;
-    WTIMER1_ICR_R = TIMER_ICR_CAECINT; // clears capture event interrupt
+void portA_IRQ(){
+    count++;
+    if(count == 1e3){
+        count = 0;
+        stopTimer_w0();
+        disableNvicInterrupt(INT_GPIOA);
+    }
+    clearPinInterrupt(FREQ_PIN_IN);
 }
 
 uint32_t getElapsedTicks(uint32_t prevTimerVal, uint32_t currentTimerVal);
@@ -137,6 +138,10 @@ int main(void)
 
     selectPinPushPullOutput(DEINT_TRIGGER);
 
+    selectPinDigitalInput(FREQ_PIN_IN);
+    selectPinInterruptRisingEdge(FREQ_PIN_IN);
+    enablePinInterrupt(FREQ_PIN_IN);
+
     selectPinDigitalInput(SW1);
     enablePinPullup(SW1);
     enablePinInterrupt(SW1);
@@ -149,53 +154,26 @@ int main(void)
 
     // 32b (effective 24b) timer for input edge timing
     SYSCTL_RCGCTIMER_R |= SYSCTL_RCGCTIMER_R1;
-    SYSCTL_RCGCWTIMER_R |= SYSCTL_RCGCWTIMER_R1;
     _delay_cycles(3);
-
-    // 1. Ensure the timer is disabled (the TnEN bit is cleared) before making any changes.
-    WTIMER1_CTL_R &= ~TIMER_CTL_TAEN;                // turn-off timer before reconfiguring
-
-    // 2. Write the GPTM Configuration (GPTMCFG) register with a value of 0x0000.0004.
-    WTIMER1_CFG_R = 0x4;          // configure as 32-bit timer (A+B)
-
-    // 3. In the GPTM Timer Mode (GPTMTnMR) register, write the TnCMR field to 0x1 and the TnMR
-    //      field to 0x3 and select a count direction by programming the TnCDIR bit.
-    WTIMER1_TAMR_R |= TIMER_TAMR_TACMR;             // use edge-count mode
-    WTIMER1_TAMR_R |= TIMER_TAMR_TAMR_CAP;           // configure for capture mode
-    WTIMER1_TAMR_R |= TIMER_TAMR_TACDIR;             // count up starting from 0x0
-
-    // 4. Configure the type of event that the timer captures by writing the TnEVENT field of the GPTM
-    //      Control (GPTMCTL) register.
-    WTIMER1_CTL_R |= TIMER_CTL_TAEVENT_POS;          // trigger on positive edge
-
-    // 5. If a prescaler is to be used, write the prescale value to the GPTM Timer n Prescale Register
-    //  (GPTMTnPR)
-    // WE ARE NOT USING A PRESCALER - OVERFLOW IS NOT AN ISSUE
-    WTIMER1_TAPMR_R      &= ~TIMER_TAPMR_TAPSMRH_M;  // no prescaler on matching 15:8
-    WTIMER1_TAPMR_R      &= ~TIMER_TAPMR_TAPSMR_M;   // no prescaler on matching 7:0
-
-    // 6. Load the timer start value into the GPTM Timer n Interval Load (GPTMTnILR) register
-    WTIMER1_TAILR_R = TIMER_TAILR_M;  // sets upper bound of timeout event (0xFFFFFFFF)
-
-    // 7. If interrupts are required, set the CnEIM bit in the GPTM Interrupt Mask (GPTMIMR) register.
-    WTIMER1_IMR_R |= TIMER_IMR_CAEIM;               // turn-on interrupt
-
-    // 8. Set the TnEN bit in the GPTM Control (GPTMCTL) register to enable the timer and start counting.
-    WTIMER1_CTL_R |= TIMER_CTL_TAEN;
-
-    // 9. Poll the CnERIS bit in the GPTMRIS register or wait for the interrupt to be generated (if enabled).
-    //  In both cases, the status flags are cleared by writing a 1 to the CnECINT bit of the GPTM
-    //  Interrupt Clear (GPTMICR) register. The time at which the event happened can be obtained
-    //  by reading the GPTM Timer n (GPTMTnR) register.
-    // TIMER1_TAMATCHR_R   = 1;                        // edges to count = TAILR - TAMATCH
-
-    NVIC_EN3_R |= 1 << (INT_WTIMER1A-96);            // turn-on interrupt 96 (WTIMER1A)
+    TIMER1_CTL_R &= ~TIMER_CTL_TAEN;                // turn-off timer before reconfiguring
+    TIMER1_CFG_R = TIMER_CFG_32_BIT_TIMER;          // configure as 32-bit timer (A+B)
+    TIMER1_TAMR_R |= TIMER_TAMR_TAMR_CAP;           // configure for capture mode
+    TIMER1_TAMR_R |= TIMER_TAMR_TACDIR;             // count up
+    TIMER1_TAMR_R &= ~TIMER_TAMR_TACMR;             // use edge-count mode
+    TIMER1_TAILR_R = F_CPU/10e3;                    // set load value (1 Hz rate)
+    TIMER1_CTL_R |= TIMER_CTL_TAEVENT_POS;          // trigger on positive edge
+    TIMER1_TAILR_R      = 3;                       // upper bound during count up
+    TIMER1_TAMATCHR_R   = 1;                        // edges to count = TAILR - TAMATCH
+    TIMER1_TAPMR_R      &= ~TIMER_TAPMR_TAPSMRH_M;  // no prescaler on matching 15:8
+    TIMER1_TAPMR_R      &= ~TIMER_TAPMR_TAPSMR_M;   // no prescaler on matching 7:0
+//    TIMER1_CTL_R |= TIMER_CTL_TAEN;                 // turn-on timer
+//    TIMER1_IMR_R |= TIMER_IMR_TATOIM;               // turn-on interrupt
+//    NVIC_EN0_R |= 1 << (INT_TIMER1A-16);            // turn-on interrupt 86 (TIMER4A)
     { // setup PF2 as input for edge counting
-        GPIO_PORTC_DEN_R    &= ~BV(6);              // input
-        GPIO_PORTC_AFSEL_R  |= BV(6);               // use alternative function
-        GPIO_PORTC_PCTL_R   &= ~GPIO_PCTL_PC6_M;    // clear PCTL bits
-        GPIO_PORTC_PCTL_R   |= GPIO_PCTL_PC6_WT1CCP0; // set PC6 to WTIMER1 capture
-        GPIO_PORTC_DEN_R    |= BV(6);               // as digital input
+        GPIO_PORTF_DEN_R    &= ~BV(2);              // input
+        GPIO_PORTF_AFSEL_R  |= BV(2);               // use alternative function
+        GPIO_PORTF_PCTL_R   |= GPIO_PCTL_PF2_T1CCP0;// Timer 1 input 0
+        GPIO_PORTF_DEN_R    |= BV(2);               // as digital input
     }
 
     // 32b timer for periodic interrupts
@@ -298,18 +276,11 @@ int main(void)
     NVIC_EN0_R = 1 << (INT_COMP0-16);           // turn-on interrupt 41 (Analog Comparator 0)
 
     // gpio setup for PC7. uC.10-3/658
-    /*
-    GPIO_PORTC_AFSEL_R  &= BV(7);
+    GPIO_PORTC_AFSEL_R  &= BV(6);
     GPIO_PORTC_DIR_R    &= BV(6);
     GPIO_PORTC_DEN_R    &= BV(6);
     GPIO_PORTC_PUR_R    &= BV(6);
     GPIO_PORTC_PDR_R    &= BV(6);
-    */
-    // gpio setup for PC7 (C0+)
-    GPIO_PORTC_AFSEL_R |= BV(7);     // Enable alternate function on PC7
-    GPIO_PORTC_DEN_R   &= ~BV(7);    // Disable digital function on PC7
-    GPIO_PORTC_AMSEL_R |= BV(7);     // Enable analog function on PC7
-
 
 
     /*********************************************************/
@@ -326,16 +297,20 @@ int main(void)
 
     // part 1 : Capacitance meter
     // RC circuit, known R
+
+    uint32_t low = 99999999;
+    uint32_t high = 0;
     while(0) {
         putsUart0("part 1 C meter: ");
 
         resetTimer_w0();
         setPinValue(DEINT_TRIGGER, 1); // discharge C
+        waitMicrosecond(1e6);
 
         // wait for button press
-        while(getPinValue(SW1) != 0)
-            ;
-        putsUart0("charging ... ");
+//        while(getPinValue(SW1) != 0)
+//            ;
+        putsUart0(" ... ");
 
         startTimer_w0();
         armCmp0();
@@ -347,27 +322,80 @@ int main(void)
         setPinValue(DEINT_TRIGGER, 1); // discharge C
 
         putu64d(getTime_w0());
+
+
+        if(getTime_w0() < low){
+            low = getTime_w0();
+        }
+        if(getTime_w0() > high){
+            high = getTime_w0();
+        }
         putsUart0("\t");
+
+
+        putsUart0("Estimated mL: ");
+        putD(0.132*getTime_w0()-917);
+        putsUart0("\t");
+
+//        /*
+        putsUart0("low: ");
+        putu64d(low);
+        putsUart0(" ");
+        putsUart0("high: ");
+        putu64d(high);
+        putsUart0("\t");
+//        */
+
+
         double R = 1'023'300;
         putD(-(40e-6 * getTime_w0()) / (R * log(1.0 - (2.469 / 3.3))));
         putsUart0(NEWLINE);
 
-        waitMicrosecond(100e3);
+        waitMicrosecond(1e6);
     }
 
     // part 2 : Inductor meter
     // colpitts oscillator based
-    //startEdgeCounter_1();
     while(1) {
-        float freq = (float)F_CPU / (float)period;
+        putsUart0("part 2 freq meter: ");
 
-        putsUart0("Period (ticks): ")
-        putu32d(period);
-        putsUart0("\t Frequency: ");
-        putFloat(freq);
-        putsUart0(" Hz" NEWLINE);
-        waitMicrosecond(500e3); // wait 0.5 seconds b/c interrupt will handle period changes
+        resetTimer_w0();
+        // wait for button press
+//        while(getPinValue(SW1) != 0) {}
+        waitMicrosecond(1e6);
 
+        startTimer_w0();
+        enableNvicInterrupt(INT_GPIOA);
+        while(isTimerRunning_w0()) {}
+
+        putu64d(getTime_w0());
+        putsUart0("\t");
+        putsUart0("Frequency(kHz): ");
+        putD(40E6/getTime_w0());
+        putsUart0("\t");
+
+
+        {
+            if((getTime_w0() > 270e3) && (getTime_w0() < 285e3))
+                putsUart0("clamped" NEWLINE);
+            if((getTime_w0() > 290e3) && (getTime_w0() < 300e3))
+                putsUart0("chair" NEWLINE);
+            if((getTime_w0() > 360e3) && (getTime_w0() < 370e3))
+                putsUart0("bottle" NEWLINE);
+        }
+
+        if(getTime_w0() < 327e3){
+            int k = 0;
+            for(k = 0; k < 5; k++){
+                togglePinValue(LED_RED);
+                waitMicrosecond(150e3);
+            }
+            setPinValue(LED_RED, 0);
+        }
+
+        putsUart0(NEWLINE);
+
+        waitMicrosecond(1e6);
     }
 }
 
