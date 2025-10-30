@@ -97,8 +97,8 @@ void idle(void)
             int volatile a = 0;
         }
         yield();
-//        putsUart0(NEWLINE "idle i: ");
-//        printu32h(i++);
+        putsUart0(NEWLINE "idle i: ");
+        printu32h(i++);
 //        sleep(MS_TO_TICKS(1e3));
     }
 }
@@ -108,7 +108,9 @@ void flash4Hz(void)
     while(true)
     {
         setPinValue(GREEN_LED, !getPinValue(GREEN_LED));
-        sleep(125);
+//        sleep(125);
+        _delay_cycles(10e6);
+        yield();
     }
 }
 

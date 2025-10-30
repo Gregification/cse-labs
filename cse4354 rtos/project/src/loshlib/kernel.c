@@ -184,7 +184,12 @@ bool createThread(_fn fn, const char name[], uint8_t priority, uint32_t stackByt
                 return false;
             }
             tcb[i].sp = (uint8_t *)(tcb[i].sp) + stackBytes;
-            tcb[i].sp = (uint32_t *)(tcb[i].sp) + 1 + 8; // instr fetch decrements then fetchs, so needs 1B32 offset. + 8B32 for stack
+            putsUart0("tcb[ ");
+            printu32d(i);
+            putsUart0(" ].sp=");
+            printu32h(tcb[i].sp);
+            putsUart0(NEWLINE);
+            tcb[i].sp = (uint32_t *)(tcb[i].sp) - 1 - 8; // instr fetch decrements then fetchs, so needs 1B32 offset. + 8B32 for stack
 
             // find srd, malloc puts it in "accessMasks"
             {
@@ -304,7 +309,7 @@ __attribute__((naked)) void pendSvIsr(void)
 {
     /* reason for " ___attribute__((naked)) "
      *  between when pendSV is invoked and it actually running MSP is decremented by 2.
-     *  something about the alignment & how compiler attempts to fix it is causing that
+     *  something about the alignment
      */
 
     // save stacks values of current task

@@ -77,7 +77,7 @@ int main(void)
 
     // Add other processes
 //    ok &= createThread(lengthyFn, "LengthyFn", 6, 1024);
-//    ok &= createThread(flash4Hz, "Flash4Hz", 4, 512);
+    ok &= createThread(flash4Hz, "Flash4Hz", 4, 512);
 //    ok &= createThread(oneshot, "OneShot", 2, 1024);
 //    ok &= createThread(readKeys, "ReadKeys", 6, 512);
 //    ok &= createThread(debounce, "Debounce", 6, 1024);
