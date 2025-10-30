@@ -184,7 +184,7 @@ bool createThread(_fn fn, const char name[], uint8_t priority, uint32_t stackByt
                 return false;
             }
             tcb[i].sp = (uint8_t *)(tcb[i].sp) + stackBytes;
-            tcb[i].sp = (uint8_t *)(tcb[i].sp) + 4; // instr fetch decrements then fetchs, so needs 4B offset before hand.
+            tcb[i].sp = (uint32_t *)(tcb[i].sp) + 1 + 8; // instr fetch decrements then fetchs, so needs 1B32 offset. + 8B32 for stack
 
             // find srd, malloc puts it in "accessMasks"
             {
@@ -239,7 +239,7 @@ void setThreadPriority(_fn fn, uint8_t priority)
 // REQUIRED: modify this function to yield execution back to scheduler using pendsv
 void yield(void)
 {
-    SVIC_ASM_PendSV;
+    SVIC_PendSV;
     __asm(" BX LR");
 }
 
@@ -247,8 +247,8 @@ void yield(void)
 // execution yielded back to scheduler until time elapses using pendsv
 void sleep(uint32_t tick)
 {
-    tcb[taskCurrent].ticks = tick;
-    tcb[taskCurrent].state = STATE_DELAYED;
+    // R0: uint32_t: tick
+    SVIC_Sleep;
     yield();
 }
 
@@ -276,7 +276,7 @@ void unlock(int8_t mutex)
 // REQUIRED: in preemptive code, add code to request task switch
 void systickIsr(void)
 {
-    putsUart0("st" NEWLINE);
+//    putsUart0("st" NEWLINE);
     // decrement task timers
 //    {
 //        uint8_t i;
@@ -312,6 +312,7 @@ __attribute__((naked)) void pendSvIsr(void)
             " MRS R0, PSP               \n" // get PSP
             " STMDB R0!, {R4-R11, LR}   \n" // push to PSP
             " MSR PSP, R0               \n" // update PSP
+            " ISB                       \n"
         );
     tcb[taskCurrent].sp = getPSP();
 
@@ -325,6 +326,7 @@ __attribute__((naked)) void pendSvIsr(void)
             " MRS R0, PSP               \n" // get PSP
             " LDMIA R0!, {R4-R11, LR}   \n" // pop from PSP
             " MSR PSP, R0               \n" // update PSP
+            " ISB                       \n"
             " BX LR                     \n"
         );
 }
@@ -333,10 +335,36 @@ __attribute__((naked)) void pendSvIsr(void)
 // REQUIRED: in preemptive code, add code to handle synchronization primitives
 void svCallIsr(void)
 {
-    // TODO: recover SVC args :( where are the docs over this?? ARM?? where??
+    uint32_t const * psp = getPSP();
+    uint32_t const * former_pc = (uint32_t*)(psp[6]); // get PC of thread mode. /110
+    uint16_t instr = former_pc[-1] >> 16;// [-1] : offset PC++, >>16 : upper 16b for the SVC instruciton we care about
 
-    // trigger PendSV
-    NVIC_INT_CTRL_R |= NVIC_INT_CTRL_PEND_SV;  // /160
+    // ignore if not SVC instr
+    if((instr & 0xFF00) != 0xDF00){
+        putsUart0("SVC_IRQ>unknown calling instruciton: ");
+        printu32h(instr);
+        putsUart0(NEWLINE);
+        return;
+    }
+    uint8_t arg = instr & 0xFF;
+
+    switch(arg){
+        case SVIC_Sleep_i:
+            // R0 : uint32_t : ticks
+            tcb[taskCurrent].ticks = psp[0];
+            tcb[taskCurrent].state = STATE_DELAYED;
+            break;
+        case SVIC_PendSV_i:
+            // trigger PendSV
+            NVIC_INT_CTRL_R |= NVIC_INT_CTRL_PEND_SV;  // /160
+            break;
+        default:
+            putsUart0("SVC_IRQ>unknown SVC arg: ");
+            printu32h(arg);
+            putsUart0(NEWLINE);
+            break;
+    }
+
 }
 
 

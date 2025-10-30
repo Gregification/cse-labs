@@ -47,7 +47,10 @@ typedef void * PID;
 
 PID pid; // current processes ID
 
-#define SVIC_ASM_PendSV __asm(" SVC #0x1"); // trigger pendSV
+#define SVIC_PendSV_i 0x1
+#define SVIC_PendSV __asm(" SVC #0x1");
+#define SVIC_Sleep_i 0x2
+#define SVIC_Sleep __asm(" SVC #0x2");
 
 //-----------------------------------------------------------------------------
 // Subroutines
