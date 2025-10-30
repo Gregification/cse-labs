@@ -11,6 +11,13 @@ src/loshlib/kernel.obj: C:/ti/ccs1281/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/i
 src/loshlib/kernel.obj: C:/ti/ccs1281/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include/machine/_types.h
 src/loshlib/kernel.obj: C:/ti/ccs1281/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include/machine/_stdint.h
 src/loshlib/kernel.obj: C:/ti/ccs1281/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include/sys/_stdint.h
+src/loshlib/kernel.obj: D:/repos/cse-labs/cse4354\ rtos/project/src/tm4c123gh6pm.h
+src/loshlib/kernel.obj: ../src/loshlib/mm.h
+src/loshlib/kernel.obj: ../src/loshlib/kernel.h
+src/loshlib/kernel.obj: C:/ti/ccs1281/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include/stdbool.h
+src/loshlib/kernel.obj: D:/repos/cse-labs/cse4354\ rtos/project/src/common.h
+src/loshlib/kernel.obj: D:/repos/cse-labs/cse4354\ rtos/project/src/loshlib/gpio.h
+src/loshlib/kernel.obj: D:/repos/cse-labs/cse4354\ rtos/project/src/loshlib/uart0.h
 
 ../src/loshlib/kernel.c:
 
@@ -33,4 +40,18 @@ C:/ti/ccs1281/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include/machine/_types.h:
 C:/ti/ccs1281/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include/machine/_stdint.h:
 
 C:/ti/ccs1281/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include/sys/_stdint.h:
+
+D:/repos/cse-labs/cse4354\ rtos/project/src/tm4c123gh6pm.h:
+
+../src/loshlib/mm.h:
+
+../src/loshlib/kernel.h:
+
+C:/ti/ccs1281/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include/stdbool.h:
+
+D:/repos/cse-labs/cse4354\ rtos/project/src/common.h:
+
+D:/repos/cse-labs/cse4354\ rtos/project/src/loshlib/gpio.h:
+
+D:/repos/cse-labs/cse4354\ rtos/project/src/loshlib/uart0.h:
 

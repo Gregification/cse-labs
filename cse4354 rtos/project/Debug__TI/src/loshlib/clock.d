@@ -12,6 +12,7 @@ src/loshlib/clock.obj: C:/ti/ccs1281/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/in
 src/loshlib/clock.obj: C:/ti/ccs1281/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include/machine/_stdint.h
 src/loshlib/clock.obj: C:/ti/ccs1281/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include/sys/_stdint.h
 src/loshlib/clock.obj: ../src/loshlib/clock.h
+src/loshlib/clock.obj: D:/repos/cse-labs/cse4354\ rtos/project/src/tm4c123gh6pm.h
 
 ../src/loshlib/clock.c:
 
@@ -36,4 +37,6 @@ C:/ti/ccs1281/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include/machine/_stdint.h
 C:/ti/ccs1281/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include/sys/_stdint.h:
 
 ../src/loshlib/clock.h:
+
+D:/repos/cse-labs/cse4354\ rtos/project/src/tm4c123gh6pm.h:
 
