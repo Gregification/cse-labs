@@ -192,17 +192,9 @@ bool createThread(_fn fn, const char name[], uint8_t priority, uint32_t stackByt
 
             { // make fake former-stack for the new task to switch too /110
                 uint32_t * psp = (uint32_t *)(tcb[i].sp);
-                // -1 for stack offset
-                // -4 for R0-R3
-                // -1 for R12
-                // -1 for LR
-                // -1 for PC
-                // -1 for xPSR
-                // -8 for PendSV
-                //      -7 for R4-R11
-                //      -1 for LR
+
                 // hardware controlled
-                (psp--)[0] = BV(28) | BV(24);//xPsr
+                (psp--)[0] = BV(24);        //xPsr
                 (psp--)[0] = (uint32_t)fn;  //PC
                 (psp--)[0] = 0xBeeF'0200;   //LR
                 (psp--)[0] = 0xBeeF'0100; //
@@ -212,7 +204,7 @@ bool createThread(_fn fn, const char name[], uint8_t priority, uint32_t stackByt
                 (psp--)[0] = 0xBeeF'0012; //
 
                 // PendSV
-                (psp--)[0] = 0xFFFF'FFFD; //LR/R14
+                (psp--)[0] = 0xFFFF'FFFD;   //LR/R14
                 (psp--)[0] = 0xBeeF'0011;   //R11
                 (psp--)[0] = 0xBeeF'0010;   //R10
                 (psp--)[0] = 0xBeeF'0009;   //R9
