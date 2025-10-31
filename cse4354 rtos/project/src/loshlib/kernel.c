@@ -279,7 +279,8 @@ void sleep(uint32_t tick)
 {
     // R0: uint32_t: tick
     SVIC_Sleep;
-    yield();
+    __asm(" BX LR"); // double check that its only these 2 asm lines in the funciton, no extra push/pops. declare the sleep func naked otherwise
+//    yield();  // scoot this logic in PendSV
 }
 
 // REQUIRED: modify this function to wait a semaphore using pendsv
