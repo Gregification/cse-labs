@@ -116,7 +116,7 @@ void initRtos(void)
     }
 
     // init systick
-    NVIC_ST_RELOAD_R    = ((int)(40e6/TICK_RATE_HZ - 1) << NVIC_ST_RELOAD_S) & NVIC_ST_RELOAD_M; // 1mS
+    NVIC_ST_RELOAD_R    = ((int)(4e6/TICK_RATE_HZ - 1) << NVIC_ST_RELOAD_S) & NVIC_ST_RELOAD_M; // 1mS
     NVIC_ST_CURRENT_R   = 0; // isr triggers on 1->0, 0 will cause it to wait 1 full cycle
     NVIC_ST_CTRL_R     &= ~NVIC_ST_CTRL_CLK_SRC; // use POSIC == 16e6 / 4 = 4e6
     NVIC_ST_CTRL_R     |= NVIC_ST_CTRL_INTEN; // enable interrupt generation when counter is 0
@@ -144,6 +144,10 @@ void _startRtos_force_new_stack(_fn);
 // fn set TMPL bit, and PC <= fn
 void startRtos(void)
 {
+    // make systick priority higher than pendSV. both default at 0. 0->...7 = high->low priority
+    NVIC_SYS_PRI3_R &= ~NVIC_SYS_PRI3_PENDSV_M;
+    NVIC_SYS_PRI3_R |= (1 << NVIC_SYS_PRI3_PENDSV_S);
+
     taskCurrent = rtosScheduler();
     setPSP(tcb[taskCurrent].sp);
     applySramAccessMask(tcb[taskCurrent].srd);
@@ -275,12 +279,11 @@ void yield(void)
 
 // REQUIRED: modify this function to support 1ms system timer
 // execution yielded back to scheduler until time elapses using pendsv
-void sleep(uint32_t tick)
+void __attribute__((naked)) sleep(uint32_t tick)
 {
     // R0: uint32_t: tick
     SVIC_Sleep;
     __asm(" BX LR"); // double check that its only these 2 asm lines in the funciton, no extra push/pops. declare the sleep func naked otherwise
-//    yield();  // scoot this logic in PendSV
 }
 
 // REQUIRED: modify this function to wait a semaphore using pendsv
@@ -307,21 +310,20 @@ void unlock(int8_t mutex)
 // REQUIRED: in preemptive code, add code to request task switch
 void systickIsr(void)
 {
-//    putsUart0("st" NEWLINE);
     // decrement task timers
-//    {
-//        uint8_t i;
-//        for(i = 0; i < MAX_TASKS; i++){
-//            if(tcb[i].pid != 0){
-//                if(tcb[i].state == STATE_DELAYED){
-//                    if(tcb[i].ticks == 0) {
-//                        tcb[i].state = STATE_READY;
-//                    } else
-//                        tcb[i].ticks--;
-//                }
-//            }
-//        }
-//    }
+    {
+        uint8_t i;
+        for(i = 0; i < MAX_TASKS; i++){
+            if(tcb[i].pid != 0){
+                if(tcb[i].state == STATE_DELAYED){
+                    if(tcb[i].ticks == 0) {
+                        tcb[i].state = STATE_READY;
+                    } else
+                        tcb[i].ticks--;
+                }
+            }
+        }
+    }
 
 //    if(preemption)
 //        SVIC_ASM_PendSV;
@@ -384,7 +386,6 @@ void svCallIsr(void)
             // R0 : uint32_t : ticks
             tcb[taskCurrent].ticks = psp[0];
             tcb[taskCurrent].state = STATE_DELAYED;
-            break;
         case SVIC_PendSV_i:
             // trigger PendSV
             NVIC_INT_CTRL_R |= NVIC_INT_CTRL_PEND_SV;  // /160
