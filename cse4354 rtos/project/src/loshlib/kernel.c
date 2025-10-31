@@ -197,17 +197,17 @@ bool createThread(_fn fn, const char name[], uint8_t priority, uint32_t stackByt
             { // make fake former-stack for the new task to switch too /110
                 uint32_t * psp = (uint32_t *)(tcb[i].sp);
 
-                // hardware controlled
+                // fake stack for hardware/compiler
                 (psp--)[0] = BV(24);        //xPsr
                 (psp--)[0] = (uint32_t)fn;  //PC
                 (psp--)[0] = 0xBeeF'0200;   //LR
-                (psp--)[0] = 0xBeeF'0100; //
-                (psp--)[0] = 0xBeeF'0015; //
-                (psp--)[0] = 0xBeeF'0014; //
-                (psp--)[0] = 0xBeeF'0013; //
-                (psp--)[0] = 0xBeeF'0012; //
+                (psp--)[0] = 0xBeeF'0100;   //
+                (psp--)[0] = 0xBeeF'0015;   //
+                (psp--)[0] = 0xBeeF'0014;   //
+                (psp--)[0] = 0xBeeF'0013;   //
+                (psp--)[0] = 0xBeeF'0012;   //
 
-                // PendSV
+                // fake stack for PendSV
                 (psp--)[0] = 0xFFFF'FFFD;   //LR/R14
                 (psp--)[0] = 0xBeeF'0011;   //R11
                 (psp--)[0] = 0xBeeF'0010;   //R10
@@ -287,22 +287,24 @@ void __attribute__((naked)) sleep(uint32_t tick)
 }
 
 // REQUIRED: modify this function to wait a semaphore using pendsv
-void wait(int8_t semaphore)
+void __attribute__((naked)) wait(int8_t semaphore)
 {
 }
 
 // REQUIRED: modify this function to signal a semaphore is available using pendsv
-void post(int8_t semaphore)
+void __attribute__((naked)) post(int8_t semaphore)
 {
 }
 
 // REQUIRED: modify this function to lock a mutex using pendsv
-void lock(int8_t mutex)
+void __attribute__((naked)) lock(int8_t mutex)
 {
+    SVIC_Lock;
+    __asm(" BX LR");
 }
 
 // REQUIRED: modify this function to unlock a mutex using pendsv
-void unlock(int8_t mutex)
+void __attribute__((naked)) unlock(int8_t mutex)
 {
 }
 
@@ -390,6 +392,23 @@ void svCallIsr(void)
             // trigger PendSV
             NVIC_INT_CTRL_R |= NVIC_INT_CTRL_PEND_SV;  // /160
             break;
+        case SVIC_Lock_i:{
+                uint8_t mi = ((uint8_t*)psp)[0];
+                if(mutexes[mi].lock) {
+                    if(mutexes[mi].lockedBy == taskCurrent)
+                        break;
+//                    MAX_MUTEX_QUEUE_SIZE
+                    if(mutexes[mi].queueSize >= MAX_MUTEX_QUEUE_SIZE){
+                        while(1) putsUart0("ERROR: SVC_IRQ>Lock>too many locks on mutex" NEWLINE);
+                    }
+
+                    mutexes[mi].processQueue[mutexes[mi].queueSize++] = taskCurrent;
+
+                } else {
+
+                }
+                break;
+            }
         default:
             putsUart0("SVC_IRQ>unknown SVC arg: ");
             printu32h(arg);
