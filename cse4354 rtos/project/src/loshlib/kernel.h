@@ -53,6 +53,8 @@ PID pid; // current processes ID
 #define SVIC_Sleep              __asm(" SVC #0x2");
 #define SVIC_Lock_i             0x03
 #define SVIC_Lock               __asm(" SVC #0x3");
+#define SVIC_UnLock_i           0x04
+#define SVIC_UnLock             __asm(" SVC #0x4");
 
 //-----------------------------------------------------------------------------
 // Subroutines

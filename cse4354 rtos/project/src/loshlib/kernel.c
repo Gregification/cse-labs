@@ -192,12 +192,19 @@ bool createThread(_fn fn, const char name[], uint8_t priority, uint32_t stackByt
             printu32d(i);
             putsUart0(" ].sp=");
             printu32h(tcb[i].sp);
+            putsUart0("\t\t");
+            putsUart0(name);
             putsUart0(NEWLINE);
 
             { // make fake former-stack for the new task to switch too /110
                 uint32_t * psp = (uint32_t *)(tcb[i].sp);
 
                 // fake stack for hardware/compiler
+                (psp--)[0] = 0xBeeF'0700;   //
+                (psp--)[0] = 0xBeeF'0600;   //
+                (psp--)[0] = 0xBeeF'0500;   //
+                (psp--)[0] = 0xBeeF'0400;   //
+                (psp--)[0] = 0xBeeF'0300;   //
                 (psp--)[0] = BV(24);        //xPsr
                 (psp--)[0] = (uint32_t)fn;  //PC
                 (psp--)[0] = 0xBeeF'0200;   //LR
@@ -271,7 +278,7 @@ void setThreadPriority(_fn fn, uint8_t priority)
 }
 
 // REQUIRED: modify this function to yield execution back to scheduler using pendsv
-void yield(void)
+void __attribute__((naked)) yield(void)
 {
     SVIC_PendSV;
     __asm(" BX LR");
@@ -299,6 +306,7 @@ void __attribute__((naked)) post(int8_t semaphore)
 // REQUIRED: modify this function to lock a mutex using pendsv
 void __attribute__((naked)) lock(int8_t mutex)
 {
+    // R0: uint8_t: mutex #
     SVIC_Lock;
     __asm(" BX LR");
 }
@@ -306,6 +314,9 @@ void __attribute__((naked)) lock(int8_t mutex)
 // REQUIRED: modify this function to unlock a mutex using pendsv
 void __attribute__((naked)) unlock(int8_t mutex)
 {
+    // R0: uint8_t: mutex #
+    SVIC_Lock;
+    __asm(" BX LR");
 }
 
 // REQUIRED: modify this function to add support for the system timer
@@ -357,6 +368,9 @@ __attribute__((naked)) void pendSvIsr(void)
     // restore stack values of new task
     setPSP(tcb[taskCurrent].sp);
     applySramAccessMask(tcb[taskCurrent].srd);
+//    putsUart0("pendSV new sram mask " NEWLINE);
+//    dumpSramAccessMaskTable(tcb[taskCurrent].srd);
+//    putsUart0(NEWLINE);
     __asm volatile(
             " MRS R0, PSP               \n" // get PSP
             " LDMIA R0!, {R4-R11, LR}   \n" // pop from PSP
@@ -373,6 +387,7 @@ void svCallIsr(void)
     uint32_t const * psp = getPSP();
     uint32_t const * former_pc = (uint32_t*)(psp[6]); // get PC of thread mode. /110
     uint16_t instr = former_pc[-1] >> 16;// [-1] : offset PC++, >>16 : upper 16b for the SVC instruciton we care about
+    uint8_t arg = instr & 0xFF;
 
     // ignore if not SVC instr
     if((instr & 0xFF00) != 0xDF00){
@@ -381,32 +396,83 @@ void svCallIsr(void)
         putsUart0(NEWLINE);
         return;
     }
-    uint8_t arg = instr & 0xFF;
 
     switch(arg){
         case SVIC_Sleep_i:
             // R0 : uint32_t : ticks
             tcb[taskCurrent].ticks = psp[0];
             tcb[taskCurrent].state = STATE_DELAYED;
+
+            NVIC_INT_CTRL_R |= NVIC_INT_CTRL_PEND_SV;  // trigger PendSV /160
+            break;
         case SVIC_PendSV_i:
-            // trigger PendSV
-            NVIC_INT_CTRL_R |= NVIC_INT_CTRL_PEND_SV;  // /160
+            NVIC_INT_CTRL_R |= NVIC_INT_CTRL_PEND_SV;  // trigger PendSV /160
             break;
         case SVIC_Lock_i:{
+                // R0: uint8_t: mutex #
                 uint8_t mi = ((uint8_t*)psp)[0];
-                if(mutexes[mi].lock) {
-                    if(mutexes[mi].lockedBy == taskCurrent)
-                        break;
-//                    MAX_MUTEX_QUEUE_SIZE
-                    if(mutexes[mi].queueSize >= MAX_MUTEX_QUEUE_SIZE){
-                        while(1) putsUart0("ERROR: SVC_IRQ>Lock>too many locks on mutex" NEWLINE);
+                putsUart0(tcb[taskCurrent].name);
+                putsUart0(" locks: ");
+                printu32d(mi);
+                putsUart0(NEWLINE);
+
+                if(mi > MAX_MUTEXES)
+                    while(1){
+                        putsUart0(NEWLINE "ERROR: SVC_IRQ>Lock>unknown mutex #");
+                        printu32d(mi);
                     }
 
-                    mutexes[mi].processQueue[mutexes[mi].queueSize++] = taskCurrent;
+                if(mutexes[mi].lockedBy == taskCurrent)
+                    break;
 
+                if(mutexes[mi].queueSize >= MAX_MUTEX_QUEUE_SIZE)
+                    while(1){
+                        putsUart0(NEWLINE "ERROR: SVC_IRQ>Lock>too many locks on mutex #");
+                        printu32d(mi);
+                    }
+
+                if(mutexes[mi].lock){ // is lock locked?
+                    // add current task to queue
+                    mutexes[mi].processQueue[mutexes[mi].queueSize] = taskCurrent;
+                    mutexes[mi].queueSize++;
+                    tcb[taskCurrent].state = STATE_BLOCKED_MUTEX;
+
+                    // let someone else run
+                    NVIC_INT_CTRL_R |= NVIC_INT_CTRL_PEND_SV;  // trigger PendSV /160
                 } else {
-
+                    // claim lock
+                    mutexes[mi].lock = true;
+                    mutexes[mi].lockedBy = taskCurrent;
                 }
+
+                break;
+            }
+        case SVIC_UnLock_i:{
+                // R0: uint8_t: mutex #
+                uint8_t mi = ((uint8_t*)psp)[0];
+                putsUart0(tcb[taskCurrent].name);
+                putsUart0(" unlocks: ");
+                printu32d(mi);
+                putsUart0(NEWLINE);
+
+                if(mutexes[mi].lockedBy != taskCurrent)
+                    while(1) putsUart0("ERROR: SVC_IRQ>UnLock>unlocking unowned mutex" NEWLINE);
+
+                if(!mutexes[mi].lock) // mutex isnt locked
+                    break;
+
+                // release mutex ownership
+                mutexes[mi].lock = false;
+
+                // shift ownership to next in line
+                if(mutexes[mi].queueSize){ // if the line even exists
+                    mutexes[mi].lockedBy = mutexes[mi].processQueue[mutexes[mi].queueSize];
+                    tcb[mutexes[mi].queueSize].state = STATE_READY;
+
+                    mutexes[mi].queueSize--;
+                    NVIC_INT_CTRL_R |= NVIC_INT_CTRL_PEND_SV;  // trigger PendSV /160
+                }
+
                 break;
             }
         default:
@@ -576,7 +642,7 @@ void _MPUFaultHandlerISR(){
 //        dumpFaultStatReg(fault_stats);
     }
 
-    while(1);
+     while(1);
 }
 
 void _BusFaultHandlerISR(){

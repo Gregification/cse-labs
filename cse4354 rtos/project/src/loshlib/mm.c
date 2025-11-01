@@ -84,10 +84,10 @@ void * mallocHeap(uint32_t size_in_bytes)
                     size_in_bytes
                 );
 
-//            putsUart0("malloc resulting mask (");
-//            printu32d(am_i);
-//            putsUart0("):" NEWLINE " enbl: ");
-//            dumpSramAccessMaskTable(accessMasks[am_i].mask.raw);
+            putsUart0("malloc resulting mask (");
+            printu32d(am_i);
+            putsUart0("):" NEWLINE " enbl: ");
+            dumpSramAccessMaskTable(accessMasks[am_i].mask.raw);
             applySramAccessMask(accessMasks[am_i].mask.raw);
 
             return (void *)(heap + (baseR * MPU_REGION_SIZE_B));
