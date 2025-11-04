@@ -12,7 +12,7 @@
 
 
 float tcV2C_K(int32_t mV);
-int32_t tcC2V_K(float degC);
+float tcC2V_K(float degC);
 
 #define TCC2V_K_LEN 1643
 /* thermocouple type K, degree celsius to voltage relation
