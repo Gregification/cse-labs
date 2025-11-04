@@ -371,16 +371,16 @@ int main(void)
             waitMicrosecond(CONVERSION_TIME_uS);
 
             float adc = ADS_readConversionResult();  // raw ADC value
-            adc = adc * 7.8125;             // ADC to uV.  lsb. ADS111x.9.3.3/17
+            adc = adc * 7.8512;             // ADC to uV.  lsb. ADS111x.9.3.3/17
             tcmV = adc;
 
-            putsUart0("TCmV: ");
-            puti32d(tcmV);
-            putsUart0("\t");
+//            putsUart0("TCmV: ");
+//            puti32d(tcmV);
+//            putsUart0("\t");
         }
 
         putsUart0("auV:");
-        putD(tcC2V_K(TMP36degC));
+        putD(tcmV);
         float actualC = tcV2C_K( tcmV + tcC2V_K(TMP36degC));
         putsUart0(" aC:");
         putD(actualC);
