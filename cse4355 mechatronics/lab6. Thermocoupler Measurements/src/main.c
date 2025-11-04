@@ -334,14 +334,15 @@ int main(void)
         putsUart0(NEWLINE);
     }
 
+    while(0){
+        puti32d(tcV2C_K(-5891));
+        putsUart0(NEWLINE);
+    }
+
     while(1){
         const uint32_t CONVERSION_TIME_uS = 1e6 / 7 ; // is 1/8 S but 1/7 for margin
 
-
-//        putD(tcV2C_K(-200));
-//        putD(-2);
-
-        float degC; // degC from TMP36
+        float TMP36degC; // degC from TMP36
         {
             // target cold junction device analog output (TMPxx)
             waitMicrosecond(CONVERSION_TIME_uS);
@@ -350,13 +351,13 @@ int main(void)
             writeI2c0Registers(ADS_ADDR, PTRREG_CONFIG, (uint8_t*)&config_cj, 2);
             waitMicrosecond(CONVERSION_TIME_uS);
 
-            degC = ADS_readConversionResult();  // raw ADC value
-            degC *= 31.25 / 1e3;             // ADC to mV.  lsb. ADS111x.9.3.3/17
-            degC = (degC - 750.0) / 10.0 + 25.0;// mV to C. TMP:4/8
+            TMP36degC = ADS_readConversionResult();  // raw ADC value
+            TMP36degC *= 31.25 / 1e3;             // ADC to mV.  lsb. ADS111x.9.3.3/17
+            TMP36degC = (TMP36degC - 750.0) / 10.0 + 25.0;// mV to C. TMP:4/8
 
             putsUart0("TMP36 deg-C : ");
-            putD(degC);
-            putsUart0(" \t");
+            putD(TMP36degC);
+            putsUart0("\t");
         }
 
 
@@ -370,16 +371,18 @@ int main(void)
             waitMicrosecond(CONVERSION_TIME_uS);
 
             float adc = ADS_readConversionResult();  // raw ADC value
-            adc = adc * 7.8125;             // ADC to uV.  lsb. ADS111x.9.3.3/17
+            adc = adc * 7.8125*10;             // ADC to uV.  lsb. ADS111x.9.3.3/17
             tcuV = adc;
 
-            putsUart0("TC uV : ");
+            putsUart0("TCuV: ");
             putu32d(tcuV);
-            putsUart0("\t : C:");
-            putu32d(tcV2C_K(adc));
-            putsUart0(" \t");
+            putsUart0("\t");
         }
 
+
+        float actualC = tcV2C_K(tcC2V_K(TMP36degC) + tcuV);
+        putsUart0("aC:");
+        putD(actualC);
         putsUart0(NEWLINE);
     }
 
