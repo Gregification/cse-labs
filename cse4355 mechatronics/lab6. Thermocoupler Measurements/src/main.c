@@ -335,7 +335,7 @@ int main(void)
     }
 
     while(0){
-        puti32d(tcC2V_K(781));
+        puti32d(tcV2C_K(-3382));
         putsUart0(NEWLINE);
     }
 
