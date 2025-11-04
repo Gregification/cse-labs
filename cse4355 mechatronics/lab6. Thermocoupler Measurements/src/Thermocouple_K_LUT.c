@@ -8,17 +8,18 @@
 #include "Thermocouple_K_LUT.h"
 
 float tcV2C_K(int32_t mV){
+    uint32_t microV = mV * 1000;
     // we'll-get-there-eventually search
     uint16_t i;
     for(i = 0; i < TCC2V_K_LEN; i++)
-        if(TCC2V_K[i] >= mV)
+        if(TCC2V_K[i] >= microV)
             break;
 
     uint16_t nxt;
     if(TCC2V_K[i] == mV || i == TCC2V_K_LEN) nxt = i;
     else    nxt = i + 1;
 
-    return ((float)i - 270000) + ((float)mV - (float)TCC2V_K[i]) / ((float)TCC2V_K[nxt] - (float)TCC2V_K[i]);
+    return ((float)i - 270000) + ((float)microV - (float)TCC2V_K[i]) / ((float)TCC2V_K[nxt] - (float)TCC2V_K[i]);
 }
 
 int32_t tcC2V_K(float degC){
