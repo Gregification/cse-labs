@@ -8,31 +8,46 @@
 #include "Thermocouple_K_LUT.h"
 
 float tcV2C_K(int32_t uV){
-    // we'll-get-there-eventually search
-    uint32_t df = -1,dn;
-    int32_t i = 0;
-    for(int32_t j = 0; j < TCC2V_K_LEN; j++){
-        if(uV < TCC2V_K[j])
-            dn = TCC2V_K[j] - uV;
-        else
-            dn = uV - TCC2V_K[j];
-
-        if(dn < df){
-            i = j;
-            df = dn;
-        }
+    int32_t i_upper = 0;
+    while (i_upper < TCC2V_K_LEN && TCC2V_K[i_upper] <= uV) {
+        i_upper++;
     }
 
-    uint16_t nxt;
-    if(TCC2V_K[i] > uV) nxt = i - 1;
-    else                nxt = i + 1;
-    if(i == TCC2V_K_LEN)
-        nxt = i;
+    if (i_upper == 0) {
+        // Return the temperature for the lowest index
+        return 0.0f - 270.0f;
+    }
 
-    float ret = (float) i - 270;
-    if(uV > 0)
-        ret -= 10;
-    return ret + ((float)uV - (float)TCC2V_K[i]) / ((float)TCC2V_K[nxt] - (float)TCC2V_K[i]);
+    if (i_upper == TCC2V_K_LEN) {
+        // Return the temperature for the highest index
+        return (float)(TCC2V_K_LEN - 1) - 270.0f;
+    }
+
+    int32_t i_lower = i_upper - 1;
+
+    float V_lower = (float)TCC2V_K[i_lower];
+    float V_upper = (float)TCC2V_K[i_upper];
+    float V_input = (float)uV;
+
+    float Temp_lower = (float)i_lower - 270.0f;
+    float Temp_upper = (float)i_upper - 270.0f; // This is just Temp_lower + 1.0f
+
+
+    // Get the denominator (range of voltages)
+    float V_range = V_upper - V_lower;
+
+    // Avoid division by zero if table entries are identical
+    if (V_range <= 0.0f) {
+        return Temp_lower;
+    }
+
+    // Get the fractional distance of our input voltage within that range
+    float fraction = (V_input - V_lower) / V_range;
+
+    // Apply that same fraction to the temperature range
+    float Temp_range = Temp_upper - Temp_lower;
+
+    return Temp_lower + (fraction * Temp_range);
 }
 
 float tcC2V_K(float degC){
