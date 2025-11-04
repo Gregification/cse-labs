@@ -334,8 +334,8 @@ int main(void)
         putsUart0(NEWLINE);
     }
 
-    while(1){
-        puti32d(tcV2C_K(100));
+    while(0){
+        puti32d(tcC2V_K(781));
         putsUart0(NEWLINE);
     }
 
@@ -381,7 +381,7 @@ int main(void)
 
         putsUart0("auV:");
         putD(tcC2V_K(TMP36degC));
-        float actualC = tcV2C_K( tcmV*1e3 - tcC2V_K(TMP36degC));
+        float actualC = tcV2C_K( tcmV + tcC2V_K(TMP36degC));
         putsUart0(" aC:");
         putD(actualC);
         putsUart0(NEWLINE);

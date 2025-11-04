@@ -41,7 +41,8 @@ float tcC2V_K(float degC){
     if(degC > 0){
         idx += 10;
         nxt = 1;
-    }
+    } else
+        idx -= 10;
     if(idx >= TCC2V_K_LEN)
         idx = TCC2V_K_LEN-1;
 
