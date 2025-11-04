@@ -334,8 +334,8 @@ int main(void)
         putsUart0(NEWLINE);
     }
 
-    while(0){
-        puti32d(tcV2C_K(-5891));
+    while(1){
+        puti32d(tcV2C_K(590));
         putsUart0(NEWLINE);
     }
 
@@ -361,7 +361,7 @@ int main(void)
         }
 
 
-        int32_t tcuV;
+        int32_t tcmV;
         {
             // target cold junction device analog output (TMPxx)
             waitMicrosecond(CONVERSION_TIME_uS);
@@ -371,16 +371,16 @@ int main(void)
             waitMicrosecond(CONVERSION_TIME_uS);
 
             float adc = ADS_readConversionResult();  // raw ADC value
-            adc = adc * 7.8125*10;             // ADC to uV.  lsb. ADS111x.9.3.3/17
-            tcuV = adc;
+            adc = adc * 7.8125;             // ADC to uV.  lsb. ADS111x.9.3.3/17
+            tcmV = adc;
 
-            putsUart0("TCuV: ");
-            putu32d(tcuV);
+            putsUart0("TCmV: ");
+            putu32d(tcmV);
             putsUart0("\t");
         }
 
 
-        float actualC = tcV2C_K(tcC2V_K(TMP36degC) + tcuV);
+        float actualC = tcV2C_K( tcmV - tcC2V_K(TMP36degC));
         putsUart0("aC:");
         putD(actualC);
         putsUart0(NEWLINE);

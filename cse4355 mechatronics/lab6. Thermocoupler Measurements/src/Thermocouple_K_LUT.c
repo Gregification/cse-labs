@@ -9,23 +9,25 @@
 
 float tcV2C_K(int32_t uV){
     // we'll-get-there-eventually search
-    uint16_t i;
-    if(uV > 0){
-        for(i = 0; i < TCC2V_K_LEN; i++)
-            if(TCC2V_K[i] >= uV)
-                break;
-    } else {
-        for(i = 270; i >= 0; i--)
-            if(TCC2V_K[i] >= uV)
-                break;
+    uint32_t df = -1,dn;
+    int32_t i = 0;
+    for(int32_t j = 0; j < TCC2V_K_LEN-1; j++){
+        if(TCC2V_K[j] < TCC2V_K[j+1])
+            dn = TCC2V_K[j+1] - TCC2V_K[j];
+        else
+            dn = TCC2V_K[j] - TCC2V_K[j+1];
+
+        if(dn < df){
+            i = j;
+            df = dn;
+        }
     }
 
+//    uint16_t nxt;
+//    if(TCC2V_K[i] == uV || i == TCC2V_K_LEN) nxt = i;
+//    else    nxt = i + 1;
 
-    uint16_t nxt;
-    if(TCC2V_K[i] == uV || i == TCC2V_K_LEN) nxt = i;
-    else    nxt = i + 1;
-
-    return ((float)i - 270) + ((float)uV - (float)TCC2V_K[i]) / ((float)TCC2V_K[nxt] - (float)TCC2V_K[i]);
+    return ((float)i - 270);// + ((float)uV - (float)TCC2V_K[i]) / ((float)TCC2V_K[nxt] - (float)TCC2V_K[i]);
 }
 
 int32_t tcC2V_K(float degC){
@@ -38,7 +40,7 @@ int32_t tcC2V_K(float degC){
     else nxt = idx + 1;
 
     // linearly interpolate
-    return TCC2V_K[idx] + (degC - (float)((int32_t)degC)) * (TCC2V_K[nxt] - TCC2V_K[idx]);
+    return TCC2V_K[idx];// + (degC - (float)((int32_t)degC)) * (TCC2V_K[nxt] - TCC2V_K[idx]);
 }
 
 int32_t const TCC2V_K[] = {
