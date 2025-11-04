@@ -7,24 +7,31 @@
 
 #include "Thermocouple_K_LUT.h"
 
-int16_t tcV2C_K(int32_t mV){
+float tcV2C_K(int32_t mV){
     // we'll-get-there-eventually search
     uint16_t i;
     for(i = 0; i < TCC2V_K_LEN; i++)
         if(TCC2V_K[i] >= mV)
             break;
 
-    return i - 270;
+    uint16_t nxt;
+    if(TCC2V_K[i] == mV || i == TCC2V_K_LEN) nxt = i;
+    else    nxt = i + 1;
+
+    return ((float)i - 270) + ((float)mV - (float)TCC2V_K[i]) / ((float)TCC2V_K[nxt] - (float)TCC2V_K[i]);
 }
 
-int32_t tcC2V_K(int16_t degC){
-    degC += 270;
-    if(degC < 0)
-        degC = 0;
-    if(degC >= TCC2V_K_LEN)
-        degC = TCC2V_K_LEN;
+int32_t tcC2V_K(float degC){
+    uint16_t idx = degC + 270;
+    if(idx >= TCC2V_K_LEN)
+        idx = TCC2V_K_LEN-1;
 
-    return TCC2V_K[degC];
+    uint16_t nxt;
+    if(degC == idx || idx == TCC2V_K_LEN) nxt = idx;
+    else nxt = idx + 1;
+
+    // linearly interpolate
+    return TCC2V_K[idx] + (degC - (float)((int32_t)degC)) * (TCC2V_K[nxt] - TCC2V_K[idx]);
 }
 
 int32_t const TCC2V_K[] = {

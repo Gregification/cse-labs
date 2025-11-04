@@ -325,8 +325,12 @@ int main(void)
     while(1){
         const uint32_t CONVERSION_TIME_uS = F_CPU / 7; // is 1/8 S but 1/7 for margin
 
-        // get degC from TMP36
-        float degC;
+
+        putD(tcV2C_K(-200));
+//        putD(-2);
+
+        float degC; // degC from TMP36
+        int32_t cj_mV;
         {
             // target cold junction device analog output (TMPxx)
             writeI2c0Registers(ADS_ADDR, PTRREG_CONFIG, (uint8_t*)&config_cj, 2);
@@ -334,8 +338,11 @@ int main(void)
 
             degC = ADS_readConversionResult();  // raw ADC value
             degC *= 31.25e-6 / 1e3;             // ADC to mV.  lsb. ADS111x.9.3.3/17
-            degC = (degC - 750.0) / 10.0 + 25.0;   // mV to C. TMP:4/8
+            degC = (degC - 750.0) / 10.0 + 25.0;// mV to C. TMP:4/8
+
+            cj_mV = tcC2V_K(degC);
         }
+
 
 
     }

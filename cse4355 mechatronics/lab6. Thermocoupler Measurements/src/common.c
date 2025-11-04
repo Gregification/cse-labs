@@ -92,6 +92,110 @@ void putu32h(uint32_t v) {
     }
 }
 
+void putD(double d) {
+    // Define the required precision (hardcoded, no macros)
+    const int PRECISION_DIGITS = 6;
+
+    // 1. Handle Sign and Absolute Value (using basic arithmetic, no fabs)
+    if (d < 0.0) {
+        putcUart0('-');
+        d = d * -1.0;
+    }
+
+    // 2. Handle Zero (as a special case)
+    // Checking for exact zero is sufficient for most scenarios
+    if (d == 0.0) {
+        putcUart0('0'); putcUart0('.');
+        for(int i = 0; i < PRECISION_DIGITS; i++) {
+            putcUart0('0');
+        }
+        putcUart0('e'); putcUart0('+'); putcUart0('0'); putcUart0('0');
+        return;
+    }
+
+    // 3. Iterative Scaling for Exponent (No log10/pow)
+    // Adjust 'd' until 1.0 <= d < 10.0, keeping track of the exponent
+    int exp_val = 0;
+
+    // Check for large numbers
+    if (d >= 10.0) {
+        while (d >= 10.0) {
+            d /= 10.0;
+            exp_val++;
+        }
+    }
+    // Check for small numbers
+    else if (d < 1.0) {
+        // Safety check d > 0.0 is technically redundant due to the previous check
+        while (d < 1.0) {
+            d *= 10.0;
+            exp_val--;
+        }
+    }
+    // Now, 'd' is the mantissa (1.0 <= d < 10.0)
+
+    // 4. Print Mantissa (Coefficient: D.DDDDDD)
+
+    // Print the single integer digit before the decimal (1-9)
+    int leading_digit = (int)d;
+    putcUart0('0' + leading_digit);
+
+    putcUart0('.');
+
+    // Extract and print the fractional part
+    double fractional_part = d - leading_digit;
+
+    for (int i = 0; i < PRECISION_DIGITS; i++) {
+        // Multiply by 10 to move the next digit to the integer place
+        fractional_part *= 10.0;
+        int digit = (int)fractional_part;
+        putcUart0('0' + digit);
+
+        // Remove the printed digit
+        fractional_part -= digit;
+    }
+
+    // 5. Print Exponent (e±XX)
+
+    putcUart0('e');
+
+    // Determine and print the sign of the exponent
+    int exp_abs = exp_val;
+    if (exp_val < 0) {
+        putcUart0('-');
+        exp_abs = exp_val * -1; // No abs
+    } else {
+        putcUart0('+');
+    }
+
+    // In-place integer-to-string conversion for the exponent (hardcoded buffer size 4)
+    char exp_str[4];
+    int i = 0;
+
+    // a. Extract digits in reverse order
+    if (exp_abs == 0) {
+        exp_str[i++] = '0';
+    } else {
+        int temp = exp_abs;
+        while (temp > 0) {
+            // No external % or / allowed on a double, but allowed on the int exp_abs
+            exp_str[i++] = '0' + (temp % 10);
+            temp /= 10;
+        }
+    }
+
+    // b. Pad to at least two digits (hardcoded 2)
+    while (i < 2) {
+        exp_str[i++] = '0';
+    }
+
+    // c. Print digits in correct order
+    while (--i >= 0) {
+        putcUart0(exp_str[i]);
+    }
+}
+
+
 void putu64d(uint64_t v) {
     // Special case for 0
     if (v == 0) {
@@ -113,60 +217,4 @@ void putu64d(uint64_t v) {
     while (--i >= 0) {
         putcUart0(str[i]);
     }
-}
-
-// generated print statement
-void putD(double C)
-{
-    if (C <= 0.0) {
-        putcUart0('0');
-        putcUart0('e');
-        putcUart0('0');
-        return;
-    }
-
-    // Get exponent (base 10)
-    int exp = 0;
-    double m = C;
-
-    // Normalize to [1,10)
-    while (m >= 10.0) {
-        m /= 10.0;
-        exp++;
-    }
-    while (m < 1.0) {
-        m *= 10.0;
-        exp--;
-    }
-
-    // Scale mantissa for 5 decimals, e.g. 4.70000 -> 470000
-    uint64_t mantissa_int = (uint64_t)(m * 100000 + 0.5); // rounded
-
-    // Print integer part
-    uint64_t int_part = mantissa_int / 100000;
-    uint64_t frac_part = mantissa_int % 100000;
-
-    putu64d(int_part);
-    putcUart0('.');
-
-    // Print fractional part with leading zeros
-    uint64_t div = 10000;
-    while (div > 0) {
-        putcUart0('0' + (frac_part / div) % 10);
-        div /= 10;
-    }
-
-    // Print exponent
-    putcUart0('e');
-    if (exp >= 0)
-        putcUart0('+');
-    else {
-        putcUart0('-');
-        exp = -exp;
-    }
-
-    // Handle 2-digit negative exponents like -07
-    if (exp < 10)
-        putcUart0('0');
-    putu64d(exp);
 }
