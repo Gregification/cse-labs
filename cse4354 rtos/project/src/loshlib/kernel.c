@@ -315,7 +315,7 @@ void __attribute__((naked)) lock(int8_t mutex)
 void __attribute__((naked)) unlock(int8_t mutex)
 {
     // R0: uint8_t: mutex #
-    SVIC_Lock;
+    SVIC_UnLock;
     __asm(" BX LR");
 }
 
@@ -391,7 +391,7 @@ void svCallIsr(void)
 
     // ignore if not SVC instr
     if((instr & 0xFF00) != 0xDF00){
-        putsUart0("SVC_IRQ>unknown calling instruciton: ");
+        putsUart0("SVC_IRQ>unknown calling instruction: ");
         printu32h(instr);
         putsUart0(NEWLINE);
         return;
@@ -414,7 +414,6 @@ void svCallIsr(void)
                 putsUart0(tcb[taskCurrent].name);
                 putsUart0(" locks: ");
                 printu32d(mi);
-                putsUart0(NEWLINE);
 
                 if(mi > MAX_MUTEXES)
                     while(1){
@@ -436,6 +435,7 @@ void svCallIsr(void)
                     mutexes[mi].processQueue[mutexes[mi].queueSize] = taskCurrent;
                     mutexes[mi].queueSize++;
                     tcb[taskCurrent].state = STATE_BLOCKED_MUTEX;
+                    putsUart0(" added self to queue" NEWLINE);
 
                     // let someone else run
                     NVIC_INT_CTRL_R |= NVIC_INT_CTRL_PEND_SV;  // trigger PendSV /160
@@ -443,6 +443,7 @@ void svCallIsr(void)
                     // claim lock
                     mutexes[mi].lock = true;
                     mutexes[mi].lockedBy = taskCurrent;
+                    putsUart0(" success" NEWLINE);
                 }
 
                 break;
@@ -453,24 +454,33 @@ void svCallIsr(void)
                 putsUart0(tcb[taskCurrent].name);
                 putsUart0(" unlocks: ");
                 printu32d(mi);
-                putsUart0(NEWLINE);
 
                 if(mutexes[mi].lockedBy != taskCurrent)
                     while(1) putsUart0("ERROR: SVC_IRQ>UnLock>unlocking unowned mutex" NEWLINE);
 
-                if(!mutexes[mi].lock) // mutex isnt locked
+                if(!mutexes[mi].lock){ // mutex isnt locked
+                    putsUart0(" wasn't locked" NEWLINE);
                     break;
-
-                // release mutex ownership
-                mutexes[mi].lock = false;
+                }
 
                 // shift ownership to next in line
                 if(mutexes[mi].queueSize){ // if the line even exists
-                    mutexes[mi].lockedBy = mutexes[mi].processQueue[mutexes[mi].queueSize];
-                    tcb[mutexes[mi].queueSize].state = STATE_READY;
+                    mutexes[mi].lockedBy = mutexes[mi].processQueue[0];
+                    tcb[mutexes[mi].lockedBy].state = STATE_READY;
+                    putsUart0(" lock passed to ");
+                    printu32d(mutexes[mi].lockedBy);
+                    putsUart0(NEWLINE);
+
+                    // shift queue down
+                    for(uint8_t i = 1; i < mutexes[mi].queueSize; i++)
+                        mutexes[mi].processQueue[i-1] = mutexes[mi].processQueue[i];
 
                     mutexes[mi].queueSize--;
                     NVIC_INT_CTRL_R |= NVIC_INT_CTRL_PEND_SV;  // trigger PendSV /160
+                } else {
+                    // release mutex ownership
+                    mutexes[mi].lock = false;
+                    putsUart0(" queue empty" NEWLINE);
                 }
 
                 break;
