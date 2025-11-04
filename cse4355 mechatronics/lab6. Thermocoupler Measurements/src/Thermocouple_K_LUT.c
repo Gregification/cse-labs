@@ -18,7 +18,7 @@ float tcV2C_K(int32_t mV){
     if(TCC2V_K[i] == mV || i == TCC2V_K_LEN) nxt = i;
     else    nxt = i + 1;
 
-    return ((float)i - 270) + ((float)mV - (float)TCC2V_K[i]) / ((float)TCC2V_K[nxt] - (float)TCC2V_K[i]);
+    return ((float)i - 270000) + ((float)mV - (float)TCC2V_K[i]) / ((float)TCC2V_K[nxt] - (float)TCC2V_K[i]);
 }
 
 int32_t tcC2V_K(float degC){

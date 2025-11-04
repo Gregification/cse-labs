@@ -17,7 +17,7 @@ int32_t tcC2V_K(float degC);
 #define TCC2V_K_LEN 1643
 /* thermocouple type K, degree celsius to voltage relation
  * starts at -270C, +1C per-array index
- * e.g: 500C => mV = arr[500+270]
+ * e.g: 500C => uV = arr[500+270]
  */
 extern int32_t const TCC2V_K[TCC2V_K_LEN];
 

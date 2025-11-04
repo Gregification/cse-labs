@@ -32,8 +32,8 @@ void initHw();
 // part 2
 #define FREQ_PIN_IN PORTA,5
 
-// see ADS111x.9.5.1.1:4/23
-#define ADS_ADDR 0x08
+// see ADS111x.9.5.1.1:4/20
+#define ADS_ADDR 72
 
 
 void setPWMA(uint16_t val){ // PB6
@@ -118,15 +118,16 @@ enum ADDR_PTR_REG {         // ADS111x.9.6.1/27
     PTRREG_HI_THRESH    = 0b11, // ADS111x.9.6.4/30
 };
 typedef struct _ADS_CONFIG {
+    unsigned int conv_mode  : 1;
+    unsigned int pga        : 3;
+    unsigned int mux        : 3;
+    unsigned int os         : 1;
+
     unsigned int con_que    : 2;
     unsigned int comp_lat   : 1;
     unsigned int comp_pol   : 1;
     unsigned int comp_moed  : 1;
     unsigned int data_rate  : 3;
-    unsigned int conv_mode  : 1;
-    unsigned int pga        : 3;
-    unsigned int mux        : 3;
-    unsigned int os         : 1;
 } ADS_CONFIG;
 
 uint16_t ADS_readConversionResult(){
@@ -298,7 +299,7 @@ int main(void)
      *  """
      */
 
-    ADS_CONFIG config_cj = { // AIN0 <+-> GND
+    ADS_CONFIG config_cj = { // AIN1 <+-> GND
              .con_que   = 0b11, // disable comparator
              .comp_lat  = 0,    // default
              .comp_pol  = 0,    // default
@@ -306,7 +307,7 @@ int main(void)
              .data_rate = 0b000,// 8SPS
              .conv_mode = 0,    // continuous conversion
              .pga       = 0b011,// +-1.024V
-             .mux       = 0b100,// AINP = AIN0 and AINN = GND
+             .mux       = 0b101,// AINP = AIN1 and AINN = GND
              .os        = 0b1,  // start conversion
         };
     ADS_CONFIG config_tc = { // AIN2 <+-> AIN3
@@ -322,29 +323,64 @@ int main(void)
         };
 
     // lab 6
+    while(0){
+        static uint8_t i = 0;
+        i++;
+        if(pollI2c0Address(i))
+            putsUart0(CLIYES);
+        else
+            putsUart0(CLINO);
+        putu32d(i);
+        putsUart0(NEWLINE);
+    }
+
     while(1){
-        const uint32_t CONVERSION_TIME_uS = F_CPU / 7; // is 1/8 S but 1/7 for margin
+        const uint32_t CONVERSION_TIME_uS = 1e6 / 7 ; // is 1/8 S but 1/7 for margin
 
 
-        putD(tcV2C_K(-200));
+//        putD(tcV2C_K(-200));
 //        putD(-2);
 
         float degC; // degC from TMP36
-        int32_t cj_mV;
         {
             // target cold junction device analog output (TMPxx)
+            waitMicrosecond(CONVERSION_TIME_uS);
+            writeI2c0Registers(ADS_ADDR, PTRREG_CONFIG, (uint8_t*)&config_cj, 2);
+            waitMicrosecond(CONVERSION_TIME_uS);
             writeI2c0Registers(ADS_ADDR, PTRREG_CONFIG, (uint8_t*)&config_cj, 2);
             waitMicrosecond(CONVERSION_TIME_uS);
 
             degC = ADS_readConversionResult();  // raw ADC value
-            degC *= 31.25e-6 / 1e3;             // ADC to mV.  lsb. ADS111x.9.3.3/17
+            degC *= 31.25 / 1e3;             // ADC to mV.  lsb. ADS111x.9.3.3/17
             degC = (degC - 750.0) / 10.0 + 25.0;// mV to C. TMP:4/8
 
-            cj_mV = tcC2V_K(degC);
+            putsUart0("TMP36 deg-C : ");
+            putD(degC);
+            putsUart0(" \t");
         }
 
 
+        int32_t tcuV;
+        {
+            // target cold junction device analog output (TMPxx)
+            waitMicrosecond(CONVERSION_TIME_uS);
+            writeI2c0Registers(ADS_ADDR, PTRREG_CONFIG, (uint8_t*)&config_tc, 2);
+            waitMicrosecond(CONVERSION_TIME_uS);
+            writeI2c0Registers(ADS_ADDR, PTRREG_CONFIG, (uint8_t*)&config_tc, 2);
+            waitMicrosecond(CONVERSION_TIME_uS);
 
+            float adc = ADS_readConversionResult();  // raw ADC value
+            adc = adc * 7.8125;             // ADC to uV.  lsb. ADS111x.9.3.3/17
+            tcuV = adc;
+
+            putsUart0("TC uV : ");
+            putu32d(tcuV);
+            putsUart0("\t : C:");
+            putu32d(tcV2C_K(adc));
+            putsUart0(" \t");
+        }
+
+        putsUart0(NEWLINE);
     }
 
 }
