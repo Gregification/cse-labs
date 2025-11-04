@@ -130,7 +130,7 @@ typedef struct _ADS_CONFIG {
     unsigned int data_rate  : 3;
 } ADS_CONFIG;
 
-uint16_t ADS_readConversionResult(){
+int16_t ADS_readConversionResult(){
     uint16_t ret;
 
     readI2c0Registers(ADS_ADDR, PTRREG_CONVERSION, (uint8_t *)&ret, 2);
@@ -375,7 +375,7 @@ int main(void)
             tcmV = adc;
 
             putsUart0("TCmV: ");
-            putu32d(tcmV);
+            puti32d(tcmV);
             putsUart0("\t");
         }
 
@@ -384,6 +384,9 @@ int main(void)
         float actualC = tcV2C_K( tcmV + tcC2V_K(TMP36degC));
         putsUart0(" aC:");
         putD(actualC);
+        if(tcmV == 255992){
+            putsUart0("\t\tTC line broken!");
+        }
         putsUart0(NEWLINE);
     }
 
