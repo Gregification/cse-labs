@@ -15,6 +15,38 @@ bool strCmp(const char * a, const char * b) {
     return b[i] - a[i];
 }
 
+void puti32d(int32_t v) {
+    // Handle negative values
+    if (v < 0) {
+        putcUart0('-');
+        // Handle INT32_MIN carefully to avoid overflow when negating
+        if (v == INT32_MIN) {
+            // INT32_MIN = -2147483648 -> print manually
+            putu32d(2147483648u);
+            return;
+        }
+        v = -v;
+    }
+
+    // Now just print the absolute value using the same logic as unsigned
+    if (v == 0) {
+        putcUart0('0');
+        return;
+    }
+
+    char str[10];
+    int i = 0;
+
+    for (i = 0; v > 0; i++) {
+        str[i] = '0' + (v % 10);
+        v /= 10;
+    }
+
+    for (i = i - 1; i >= 0; --i) {
+        putcUart0(str[i]);
+    }
+}
+
 void putu32d(uint32_t v) {
     // This handles the special case of 0
     if (v == 0) {

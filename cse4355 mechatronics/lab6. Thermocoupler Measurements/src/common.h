@@ -34,6 +34,7 @@
 #define CLIRESET "\033[0m"
 #define CLICLEAR "\033[2J\033[H\033[0m"
 
+void puti32d(int32_t);
 void putu32d(uint32_t);
 void putu32h(uint32_t);
 void putu64d(uint64_t);
