@@ -190,7 +190,7 @@ bool createThread(_fn fn, const char name[], uint8_t priority, uint32_t stackByt
             tcb[i].sp = (uint8_t *)(tcb[i].sp) + stackBytes;
             putsUart0("tcb[ ");
             printu32d(i);
-            putsUart0(" ].sp=");
+            putsUart0("].sp=");
             printu32h(tcb[i].sp);
             putsUart0("\t\t");
             putsUart0(name);
@@ -296,11 +296,17 @@ void __attribute__((naked)) sleep(uint32_t tick)
 // REQUIRED: modify this function to wait a semaphore using pendsv
 void __attribute__((naked)) wait(int8_t semaphore)
 {
+    // R0: uint8_t: mutex #
+    SVIC_Wait;
+    __asm(" BX LR");
 }
 
 // REQUIRED: modify this function to signal a semaphore is available using pendsv
 void __attribute__((naked)) post(int8_t semaphore)
 {
+    // R0: uint8_t: mutex #
+    SVIC_Post;
+    __asm(" BX LR");
 }
 
 // REQUIRED: modify this function to lock a mutex using pendsv
@@ -411,13 +417,13 @@ void svCallIsr(void)
         case SVIC_Lock_i:{
                 // R0: uint8_t: mutex #
                 uint8_t mi = ((uint8_t*)psp)[0];
-                putsUart0(tcb[taskCurrent].name);
-                putsUart0(" locks: ");
-                printu32d(mi);
+//                putsUart0(tcb[taskCurrent].name);
+//                putsUart0(" locks: ");
+//                printu32d(mi);
 
                 if(mi > MAX_MUTEXES)
                     while(1){
-                        putsUart0(NEWLINE "ERROR: SVC_IRQ>Lock>unknown mutex #");
+                        putsUart0(NEWLINE "ERROR: SVC_IRQ>Lock>out of bounds mutex #");
                         printu32d(mi);
                     }
 
@@ -435,7 +441,7 @@ void svCallIsr(void)
                     mutexes[mi].processQueue[mutexes[mi].queueSize] = taskCurrent;
                     mutexes[mi].queueSize++;
                     tcb[taskCurrent].state = STATE_BLOCKED_MUTEX;
-                    putsUart0(" added self to queue" NEWLINE);
+//                    putsUart0(" added self to queue" NEWLINE);
 
                     // let someone else run
                     NVIC_INT_CTRL_R |= NVIC_INT_CTRL_PEND_SV;  // trigger PendSV /160
@@ -443,7 +449,7 @@ void svCallIsr(void)
                     // claim lock
                     mutexes[mi].lock = true;
                     mutexes[mi].lockedBy = taskCurrent;
-                    putsUart0(" success" NEWLINE);
+//                    putsUart0(" success" NEWLINE);
                 }
 
                 break;
@@ -451,15 +457,21 @@ void svCallIsr(void)
         case SVIC_UnLock_i:{
                 // R0: uint8_t: mutex #
                 uint8_t mi = ((uint8_t*)psp)[0];
-                putsUart0(tcb[taskCurrent].name);
-                putsUart0(" unlocks: ");
-                printu32d(mi);
+//                putsUart0(tcb[taskCurrent].name);
+//                putsUart0(" unlocks: ");
+//                printu32d(mi);
+
+                if(mi > MAX_MUTEXES)
+                    while(1){
+                        putsUart0(NEWLINE "ERROR: SVC_IRQ>Lock>out of bounds mutex #");
+                        printu32d(mi);
+                    }
 
                 if(mutexes[mi].lockedBy != taskCurrent)
                     while(1) putsUart0("ERROR: SVC_IRQ>UnLock>unlocking unowned mutex" NEWLINE);
 
                 if(!mutexes[mi].lock){ // mutex isnt locked
-                    putsUart0(" wasn't locked" NEWLINE);
+//                    putsUart0(" wasn't locked" NEWLINE);
                     break;
                 }
 
@@ -467,7 +479,7 @@ void svCallIsr(void)
                 if(mutexes[mi].queueSize){ // if the line even exists
                     mutexes[mi].lockedBy = mutexes[mi].processQueue[0];
                     tcb[mutexes[mi].lockedBy].state = STATE_READY;
-                    putsUart0(" lock passed to ");
+//                    putsUart0(" lock passed to ");
                     printu32d(mutexes[mi].lockedBy);
                     putsUart0(NEWLINE);
 
@@ -480,11 +492,71 @@ void svCallIsr(void)
                 } else {
                     // release mutex ownership
                     mutexes[mi].lock = false;
-                    putsUart0(" queue empty" NEWLINE);
+//                    putsUart0(" queue empty" NEWLINE);
                 }
 
-                break;
             }
+            break;
+
+        case SVIC_Wait_i:{
+                uint8_t si = ((uint8_t*)psp)[0];
+
+                if(si > MAX_SEMAPHORES) while(1){
+                    putsUart0(NEWLINE "ERROR: SVC_IRQ>Wait>out of bounds semaphore #");
+                    printu32d(si);
+                }
+
+                if(semaphores[si].queueSize > MAX_SEMAPHORE_QUEUE_SIZE){
+                    putsUart0(NEWLINE "ERROR: SVC_IRQ>Wait>semaphore #");
+                    printu32d(si);
+                    putsUart0(" overqueued");
+                }
+
+                if(semaphores[si].count > 0) {
+                    semaphores[si].count--;
+                    return;
+                } else {
+                    tcb[taskCurrent].state = STATE_BLOCKED_SEMAPHORE;
+                    tcb[taskCurrent].semaphore = si;
+                    semaphores[si].processQueue[semaphores[si].queueSize++] = taskCurrent; // add to queue
+                    NVIC_INT_CTRL_R |= NVIC_INT_CTRL_PEND_SV;  // trigger PendSV /160
+                }
+
+            }
+            break;
+
+        case SVIC_Post_i:{
+                uint8_t si = ((uint8_t*)psp)[0];
+
+                if(si > MAX_SEMAPHORES) while(1){
+                    putsUart0(NEWLINE "ERROR: SVC_IRQ>Post>out of bounds semaphore #");
+                    printu32d(si);
+                }
+                semaphores[si].count++;
+
+                if(semaphores[si].count == 1) {
+                    if(semaphores[si].queueSize != 0){
+                        tcb[taskCurrent].state = STATE_BLOCKED_SEMAPHORE;
+                        tcb[taskCurrent].semaphore = si;
+
+                        semaphores[si].processQueue[semaphores[si].queueSize++] = taskCurrent; // remove from to queue
+
+                        mutexes[mi].lockedBy = mutexes[mi].processQueue[0];
+                        tcb[mutexes[mi].lockedBy].state = STATE_READY;
+    //                    putsUart0(" lock passed to ");
+                        printu32d(mutexes[mi].lockedBy);
+                        putsUart0(NEWLINE);
+
+                        // shift queue down
+                        for(uint8_t i = 1; i < mutexes[mi].queueSize; i++)
+                            mutexes[mi].processQueue[i-1] = mutexes[mi].processQueue[i];
+
+                        mutexes[mi].queueSize--;
+                    }
+                }
+            }
+            break;
+
         default:
             putsUart0("SVC_IRQ>unknown SVC arg: ");
             printu32h(arg);
