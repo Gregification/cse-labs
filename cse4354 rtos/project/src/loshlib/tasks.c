@@ -74,9 +74,21 @@ void initHw(void)
     waitMicrosecond(250000);
 }
 
-// REQUIRED: add code to return a value from 0-63 indicating which of 6 PBs are pressed
+// REQUIRED: add code to return a value from 0-6 indicating which of 6 PBs are pressed
 uint8_t readPbs(void)
 {
+    if(getPinValue(BTN_1_I))
+        return 1;
+    if(getPinValue(BTN_2_I))
+        return 2;
+    if(getPinValue(BTN_3_I))
+        return 3;
+    if(getPinValue(BTN_4_I))
+        return 4;
+    if(getPinValue(BTN_5_I))
+        return 5;
+    // TODO: rewire PF4 to be button
+
     return 0;
 }
 

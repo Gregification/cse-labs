@@ -128,12 +128,45 @@ uint8_t rtosScheduler(void)
     bool ok;
     static uint8_t task = 0xFF;
     ok = false;
-    while (!ok)
+
+    if(priorityScheduler) {
+        // brute force
+        // find & run highest priority
+
+        // find next runnable
+        uint8_t nxt = task;
+        for(uint8_t i = 0; i < MAX_TASKS; i++){
+            nxt++;
+            if (nxt >= MAX_TASKS)
+                nxt = 0;
+
+            // if task is ready to run
+            if((tcb[nxt].state == STATE_READY || tcb[nxt].state == STATE_UNRUN)){
+                if(ok){ // if a potential nxt has been found already
+                    if(tcb[nxt].priority < tcb[task].priority) // filter by priority
+                        task = nxt;
+                } else {
+                    ok = true;
+                    task = nxt;
+                }
+            }
+        }
+
+        if(ok)
+            return task;
+
+        // all tasks blocked / unrunnable, run first too unblock
+    }
+
+    // round robin
     {
-        task++;
-        if (task >= MAX_TASKS)
-            task = 0;
-        ok = (tcb[task].state == STATE_READY || tcb[task].state == STATE_UNRUN);
+        while (!ok)
+        {
+            task++;
+            if (task >= MAX_TASKS)
+                task = 0;
+            ok = (tcb[task].state == STATE_READY || tcb[task].state == STATE_UNRUN);
+        }
     }
     return task;
 }
@@ -467,8 +500,10 @@ void svCallIsr(void)
                         printu32d(mi);
                     }
 
-                if(mutexes[mi].lockedBy != taskCurrent)
-                    while(1) putsUart0("ERROR: SVC_IRQ>UnLock>unlocking unowned mutex" NEWLINE);
+                if(mutexes[mi].lockedBy != taskCurrent) while(1) {
+                    putsUart0("ERROR: SVC_IRQ>UnLock>unlocking unowned mutex" NEWLINE);
+                    printu32d(mi);
+                }
 
                 if(!mutexes[mi].lock){ // mutex isnt locked
 //                    putsUart0(" wasn't locked" NEWLINE);
@@ -480,8 +515,8 @@ void svCallIsr(void)
                     mutexes[mi].lockedBy = mutexes[mi].processQueue[0];
                     tcb[mutexes[mi].lockedBy].state = STATE_READY;
 //                    putsUart0(" lock passed to ");
-                    printu32d(mutexes[mi].lockedBy);
-                    putsUart0(NEWLINE);
+//                    printu32d(mutexes[mi].lockedBy);
+//                    putsUart0(NEWLINE);
 
                     // shift queue down
                     for(uint8_t i = 1; i < mutexes[mi].queueSize; i++)
@@ -506,7 +541,7 @@ void svCallIsr(void)
                     printu32d(si);
                 }
 
-                if(semaphores[si].queueSize > MAX_SEMAPHORE_QUEUE_SIZE){
+                if(semaphores[si].queueSize > MAX_SEMAPHORE_QUEUE_SIZE) while(1) {
                     putsUart0(NEWLINE "ERROR: SVC_IRQ>Wait>semaphore #");
                     printu32d(si);
                     putsUart0(" overqueued");
@@ -514,8 +549,18 @@ void svCallIsr(void)
 
                 if(semaphores[si].count > 0) {
                     semaphores[si].count--;
+
+//                    putsUart0(tcb[taskCurrent].name);
+//                    putsUart0(" -> wait none on semph #");
+//                    printu32d(si);
+//                    putsUart0(NEWLINE);
                     return;
                 } else {
+//                    putsUart0(tcb[taskCurrent].name);
+//                    putsUart0(" -> blocked on semph #");
+//                    printu32d(si);
+//                    putsUart0(NEWLINE);
+
                     tcb[taskCurrent].state = STATE_BLOCKED_SEMAPHORE;
                     tcb[taskCurrent].semaphore = si;
                     semaphores[si].processQueue[semaphores[si].queueSize++] = taskCurrent; // add to queue
@@ -536,23 +581,36 @@ void svCallIsr(void)
 
                 if(semaphores[si].count == 1) {
                     if(semaphores[si].queueSize != 0){
-                        tcb[taskCurrent].state = STATE_BLOCKED_SEMAPHORE;
-                        tcb[taskCurrent].semaphore = si;
+                        // decrement semaphore
+                        semaphores[si].count--;
 
-                        semaphores[si].processQueue[semaphores[si].queueSize++] = taskCurrent; // remove from to queue
+                        // unblock next in queue
+                        tcb[semaphores[si].processQueue[0]].state = STATE_READY;
 
-                        mutexes[mi].lockedBy = mutexes[mi].processQueue[0];
-                        tcb[mutexes[mi].lockedBy].state = STATE_READY;
-    //                    putsUart0(" lock passed to ");
-                        printu32d(mutexes[mi].lockedBy);
+                        putsUart0(tcb[taskCurrent].name);
+                        putsUart0(" -> semph unblocked: ");
+                        putsUart0(tcb[semaphores[si].processQueue[0]].name);
                         putsUart0(NEWLINE);
 
                         // shift queue down
-                        for(uint8_t i = 1; i < mutexes[mi].queueSize; i++)
-                            mutexes[mi].processQueue[i-1] = mutexes[mi].processQueue[i];
+                        for(uint8_t i = 1; i < semaphores[si].queueSize; i++)
+                            semaphores[si].processQueue[i-1] = semaphores[si].processQueue[i];
 
-                        mutexes[mi].queueSize--;
+                        semaphores[si].queueSize--;
                     }
+                    else
+                    {
+                        putsUart0(tcb[taskCurrent].name);
+                        putsUart0(" -> post to empty semph #");
+                        printu32d(si);
+                        putsUart0(NEWLINE);
+                    }
+                }
+                else {
+                    putsUart0(tcb[taskCurrent].name);
+                    putsUart0(" -> post semph #");
+                    printu32d(si);
+                    putsUart0(NEWLINE);
                 }
             }
             break;
