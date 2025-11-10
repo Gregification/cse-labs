@@ -14,13 +14,13 @@ float tcV2C_K(int32_t uV){
         i_upper++;
     }
 
+    // if idx == 0, return lowest index -270F
     if (i_upper == 0) {
-        // Return the temperature for the lowest index
-        return 0.0f - 270.0f;
+        return -270.0f;
     }
 
+    // if idx == max, return highest index
     if (i_upper == TCC2V_K_LEN) {
-        // Return the temperature for the highest index
         return (float)(TCC2V_K_LEN - 1) - 270.0f;
     }
 
