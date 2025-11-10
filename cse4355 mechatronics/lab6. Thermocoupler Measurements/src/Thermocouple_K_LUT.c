@@ -48,7 +48,7 @@ float tcV2C_K(int32_t uV){
     // Apply that same fraction to the temperature range
     float Temp_range = Temp_upper - Temp_lower;
 
-    return Temp_lower + (fraction * Temp_range);
+    return Temp_lower + (fraction * Temp_range) + 20.0;
 }
 
 float tcC2V_K(float degC){
@@ -76,7 +76,7 @@ float tcC2V_K(float degC){
     float V_upper = (float)TCC2V_K[i_upper];
 
     // Linearly interpolate between the two voltages
-    return V_lower + (fraction * (V_upper - V_lower));
+    return V_lower + (fraction * (V_upper - V_lower))  - 20.0;
 }
 
 int32_t const TCC2V_K[] = {
