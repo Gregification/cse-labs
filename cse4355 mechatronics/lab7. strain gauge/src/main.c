@@ -103,11 +103,16 @@ void portA_IRQ(){
 
 /*** HX711 ************************************/
 
-#define HX_DATA     PORTD,2
-#define HX_CLK      PORTD,3
+#define HX_DATA     PORTE,1
+#define HX_CLK      PORTE,2
 
 uint32_t hx_read(){
     const int delayInUs = 20;
+
+    setPinValue(HX_CLK, 1);
+    waitMicrosecond(80);
+    setPinValue(HX_CLK, 0);
+    waitMicrosecond(10);
 
     while(1 == getPinValue(HX_DATA))
         {}
@@ -118,7 +123,7 @@ uint32_t hx_read(){
         setPinValue(HX_CLK, 1);
         waitMicrosecond(delayInUs);
         if(getPinValue(HX_DATA))
-            data |= 1;
+            data |= i;
         data <<= 1;
         setPinValue(HX_CLK, 0);
         waitMicrosecond(delayInUs);
@@ -286,12 +291,16 @@ int main(void)
     /*********************************************************/
 
 
+    int32_t raw = hx_read();
     while(1){
-//        putsUart0("hx711: ");
-        puti32d(hx_read());
+        raw = raw  * 9 / 10 + hx_read() / 10;
+//        raw = hx_read();
+
+        putsUart0("raw: \t");
+        puti32d(raw);
         putsUart0(NEWLINE);
 
-        waitMicrosecond(200e3);
+        waitMicrosecond(100e3);
     }
 
 }
