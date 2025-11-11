@@ -14,8 +14,6 @@
 #include "loshlib/i2c0.h"
 
 #include "common.h"
-#include "cliShell.h"
-#include "Thermocouple_K_LUT.h"
 
 
 void initHw();
@@ -93,13 +91,13 @@ void timer3A_IRQ(){
 unsigned int count = 0;
 
 void portA_IRQ(){
-    count++;
-    if(count == 1e3){
-        count = 0;
-        stopTimer_w0();
-        disableNvicInterrupt(INT_GPIOA);
-    }
-    clearPinInterrupt(FREQ_PIN_IN);
+//    count++;
+//    if(count == 1e3){
+//        count = 0;
+//        stopTimer_w0();
+//        disableNvicInterrupt(INT_GPIOA);
+//    }
+//    clearPinInterrupt(FREQ_PIN_IN);
 }
 
 
@@ -108,18 +106,20 @@ void portA_IRQ(){
 #define HX_DATA     PORTD,2
 #define HX_CLK      PORTD,3
 
-uint32_t void hx_read(){
-    static int delayInUs = 20;
+uint32_t hx_read(){
+    const int delayInUs = 20;
 
-    while(0 == getPinValue(HX_DATA))
+    while(1 == getPinValue(HX_DATA))
         {}
+    waitMicrosecond(delayInUs);
 
     uint32_t data = 0;
     for(uint8_t i = 0; i < 24; i++){
         setPinValue(HX_CLK, 1);
         waitMicrosecond(delayInUs);
         if(getPinValue(HX_DATA))
-            data |= BV(i);
+            data |= 1;
+        data <<= 1;
         setPinValue(HX_CLK, 0);
         waitMicrosecond(delayInUs);
     }
@@ -275,7 +275,7 @@ int main(void)
     /*********************************************************/
 
     setUart0BaudRate(115200, F_CPU);
-    putsUart0(CLICLEAR CLIRESET CLIGOOD "FALL 2025, CSE4355 Mechatronics, Lab 2" NEWLINE CLIRESET);
+    putsUart0(CLICLEAR CLIRESET CLIGOOD "FALL 2025, CSE4355 Mechatronics, Lab 7" NEWLINE CLIRESET);
 
 
     /*********************************************************/
@@ -287,11 +287,11 @@ int main(void)
 
 
     while(1){
-        putsUart0("hx711: ");
-        putD(hx_read());
+//        putsUart0("hx711: ");
+        puti32d(hx_read());
         putsUart0(NEWLINE);
 
-        waitMicrosecond(500e3);
+        waitMicrosecond(200e3);
     }
 
 }
