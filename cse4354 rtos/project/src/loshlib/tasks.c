@@ -77,19 +77,21 @@ void initHw(void)
 // REQUIRED: add code to return a value from 0-6 indicating which of 6 PBs are pressed
 uint8_t readPbs(void)
 {
-    if(getPinValue(BTN_1_I))
-        return 1;
-    if(getPinValue(BTN_2_I))
-        return 2;
-    if(getPinValue(BTN_3_I))
-        return 3;
-    if(getPinValue(BTN_4_I))
-        return 4;
-    if(getPinValue(BTN_5_I))
-        return 5;
-    // TODO: rewire PF4 to be button
+    int val = 0;
 
-    return 0;
+    // TODO: rewire PF4 to be button
+    if(getPinValue(BTN_1_I))
+        val |= BV(0);
+    if(getPinValue(BTN_2_I))
+        val |= BV(1);
+    if(getPinValue(BTN_3_I))
+        val |= BV(2);
+    if(getPinValue(BTN_4_I))
+        val |= BV(3);
+    if(getPinValue(BTN_5_I))
+        val |= BV(4);
+
+    return val;
 }
 
 // one task must be ready at all times or the scheduler will fail

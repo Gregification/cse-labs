@@ -16,6 +16,7 @@
 //-----------------------------------------------------------------------------
 
 void initHw(void);
+uint8_t readPbs(void);
 
 void idle(void);
 void flash4Hz(void);

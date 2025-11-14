@@ -130,30 +130,43 @@ uint8_t rtosScheduler(void)
     ok = false;
 
     if(priorityScheduler) {
-        // brute force
-        // find & run highest priority
-
-        // find next runnable
-        uint8_t nxt = task;
-        for(uint8_t i = 0; i < MAX_TASKS; i++){
-            nxt++;
-            if (nxt >= MAX_TASKS)
-                nxt = 0;
-
+        // find next highest priority, store in "task"
+        for(uint8_t i = 0; i <= MAX_TASKS; i++){
             // if task is ready to run
-            if((tcb[nxt].state == STATE_READY || tcb[nxt].state == STATE_UNRUN)){
-                if(ok){ // if a potential nxt has been found already
-                    if(tcb[nxt].priority < tcb[task].priority) // filter by priority
-                        task = nxt;
+            if((tcb[i].state == STATE_READY || tcb[i].state == STATE_UNRUN)){
+                if(ok){ // if a potential has already been found
+                    if(tcb[i].priority < tcb[task].priority) // filter by priority
+                        task = i;
                 } else {
                     ok = true;
-                    task = nxt;
+                    task = i;
                 }
             }
         }
 
-        if(ok)
+        if(ok) {
+            static uint8_t nxtTaskIdx[NUM_PRIORITIES];
+            uint8_t priority = tcb[task].priority;
+            // search for the next task of the same priority starting from the saved index
+            for(uint8_t i = 1; i <= MAX_TASKS; i++){
+
+                uint8_t targi = nxtTaskIdx[priority] + i;
+                if(targi > MAX_TASKS) // targi %= MAX_TASKS
+                    targi -= MAX_TASKS;
+
+                // if is matching priority
+                if(tcb[targi].priority == priority) {
+                    // if task is ready to run
+                    if((tcb[targi].state == STATE_READY || tcb[targi].state == STATE_UNRUN)){
+                        // update latest index of priority
+                        nxtTaskIdx[priority] = targi;
+                        task = targi;
+                    }
+                }
+            }
+
             return task;
+        }
 
         // all tasks blocked / unrunnable, run first too unblock
     }
@@ -229,36 +242,36 @@ bool createThread(_fn fn, const char name[], uint8_t priority, uint32_t stackByt
             putsUart0(name);
             putsUart0(NEWLINE);
 
-            { // make fake former-stack for the new task to switch too /110
-                uint32_t * psp = (uint32_t *)(tcb[i].sp);
-
-                // fake stack for hardware/compiler
-                (psp--)[0] = 0xBeeF'0700;   //
-                (psp--)[0] = 0xBeeF'0600;   //
-                (psp--)[0] = 0xBeeF'0500;   //
-                (psp--)[0] = 0xBeeF'0400;   //
-                (psp--)[0] = 0xBeeF'0300;   //
-                (psp--)[0] = BV(24);        //xPsr
-                (psp--)[0] = (uint32_t)fn;  //PC
-                (psp--)[0] = 0xBeeF'0200;   //LR
-                (psp--)[0] = 0xBeeF'0100;   //
-                (psp--)[0] = 0xBeeF'0015;   //
-                (psp--)[0] = 0xBeeF'0014;   //
-                (psp--)[0] = 0xBeeF'0013;   //
-                (psp--)[0] = 0xBeeF'0012;   //
-
-                // fake stack for PendSV
-                (psp--)[0] = 0xFFFF'FFFD;   //LR/R14
-                (psp--)[0] = 0xBeeF'0011;   //R11
-                (psp--)[0] = 0xBeeF'0010;   //R10
-                (psp--)[0] = 0xBeeF'0009;   //R9
-                (psp--)[0] = 0xBeeF'0008;   //R8
-                (psp--)[0] = 0xBeeF'0007;   //R7
-                (psp--)[0] = 0xBeeF'0006;   //R6
-                (psp--)[0] = 0xBeeF'0005;   //R5
-
-                tcb[i].sp = psp;
-            }
+//            { // make fake former-stack for the new task to switch too /110
+//                uint32_t * psp = (uint32_t *)(tcb[i].sp);
+//
+//                // fake stack for hardware/compiler
+//                (psp--)[0] = 0xBeeF'0700;   //
+//                (psp--)[0] = 0xBeeF'0600;   //
+//                (psp--)[0] = 0xBeeF'0500;   //
+//                (psp--)[0] = 0xBeeF'0400;   //
+//                (psp--)[0] = 0xBeeF'0300;   //
+//                (psp--)[0] = BV(24);        //xPsr
+//                (psp--)[0] = (uint32_t)fn;  //PC
+//                (psp--)[0] = 0xBeeF'0200;   //LR
+//                (psp--)[0] = 0xBeeF'0100;   //
+//                (psp--)[0] = 0xBeeF'0015;   //
+//                (psp--)[0] = 0xBeeF'0014;   //
+//                (psp--)[0] = 0xBeeF'0013;   //
+//                (psp--)[0] = 0xBeeF'0012;   //
+//
+//                // fake stack for PendSV
+//                (psp--)[0] = 0xFFFF'FFFD;   //LR/R14
+//                (psp--)[0] = 0xBeeF'0011;   //R11
+//                (psp--)[0] = 0xBeeF'0010;   //R10
+//                (psp--)[0] = 0xBeeF'0009;   //R9
+//                (psp--)[0] = 0xBeeF'0008;   //R8
+//                (psp--)[0] = 0xBeeF'0007;   //R7
+//                (psp--)[0] = 0xBeeF'0006;   //R6
+//                (psp--)[0] = 0xBeeF'0005;   //R5
+//
+//                tcb[i].sp = psp;
+//            }
 
             // find srd, malloc puts it in "accessMasks"
             {
@@ -378,8 +391,7 @@ void systickIsr(void)
     }
 
 //    if(preemption)
-//        SVIC_ASM_PendSV;
-
+//        SVIC_PendSV;
 
 }
 
@@ -405,7 +417,42 @@ __attribute__((naked)) void pendSvIsr(void)
     taskCurrent = rtosScheduler();
 
     // restore stack values of new task
+    if(tcb[taskCurrent].state == STATE_UNRUN) {
+        tcb[taskCurrent].state = STATE_READY;
+        { // make fake former-stack for the new task to switch too /110
+            uint32_t * psp = (uint32_t *)(tcb[taskCurrent].sp);
+
+            // fake stack for hardware/compiler
+            (psp--)[0] = 0xBeeF'0700;   //
+            (psp--)[0] = 0xBeeF'0600;   //
+            (psp--)[0] = 0xBeeF'0500;   //
+            (psp--)[0] = 0xBeeF'0400;   //
+            (psp--)[0] = 0xBeeF'0300;   //
+            (psp--)[0] = BV(24);        //xPsr
+            (psp--)[0] = (uint32_t)tcb[taskCurrent].pid;  //PC
+            (psp--)[0] = 0xBeeF'0200;   //LR
+            (psp--)[0] = 0xBeeF'0100;   //
+            (psp--)[0] = 0xBeeF'0015;   //
+            (psp--)[0] = 0xBeeF'0014;   //
+            (psp--)[0] = 0xBeeF'0013;   //
+            (psp--)[0] = 0xBeeF'0012;   //
+
+            // fake stack for PendSV
+            (psp--)[0] = 0xFFFF'FFFD;   //LR/R14
+            (psp--)[0] = 0xBeeF'0011;   //R11
+            (psp--)[0] = 0xBeeF'0010;   //R10
+            (psp--)[0] = 0xBeeF'0009;   //R9
+            (psp--)[0] = 0xBeeF'0008;   //R8
+            (psp--)[0] = 0xBeeF'0007;   //R7
+            (psp--)[0] = 0xBeeF'0006;   //R6
+            (psp--)[0] = 0xBeeF'0005;   //R5
+
+            tcb[taskCurrent].sp = psp;
+        }
+    }
     setPSP(tcb[taskCurrent].sp);
+
+
     applySramAccessMask(tcb[taskCurrent].srd);
 //    putsUart0("pendSV new sram mask " NEWLINE);
 //    dumpSramAccessMaskTable(tcb[taskCurrent].srd);

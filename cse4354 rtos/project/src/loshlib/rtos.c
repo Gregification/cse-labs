@@ -52,6 +52,8 @@ int main(void)
     // Initialize hardware
     initSystemClockTo40Mhz();
     initHw();
+    setPinValue(BTN_EN_O, 1);
+
     initUart0();
     initMemoryManager();
     initMpu();

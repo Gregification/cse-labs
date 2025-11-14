@@ -15,19 +15,25 @@ bool strCmp(const char * a, const char * b) {
     return b[i] - a[i];
 }
 
+#include <stdint.h> // Include for uint32_t
+
+// Assume putcUart0 is a function that prints a single character
+
 void printu32d(uint32_t v) {
-    if(v == 0){
+    if (v == 0) {
         putcUart0('0');
         return;
     }
 
     char str[10];
     int i = 0;
-    for(i = 0; v > 0; i++){
+
+    for (i = 0; v > 0; i++) {
         str[i] = '0' + (v % 10);
         v /= 10;
     }
-    for(; i >= 0; --i){
+
+    for (i = i - 1; i >= 0; --i) {
         putcUart0(str[i]);
     }
 }

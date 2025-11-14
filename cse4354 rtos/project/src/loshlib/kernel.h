@@ -39,6 +39,7 @@ typedef void (*_fn)();
 
 // tasks
 #define MAX_TASKS 12
+#define NUM_PRIORITIES  8
 
 #define TICK_RATE_HZ 1000
 #define MS_TO_TICKS(X) ((X) * TICK_RATE_HZ / 1000)
