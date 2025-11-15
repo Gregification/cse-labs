@@ -18,6 +18,7 @@ ORDERED_OBJS += \
 "./src/loshlib/gpio.obj" \
 "./src/loshlib/kb_gpio.obj" \
 "./src/loshlib/kernel.obj" \
+"./src/loshlib/kernel_asm.obj" \
 "./src/loshlib/mm.obj" \
 "./src/loshlib/nvic.obj" \
 "./src/loshlib/rtos.obj" \
@@ -159,9 +160,9 @@ project.out: $(OBJS) $(CMD_SRCS) $(GEN_CMDS)
 # Other Targets
 clean:
 	-$(RM) $(EXE_OUTPUTS__QUOTED)
-	-$(RM) "tm4c123gh6pm_startup_ccs.obj" "src\common.obj" "src\rtos_asm.obj" "src\loshlib\clock.obj" "src\loshlib\faults.obj" "src\loshlib\gpio.obj" "src\loshlib\kb_gpio.obj" "src\loshlib\kernel.obj" "src\loshlib\mm.obj" "src\loshlib\nvic.obj" "src\loshlib\rtos.obj" "src\loshlib\shell.obj" "src\loshlib\tasks.obj" "src\loshlib\uart0.obj" "src\loshlib\wait.obj" 
+	-$(RM) "tm4c123gh6pm_startup_ccs.obj" "src\common.obj" "src\rtos_asm.obj" "src\loshlib\clock.obj" "src\loshlib\faults.obj" "src\loshlib\gpio.obj" "src\loshlib\kb_gpio.obj" "src\loshlib\kernel.obj" "src\loshlib\kernel_asm.obj" "src\loshlib\mm.obj" "src\loshlib\nvic.obj" "src\loshlib\rtos.obj" "src\loshlib\shell.obj" "src\loshlib\tasks.obj" "src\loshlib\uart0.obj" "src\loshlib\wait.obj" 
 	-$(RM) "tm4c123gh6pm_startup_ccs.d" "src\common.d" "src\loshlib\clock.d" "src\loshlib\faults.d" "src\loshlib\gpio.d" "src\loshlib\kb_gpio.d" "src\loshlib\kernel.d" "src\loshlib\mm.d" "src\loshlib\nvic.d" "src\loshlib\rtos.d" "src\loshlib\shell.d" "src\loshlib\tasks.d" "src\loshlib\uart0.d" "src\loshlib\wait.d" 
-	-$(RM) "src\rtos_asm.d" 
+	-$(RM) "src\rtos_asm.d" "src\loshlib\kernel_asm.d" 
 	-@echo 'Finished clean'
 	-@echo ' '
 

@@ -6,6 +6,7 @@
 "./src/loshlib/gpio.obj"
 "./src/loshlib/kb_gpio.obj"
 "./src/loshlib/kernel.obj"
+"./src/loshlib/kernel_asm.obj"
 "./src/loshlib/mm.obj"
 "./src/loshlib/nvic.obj"
 "./src/loshlib/rtos.obj"

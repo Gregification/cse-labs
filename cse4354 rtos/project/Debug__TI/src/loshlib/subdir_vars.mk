@@ -5,6 +5,9 @@
 SHELL = cmd.exe
 
 # Add inputs and outputs from these tool invocations to the build variables 
+S_SRCS += \
+../src/loshlib/kernel_asm.s 
+
 C_SRCS += \
 ../src/loshlib/clock.c \
 ../src/loshlib/faults.c \
@@ -18,6 +21,9 @@ C_SRCS += \
 ../src/loshlib/tasks.c \
 ../src/loshlib/uart0.c \
 ../src/loshlib/wait.c 
+
+S_DEPS += \
+./src/loshlib/kernel_asm.d 
 
 C_DEPS += \
 ./src/loshlib/clock.d \
@@ -39,6 +45,7 @@ OBJS += \
 ./src/loshlib/gpio.obj \
 ./src/loshlib/kb_gpio.obj \
 ./src/loshlib/kernel.obj \
+./src/loshlib/kernel_asm.obj \
 ./src/loshlib/mm.obj \
 ./src/loshlib/nvic.obj \
 ./src/loshlib/rtos.obj \
@@ -53,6 +60,7 @@ OBJS__QUOTED += \
 "src\loshlib\gpio.obj" \
 "src\loshlib\kb_gpio.obj" \
 "src\loshlib\kernel.obj" \
+"src\loshlib\kernel_asm.obj" \
 "src\loshlib\mm.obj" \
 "src\loshlib\nvic.obj" \
 "src\loshlib\rtos.obj" \
@@ -75,6 +83,9 @@ C_DEPS__QUOTED += \
 "src\loshlib\uart0.d" \
 "src\loshlib\wait.d" 
 
+S_DEPS__QUOTED += \
+"src\loshlib\kernel_asm.d" 
+
 C_SRCS__QUOTED += \
 "../src/loshlib/clock.c" \
 "../src/loshlib/faults.c" \
@@ -88,5 +99,8 @@ C_SRCS__QUOTED += \
 "../src/loshlib/tasks.c" \
 "../src/loshlib/uart0.c" \
 "../src/loshlib/wait.c" 
+
+S_SRCS__QUOTED += \
+"../src/loshlib/kernel_asm.s" 
 
 

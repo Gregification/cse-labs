@@ -62,7 +62,7 @@ PID pid; // current processes ID
 #define SVIC_Post               __asm(" SVC #0x6"); // 6
 #define SVIC_Reboot_i           7
 #define SVIC_Reboot             __asm(" SVC #0x7"); // 7
-#define SVIC_Request_i          8
+#define SVIC_Request_i          8   // NOTE: hardcoded in "kernel_asm.s", values must match!
 #define SVIC_Request            __asm(" SVC #0x8");
 //-----------------------------------------------------------------------------
 // Subroutines

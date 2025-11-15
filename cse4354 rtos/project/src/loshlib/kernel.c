@@ -717,10 +717,11 @@ void svCallIsr(void)
 
 }
 
-void __attribute__((naked)) request(req_t t, void const * in, void * out){
-    SVIC_Request;
-    __asm(" bx lr");
-}
+// written in assembly, compiler keeps throwing in assembly that overwrites the args
+//void __attribute__((naked)) request(req_t t, void const * in, void * out){
+//    SVIC_Request;
+//    __asm(" bx lr");
+//}
 
 
 void dumpPSPRegsFromMSP() {
