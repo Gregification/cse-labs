@@ -13,6 +13,9 @@ src/loshlib/shell.obj: C:/ti/ccs1281/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/in
 src/loshlib/shell.obj: C:/ti/ccs1281/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include/sys/_stdint.h
 src/loshlib/shell.obj: D:/repos/cse-labs/cse4354\ rtos/project/src/tm4c123gh6pm.h
 src/loshlib/shell.obj: ../src/loshlib/shell.h
+src/loshlib/shell.obj: D:/repos/cse-labs/cse4354\ rtos/project/src/common.h
+src/loshlib/shell.obj: C:/ti/ccs1281/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include/stdbool.h
+src/loshlib/shell.obj: ../src/loshlib/kernel.h
 
 ../src/loshlib/shell.c:
 
@@ -39,4 +42,10 @@ C:/ti/ccs1281/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include/sys/_stdint.h:
 D:/repos/cse-labs/cse4354\ rtos/project/src/tm4c123gh6pm.h:
 
 ../src/loshlib/shell.h:
+
+D:/repos/cse-labs/cse4354\ rtos/project/src/common.h:
+
+C:/ti/ccs1281/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include/stdbool.h:
+
+../src/loshlib/kernel.h:
 

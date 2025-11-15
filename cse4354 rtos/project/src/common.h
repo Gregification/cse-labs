@@ -12,20 +12,21 @@
 #include <stdbool.h>
 #include "tm4c123gh6pm.h"
 
-#define BV(X) (1 << (X))
-#define ARRANDN(ARR) ARR,sizeof(ARR)
+#define BV(X) (1 << (X))                    // Bit Value
+#define ARRANDN(ARR) ARR,sizeof(ARR)        // ARRay AND size N
+#define SETPIF(PTR, VAL) if(PTR) *(PTR)=VAL;// SET Pointer IF pointerexists
 
 #define F_CPU 40e6
 
-#define NEWLINE "\n\r"
-#define CLIERROR "\033[38;2;255;0;0m"
-#define CLIHIGHLIGHT "\033[38;2;255;255;0m"
-#define CLIGOOD "\033[38;2;0;255;0m"
-#define CLIYES "\033[38;2;0;255;255m"
-#define CLINO "\033[38;2;255;0;255m"
-#define CLIWARN "\033[38;2;255;100;0m"
-#define CLIRESET "\033[0m"
-#define CLICLEAR "\033[2J\033[H\033[0m"
+#define NEWLINE         "\n\r"
+#define CLIERROR        "\033[38;2;255;0;0m"
+#define CLIHIGHLIGHT    "\033[38;2;255;255;0m"
+#define CLIGOOD         "\033[38;2;0;255;0m"
+#define CLIYES          "\033[38;2;0;255;255m"
+#define CLINO           "\033[38;2;255;0;255m"
+#define CLIWARN         "\033[38;2;255;100;0m"
+#define CLIRESET        "\033[0m"
+#define CLICLEAR        "\033[2J\033[H\033[0m"
 
 #define LED_RED     PORTE,0
 #define LED_GREEN   PORTA,4

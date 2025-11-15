@@ -48,19 +48,22 @@ typedef void * PID;
 
 PID pid; // current processes ID
 
-#define SVIC_PendSV_i           0x01
+#define SVIC_PendSV_i           1
 #define SVIC_PendSV             __asm(" SVC #0x1");
-#define SVIC_Sleep_i            0x02
+#define SVIC_Sleep_i            2
 #define SVIC_Sleep              __asm(" SVC #0x2");
-#define SVIC_Lock_i             0x03
+#define SVIC_Lock_i             3
 #define SVIC_Lock               __asm(" SVC #0x3");
-#define SVIC_UnLock_i           0x04
+#define SVIC_UnLock_i           4
 #define SVIC_UnLock             __asm(" SVC #0x4");
-#define SVIC_Wait_i             0x05
+#define SVIC_Wait_i             5
 #define SVIC_Wait               __asm(" SVC #0x5");
-#define SVIC_Post_i             0x06
-#define SVIC_Post               __asm(" SVC #0x6");
-
+#define SVIC_Post_i             6
+#define SVIC_Post               __asm(" SVC #0x6"); // 6
+#define SVIC_Reboot_i           7
+#define SVIC_Reboot             __asm(" SVC #0x7"); // 7
+#define SVIC_Request_i          8
+#define SVIC_Request            __asm(" SVC #0x8");
 //-----------------------------------------------------------------------------
 // Subroutines
 //-----------------------------------------------------------------------------
@@ -100,5 +103,22 @@ extern uint32_t * getMSP(); // not sure if this is right, dosen't the interrupt 
 // CONTROL reg /88
 extern void setASP();
 extern void setTMPL();
+
+/**
+ * req_t entries with VAL_ means its a getter and setter,
+ *      if the arguement is not empty
+ */
+typedef enum {
+    REQ_PRINT_PS,       // (null, null) . prints process status
+    REQ_PRINT_IPCS,     // (null, null) . prints interprocess communication status
+    REQ_KILL,           // (PID , bool) . kills task found by process ID. return true if process killed
+    REQ_PKILL,          // (string  , bool) . kills task found by name. return true if process killed
+    REQ_VAL_PRIINHERT,  // (bool, bool) . priority inheritance
+    REQ_VAL_PREEMPT,    // (bool, bool) . premption
+    REQ_VAL_SCHEDULER,  // (bool, bool) . scheduler is (true)priority or (false)round-robin
+    REQ_PRINT_PIDOF,    // (string, bool) . prints PID of process found by name. return true if process killed
+    REQ_RUN,            // (string, bool) . starts process - if not already -. return true if process found
+} req_t;
+void request(req_t, void const * in, void * out);
 
 #endif

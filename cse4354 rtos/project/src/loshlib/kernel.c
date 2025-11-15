@@ -648,6 +648,66 @@ void svCallIsr(void)
             }
             break;
 
+        case SVIC_Reboot_i:
+            NVIC_APINT_R = NVIC_APINT_VECTKEY | NVIC_APINT_SYSRESETREQ;
+            break;
+
+        case SVIC_Request_i:
+            _Static_assert(sizeof(req_t) == sizeof(uint8_t), "incorrect offset used for type req_t"); // see next line
+            req_t req = ((uint8_t*)psp++)[0];
+            switch (req) {
+                case REQ_PRINT_PS:{
+                        putsUart0("PRINT_PS" NEWLINE);
+                    } break;
+                case REQ_PRINT_IPCS:{
+                        putsUart0("PRINT_IPCS" NEWLINE);
+                    } break;
+                case REQ_KILL:{
+                        putsUart0("KILL" NEWLINE);
+                    } break;
+                case REQ_PKILL:{
+                        putsUart0("PKILL" NEWLINE);
+                    } break;
+                case REQ_VAL_PRIINHERT:{
+                        putsUart0("VAL_PRIINHERT" NEWLINE);
+                    } break;
+                case REQ_VAL_PREEMPT:{
+                        putsUart0("VAL_PREEMPT" NEWLINE);
+                    } break;
+                case REQ_VAL_SCHEDULER:{
+                        putsUart0("VAL_SCHEDULER" NEWLINE);
+                    } break;
+                case REQ_PRINT_PIDOF:{
+                        putsUart0("PRINT_PIDOF" NEWLINE);
+                    } break;
+                case REQ_RUN:{
+                        char const * str = (char*)(psp++)[0];   // arg1
+                        bool * ret = (bool*)(psp++)[0];         // arg2
+
+                        SETPIF(ret, false);
+
+                        if(!str)
+                            break;
+
+                        // find first matching func
+                        for(uint8_t i = 0; i < MAX_TASKS; i++){
+                            if((tcb[i].pid) && (0 == strCmp(tcb[i].name,str) && (tcb[i].state != STATE_INVALID))){
+                                SETPIF(ret, true);
+
+                                if(tcb[i].state == STATE_KILLED)
+                                    tcb[i].state = STATE_UNRUN;
+
+                                break;
+                            }
+                        }
+
+                    } break;
+                default:{
+                        putsUart0("UNKNOWN_REQUEST" NEWLINE);
+                    } break;
+            }
+            break;
+
         default:
             putsUart0("SVC_IRQ>unknown SVC arg: ");
             printu32h(arg);
@@ -655,6 +715,11 @@ void svCallIsr(void)
             break;
     }
 
+}
+
+void __attribute__((naked)) request(req_t t, void const * in, void * out){
+    SVIC_Request;
+    __asm(" bx lr");
 }
 
 
