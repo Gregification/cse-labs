@@ -52,7 +52,6 @@ int main(void)
     // Initialize hardware
     initSystemClockTo40Mhz();
     initHw();
-    setPinValue(BTN_EN_O, 1);
 
     initUart0();
     initMemoryManager();
@@ -68,10 +67,10 @@ int main(void)
     // Setup UART0 baud rate
     setUart0BaudRate(115200, 40e6);
 
-//    while(1){
-//        putsUart0(NEWLINE "meow: ");
-//        printu32d(readPbs());
-//    }
+    while(1){
+        putsUart0(NEWLINE "meow: ");
+        printu32d(readPbs());
+    }
 
     // Initialize mutexes and semaphores
     initMutex(resource);

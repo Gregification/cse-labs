@@ -33,7 +33,7 @@
 #define LED_ORANGE  PORTA,2
 #define LED_YELLOW  PORTA,3
 
-#define BTN_EN_O    PORTF,4
+#define BTN_0_I     PORTF,4 // this has a pull up which also powers all other buttons
 #define BTN_1_I     PORTC,4
 #define BTN_2_I     PORTC,5
 #define BTN_3_I     PORTC,6

@@ -54,7 +54,7 @@ void initHw(void)
     enablePort(PORTF);
 
     // Configure LED and pushbutton pins
-    selectPinPushPullOutput(BTN_EN_O);
+    //    BTN_0_I // funky stuff done for it in readPbs()
     selectPinDigitalInput(BTN_1_I);
     selectPinDigitalInput(BTN_2_I);
     selectPinDigitalInput(BTN_3_I);
@@ -77,21 +77,32 @@ void initHw(void)
 // REQUIRED: add code to return a value from 0-6 indicating which of 6 PBs are pressed
 uint8_t readPbs(void)
 {
-    int val = 0;
 
-    // TODO: rewire PF4 to be button
+    selectPinPushPullOutput(BTN_0_I);
+    setPinValue(BTN_0_I, 1);
+//    waitMicrosecond(5);
+
     if(getPinValue(BTN_1_I))
-        val |= BV(0);
+        return BV(1);
     if(getPinValue(BTN_2_I))
-        val |= BV(1);
+        return BV(2);
     if(getPinValue(BTN_3_I))
-        val |= BV(2);
+        return BV(3);
     if(getPinValue(BTN_4_I))
-        val |= BV(3);
+        return BV(4);
     if(getPinValue(BTN_5_I))
-        val |= BV(4);
+        return BV(5);
 
-    return val;
+    selectPinDigitalInput(BTN_0_I);
+    enablePinPullup(BTN_0_I);
+//    waitMicrosecond(5);
+
+    if(getPinValue(BTN_0_I) == 0)
+        return BV(0);
+
+    disablePinPullup(BTN_0_I);
+
+    return 0;
 }
 
 // one task must be ready at all times or the scheduler will fail
