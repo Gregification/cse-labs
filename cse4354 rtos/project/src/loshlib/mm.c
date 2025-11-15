@@ -43,7 +43,7 @@ void * mallocHeap(uint32_t size_in_bytes)
         for(am_i = 0; am_i < MAX_TASKS; am_i++)
             if(accessMasks[am_i].pid == 0) {
                 accessMasks[am_i].pid = pid;
-                addSramAccessWindow(&accessMasks[am_i].mask.raw, (uint32_t*)SRAM_BASE, 1024*4);
+//                addSramAccessWindow(&accessMasks[am_i].mask.raw, (uint32_t*)SRAM_BASE, 1024*4);
                 break;
             }
 
@@ -74,7 +74,7 @@ void * mallocHeap(uint32_t size_in_bytes)
             for(d = baseR; d <= (baseR + regions); d++) {
                 HOT[d].owner_pid = pid;
                 HOT[d].len = 0;
-                accessMasks[am_i].mask.masks[(baseR + regions)/8] |= BV((baseR + regions) % 8);
+//                accessMasks[am_i].mask.masks[(baseR + regions)/8] |= BV((baseR + regions) % 8);
             }
             HOT[baseR].len = regions+1;
 
@@ -88,6 +88,7 @@ void * mallocHeap(uint32_t size_in_bytes)
             printu32d(am_i);
             putsUart0("):" NEWLINE " enbl: ");
             dumpSramAccessMaskTable(accessMasks[am_i].mask.raw);
+
             applySramAccessMask(accessMasks[am_i].mask.raw);
 
             return (void *)(heap + (baseR * MPU_REGION_SIZE_B));

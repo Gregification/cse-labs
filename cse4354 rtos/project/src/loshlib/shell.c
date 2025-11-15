@@ -25,4 +25,7 @@
 // REQUIRED: add processing for the shell commands through the UART here
 void shell(void)
 {
+    while(1){
+        yield();
+    }
 }

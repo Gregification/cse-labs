@@ -148,7 +148,7 @@ uint8_t rtosScheduler(void)
             static uint8_t nxtTaskIdx[NUM_PRIORITIES];
             uint8_t priority = tcb[task].priority;
             // search for the next task of the same priority starting from the saved index
-            for(uint8_t i = 1; i <= MAX_TASKS; i++){
+            for(uint8_t i = 1; i < MAX_TASKS; i++){
 
                 uint8_t targi = nxtTaskIdx[priority] + i;
                 if(targi > MAX_TASKS) // targi %= MAX_TASKS
@@ -159,12 +159,13 @@ uint8_t rtosScheduler(void)
                     // if task is ready to run
                     if((tcb[targi].state == STATE_READY || tcb[targi].state == STATE_UNRUN)){
                         // update latest index of priority
-                        nxtTaskIdx[priority] = targi;
                         task = targi;
+                        break;
                     }
                 }
             }
 
+            nxtTaskIdx[priority] = task;
             return task;
         }
 
@@ -184,26 +185,26 @@ uint8_t rtosScheduler(void)
     return task;
 }
 
-void _startRtos_force_new_stack(_fn);
 // REQUIRED: modify this function to start the operating system
 // by calling scheduler, set srd bits, setting PSP, ASP bit, call fn with fn add in R0
 // fn set TMPL bit, and PC <= fn
-void startRtos(void)
+void __attribute__((naked)) startRtos(void)
 {
     // make systick priority higher than pendSV. both default at 0. 0->...7 = high->low priority
     NVIC_SYS_PRI3_R &= ~NVIC_SYS_PRI3_PENDSV_M;
     NVIC_SYS_PRI3_R |= (1 << NVIC_SYS_PRI3_PENDSV_S);
 
-    taskCurrent = rtosScheduler();
-    setPSP(tcb[taskCurrent].sp);
-    applySramAccessMask(tcb[taskCurrent].srd);
-    setASP();
+    // need a task to switch from, so grab a random one and claim its the previous one
+    {
+        taskCurrent = rtosScheduler();
+        setPSP(tcb[taskCurrent].sp);
+        applySramAccessMask(tcb[taskCurrent].srd);
+    }
+
     NVIC_ST_CTRL_R     |= NVIC_ST_CTRL_ENABLE; // enable SysTick
+    setASP();
     setTMPL();
-    _startRtos_force_new_stack((_fn)tcb[taskCurrent].pid);
-}
-void _startRtos_force_new_stack(_fn func){
-    func();
+    SVIC_PendSV;
 }
 
 // REQUIRED:
@@ -423,29 +424,14 @@ __attribute__((naked)) void pendSvIsr(void)
             uint32_t * psp = (uint32_t *)(tcb[taskCurrent].sp);
 
             // fake stack for hardware/compiler
-            (psp--)[0] = 0xBeeF'0700;   //
-            (psp--)[0] = 0xBeeF'0600;   //
-            (psp--)[0] = 0xBeeF'0500;   //
-            (psp--)[0] = 0xBeeF'0400;   //
-            (psp--)[0] = 0xBeeF'0300;   //
+            psp -= 5;
             (psp--)[0] = BV(24);        //xPsr
             (psp--)[0] = (uint32_t)tcb[taskCurrent].pid;  //PC
-            (psp--)[0] = 0xBeeF'0200;   //LR
-            (psp--)[0] = 0xBeeF'0100;   //
-            (psp--)[0] = 0xBeeF'0015;   //
-            (psp--)[0] = 0xBeeF'0014;   //
-            (psp--)[0] = 0xBeeF'0013;   //
-            (psp--)[0] = 0xBeeF'0012;   //
+            psp -= 6;
 
             // fake stack for PendSV
             (psp--)[0] = 0xFFFF'FFFD;   //LR/R14
-            (psp--)[0] = 0xBeeF'0011;   //R11
-            (psp--)[0] = 0xBeeF'0010;   //R10
-            (psp--)[0] = 0xBeeF'0009;   //R9
-            (psp--)[0] = 0xBeeF'0008;   //R8
-            (psp--)[0] = 0xBeeF'0007;   //R7
-            (psp--)[0] = 0xBeeF'0006;   //R6
-            (psp--)[0] = 0xBeeF'0005;   //R5
+            psp -= 7;
 
             tcb[taskCurrent].sp = psp;
         }

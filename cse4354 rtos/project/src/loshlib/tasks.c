@@ -228,10 +228,10 @@ void uncooperative(void)
 
 void errant(void)
 {
-    uint32_t* p = (uint32_t*)0x20000000;
+    volatile uint32_t* p = (uint32_t*)0x20000000;
     while(true)
     {
-        while (readPbs() == 32)
+        while (readPbs() == 16)
         {
             *p = 0;
         }
