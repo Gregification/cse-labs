@@ -14,7 +14,7 @@
 
 #define BV(X) (1 << (X))                    // Bit Value
 #define ARRANDN(ARR) ARR,sizeof(ARR)        // ARRay AND size N
-#define SETPIF(PTR, VAL) if(PTR) *(PTR)=VAL;// SET Pointer IF pointerexists
+#define SETPIF(PTR, VAL) if(PTR) *(PTR)=VAL;// SET Pointer IF pointer exists
 
 #define F_CPU 40e6
 

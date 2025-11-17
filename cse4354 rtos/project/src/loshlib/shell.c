@@ -13,10 +13,12 @@
 //-----------------------------------------------------------------------------
 
 #include <stdint.h>
+#include <stdlib.h>
 #include "tm4c123gh6pm.h"
 #include "shell.h"
 #include "common.h"
 #include "kernel.h"
+#include "loshlib/uart0.h"
 
 // REQUIRED: Add header files here for your strings functions, ...
 
@@ -76,9 +78,8 @@ void shell(void)
 
                bool success;
                request(REQ_KILL, &pid, &success);
-               if(success)  putsUart0("success");
-               else         putsUart0("failed");
-               putsUart0(NEWLINE);
+
+               if(!success) putsUart0("cmd failed" NEWLINE);
            }
            if(isCommand(&data, "pkill", 1)){
                valid = true;
@@ -87,76 +88,71 @@ void shell(void)
 
                bool success;
                request(REQ_PKILL, pname, &success);
-               if(success)  putsUart0("success");
-               else         putsUart0("failed");
-               putsUart0(NEWLINE);
+
+               if(!success) putsUart0("cmd failed" NEWLINE);
            }
            if(isCommand(&data, "pi", 1)){
                valid = true;
 
                char * arg = getFieldString(&data, 1);
 
-               bool success;
                bool param;
                if(0 == strCmp("ON", arg)){
                    param = true;
-                   request(REQ_VAL_PRIINHERT, &param, &success);
-               }
+                   request(REQ_VAL_PRIINHERT, &param, 0);
+               } else
                if(0 == strCmp("OFF", arg)){
                    param = false;
-                   request(REQ_VAL_PRIINHERT, &param, &success);
+                   request(REQ_VAL_PRIINHERT, &param, 0);
+               } else {
+                   putsUart0("unrecognized arg" NEWLINE);
                }
-
-               if(success)  putsUart0("success");
-               else         putsUart0("failed");
-               putsUart0(NEWLINE);
            }
            if(isCommand(&data, "preempt", 1)){
                valid = true;
-               putsUart0("preempt" NEWLINE);
                char * arg = getFieldString(&data, 1);
 
-               bool success, param;
+               bool param;
                if(0 == strCmp("ON", arg)){
                    param = true;
-                   request(REQ_VAL_PREEMPT, &param, &success);
-               }
+                   request(REQ_VAL_PREEMPT, &param, 0);
+               } else
                if(0 == strCmp("OFF", arg)){
                    param = false;
-                   request(REQ_VAL_PREEMPT, &param, &success);
+                   request(REQ_VAL_PREEMPT, &param, 0);
+               } else {
+                   putsUart0("unrecognized arg" NEWLINE);
                }
-
-               if(success)  putsUart0("success");
-               else         putsUart0("failed");
-               putsUart0(NEWLINE);
            }
            if(isCommand(&data, "sched", 1)){
                valid = true;
 
                char * arg = getFieldString(&data, 1);
 
-               bool success, param;
+               bool param;
                if(0 == strCmp("PRIO", arg)){
                    param = true;
-                   request(REQ_VAL_SCHEDULER, &param, &success);
-               }
+                   request(REQ_VAL_SCHEDULER, &param, 0);
+               } else
                if(0 == strCmp("RR", arg)){
                    param = false;
-                   request(REQ_VAL_SCHEDULER, &param, &success);
+                   request(REQ_VAL_SCHEDULER, &param, 0);
+               } else {
+                   putsUart0("unrecognized arg" NEWLINE);
                }
-
-               if(success)  putsUart0("success");
-               else         putsUart0("failed");
-               putsUart0(NEWLINE);
            }
            if(isCommand(&data, "pidof", 1)){
                valid = true;
                const char * arg = getFieldString(&data, 1);
 
-               bool success;
-               request(REQ_PRINT_PIDOF, arg, &success);
-               if(success)  putsUart0("success");
-               else         putsUart0("failed");
+               PID result;
+               request(REQ_PIDOF, arg, &result);
+
+               if(result)
+                   printu32d((uint32_t)result);
+               else
+                   putsUart0("cmd failed");
+
                putsUart0(NEWLINE);
            }
            if(isCommand(&data, "run", 0)){
@@ -165,9 +161,8 @@ void shell(void)
 
                bool success;
                request(REQ_RUN, arg, (void*)&success);
-               if(success)  putsUart0("success");
-               else         putsUart0("failed");
-               putsUart0(NEWLINE);
+
+               if(!success) putsUart0("cmd failed" NEWLINE);
            }
 
            if(isCommand(&data, "help", 0)){

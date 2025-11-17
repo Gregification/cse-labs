@@ -60,7 +60,7 @@ uint8_t taskCount = 0;            // total number of valid tasks
 // control
 bool priorityScheduler = true;    // priority (true) or round-robin (false)
 bool priorityInheritance = false; // priority inheritance for mutexes
-bool preemption = false;          // preemption (true) or cooperative (false)
+bool preemption = true;          // preemption (true) or cooperative (false)
 
 // tcb
 #define NUM_PRIORITIES   8
@@ -76,11 +76,20 @@ struct _tcb
     char name[16];                 // name of task used in ps command
     uint8_t mutex;                 // index of the mutex in use or blocking the thread
     uint8_t semaphore;             // index of the semaphore that is blocking the thread
+    uint16_t cpu_time;             // relative time from XXX of cpu use
 } tcb[MAX_TASKS];
 
 //-----------------------------------------------------------------------------
 // Subroutines
 //-----------------------------------------------------------------------------
+
+uint32_t pendSV_systicks; // ticks for use by pendSV only
+
+// returns tcb index of first task with matching name. returns MAX_TASKS if not found
+uint8_t findTaskByName(char const * name);
+
+// returns true of spand is entirely within taskCurrent's allocated memory
+bool inSRAMBounds(void const * start, uint32_t len);
 
 bool initMutex(uint8_t mutex)
 {
@@ -191,8 +200,8 @@ uint8_t rtosScheduler(void)
 void __attribute__((naked)) startRtos(void)
 {
     // make systick priority higher than pendSV. both default at 0. 0->...7 = high->low priority
-    NVIC_SYS_PRI3_R &= ~NVIC_SYS_PRI3_PENDSV_M;
-    NVIC_SYS_PRI3_R |= (1 << NVIC_SYS_PRI3_PENDSV_S);
+//    NVIC_SYS_PRI3_R &= ~NVIC_SYS_PRI3_PENDSV_M;
+//    NVIC_SYS_PRI3_R |= (1 << NVIC_SYS_PRI3_PENDSV_S);
 
     // need a task to switch from, so grab a random one and claim its the previous one
     {
@@ -201,10 +210,11 @@ void __attribute__((naked)) startRtos(void)
         applySramAccessMask(tcb[taskCurrent].srd);
     }
 
-    NVIC_ST_CTRL_R     |= NVIC_ST_CTRL_ENABLE; // enable SysTick
     setASP();
+    NVIC_ST_CTRL_R     |= NVIC_ST_CTRL_ENABLE; // enable SysTick
     setTMPL();
     SVIC_PendSV;
+    while(1);
 }
 
 // REQUIRED:
@@ -312,6 +322,7 @@ bool createThread(_fn fn, const char name[], uint8_t priority, uint32_t stackByt
 //           unlock any mutexes, mark state as killed
 void killThread(_fn fn)
 {
+    putsUart0("KILL THREAD");
 }
 
 // REQUIRED: modify this function to restart a thread, including creating a stack
@@ -376,6 +387,8 @@ void __attribute__((naked)) unlock(int8_t mutex)
 // REQUIRED: in preemptive code, add code to request task switch
 void systickIsr(void)
 {
+    pendSV_systicks++;
+
     // decrement task timers
     {
         uint8_t i;
@@ -391,9 +404,11 @@ void systickIsr(void)
         }
     }
 
-//    if(preemption)
+    if(preemption) {
+        // TODO: ask TA why the next line throws a error
 //        SVIC_PendSV;
-
+        NVIC_INT_CTRL_R |= NVIC_INT_CTRL_PEND_SV;  // trigger PendSV /160
+    }
 }
 
 // REQUIRED: in coop and preemptive, modify this function to add support for task switching
@@ -401,8 +416,8 @@ void systickIsr(void)
 __attribute__((naked)) void pendSvIsr(void)
 {
     /* reason for " ___attribute__((naked)) "
-     *  between when pendSV is invoked and it actually running MSP is decremented by 2.
-     *  something about the alignment
+     *  between when pendSV is invoked and it actually running, MSP is decremented by 2.
+     *  something about the memory alignment makes the compiler do that
      */
 
     // save stacks values of current task
@@ -413,6 +428,18 @@ __attribute__((naked)) void pendSvIsr(void)
             " ISB                       \n"
         );
     tcb[taskCurrent].sp = getPSP();
+
+    // calculate cpu time
+    {
+        uint32_t cpu_dt;
+        cpu_dt = (NVIC_ST_RELOAD_R & NVIC_ST_RELOAD_M) - (NVIC_ST_CURRENT_R & NVIC_ST_CURRENT_M);
+    //    tcb[taskCurrent].cpu_time =
+    //                (tcb[taskCurrent].cpu_time  >> CPU_TIMER_FILTER_RESPONSE) * (BV(CPU_TIMER_FILTER_RESPONSE)-1)
+    //            +   (pendSV_systick_counter     >> CPU_TIMER_FILTER_RESPONSE)
+    //        ;
+        if( cpu_dt > tcb[taskCurrent].cpu_time)
+            tcb[taskCurrent].cpu_time = cpu_dt;
+    }
 
     // change tasks
     taskCurrent = rtosScheduler();
@@ -443,6 +470,8 @@ __attribute__((naked)) void pendSvIsr(void)
 //    putsUart0("pendSV new sram mask " NEWLINE);
 //    dumpSramAccessMaskTable(tcb[taskCurrent].srd);
 //    putsUart0(NEWLINE);
+
+    // SW recover remaining stack
     __asm volatile(
             " MRS R0, PSP               \n" // get PSP
             " LDMIA R0!, {R4-R11, LR}   \n" // pop from PSP
@@ -652,61 +681,139 @@ void svCallIsr(void)
             NVIC_APINT_R = NVIC_APINT_VECTKEY | NVIC_APINT_SYSRESETREQ;
             break;
 
-        case SVIC_Request_i:
-            _Static_assert(sizeof(req_t) == sizeof(uint8_t), "incorrect offset used for type req_t"); // see next line
-            req_t req = ((uint8_t*)psp++)[0];
-            switch (req) {
-                case REQ_PRINT_PS:{
-                        putsUart0("PRINT_PS" NEWLINE);
-                    } break;
-                case REQ_PRINT_IPCS:{
-                        putsUart0("PRINT_IPCS" NEWLINE);
-                    } break;
-                case REQ_KILL:{
-                        putsUart0("KILL" NEWLINE);
-                    } break;
-                case REQ_PKILL:{
-                        putsUart0("PKILL" NEWLINE);
-                    } break;
-                case REQ_VAL_PRIINHERT:{
-                        putsUart0("VAL_PRIINHERT" NEWLINE);
-                    } break;
-                case REQ_VAL_PREEMPT:{
-                        putsUart0("VAL_PREEMPT" NEWLINE);
-                    } break;
-                case REQ_VAL_SCHEDULER:{
-                        putsUart0("VAL_SCHEDULER" NEWLINE);
-                    } break;
-                case REQ_PRINT_PIDOF:{
-                        putsUart0("PRINT_PIDOF" NEWLINE);
-                    } break;
-                case REQ_RUN:{
-                        char const * str = (char*)(psp++)[0];   // arg1
-                        bool * ret = (bool*)(psp++)[0];         // arg2
+        case SVIC_Request_i: {
+                _Static_assert(sizeof(req_t) == sizeof(uint8_t), "incorrect offset used for type req_t"); // see prior line
+                req_t req = ((uint8_t*)psp++)[0];
+                switch (req) {
+                    case REQ_PRINT_PS:{
+                            putsUart0("PRINT_PS" NEWLINE);
+                            // TODO
+                            for(uint8_t i = 0; i < MAX_TASKS; i++) {
+                                if(!tcb[i].pid)
+                                    continue;
 
-                        SETPIF(ret, false);
+                                printu32d(tcb[i].cpu_time);
+                                putsUart0(" \t");
+                                putsUart0(tcb[i].name);
+                                putsUart0(NEWLINE);
+                            }
+                        } break;
+                    case REQ_PRINT_IPCS:{
+                            putsUart0("PRINT_IPCS" NEWLINE);
+                            // TODO
+                        } break;
+                    case REQ_KILL:{
+                            putsUart0("KILL" NEWLINE);
+                            // TODO
+                        } break;
+                    case REQ_PKILL:{
+                            putsUart0("PKILL" NEWLINE);
+                            // TODO
+                        } break;
+                    case REQ_VAL_PRIINHERT:{
+                            putsUart0("VAL_PRIINHERT" NEWLINE);
+                            bool * new = (bool*)(psp++)[0];   // arg1
+                            bool * old = (bool*)(psp++)[0];   // arg2
 
-                        if(!str)
-                            break;
-
-                        // find first matching func
-                        for(uint8_t i = 0; i < MAX_TASKS; i++){
-                            if((tcb[i].pid) && (0 == strCmp(tcb[i].name,str) && (tcb[i].state != STATE_INVALID))){
-                                SETPIF(ret, true);
-
-                                if(tcb[i].state == STATE_KILLED)
-                                    tcb[i].state = STATE_UNRUN;
-
+                            if(     (new && !inSRAMBounds(new, sizeof(*new)))
+                                ||  (old && !inSRAMBounds(old, sizeof(*old)))
+                            ) {
+                                killThread((_fn)tcb[taskCurrent].pid);
                                 break;
                             }
-                        }
 
-                    } break;
-                default:{
-                        putsUart0("UNKNOWN_REQUEST" NEWLINE);
-                    } break;
-            }
-            break;
+                            SETPIF(old, priorityInheritance);
+                            if(new)
+                                priorityInheritance = *new;
+                        } break;
+                    case REQ_VAL_PREEMPT:{
+                            putsUart0("VAL_PREEMPT" NEWLINE);
+                            bool * new = (bool*)(psp++)[0];   // arg1
+                            bool * old = (bool*)(psp++)[0];   // arg2
+
+                            if(     (new && !inSRAMBounds(new, sizeof(*new)))
+                                ||  (old && !inSRAMBounds(old, sizeof(*old)))
+                            ) {
+                                killThread((_fn)tcb[taskCurrent].pid);
+                                break;
+                            }
+
+                            SETPIF(old, preemption);
+                            if(new)
+                                preemption = *new;
+
+                        } break;
+                    case REQ_VAL_SCHEDULER:{
+                            putsUart0("VAL_SCHEDULER" NEWLINE);
+                            bool * new = (bool*)(psp++)[0];   // arg1
+                            bool * old = (bool*)(psp++)[0];   // arg2
+
+                            if(     (new && !inSRAMBounds(new, sizeof(*new)))
+                                ||  (old && !inSRAMBounds(old, sizeof(*old)))
+                            ) {
+                                killThread((_fn)tcb[taskCurrent].pid);
+                                break;
+                            }
+
+                            SETPIF(old, priorityScheduler);
+                            if(new)
+                                priorityScheduler = *new;
+
+                        } break;
+                    case REQ_PIDOF:{
+                            putsUart0("REQ_PIDOF" NEWLINE);
+                            char const * name = (char*)(psp++)[0];   // arg1
+                            PID* out = (PID*)(psp++)[0];         // arg2
+
+                            if(     (name && !inSRAMBounds(name, sizeof(*name)))
+                                ||  (out && !inSRAMBounds(out, sizeof(*out)))
+                            ) {
+                                killThread((_fn)tcb[taskCurrent].pid);
+                                break;
+                            }
+
+                            uint8_t task = MAX_TASKS;
+                            if(name)
+                                task = findTaskByName(name);
+
+                            if(task < MAX_TASKS)
+                                SETPIF(out, tcb[task].pid);
+
+                        } break;
+                    case REQ_RUN:{
+                            char const * str = (char*)(psp++)[0];   // arg1
+                            bool * ret = (bool*)(psp++)[0];         // arg2
+
+                            if(     (str && !inSRAMBounds(str, sizeof(*str)))
+                                ||  (ret && !inSRAMBounds(ret, sizeof(*ret)))
+                            ) {
+                                killThread((_fn)tcb[taskCurrent].pid);
+                                break;
+                            }
+
+                            SETPIF(ret, false);
+
+                            if(!str)
+                                break;
+
+                            // find first matching func
+                            for(uint8_t i = 0; i < MAX_TASKS; i++){
+                                if((tcb[i].pid) && (0 == strCmp(tcb[i].name,str) && (tcb[i].state != STATE_INVALID))){
+                                    SETPIF(ret, true);
+
+                                    if(tcb[i].state == STATE_KILLED)
+                                        tcb[i].state = STATE_UNRUN;
+
+                                    break;
+                                }
+                            }
+
+                        } break;
+                    default:{
+                            putsUart0("UNKNOWN_REQUEST" NEWLINE);
+                        } break;
+                }
+            } break;
 
         default:
             putsUart0("SVC_IRQ>unknown SVC arg: ");
@@ -717,12 +824,17 @@ void svCallIsr(void)
 
 }
 
-// written in assembly, compiler keeps throwing in assembly that overwrites the args
-//void __attribute__((naked)) request(req_t t, void const * in, void * out){
-//    SVIC_Request;
-//    __asm(" bx lr");
-//}
+uint8_t findTaskByName(char const * name){
+    uint8_t i;
+    for(i = 0; i < MAX_TASKS; i++){
+        if((tcb[i].pid) && (tcb[i].state != STATE_INVALID) && (0 == strCmp(tcb[i].name, name))){
+            return i;
+        }
+    }
 
+    // nothing found
+    return i;
+}
 
 void dumpPSPRegsFromMSP() {
     uint32_t * psp = getPSP();
@@ -847,6 +959,8 @@ void _HardFaultHandlerISR(){
     putsUart0(CLIERROR);
     putsUart0("Hard fault in process ");
     printu32h((uint32_t)pid);
+    putsUart0(" : ");
+    putsUart0(tcb[taskCurrent].name);
     putsUart0(NEWLINE);
 
     dumpPSPRegsFromMSP();
@@ -861,6 +975,8 @@ void _MPUFaultHandlerISR(){
     putsUart0(CLIERROR);
     putsUart0("MPU fault in process ");
     printu32h((uint32_t)pid);
+    putsUart0(" : ");
+    putsUart0(tcb[taskCurrent].name);
     putsUart0(NEWLINE);
 
     dumpPSPRegsFromMSP();
@@ -890,6 +1006,8 @@ void _BusFaultHandlerISR(){
     putsUart0(CLIERROR);
     putsUart0("Bus fault in process ");
     printu32h((uint32_t)pid);
+    putsUart0(" : ");
+    putsUart0(tcb[taskCurrent].name);
     putsUart0(NEWLINE);
 
     // /177 . Bus Fault bits 15:8
@@ -919,6 +1037,8 @@ void _UsageFaultHandlerISR(){
     putsUart0(CLIERROR);
     putsUart0("Usage fault in process ");
     printu32h((uint32_t)pid);
+    putsUart0(" : ");
+    putsUart0(tcb[taskCurrent].name);
     putsUart0(NEWLINE);
 
     // /177 . Usage Fault bits 31:16
@@ -936,6 +1056,28 @@ void _UsageFaultHandlerISR(){
     while(1);
 }
 
+
+bool inSRAMBounds(void const * start_addr, uint32_t len){
+    SRDBitMask const srd = (SRDBitMask)tcb[taskCurrent].srd;
+
+    if(((uint32_t)start_addr < SRAM_BASE) || ((uint32_t)start_addr >= (SRAM_BASE + SRAM_SIZE)))
+        return false;
+
+    uint8_t start_b = ((uint32_t)start_addr - SRAM_BASE) / MPU_REGION_SIZE_B;
+    len /= 1024;
+
+    for(uint8_t i = 0; i < len; i++){
+        if(!(srd.raw & BV(start_b + i)))
+            return false;
+    }
+
+    return true;
+}
+
 #if 4'000'000 / TICK_RATE_HZ >= 0xFF'FFFF
-    #error "SysTick too fast"
+    #error "TICK_RATE_HZ. SysTick too fast"
+#endif
+
+#if (CPU_TIMER_FILTER_RESPONSE <= 0) || (CPU_TIMER_FILTER_RESPONSE > 8)
+    #error "CPU_TIMER_FILTER_RESPONSE must be between 1 and 8"
 #endif

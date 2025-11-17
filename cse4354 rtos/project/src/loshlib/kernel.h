@@ -40,6 +40,7 @@ typedef void (*_fn)();
 // tasks
 #define MAX_TASKS 12
 #define NUM_PRIORITIES  8
+#define CPU_TIMER_FILTER_RESPONSE 4     // lower means faster
 
 #define TICK_RATE_HZ 1000
 #define MS_TO_TICKS(X) ((X) * TICK_RATE_HZ / 1000)
@@ -116,7 +117,7 @@ typedef enum {
     REQ_VAL_PRIINHERT,  // (bool, bool) . priority inheritance
     REQ_VAL_PREEMPT,    // (bool, bool) . premption
     REQ_VAL_SCHEDULER,  // (bool, bool) . scheduler is (true)priority or (false)round-robin
-    REQ_PRINT_PIDOF,    // (string, bool) . prints PID of process found by name. return true if process killed
+    REQ_PIDOF,          // (string, PID) . returns PID of process found by name. return true if process killed
     REQ_RUN,            // (string, bool) . starts process - if not already -. return true if process found
 } req_t;
 void request(req_t, void const * in, void * out);
