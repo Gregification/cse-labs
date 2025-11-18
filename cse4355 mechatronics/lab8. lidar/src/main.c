@@ -24,10 +24,6 @@ void initHw();
 #define PWMMAX ((uint16_t)0x8FF)
 //#define PWMMAX ((uint16_t)0x100)
 
-// see ADS111x.9.5.1.1:4/20
-#define ADS_ADDR 72
-
-
 void setPWMA(uint16_t val){ // PB6
     PWM0_0_CMPA_R &= ~0xFFFF;
     PWM0_0_CMPA_R |= val; // set pwmA comp value
@@ -103,38 +99,61 @@ void portA_IRQ(){
 
 /*** HX711 ************************************/
 
-#define HX_DATA     PORTE,1
-#define HX_CLK      PORTE,2
+// Pins
+#define UART1_TX PORTC,5
+#define UART1_RX PORTC,4
 
-uint32_t hx_read(){
-    const int delayInUs = 20;
+// Initialize UART1
+void initUart1(void)
+{
+    // Enable clocks
+    SYSCTL_RCGCUART_R |= SYSCTL_RCGCUART_R1;
+    _delay_cycles(3);
+    enablePort(PORTC);
 
-    setPinValue(HX_CLK, 1);
-    waitMicrosecond(80);
-    setPinValue(HX_CLK, 0);
-    waitMicrosecond(10);
+    // Configure UART0 pins
+    selectPinPushPullOutput(UART1_TX);
+    selectPinDigitalInput(UART1_RX);
+    setPinAuxFunction(UART1_TX, GPIO_PCTL_PC5_U1TX);
+    setPinAuxFunction(UART1_RX, GPIO_PCTL_PC4_U1RX);
 
-    while(1 == getPinValue(HX_DATA))
-        {}
-    waitMicrosecond(delayInUs);
+    // Configure UART0 with default baud rate
+    UART1_CTL_R = 0;                                    // turn-off UART0 to allow safe programming
+    UART1_CC_R = UART_CC_CS_SYSCLK;                     // use system clock (usually 40 MHz)
+}
 
-    uint32_t data = 0;
-    for(uint8_t i = 0; i < 24; i++){
-        setPinValue(HX_CLK, 1);
-        waitMicrosecond(delayInUs);
-        if(getPinValue(HX_DATA))
-            data |= i;
-        data <<= 1;
-        setPinValue(HX_CLK, 0);
-        waitMicrosecond(delayInUs);
+// Set baud rate as function of instruction cycle frequency
+void setUart1BaudRate(uint32_t baudRate, uint32_t fcyc)
+{
+    uint32_t divisorTimes128 = (fcyc * 8) / baudRate;   // calculate divisor (r) in units of 1/128,
+                                                        // where r = fcyc / 16 * baudRate
+    divisorTimes128 += 1;                               // add 1/128 to allow rounding
+    UART1_CTL_R = 0;                                    // turn-off UART0 to allow safe programming
+    UART1_IBRD_R = divisorTimes128 >> 7;                // set integer value to floor(r)
+    UART1_FBRD_R = ((divisorTimes128) >> 1) & 63;       // set fractional value to round(fract(r)*64)
+    UART1_LCRH_R = UART_LCRH_WLEN_8 | UART_LCRH_FEN;    // configure for 8N1 w/ 16-level FIFO
+    UART1_CTL_R = UART_CTL_TXE | UART_CTL_RXE | UART_CTL_UARTEN;
+                                                        // turn-on UART1
+}
+
+void uart1_tx(void const * tx, uint8_t len){
+    for(uint8_t i = 0; i < len; i++){
+        while (UART1_FR_R & UART_FR_TXFF);               // wait if uart1 tx fifo full
+        UART1_DR_R = ((uint8_t *)tx)[i];                   // write character to fifo
     }
+}
 
-    setPinValue(HX_CLK, 1);
-    waitMicrosecond(delayInUs);
-    setPinValue(HX_CLK, 0);
-    waitMicrosecond(delayInUs);
+void uart1_rx(void * rx, uint8_t len){
+    for(uint8_t i = 0; i < len; i++){
+        while (UART1_FR_R & UART_FR_RXFE);              // wait if uart1 rx fifo empty
+        ((uint8_t *)rx)[i] = UART1_DR_R & 0xFF;                      // get character from fifo
+    }
+}
 
-    return data;
+uint16_t alm8_getDistance(){
+    uint8_t requestPacket[] = {0xA5, 0x21}; // start byte , FORCE_SCAN request
+
+    return 0xbeef;
 }
 
 
@@ -151,9 +170,6 @@ int main(void)
     selectPinPushPullOutput(LED_RED);
     selectPinPushPullOutput(LED_GREEN);
     selectPinPushPullOutput(LED_BLUE);
-
-    selectPinDigitalInput(HX_DATA);
-    selectPinPushPullOutput(HX_CLK);
 
     selectPinDigitalInput(SW1);
     enablePinPullup(SW1);
@@ -280,25 +296,44 @@ int main(void)
     /*********************************************************/
 
     setUart0BaudRate(115200, F_CPU);
-    putsUart0(CLICLEAR CLIRESET CLIGOOD "FALL 2025, CSE4355 Mechatronics, Lab 7" NEWLINE CLIRESET);
+    putsUart0(CLICLEAR CLIRESET CLIGOOD "FALL 2025, CSE4355 Mechatronics, Lab 8" NEWLINE CLIRESET);
 
 
     /*********************************************************/
 
-    setPWMA(PWMMAX * 0.0);
+    setPWMA(PWMMAX * 0.2);
     setPWMB(PWMMAX * 0.0);
 
     /*********************************************************/
 
+    // send stop command
+    {
+        uint8_t tx[] = {0xA5, 0x25};
+        uart1_tx(ARRANDN(tx));
+    }
 
-    int32_t raw = hx_read();
+    // dump info
+    {
+        uint8_t tx[] = {0xA5, 0x50};
+        uart1_tx(ARRANDN(tx));
+
+        uint8_t rx[20];
+        uart1_rx(ARRANDN(rx));
+
+        for(uint8_t i = 0; i < sizeof(rx); i++){
+            putsUart0(" \t");
+            puti32d(rx[i]);
+
+            if(i % 5 == 0)
+                putsUart0(NEWLINE);
+        }
+    }
+
+
     while(1){
-        raw = raw  * 9 / 10 + hx_read() / 10;
-//        raw = hx_read();
-
-        putsUart0("raw: \t");
-        puti32d(raw);
-        putsUart0(NEWLINE);
+//        putsUart0("raw: \t");
+//        puti32d(raw);
+//        putsUart0(NEWLINE);
 
         waitMicrosecond(100e3);
     }
