@@ -39,16 +39,13 @@ typedef union {
     uint64_t raw;
 } SRDBitMask;
 
+SRDBitMask accessMask;      // current processes mem access mask
+
 /** Heap Ownership Table */
 struct {
     PID owner_pid;
     unsigned int len;   // length of allocation, only base pointer has non-zero value.
 } HOT[MPU_REGION_COUNT];
-
-struct {
-    PID pid;
-    SRDBitMask mask;
-} accessMasks[MAX_TASKS];
 
 
 extern volatile uint8_t heap[];

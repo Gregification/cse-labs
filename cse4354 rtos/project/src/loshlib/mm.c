@@ -34,22 +34,8 @@ void * mallocHeap(uint32_t size_in_bytes)
         return 0;
 
     // find what access mask to update
-    unsigned int am_i = 0;
-    for(am_i = 0; am_i < MAX_TASKS; am_i++)
-        if(accessMasks[am_i].pid == pid)
-            break;
-    if(am_i == MAX_TASKS) { // pid dosent already have a mask
-        // find empty space for mask
-        for(am_i = 0; am_i < MAX_TASKS; am_i++)
-            if(accessMasks[am_i].pid == 0) {
-                accessMasks[am_i].pid = pid;
-//                addSramAccessWindow(&accessMasks[am_i].mask.raw, (uint32_t*)SRAM_BASE, 1024*4);
-                break;
-            }
 
-        if(am_i == MAX_TASKS) // if no space available
-            return 0;
-    }
+//                addSramAccessWindow(&accessMasks[am_i].mask.raw, (uint32_t*)SRAM_BASE, 1024*4);
 
 
     int regions = (size_in_bytes-1) / MPU_REGION_SIZE_B;
@@ -79,17 +65,17 @@ void * mallocHeap(uint32_t size_in_bytes)
             HOT[baseR].len = regions+1;
 
             addSramAccessWindow(
-                    &accessMasks[am_i].mask.raw,
+                    &accessMask.raw,
                     heap + (baseR * MPU_REGION_SIZE_B),
                     size_in_bytes
                 );
 
-            putsUart0("malloc resulting mask (");
-            printu32d(am_i);
+            putsUart0("malloc resulting mask (pid:");
+            printu32d((uint32_t)pid);
             putsUart0("):" NEWLINE " enbl: ");
-            dumpSramAccessMaskTable(accessMasks[am_i].mask.raw);
+            dumpSramAccessMaskTable(accessMask.raw);
 
-            applySramAccessMask(accessMasks[am_i].mask.raw);
+            applySramAccessMask(accessMask.raw);
 
             return (void *)(heap + (baseR * MPU_REGION_SIZE_B));
         }
@@ -114,40 +100,26 @@ void freeHeap(void *address_from_malloc)
             if(address_from_malloc == (heap + (r * MPU_REGION_SIZE_B))){
                 // is valid
 
-                int am_i;
-                // find the appropriate mask to update (if it even exists (it should))
-                for(am_i = 0; am_i < MAX_TASKS; am_i++)
-                    if(accessMasks[am_i].pid == pid)
-                        break;
-
                 // update ownership
                 for(int i = 1; i < HOT[r].len; i++){
                     HOT[r+i].owner_pid = 0;
                     HOT[r+i].len = 0;
 
                     // update access
-                    if(am_i != MAX_TASKS)
-                        accessMasks[am_i].mask.masks[(4 + r + i)/8] &= ~BV((4 + r + i) % 8);
+                    accessMask.masks[(4 + r + i)/8] &= ~BV((4 + r + i) % 8);
                 }
                 HOT[r].owner_pid = 0;
                 HOT[r].len = 0;
 
-                if(am_i != MAX_TASKS){
 //                    putsUart0("free edit mask on ");
 //                    printu32d(am_i);
 //                    putsUart0(NEWLINE);
-                    accessMasks[am_i].mask.masks[(4 + r)/8] &= ~BV((4 + r) % 8);
-                } else {
-//                    putsUart0("free has no mask to edit PID:");
-//                    printu32d(pid);
-//                    putsUart0(NEWLINE);
-                }
+                accessMask.masks[(4 + r)/8] &= ~BV((4 + r) % 8);
 
 //                putsUart0("free resulting mask:" NEWLINE);
 //                dumpAccessTable();
 
-                if(am_i != MAX_TASKS)
-                    applySramAccessMask(accessMasks[am_i].mask.raw);
+                applySramAccessMask(accessMask.raw);
 
                 return;
             }
@@ -188,10 +160,6 @@ void initMemoryManager(void)
 
 // REQUIRED: add your custom MPU functions here (eg to return the srd bits)
 void setupMPU() {
-    for(int i = 0; i < MAX_TASKS; i++){
-        accessMasks[i].mask.raw = createNoSramAccessMask();
-        accessMasks[i].pid = 0;
-    }
 
     { // default all access rule
         __asm(" ISB");

@@ -47,7 +47,7 @@ typedef void (*_fn)();
 
 typedef void * PID;
 
-PID pid; // current processes ID
+PID pid;                    // current processes ID
 
 #define SVIC_PendSV_i           1
 #define SVIC_PendSV             __asm(" SVC #0x1");

@@ -76,7 +76,7 @@ struct _tcb
     char name[16];                 // name of task used in ps command
     uint8_t mutex;                 // index of the mutex in use or blocking the thread
     uint8_t semaphore;             // index of the semaphore that is blocking the thread
-    uint32_t cpu_time;             // relative time from XXX of cpu use
+    uint16_t cpu_time;             // relative time from XXX of cpu use
 } tcb[MAX_TASKS];
 
 //-----------------------------------------------------------------------------
@@ -286,15 +286,7 @@ bool createThread(_fn fn, const char name[], uint8_t priority, uint32_t stackByt
 
             // find srd, malloc puts it in "accessMasks"
             {
-                uint8_t accessMask_i;
-                for(accessMask_i = 0; accessMask_i < (sizeof(accessMasks)-1)/sizeof(accessMasks[0]); accessMask_i++){
-                    if(accessMasks[accessMask_i].pid == tcb[i].pid)
-                        break;
-                }
-                if(accessMasks[accessMask_i].pid != tcb[i].pid){
-                    return false;
-                }
-                tcb[i].srd = accessMasks[accessMask_i].mask.raw;
+                tcb[i].srd = accessMask.raw;
             }
 
             tcb[i].state = STATE_UNRUN;
@@ -323,6 +315,22 @@ bool createThread(_fn fn, const char name[], uint8_t priority, uint32_t stackByt
 void killThread(_fn fn)
 {
     putsUart0("KILL THREAD");
+
+    uint8_t task;
+    // find task by _fn
+    for(task = 0; task < MAX_TASKS; task++)
+        if(tcb[task].pid == fn)
+            break;
+    if(task == MAX_TASKS)
+        return;
+
+    // free mem
+//    freeHeap(t);
+
+    // remove task from semaphore queues
+
+    // remove task from mutex queues
+
 }
 
 // REQUIRED: modify this function to restart a thread, including creating a stack
@@ -439,7 +447,6 @@ __attribute__((naked)) void pendSvIsr(void)
             " MSR PSP, R0               \n" // update PSP
             " ISB                       \n"
         );
-    tcb[taskCurrent].sp = getPSP();
 
     // calculate cpu time
     {
@@ -450,8 +457,14 @@ __attribute__((naked)) void pendSvIsr(void)
             ;
     }
 
+    tcb[taskCurrent].sp = getPSP();
+    tcb[taskCurrent].srd = accessMask.raw;
+
     // change tasks
     taskCurrent = rtosScheduler();
+
+    pid = tcb[taskCurrent].pid;
+    accessMask.raw = tcb[taskCurrent].srd;
 
     // restore stack values of new task
     if(tcb[taskCurrent].state == STATE_UNRUN) {
