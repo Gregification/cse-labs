@@ -144,16 +144,21 @@ void uart1_tx(void const * tx, uint8_t len){
 }
 
 void uart1_rx(void * rx, uint8_t len){
-    for(uint8_t i = 0; i < len; i++){
+    ((uint8_t *)rx)[0] = 0;
+    while(((uint8_t *)rx)[0] != 0xA5) {
         while (UART1_FR_R & UART_FR_RXFE);              // wait if uart1 rx fifo empty
-        ((uint8_t *)rx)[i] = UART1_DR_R & 0xFF;                      // get character from fifo
+        ((uint8_t *)rx)[0] = UART1_DR_R & 0xFF;         // get character from fifo
+    }
+
+    for(uint8_t i = 1; i < len; i++){
+        while (UART1_FR_R & UART_FR_RXFE);              // wait if uart1 rx fifo empty
+        ((uint8_t *)rx)[i] = UART1_DR_R & 0xFF;         // get character from fifo
     }
 }
 
-uint16_t alm8_getDistance(){
-    uint8_t requestPacket[] = {0xA5, 0x21}; // start byte , FORCE_SCAN request
-
-    return 0xbeef;
+uint8_t uart1rxB(){
+    while (UART1_FR_R & UART_FR_RXFE);              // wait if uart1 rx fifo empty
+    return UART1_DR_R & 0xFF;         // get character from fifo
 }
 
 
@@ -166,14 +171,15 @@ int main(void)
 
     initHw();
     initUart0();
+    initUart1();
 
     selectPinPushPullOutput(LED_RED);
     selectPinPushPullOutput(LED_GREEN);
     selectPinPushPullOutput(LED_BLUE);
 
-    selectPinDigitalInput(SW1);
-    enablePinPullup(SW1);
-    enablePinInterrupt(SW1);
+//    selectPinDigitalInput(SW1);
+//    enablePinPullup(SW1);
+//    enablePinInterrupt(SW1);
 
 //    setPinCommitControl(SW2);
 //    enablePinPullup(SW2);
@@ -296,46 +302,158 @@ int main(void)
     /*********************************************************/
 
     setUart0BaudRate(115200, F_CPU);
-    putsUart0(CLICLEAR CLIRESET CLIGOOD "FALL 2025, CSE4355 Mechatronics, Lab 8" NEWLINE CLIRESET);
+    setUart1BaudRate(115200, F_CPU);
+//    putsUart0(CLICLEAR CLIRESET CLIGOOD "FALL 2025, CSE4355 Mechatronics, Lab 8" NEWLINE CLIRESET);
 
 
     /*********************************************************/
 
-    setPWMA(PWMMAX * 0.2);
+    setPWMA(PWMMAX * 0.9);
     setPWMB(PWMMAX * 0.0);
 
     /*********************************************************/
 
-    // send stop command
+    // stop
     {
         uint8_t tx[] = {0xA5, 0x25};
         uart1_tx(ARRANDN(tx));
     }
+    waitMicrosecond(5e3);
+
+    //get health
+    {
+        uint8_t tx[] = {0xA5, 0x52};
+        uart1_tx(ARRANDN(tx));
+
+        uint8_t rx[7];
+        uart1_rx(ARRANDN(rx));
+
+//        putsUart0("health dump" NEWLINE);
+//        for(uint8_t i = 1; i <= sizeof(rx); i++){
+//            putsUart0(" \t");
+//            putu32h(rx[i-1]);
+//
+//            if(i % 4 == 0)
+//                putsUart0(NEWLINE);
+//        }
+//        putsUart0(NEWLINE);
+    }
+    waitMicrosecond(5e3);
 
     // dump info
     {
         uint8_t tx[] = {0xA5, 0x50};
         uart1_tx(ARRANDN(tx));
 
-        uint8_t rx[20];
+        uint8_t rx[3 + 20];
         uart1_rx(ARRANDN(rx));
+        waitMicrosecond(5e3);
 
-        for(uint8_t i = 0; i < sizeof(rx); i++){
-            putsUart0(" \t");
-            puti32d(rx[i]);
-
-            if(i % 5 == 0)
-                putsUart0(NEWLINE);
-        }
+//        putsUart0("info dump" NEWLINE);
+//        for(uint8_t i = 1; i <= sizeof(rx); i++){
+//            putsUart0(" \t");
+//            putu32h(rx[i-1]);
+//            if(i % 5 == 0)
+//                putsUart0(NEWLINE);
+//        }
+//        putsUart0(NEWLINE);
     }
+    waitMicrosecond(5e3);
 
+    // start motor
+    {
+//        putsUart0("start motor" NEWLINE);
+        uint8_t tx[] = {0xA5, 0xA8, 0x02, 0x0, 0x00, 0x0};
 
-    while(1){
-//        putsUart0("raw: \t");
-//        puti32d(raw);
+        for(uint8_t i = 0; i < sizeof(tx)-1; i++)
+            tx[sizeof(tx)-1] ^= tx[i];
+        uart1_tx(ARRANDN(tx));
+
+    }
+    waitMicrosecond(5e3);
+
+    // scan
+    {
+//        putsUart0("scan dump" NEWLINE);
+        uint8_t tx[] = {0xA5, 0x21};
+        uart1_tx(ARRANDN(tx));
+
+        uint8_t rx[7];
+        uart1_rx(ARRANDN(rx));
+//        for(uint8_t i = 1; i <= sizeof(rx); i++){
+//            putsUart0(" \t");
+//            putu32h(rx[i-1]);
+
+//            if(i % 5 == 0)
+//                putsUart0(NEWLINE);
+//        }
 //        putsUart0(NEWLINE);
 
-        waitMicrosecond(100e3);
+//        putsUart0("distance: ");
+        uint32_t* dist = rx+3;
+//        puti32d(*dist);
+
+//        putsUart0(CLIRESET NEWLINE);
+    }
+    waitMicrosecond(5e3);
+
+    while(1){
+        putsUart0(CLICLEAR);
+        static float vol;
+
+        struct {
+            uint16_t dist_raw;
+            uint16_t angle_raw;
+        } raw[500];
+        uint16_t rawlen = sizeof(raw)/sizeof(raw[0]);
+
+        // read scan
+        {
+            uint8_t rx[5]; // rx buffer
+            rx[1] = 0;
+
+            // wait for new scan
+            while(1) {
+                rx[0] = rx[1];
+
+                rx[1] = uart1rxB();
+
+                if(
+                        (rx[0] & 0b1) == 1
+                    &&  (rx[0] & 0b10)== 0
+                    &&  (rx[1] & 0b1) == 1
+                    )
+                    break;
+            }
+            uart1rxB();
+            uart1rxB();
+            uart1rxB();
+
+            for(uint16_t i = 0; i < rawlen; i++) {
+                uart1rxB(); // +0
+
+                raw[i].angle_raw = uart1rxB() >>1;              // +1
+                raw[i].angle_raw |= (uint16_t)uart1rxB() << 7;  // +2
+                raw[i].dist_raw = uart1rxB();                    // +3
+                raw[i].dist_raw |= (uint16_t)uart1rxB() << 8;   // +4
+           }
+
+           for(uint16_t i = 0; i < rawlen; i++) {
+               float dist; // mm
+               float angle; // deg
+
+               dist = raw[i].dist_raw / 4;
+               angle = raw[i].angle_raw / 64;
+
+               putD(angle);
+               putsUart0(" , ");
+               puti32d(dist);
+               putsUart0(NEWLINE);
+          }
+
+        }
+
+        while(1);
     }
 
 }
