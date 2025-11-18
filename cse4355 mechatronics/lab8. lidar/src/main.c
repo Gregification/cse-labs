@@ -362,7 +362,6 @@ int main(void)
 
     // start motor
     {
-//        putsUart0("start motor" NEWLINE);
         uint8_t tx[] = {0xA5, 0xA8, 0x02, 0x0, 0x00, 0x0};
 
         for(uint8_t i = 0; i < sizeof(tx)-1; i++)
@@ -370,92 +369,77 @@ int main(void)
         uart1_tx(ARRANDN(tx));
 
     }
-    waitMicrosecond(5e3);
+    waitMicrosecond(2e6);
+
+    // clear fifo
+    while (!(UART1_FR_R & UART_FR_RXFE)){
+        volatile uint8_t a = UART1_DR_R;
+    }
+
+    struct {
+        uint16_t dist_raw;
+        uint16_t angle_raw;
+    } raw[800];
+    uint16_t const rawlen = sizeof(raw)/sizeof(raw[0]);
 
     // scan
     {
-//        putsUart0("scan dump" NEWLINE);
         uint8_t tx[] = {0xA5, 0x21};
         uart1_tx(ARRANDN(tx));
 
         uint8_t rx[7];
         uart1_rx(ARRANDN(rx));
-//        for(uint8_t i = 1; i <= sizeof(rx); i++){
-//            putsUart0(" \t");
-//            putu32h(rx[i-1]);
-
-//            if(i % 5 == 0)
-//                putsUart0(NEWLINE);
-//        }
-//        putsUart0(NEWLINE);
-
-//        putsUart0("distance: ");
-        uint32_t* dist = rx+3;
-//        puti32d(*dist);
-
-//        putsUart0(CLIRESET NEWLINE);
     }
-    waitMicrosecond(5e3);
 
-    while(1){
-        putsUart0(CLICLEAR);
-        static float vol;
 
-        struct {
-            uint16_t dist_raw;
-            uint16_t angle_raw;
-        } raw[500];
-        uint16_t rawlen = sizeof(raw)/sizeof(raw[0]);
+    // read scan
+    {
+        for(uint16_t i = 0; i < rawlen; i++) {
+            uart1rxB(); // +0
 
-        // read scan
-        {
-            uint8_t rx[5]; // rx buffer
-            rx[1] = 0;
+            raw[i].angle_raw = uart1rxB() >>1;              // +1
+            raw[i].angle_raw |= (uint16_t)uart1rxB() << 7;  // +2
+            raw[i].dist_raw = uart1rxB();                    // +3
+            raw[i].dist_raw |= (uint16_t)uart1rxB() << 8;   // +4
+       }
+    }
 
-            // wait for new scan
-            while(1) {
-                rx[0] = rx[1];
+    // stop
+    {
+        uint8_t tx[] = {0xA5, 0x40};
+        uart1_tx(ARRANDN(tx));
 
-                rx[1] = uart1rxB();
+        setPWMA(0);
+    }
 
-                if(
-                        (rx[0] & 0b1) == 1
-                    &&  (rx[0] & 0b10)== 0
-                    &&  (rx[1] & 0b1) == 1
-                    )
-                    break;
-            }
-            uart1rxB();
-            uart1rxB();
-            uart1rxB();
+    // dump scan
+    for(uint16_t i = 0; i < rawlen; i++) {
+        float dist; // mm
+        float angle; // deg
 
-            for(uint16_t i = 0; i < rawlen; i++) {
-                uart1rxB(); // +0
+        dist = raw[i].dist_raw / 4;
+        angle = raw[i].angle_raw / 64;
 
-                raw[i].angle_raw = uart1rxB() >>1;              // +1
-                raw[i].angle_raw |= (uint16_t)uart1rxB() << 7;  // +2
-                raw[i].dist_raw = uart1rxB();                    // +3
-                raw[i].dist_raw |= (uint16_t)uart1rxB() << 8;   // +4
-           }
+        putD(angle);
+        putsUart0(" , ");
+        puti32d(dist);
+        putsUart0(NEWLINE);
+   }
 
-           for(uint16_t i = 0; i < rawlen; i++) {
-               float dist; // mm
-               float angle; // deg
+    // calc area
+    {
 
-               dist = raw[i].dist_raw / 4;
-               angle = raw[i].angle_raw / 64;
+        float volume = 0;
 
-               putD(angle);
-               putsUart0(" , ");
-               puti32d(dist);
-               putsUart0(NEWLINE);
-          }
+        for(uint16_t i = 0; i < rawlen; i++) {
+            float angleD = 0
+            float dist = raw[i].dist_raw / 4;
+            float angle_deg = raw[i].angle_raw / 64;
 
         }
-
-        while(1);
     }
 
+    while(1);
 }
 
 
