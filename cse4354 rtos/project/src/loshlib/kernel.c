@@ -76,7 +76,7 @@ struct _tcb
     char name[16];                 // name of task used in ps command
     uint8_t mutex;                 // index of the mutex in use or blocking the thread
     uint8_t semaphore;             // index of the semaphore that is blocking the thread
-    uint16_t cpu_time;             // relative time from XXX of cpu use
+    uint32_t cpu_time;             // relative time from XXX of cpu use
 } tcb[MAX_TASKS];
 
 //-----------------------------------------------------------------------------
@@ -394,6 +394,18 @@ void systickIsr(void)
         uint8_t i;
         for(i = 0; i < MAX_TASKS; i++){
             if(tcb[i].pid != 0){
+                switch(tcb[i].state){
+                    case STATE_KILLED:
+                    case STATE_UNRUN:
+                    case STATE_INVALID:
+                        tcb[i].cpu_time = 0;
+
+                    case STATE_DELAYED:
+                    case STATE_BLOCKED_MUTEX:
+                    case STATE_BLOCKED_SEMAPHORE:
+                    default: break;
+                }
+
                 if(tcb[i].state == STATE_DELAYED){
                     if(tcb[i].ticks == 0) {
                         tcb[i].state = STATE_READY;
@@ -431,14 +443,11 @@ __attribute__((naked)) void pendSvIsr(void)
 
     // calculate cpu time
     {
-        uint32_t cpu_dt;
-        cpu_dt = (NVIC_ST_RELOAD_R & NVIC_ST_RELOAD_M) - (NVIC_ST_CURRENT_R & NVIC_ST_CURRENT_M);
-    //    tcb[taskCurrent].cpu_time =
-    //                (tcb[taskCurrent].cpu_time  >> CPU_TIMER_FILTER_RESPONSE) * (BV(CPU_TIMER_FILTER_RESPONSE)-1)
-    //            +   (pendSV_systick_counter     >> CPU_TIMER_FILTER_RESPONSE)
-    //        ;
-        if( cpu_dt > tcb[taskCurrent].cpu_time)
-            tcb[taskCurrent].cpu_time = cpu_dt;
+        const uint32_t cpu_dt = (NVIC_ST_RELOAD_R & NVIC_ST_RELOAD_M) - (NVIC_ST_CURRENT_R & NVIC_ST_CURRENT_M);
+        tcb[taskCurrent].cpu_time =
+                    ((tcb[taskCurrent].cpu_time * (BV(CPU_TIMER_FILTER_RESPONSE)-1)) >> CPU_TIMER_FILTER_RESPONSE)
+                +   (cpu_dt                     >> CPU_TIMER_FILTER_RESPONSE)
+            ;
     }
 
     // change tasks
