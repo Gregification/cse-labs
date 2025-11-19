@@ -197,6 +197,7 @@ uint8_t rtosScheduler(void)
 // REQUIRED: modify this function to start the operating system
 // by calling scheduler, set srd bits, setting PSP, ASP bit, call fn with fn add in R0
 // fn set TMPL bit, and PC <= fn
+void _startRtos_force_new_stack();
 void __attribute__((naked)) startRtos(void)
 {
     // make systick priority higher than pendSV. both default at 0. 0->...7 = high->low priority
@@ -214,8 +215,8 @@ void __attribute__((naked)) startRtos(void)
     NVIC_ST_CTRL_R     |= NVIC_ST_CTRL_ENABLE; // enable SysTick
     setTMPL();
     SVIC_PendSV;
-    while(1);
 }
+
 
 // REQUIRED:
 // add task if room in task list
@@ -240,7 +241,13 @@ bool createThread(_fn fn, const char name[], uint8_t priority, uint32_t stackByt
             i = 0;
             while (tcb[i].state != STATE_INVALID) {i++;}
             pid = tcb[i].pid = fn;
-            tcb[i].sp = mallocHeap(stackBytes);
+            {
+                SRDBitMask og = accessMask;
+                accessMask.raw = tcb[i].srd;
+                tcb[i].sp = mallocHeap(stackBytes);
+                tcb[i].srd = accessMask.raw;
+                accessMask = og;
+            }
             if(tcb[i].sp == 0){
                 return false;
             }
@@ -283,11 +290,6 @@ bool createThread(_fn fn, const char name[], uint8_t priority, uint32_t stackByt
 //
 //                tcb[i].sp = psp;
 //            }
-
-            // find srd, malloc puts it in "accessMasks"
-            {
-                tcb[i].srd = accessMask.raw;
-            }
 
             tcb[i].state = STATE_UNRUN;
             tcb[i].priority = priority;
@@ -449,26 +451,34 @@ __attribute__((naked)) void pendSvIsr(void)
         );
 
     // calculate cpu time
+    static uint32_t cpu_dt;
     {
-        const uint32_t cpu_dt = (NVIC_ST_RELOAD_R & NVIC_ST_RELOAD_M) - (NVIC_ST_CURRENT_R & NVIC_ST_CURRENT_M);
+        uint32_t curr = NVIC_ST_CURRENT_R & NVIC_ST_CURRENT_M;
+        if(curr > cpu_dt)
+            cpu_dt += curr;
+
+        cpu_dt += pendSV_systicks * (NVIC_ST_RELOAD_R & NVIC_ST_RELOAD_M);
+
         tcb[taskCurrent].cpu_time =
                     ((tcb[taskCurrent].cpu_time * (BV(CPU_TIMER_FILTER_RESPONSE)-1)) >> CPU_TIMER_FILTER_RESPONSE)
-                +   (cpu_dt                     >> CPU_TIMER_FILTER_RESPONSE)
+                +   (cpu_dt >> CPU_TIMER_FILTER_RESPONSE)
             ;
     }
 
-    tcb[taskCurrent].sp = getPSP();
-    tcb[taskCurrent].srd = accessMask.raw;
+    // if not initializing the task
+    if(tcb[taskCurrent].state != STATE_UNRUN){
+        tcb[taskCurrent].sp = getPSP();
+        tcb[taskCurrent].srd = accessMask.raw;
+    }
 
     // change tasks
     taskCurrent = rtosScheduler();
 
-    pid = tcb[taskCurrent].pid;
-    accessMask.raw = tcb[taskCurrent].srd;
 
     // restore stack values of new task
     if(tcb[taskCurrent].state == STATE_UNRUN) {
         tcb[taskCurrent].state = STATE_READY;
+
         { // make fake former-stack for the new task to switch too /110
             uint32_t * psp = (uint32_t *)(tcb[taskCurrent].sp);
 
@@ -487,11 +497,17 @@ __attribute__((naked)) void pendSvIsr(void)
     }
     setPSP(tcb[taskCurrent].sp);
 
+    pid = tcb[taskCurrent].pid;
+    accessMask.raw = tcb[taskCurrent].srd;
 
     applySramAccessMask(tcb[taskCurrent].srd);
 //    putsUart0("pendSV new sram mask " NEWLINE);
 //    dumpSramAccessMaskTable(tcb[taskCurrent].srd);
 //    putsUart0(NEWLINE);
+
+    // start cpu_time timer
+    cpu_dt = NVIC_ST_CURRENT_R & NVIC_ST_CURRENT_M;
+    pendSV_systicks = 0;
 
     // SW recover remaining stack
     __asm volatile(
@@ -975,7 +991,7 @@ void dumpFaultStatReg(uint32_t stat) {
 }
 
 
-void _HardFaultHandlerISR(){
+ void _HardFaultHandlerISR(){
     setPinValue(LED_BLUE, 1);
 
     putsUart0(CLIERROR);

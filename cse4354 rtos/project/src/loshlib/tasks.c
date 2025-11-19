@@ -80,7 +80,7 @@ uint8_t readPbs(void)
 
     selectPinPushPullOutput(BTN_0_I);
     setPinValue(BTN_0_I, 1);
-//    waitMicrosecond(5);
+//    waitMicrosecond(1);
 
     if(getPinValue(BTN_1_I))
         return BV(1);
@@ -88,14 +88,14 @@ uint8_t readPbs(void)
         return BV(2);
     if(getPinValue(BTN_3_I))
         return BV(3);
-    if(getPinValue(BTN_4_I))
+    if(getPinValue(BTN_4_I)) // TODO: check wiring, died again
         return BV(4);
     if(getPinValue(BTN_5_I))
         return BV(5);
 
     selectPinDigitalInput(BTN_0_I);
     enablePinPullup(BTN_0_I);
-//    waitMicrosecond(5);
+//    waitMicrosecond(1);
 
     if(getPinValue(BTN_0_I) == 0)
         return BV(0);
@@ -242,6 +242,8 @@ void errant(void)
     volatile uint32_t* p = (uint32_t*)0x20000000;
     while(true)
     {
+//        printu32d(readPbs());
+//        putsUart0(NEWLINE);
         while (readPbs() == 16)
         {
             *p = 0;
