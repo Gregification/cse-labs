@@ -84,12 +84,15 @@ struct _tcb
 //-----------------------------------------------------------------------------
 
 uint32_t pendSV_systicks; // ticks for use by pendSV only
+uint32_t cpu_timeer_sum;
 
 // returns tcb index of first task with matching name. returns MAX_TASKS if not found
 uint8_t findTaskByName(char const * name);
 
 // returns true of spand is entirely within taskCurrent's allocated memory
 bool inSRAMBounds(void const * start, uint32_t len);
+
+void _killThread(uint8_t tcb_i);
 
 bool initMutex(uint8_t mutex)
 {
@@ -401,6 +404,8 @@ void systickIsr(void)
 
     // decrement task timers
     {
+        cpu_timeer_sum = 0;
+
         uint8_t i;
         for(i = 0; i < MAX_TASKS; i++){
             if(tcb[i].pid != 0){
@@ -415,6 +420,8 @@ void systickIsr(void)
                     case STATE_BLOCKED_SEMAPHORE:
                     default: break;
                 }
+
+                cpu_timeer_sum += tcb[i].cpu_time;
 
                 if(tcb[i].state == STATE_DELAYED){
                     if(tcb[i].ticks == 0) {
@@ -724,21 +731,51 @@ void svCallIsr(void)
                 req_t req = ((uint8_t*)psp++)[0];
                 switch (req) {
                     case REQ_PRINT_PS:{
-                            putsUart0("PRINT_PS" NEWLINE);
-                            // TODO
+//                            putsUart0("PRINT_PS" NEWLINE);
                             for(uint8_t i = 0; i < MAX_TASKS; i++) {
-                                if(!tcb[i].pid)
+                                if(!tcb[i].pid || tcb[i].state == STATE_KILLED)
                                     continue;
 
-                                printu32d(tcb[i].cpu_time);
+                                printu32d(tcb[i].cpu_time / (cpu_timeer_sum >> 7));
                                 putsUart0(" \t");
                                 putsUart0(tcb[i].name);
                                 putsUart0(NEWLINE);
                             }
                         } break;
                     case REQ_PRINT_IPCS:{
-                            putsUart0("PRINT_IPCS" NEWLINE);
-                            // TODO
+                            // dump mutex stuff
+                            putsUart0("mutex:\t# \tqueue size \tLocked by?" NEWLINE);
+                            for(uint8_t i = 0; i < MAX_MUTEXES; i++) {
+                                if(mutexes[i].lock)
+                                    putsUart0(CLIHIGHLIGHT);
+                                putsUart0("\t");
+                                printu32d(i); // #
+                                putsUart0("\t\t");
+                                printu32d(mutexes[i].queueSize);
+                                putsUart0("\t");
+                                putsUart0(tcb[mutexes[i].lockedBy].name); // locked?
+                                putsUart0(NEWLINE CLIRESET);
+                            }
+
+                            putsUart0(NEWLINE);
+
+                            // dump semaphore stuff
+                            putsUart0("semph:\t# \tcount \tqueue size \t queue" NEWLINE);
+                            for(uint8_t i = 0; i < MAX_SEMAPHORES; i++) {
+                                putsUart0("\t");
+                                printu32d(i);
+                                putsUart0("\t");
+                                printu32d(semaphores[i].count);
+                                putsUart0("\t");
+                                printu32d(semaphores[i].queueSize);
+                                putsUart0("\t\t");
+                                for(uint8_t j = 0; j < semaphores[i].queueSize && j < MAX_SEMAPHORE_QUEUE_SIZE; j++){
+                                    putsUart0(" <- ");
+                                    putsUart0(tcb[semaphores[i].processQueue[j]].name);
+                                }
+                                putsUart0(NEWLINE);
+                            }
+
                         } break;
                     case REQ_KILL:{
                             putsUart0("KILL" NEWLINE);
@@ -1110,6 +1147,10 @@ bool inSRAMBounds(void const * start_addr, uint32_t len){
     }
 
     return true;
+}
+
+void _killThread(uint8_t tcb_i){
+
 }
 
 #if 4'000'000 / TICK_RATE_HZ >= 0xFF'FFFF

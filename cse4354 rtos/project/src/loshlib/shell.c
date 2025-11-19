@@ -164,10 +164,15 @@ void shell(void)
 
                if(!success) putsUart0("cmd failed" NEWLINE);
            }
+           if(isCommand(&data, "clear", 0)){
+               valid = true;
+               putsUart0(CLICLEAR);
+           }
 
            if(isCommand(&data, "help", 0)){
                valid = true;
                putsUart0("commands:" NEWLINE);
+               putsUart0("clear" NEWLINE);
                putsUart0("reboot" NEWLINE);
                putsUart0("ps" NEWLINE);
                putsUart0("ipcs" NEWLINE);
@@ -188,6 +193,8 @@ void shell(void)
 void getsUart0(USER_DATA * ud){
     uint8_t count = 0;
     while(count <= MAX_CHARS){
+//        if(UART0_FR_R & UART_FR_RXFE) // if fifo empty
+//           yield();
         char c = getcUart0();
 
         if(c == 8 || c == 127){ // character is backspace

@@ -242,8 +242,6 @@ void errant(void)
     volatile uint32_t* p = (uint32_t*)0x20000000;
     while(true)
     {
-//        printu32d(readPbs());
-//        putsUart0(NEWLINE);
         while (readPbs() == 16)
         {
             *p = 0;
