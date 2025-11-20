@@ -76,7 +76,8 @@ struct _tcb
     char name[16];                 // name of task used in ps command
     uint8_t mutex;                 // index of the mutex in use or blocking the thread
     uint8_t semaphore;             // index of the semaphore that is blocking the thread
-    uint16_t cpu_time;             // relative time from XXX of cpu use
+    uint16_t cpu_time;             // relative time of pendSV_systicks of cpu use
+    uint32_t stackB;               // size of stack. used when restarting task
 } tcb[MAX_TASKS];
 
 //-----------------------------------------------------------------------------
@@ -88,11 +89,18 @@ uint32_t cpu_timeer_sum;
 
 // returns tcb index of first task with matching name. returns MAX_TASKS if not found
 uint8_t findTaskByName(char const * name);
+// returns tcb index of first task with matching pid. returns MAX_TASKS if not found
+uint8_t findTaskByPID(PID pid);
+// returns tcb index of first task with matching fn. returns MAX_TASKS if not found
+uint8_t findTaskByFn(_fn fn);
 
 // returns true of spand is entirely within taskCurrent's allocated memory
 bool inSRAMBounds(void const * start, uint32_t len);
 
+// kill thread logic
 void _killThread(uint8_t tcb_i);
+
+void dumpTasks();
 
 bool initMutex(uint8_t mutex)
 {
@@ -228,90 +236,66 @@ void __attribute__((naked)) startRtos(void)
 // set the srd bits based on the memory allocation
 bool createThread(_fn fn, const char name[], uint8_t priority, uint32_t stackBytes)
 {
-    bool ok = false;
-    uint8_t i = 0;
-    bool found = false;
-    if (taskCount < MAX_TASKS)
-    {
-        // make sure fn not already in list (prevent reentrancy)
-        while (!found && (i < MAX_TASKS))
-        {
-            found = (tcb[i++].pid ==  fn);
-        }
-        if (!found)
-        {
-            // find first available tcb record
-            i = 0;
-            while (tcb[i].state != STATE_INVALID) {i++;}
-            pid = tcb[i].pid = fn;
-            {
-                SRDBitMask og = accessMask;
-                accessMask.raw = tcb[i].srd;
-                tcb[i].sp = mallocHeap(stackBytes);
-                tcb[i].srd = accessMask.raw;
-                accessMask = og;
-            }
-            if(tcb[i].sp == 0){
-                return false;
-            }
-            tcb[i].sp = (uint8_t *)(tcb[i].sp) + stackBytes;
-            putsUart0("tcb[ ");
-            printu32d(i);
-            putsUart0("].sp=");
-            printu32h(tcb[i].sp);
-            putsUart0("\t\t");
-            putsUart0(name);
-            putsUart0(NEWLINE);
+    uint8_t tcb_i;
 
-//            { // make fake former-stack for the new task to switch too /110
-//                uint32_t * psp = (uint32_t *)(tcb[i].sp);
-//
-//                // fake stack for hardware/compiler
-//                (psp--)[0] = 0xBeeF'0700;   //
-//                (psp--)[0] = 0xBeeF'0600;   //
-//                (psp--)[0] = 0xBeeF'0500;   //
-//                (psp--)[0] = 0xBeeF'0400;   //
-//                (psp--)[0] = 0xBeeF'0300;   //
-//                (psp--)[0] = BV(24);        //xPsr
-//                (psp--)[0] = (uint32_t)fn;  //PC
-//                (psp--)[0] = 0xBeeF'0200;   //LR
-//                (psp--)[0] = 0xBeeF'0100;   //
-//                (psp--)[0] = 0xBeeF'0015;   //
-//                (psp--)[0] = 0xBeeF'0014;   //
-//                (psp--)[0] = 0xBeeF'0013;   //
-//                (psp--)[0] = 0xBeeF'0012;   //
-//
-//                // fake stack for PendSV
-//                (psp--)[0] = 0xFFFF'FFFD;   //LR/R14
-//                (psp--)[0] = 0xBeeF'0011;   //R11
-//                (psp--)[0] = 0xBeeF'0010;   //R10
-//                (psp--)[0] = 0xBeeF'0009;   //R9
-//                (psp--)[0] = 0xBeeF'0008;   //R8
-//                (psp--)[0] = 0xBeeF'0007;   //R7
-//                (psp--)[0] = 0xBeeF'0006;   //R6
-//                (psp--)[0] = 0xBeeF'0005;   //R5
-//
-//                tcb[i].sp = psp;
-//            }
+    if (taskCount >= MAX_TASKS)
+        return false;
 
-            tcb[i].state = STATE_UNRUN;
-            tcb[i].priority = priority;
+    // make sure fn not already in list (prevent reentrancy)
+    for(tcb_i = 0; tcb_i < MAX_TASKS; tcb_i++) {
+        if(tcb[tcb_i].pid ==  fn){
+            // unless its a killed thread, no reentrant conflict there
+            if(tcb[tcb_i].state == STATE_KILLED)
+                break;
 
-            // copy name
-            {
-                uint8_t j;
-                for(j = 0; j < sizeof(tcb[i].name)-1; j++){
-                    tcb[i].name[j] = name[j];
-                }
-                tcb[i].name[j] = '\0';
-            }
-
-            // increment task count
-            taskCount++;
-            ok = true;
+            return false;
         }
     }
-    return ok;
+
+    // find available tcb record
+    if(tcb_i == MAX_TASKS){ // if task wasn't in a killed state
+        tcb_i = 0;
+        while (tcb[tcb_i].state != STATE_INVALID)
+            tcb_i++;
+    }
+    // else : task was in a killed state, reuse the tcb index
+
+    // allocate memory
+    {
+        // some globals have to be preserved since malloc assumes its running from a task
+        PID ogpid = pid;
+        pid = tcb[tcb_i].pid = fn;
+        SRDBitMask ogam = accessMask;
+        accessMask.raw = createNoSramAccessMask();
+
+        tcb[tcb_i].sp = mallocHeap(stackBytes);
+        tcb[tcb_i].srd = accessMask.raw; // the new mask is stored in this global which is normally saved by pendSV
+
+        accessMask = ogam;
+        pid = ogpid;
+    }
+
+    if(tcb[tcb_i].sp == 0)
+        return false;
+
+    tcb[tcb_i].sp = (uint8_t *)(tcb[tcb_i].sp) + stackBytes;
+    tcb[tcb_i].stackB = stackBytes;
+    tcb[tcb_i].state = STATE_UNRUN;
+    tcb[tcb_i].priority = priority;
+
+    // copy name
+    {
+        uint8_t j;
+        for(j = 0; j < sizeof(tcb[tcb_i].name)-1; j++){
+            tcb[tcb_i].name[j] = name[j];
+        }
+        tcb[tcb_i].name[j] = '\0';
+    }
+
+    // increment task count
+    taskCount++;
+
+    return true;
 }
 
 // REQUIRED: modify this function to kill a thread
@@ -319,28 +303,24 @@ bool createThread(_fn fn, const char name[], uint8_t priority, uint32_t stackByt
 //           unlock any mutexes, mark state as killed
 void killThread(_fn fn)
 {
-    putsUart0("KILL THREAD");
-
-    uint8_t task;
-    // find task by _fn
-    for(task = 0; task < MAX_TASKS; task++)
-        if(tcb[task].pid == fn)
-            break;
+    uint8_t task = findTaskByFn(fn);
     if(task == MAX_TASKS)
         return;
 
-    // free mem
-//    freeHeap(t);
-
-    // remove task from semaphore queues
-
-    // remove task from mutex queues
-
+    _killThread(task);
 }
 
 // REQUIRED: modify this function to restart a thread, including creating a stack
 void restartThread(_fn fn)
 {
+    uint8_t task = findTaskByFn(fn);
+    if(task == MAX_TASKS)
+        return;
+
+    // recreate thread
+    // createThread is made in a way to allow rerunning of killed threads
+    if(createThread(fn, tcb[task].name, tcb[task].priority, tcb[task].stackB))
+        while(1) putsUart0("restartThread exploded! "NEWLINE);
 }
 
 // REQUIRED: modify this function to set a thread priority
@@ -736,7 +716,8 @@ void svCallIsr(void)
                                 if(!tcb[i].pid || tcb[i].state == STATE_KILLED)
                                     continue;
 
-                                printu32d(tcb[i].cpu_time / (cpu_timeer_sum >> 7));
+//                                printu32d(tcb[i].cpu_time / (cpu_timeer_sum >> 7));
+                                printu32d(tcb[i].cpu_time * 10000 / cpu_timeer_sum);
                                 putsUart0(" \t");
                                 putsUart0(tcb[i].name);
                                 putsUart0(NEWLINE);
@@ -778,12 +759,32 @@ void svCallIsr(void)
 
                         } break;
                     case REQ_KILL:{
-                            putsUart0("KILL" NEWLINE);
-                            // TODO
+//                            putsUart0("KILL" NEWLINE);
+                            PID * arg1 = (PID*)(psp++)[0];   // arg1
+                            bool * ret = (bool*)(psp++)[0];  // arg2
+
+                            uint8_t tcb_i = findTaskByPID(*arg1);
+                            if(tcb_i < MAX_TASKS){
+                                _killThread(tcb_i);
+
+                                SETPIF(ret, tcb[tcb_i].state == STATE_KILLED);
+                            }
+
+                            ret = false;
                         } break;
                     case REQ_PKILL:{
                             putsUart0("PKILL" NEWLINE);
-                            // TODO
+                            char const * arg1 = (char*)(psp++)[0];   // arg1
+                            bool * ret = (bool*)(psp++)[0];  // arg2
+
+                            uint8_t tcb_i = findTaskByName(arg1);
+                            if(tcb_i < MAX_TASKS){
+                                _killThread(tcb_i);
+
+                                SETPIF(ret, tcb[tcb_i].state == STATE_KILLED);
+                            }
+
+                            ret = false;
                         } break;
                     case REQ_VAL_PRIINHERT:{
                             putsUart0("VAL_PRIINHERT" NEWLINE);
@@ -884,6 +885,9 @@ void svCallIsr(void)
                             }
 
                         } break;
+                    case REQ_DUMP_TASKS: {
+                            dumpTasks();
+                        } break;
                     default:{
                             putsUart0("UNKNOWN_REQUEST" NEWLINE);
                         } break;
@@ -903,12 +907,29 @@ uint8_t findTaskByName(char const * name){
     uint8_t i;
     for(i = 0; i < MAX_TASKS; i++){
         if((tcb[i].pid) && (tcb[i].state != STATE_INVALID) && (0 == strCmp(tcb[i].name, name))){
-            return i;
+            break;
         }
     }
 
-    // nothing found
     return i;
+}
+
+uint8_t findTaskByPID(PID pid){
+    if(pid == 0)
+        return MAX_TASKS;
+
+    uint8_t i;
+    for(i = 0; i < MAX_TASKS; i++){
+        if((tcb[i].pid == pid) && (tcb[i].state != STATE_INVALID)){
+            break;
+        }
+    }
+
+    return i;
+}
+
+uint8_t findTaskByFn(_fn fn) {
+    return findTaskByPID((PID)fn);
 }
 
 void dumpPSPRegsFromMSP() {
@@ -1150,7 +1171,96 @@ bool inSRAMBounds(void const * start_addr, uint32_t len){
 }
 
 void _killThread(uint8_t tcb_i){
+    // assume valid tcb index
+    tcb[tcb_i].state = STATE_KILLED;
 
+    // free all mem associated with the task
+    for(uint8_t i = 0; i < MPU_REGION_COUNT; i++){
+        if(HOT[i].owner_pid == tcb[tcb_i].pid){
+            // calc mem location, assume all regions equal size
+            void * start = heap + (i * MPU_REGION_SIZE_B);
+
+            PID ogpid = pid;
+            pid = tcb[tcb_i].pid;
+            freeHeap(start);
+            pid = ogpid;
+        }
+    }
+
+    // remove from semaphore queues
+    for(uint8_t i = 0; i < MAX_SEMAPHORES; i++){
+        bool scootEles = false;
+
+        for(uint8_t j = 0; j < semaphores[i].queueSize; j++){
+            if(scootEles)
+                semaphores[i].processQueue[j-1] = semaphores[i].processQueue[j];
+            else if(semaphores[i].processQueue[j] == tcb_i)
+                scootEles = true;
+        }
+
+        if(scootEles)
+            semaphores[i].queueSize--;
+    }
+
+    // remove from mutex queues
+    // leaves mutex in a locked state if its the active holder. no proper way to resolve this.
+    for(uint8_t i = 0; i < MAX_MUTEXES; i++){
+        uint8_t scootEles = 0;
+
+        if(mutexes[i].lockedBy == tcb_i)
+            scootEles++;
+
+        for(uint8_t j = 0; j < mutexes[i].queueSize; j++){
+            if(mutexes[i].processQueue[j] == tcb_i)
+                scootEles++;
+            else
+                mutexes[i].processQueue[j-scootEles] = mutexes[i].processQueue[j];
+        }
+
+        if(scootEles)
+            mutexes[i].queueSize -= scootEles;
+    }
+
+}
+
+void dumpTasks() {
+    for(uint8_t i = 0; i < MAX_TASKS; i++){
+        if(tcb[i].pid == 0)
+            continue;
+        putsUart0("Task#: ");
+        printu32d(i);
+        putsUart0(NEWLINE "\t");
+
+        putsUart0("PID(dec:hex): ");
+        printu32d(tcb[i].pid);
+        putcUart0(':');
+        printu32h(tcb[i].pid);
+        putsUart0(NEWLINE "\t");
+
+        putsUart0("name: ");
+        putsUart0(tcb[i].name);
+        putsUart0(NEWLINE "\t");
+
+        putsUart0("state: ");
+        switch(tcb[i].state){
+            case STATE_INVALID           :    putsUart0("STATE_INVALID"); break;
+            case STATE_UNRUN             :    putsUart0("STATE_UNRUN"); break;
+            case STATE_READY             :    putsUart0("STATE_READY"); break;
+            case STATE_DELAYED           :    putsUart0("STATE_DELAYED"); break;
+            case STATE_BLOCKED_SEMAPHORE :    putsUart0("STATE_BLOCKED_SEMAPHORE"); break;
+            case STATE_BLOCKED_MUTEX     :    putsUart0("STATE_BLOCKED_MUTEX"); break;
+            case STATE_KILLED            :    putsUart0("STATE_KILLED"); break;
+            default                      :    putsUart0("<undefined state (uh oh)>"); break;
+        }
+        putsUart0(NEWLINE "\t");
+
+        putsUart0("sram access table" NEWLINE);
+        dumpSramAccessMaskTable(tcb[i].srd);
+        putsUart0(NEWLINE);
+    }
+
+    putsUart0("Heap Ownership Table" NEWLINE);
+    dumpHeapOwnershipTable();
 }
 
 #if 4'000'000 / TICK_RATE_HZ >= 0xFF'FFFF

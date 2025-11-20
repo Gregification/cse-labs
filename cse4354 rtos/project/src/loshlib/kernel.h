@@ -119,6 +119,7 @@ typedef enum {
     REQ_VAL_SCHEDULER,  // (bool, bool) . scheduler is (true)priority or (false)round-robin
     REQ_PIDOF,          // (string, PID) . returns PID of process found by name. return true if process killed
     REQ_RUN,            // (string, bool) . starts process - if not already -. return true if process found
+    REQ_DUMP_TASKS,     // (null, null) . prints each tasks memory, access, state, etc
 } req_t;
 void request(req_t, void const * in, void * out);
 

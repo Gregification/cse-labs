@@ -155,7 +155,7 @@ void shell(void)
 
                putsUart0(NEWLINE);
            }
-           if(isCommand(&data, "run", 0)){
+           if(isCommand(&data, "run", 1)){
                valid = true;
                const char * arg = getFieldString(&data, 1);
 
@@ -168,6 +168,10 @@ void shell(void)
                valid = true;
                putsUart0(CLICLEAR);
            }
+           if(isCommand(&data, "dump", 0)){
+              valid = true;
+              request(REQ_DUMP_TASKS, 0, 0);
+          }
 
            if(isCommand(&data, "help", 0)){
                valid = true;
@@ -183,6 +187,7 @@ void shell(void)
                putsUart0("sched <PRIO|RR>" NEWLINE);
                putsUart0("pidof <pname>" NEWLINE);
                putsUart0("run <pname>" NEWLINE);
+               putsUart0("dump" NEWLINE);
 
            }
            if(!valid)

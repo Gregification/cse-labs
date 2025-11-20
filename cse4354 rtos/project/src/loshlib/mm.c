@@ -70,11 +70,6 @@ void * mallocHeap(uint32_t size_in_bytes)
                     size_in_bytes
                 );
 
-            putsUart0("malloc resulting mask (pid:");
-            printu32d((uint32_t)pid);
-            putsUart0("):" NEWLINE " enbl: ");
-            dumpSramAccessMaskTable(accessMask.raw);
-
             applySramAccessMask(accessMask.raw);
 
             return (void *)(heap + (baseR * MPU_REGION_SIZE_B));
@@ -90,7 +85,7 @@ void freeHeap(void *address_from_malloc)
 {
     // --- find the region it corresponds to ------------------
 
-    for(unsigned int r = 0; r < MPU_REGION_COUNT; r++){
+    for(uint8_t r = 0; r < MPU_REGION_COUNT; r++){
 
         // ".len != 0" : '.len==0' means its not a base pointer
         if((HOT[r].len != 0) && (HOT[r].owner_pid == pid)){
