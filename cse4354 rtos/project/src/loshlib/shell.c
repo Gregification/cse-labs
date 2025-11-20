@@ -124,6 +124,21 @@ void shell(void)
                    putsUart0("unrecognized arg" NEWLINE);
                }
            }
+           if(isCommand(&data, "critter", 0)){
+              valid = true;
+              uint64_t raw;
+              while(1){
+                  raw += 3;
+//                  "\033[38;2;255;0;0m"
+                  putsUart0(CLICLEAR"\033[48;2;");
+                  printu32d((uint32_t)(((uint8_t*)&raw))[0]); // r
+                  putcUart0(';');
+                  printu32d((uint32_t)(((uint8_t*)&raw))[1]); // g
+                  putcUart0(';');
+                  printu32d((uint32_t)(((uint8_t*)&raw))[2]); // b
+                  putcUart0('m');
+              }
+           }
            if(isCommand(&data, "sched", 1)){
                valid = true;
 
@@ -171,7 +186,7 @@ void shell(void)
            if(isCommand(&data, "dump", 0)){
               valid = true;
               request(REQ_DUMP_TASKS, 0, 0);
-          }
+           }
 
            if(isCommand(&data, "help", 0)){
                valid = true;
@@ -187,6 +202,7 @@ void shell(void)
                putsUart0("sched <PRIO|RR>" NEWLINE);
                putsUart0("pidof <pname>" NEWLINE);
                putsUart0("run <pname>" NEWLINE);
+               putsUart0("critter" NEWLINE);
                putsUart0("dump" NEWLINE);
 
            }
