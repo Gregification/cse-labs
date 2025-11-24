@@ -155,7 +155,7 @@ uint8_t rtosScheduler(void)
             // if task is ready to run
             if((tcb[i].state == STATE_READY || tcb[i].state == STATE_UNRUN)){
                 if(ok){ // if a potential has already been found
-                    if(tcb[i].priority < tcb[task].priority) // filter by priority
+                    if(tcb[i].currentPriority < tcb[task].currentPriority) // filter by priority
                         task = i;
                 } else {
                     ok = true;
@@ -166,7 +166,7 @@ uint8_t rtosScheduler(void)
 
         if(ok) {
             static uint8_t nxtTaskIdx[NUM_PRIORITIES];
-            uint8_t priority = tcb[task].priority;
+            uint8_t priority = tcb[task].currentPriority;
             // search for the next task of the same priority starting from the saved index
             for(uint8_t i = 1; i < MAX_TASKS; i++){
 
@@ -175,7 +175,7 @@ uint8_t rtosScheduler(void)
                     targi -= MAX_TASKS;
 
                 // if is matching priority
-                if(tcb[targi].priority == priority) {
+                if(tcb[targi].currentPriority == priority) {
                     // if task is ready to run
                     if((tcb[targi].state == STATE_READY || tcb[targi].state == STATE_UNRUN)){
                         // update latest index of priority
@@ -273,6 +273,9 @@ bool createThread(_fn fn, const char name[], uint8_t priority, uint32_t stackByt
 
         accessMask = ogam;
         pid = ogpid;
+
+        // also add access to the lower regions for statics
+//        addSramAccessWindow(&tcb[tcb_i].srd, (uint32_t *)SRAM_BASE, 4 * MPU_REGION_SIZE_B);
     }
 
     if(tcb[tcb_i].sp == 0)
@@ -282,6 +285,7 @@ bool createThread(_fn fn, const char name[], uint8_t priority, uint32_t stackByt
     tcb[tcb_i].stackB = stackBytes;
     tcb[tcb_i].state = STATE_UNRUN;
     tcb[tcb_i].priority = priority;
+    tcb[tcb_i].currentPriority = tcb[tcb_i].priority;
 
     // copy name
     {
@@ -326,6 +330,11 @@ void restartThread(_fn fn)
 // REQUIRED: modify this function to set a thread priority
 void setThreadPriority(_fn fn, uint8_t priority)
 {
+    uint8_t task = findTaskByFn(fn);
+    if(task == MAX_TASKS)
+        return;
+
+    tcb[task].priority = priority;
 }
 
 // REQUIRED: modify this function to yield execution back to scheduler using pendsv
@@ -465,7 +474,7 @@ __attribute__((naked)) void pendSvIsr(void)
     // restore stack values of new task
     if(tcb[taskCurrent].state == STATE_UNRUN) {
         tcb[taskCurrent].state = STATE_READY;
-
+        tcb[taskCurrent].currentPriority = tcb[taskCurrent].priority;
         { // make fake former-stack for the new task to switch too /110
             uint32_t * psp = (uint32_t *)(tcb[taskCurrent].sp);
 
@@ -559,10 +568,17 @@ void svCallIsr(void)
                 if(mutexes[mi].lock){ // is lock locked?
                     // add current task to queue
                     mutexes[mi].processQueue[mutexes[mi].queueSize] = taskCurrent;
-                    mutexes[mi].queueSize++;
                     tcb[taskCurrent].state = STATE_BLOCKED_MUTEX;
 //                    putsUart0(" added self to queue" NEWLINE);
 
+                    if(priorityInheritance){
+                        // trickle down the priority, update priorities as needed
+                        for(uint8_t i = 0; i < mutexes[mi].queueSize; --i)
+                            if(tcb[mutexes[mi].processQueue[i]].currentPriority > tcb[taskCurrent].currentPriority)
+                                tcb[mutexes[mi].processQueue[i]].currentPriority = tcb[taskCurrent].currentPriority;
+                    }
+
+                    mutexes[mi].queueSize++;
                     // let someone else run
                     NVIC_INT_CTRL_R |= NVIC_INT_CTRL_PEND_SV;  // trigger PendSV /160
                 } else {
@@ -587,10 +603,13 @@ void svCallIsr(void)
                         printu32d(mi);
                     }
 
-                if(mutexes[mi].lockedBy != taskCurrent) while(1) {
-                    putsUart0("ERROR: SVC_IRQ>UnLock>unlocking unowned mutex" NEWLINE);
-                    printu32d(mi);
-                }
+                if(mutexes[mi].lockedBy != taskCurrent)
+                    while(1) {
+                        putsUart0("ERROR: SVC_IRQ>UnLock>unlocking unowned mutex" NEWLINE);
+                        printu32d(mi);
+                    }
+
+                // remove ownership from tcb
 
                 if(!mutexes[mi].lock){ // mutex isnt locked
 //                    putsUart0(" wasn't locked" NEWLINE);
@@ -617,6 +636,29 @@ void svCallIsr(void)
 //                    putsUart0(" queue empty" NEWLINE);
                 }
 
+                // find approate priority
+                tcb[taskCurrent].currentPriority = tcb[taskCurrent].priority;
+                if(priorityInheritance) {
+
+                    // search for highest inherited priority in mutexes
+                    for(uint8_t m = 0; m < MAX_MUTEXES; m++) {
+                        if(mutexes[m].lock) {
+                            bool taskInvolved = mutexes[m].lockedBy == taskCurrent;
+                            uint8_t highestPriority = tcb[taskCurrent].priority;
+
+                            for(uint8_t i = 0; i < mutexes[m].queueSize; i++){
+                                if(taskCurrent == mutexes[m].processQueue[i])
+                                    taskInvolved = true;
+
+                                if(tcb[mutexes[m].processQueue[i]].priority < highestPriority)
+                                    highestPriority = tcb[mutexes[m].processQueue[i]].priority;
+                            }
+
+                            if(taskInvolved)
+                                tcb[taskCurrent].currentPriority = highestPriority;
+                        }
+                    }
+                }
             }
             break;
 
@@ -674,10 +716,10 @@ void svCallIsr(void)
                         // unblock next in queue
                         tcb[semaphores[si].processQueue[0]].state = STATE_READY;
 
-                        putsUart0(tcb[taskCurrent].name);
-                        putsUart0(" -> semph unblocked: ");
-                        putsUart0(tcb[semaphores[si].processQueue[0]].name);
-                        putsUart0(NEWLINE);
+//                        putsUart0(tcb[taskCurrent].name);
+//                        putsUart0(" -> semph unblocked: ");
+//                        putsUart0(tcb[semaphores[si].processQueue[0]].name);
+//                        putsUart0(NEWLINE);
 
                         // shift queue down
                         for(uint8_t i = 1; i < semaphores[si].queueSize; i++)
@@ -687,17 +729,17 @@ void svCallIsr(void)
                     }
                     else
                     {
-                        putsUart0(tcb[taskCurrent].name);
-                        putsUart0(" -> post to empty semph #");
-                        printu32d(si);
-                        putsUart0(NEWLINE);
+//                        putsUart0(tcb[taskCurrent].name);
+//                        putsUart0(" -> post to empty semph #");
+//                        printu32d(si);
+//                        putsUart0(NEWLINE);
                     }
                 }
                 else {
-                    putsUart0(tcb[taskCurrent].name);
-                    putsUart0(" -> post semph #");
-                    printu32d(si);
-                    putsUart0(NEWLINE);
+//                    putsUart0(tcb[taskCurrent].name);
+//                    putsUart0(" -> post semph #");
+//                    printu32d(si);
+//                    putsUart0(NEWLINE);
                 }
             }
             break;
