@@ -47,9 +47,12 @@ void inline stopTimer_w0(){
 }
 
 uint64_t getTime_w0(){
-    uint64_t time = WTIMER0_TBV_R;
+    uint32_t low = WTIMER0_TAV_R;  // Read Low first to snapshot High
+    uint32_t high = WTIMER0_TBV_R; // Read the snapshot
+
+    uint64_t time = high;
     time <<= 32;
-    time |= WTIMER0_TAV_R;
+    time |= low;
     return time;
 }
 
@@ -106,27 +109,33 @@ void portA_IRQ(){
 #define HX_DATA     PORTE,1
 #define HX_CLK      PORTE,2
 
-uint32_t hx_read(){
-    const int delayInUs = 20;
+int32_t hx_read(){
+    const int delayInUs = 1;
 
-    setPinValue(HX_CLK, 1);
-    waitMicrosecond(80);
     setPinValue(HX_CLK, 0);
-    waitMicrosecond(10);
-
-    while(1 == getPinValue(HX_DATA))
-        {}
     waitMicrosecond(delayInUs);
+
+    int timeout = 100000;
+    while(1 == getPinValue(HX_DATA)) {
+        timeout--;
+        if(timeout == 0) return 0; // Return error/0 if timeout
+    }
+
 
     uint32_t data = 0;
     for(uint8_t i = 0; i < 24; i++){
         setPinValue(HX_CLK, 1);
         waitMicrosecond(delayInUs);
-        if(getPinValue(HX_DATA))
-            data |= i;
-        data <<= 1;
+
+        data = data << 1;
+
         setPinValue(HX_CLK, 0);
         waitMicrosecond(delayInUs);
+
+        if(getPinValue(HX_DATA))
+        {
+            data++;
+        }
     }
 
     setPinValue(HX_CLK, 1);
@@ -134,7 +143,11 @@ uint32_t hx_read(){
     setPinValue(HX_CLK, 0);
     waitMicrosecond(delayInUs);
 
-    return data;
+    if (data & 0x800000) {
+        data |= 0xFF000000;
+    }
+
+    return (int32_t)data;
 }
 
 
@@ -292,12 +305,56 @@ int main(void)
 
 
     int32_t raw = hx_read();
+    int32_t zero;
+    int32_t g250;
+    uint8_t count = 0;
+    float scale_factor;
+    float weight_float = 0.0;
+    int32_t weight_grams = 0;
+
     while(1){
-        raw = raw  * 9 / 10 + hx_read() / 10;
-//        raw = hx_read();
+        static int32_t smoothed = 0;
+        int32_t current = hx_read();
+        // 90% old, 10% new
+        smoothed = (smoothed * 9 + current) / 10;
+
+        if (count == 0)
+        {
+            if(getPinValue(SW1) == 0)
+            {
+                zero = hx_read(); // get zero value
+                count++;
+                while(getPinValue(SW1) == 0){
+                    putsUart0("button pressed");
+                }
+            }
+        }
+        else if (count == 1)
+        {
+            if(getPinValue(SW1) == 0)
+            {
+                g250 = hx_read(); // get 250g weight value
+                scale_factor = (float)(g250 - zero) / 250.0;
+                if (scale_factor == 0)
+                {
+                    scale_factor = 1.0;
+                }
+                count++;
+                while(getPinValue(SW1) == 0){
+                    putsUart0("button pressed");
+                }
+            }
+        }
+        else if (count == 2)
+        {
+            weight_float = (float)(smoothed - current) / scale_factor;
+            weight_grams = (int32_t)weight_float;
+        }
 
         putsUart0("raw: \t");
-        puti32d(raw);
+        puti32d(smoothed);
+        putsUart0("weight (g): \t");
+        puti32d(weight_grams);
         putsUart0(NEWLINE);
 
         waitMicrosecond(100e3);

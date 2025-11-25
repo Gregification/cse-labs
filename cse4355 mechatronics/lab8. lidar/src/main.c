@@ -432,7 +432,7 @@ int main(void)
         float volume = 0;
 
         for(uint16_t i = 0; i < rawlen; i++) {
-            float angleD = 0a
+            float angleD = 0;
             float dist = raw[i].dist_raw / 4;
             float angle_deg = raw[i].angle_raw / 64;
 
