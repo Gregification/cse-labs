@@ -262,41 +262,9 @@ int main(void)
     PWM0_ENABLE_R |= PWM_ENABLE_PWM0EN;     // enable PWM1a /1248
     PWM0_ENABLE_R |= PWM_ENABLE_PWM1EN;     // enable PWM1b
 
-
-    /*** ADC *************************************************/
-
-//    initAdc0Ss3();
-//    setAdc0Ss3Log2AverageCount(1);
-//    setAdc0Ss3Mux(0);
-
     /*** I2C0 ************************************************/
 
     initI2c0();
-
-    /*** Analog Comparator ***********************************/
-
-    /*
-    SYSCTL_RCGCACMP_R |= SYSCTL_RCGCACMP_R0;    // enable clock to comparators
-    _delay_cycles(3);
-
-    COMP_ACCTL0_R |= COMP_ACCTL0_ASRCP_REF;     // use internal voltage source for reference
-    COMP_ACREFCTL_R |= COMP_ACREFCTL_EN         // turn on resister ladder
-            | 0xF;                              // Vref/Vin set to 2.469V +- 55mV
-    _delay_cycles(F_CPU / 1e6 * 11);            // delay 10us. uP.19.4
-    COMP_ACINTEN_R &= ~COMP_ACINTEN_IN0;        // disable interrupt 0
-    COMP_ACINTEN_R &= ~COMP_ACINTEN_IN1;        // disable interrupt 1
-    COMP_ACCTL0_R |= COMP_ACCTL0_ISLVAL;        // interrupt 0 if value is high
-    COMP_ACCTL0_R |= COMP_ACCTL0_CINV;          // invert. output high when V- < V+
-
-    NVIC_EN0_R = 1 << (INT_COMP0-16);           // turn-on interrupt 41 (Analog Comparator 0)
-
-    // gpio setup for PC7. uC.10-3/658
-    GPIO_PORTC_AFSEL_R  &= BV(6);
-    GPIO_PORTC_DIR_R    &= BV(6);
-    GPIO_PORTC_DEN_R    &= BV(6);
-    GPIO_PORTC_PUR_R    &= BV(6);
-    GPIO_PORTC_PDR_R    &= BV(6);
-    */
 
 
     /*********************************************************/
@@ -304,7 +272,6 @@ int main(void)
     setUart0BaudRate(115200, F_CPU);
     setUart1BaudRate(115200, F_CPU);
 //    putsUart0(CLICLEAR CLIRESET CLIGOOD "FALL 2025, CSE4355 Mechatronics, Lab 8" NEWLINE CLIRESET);
-
 
     /*********************************************************/
 
@@ -379,7 +346,7 @@ int main(void)
     struct {
         uint16_t dist_raw;
         uint16_t angle_raw;
-    } raw[800];
+    } raw[500];
     uint16_t const rawlen = sizeof(raw)/sizeof(raw[0]);
 
     // scan
@@ -401,6 +368,9 @@ int main(void)
             raw[i].angle_raw |= (uint16_t)uart1rxB() << 7;  // +2
             raw[i].dist_raw = uart1rxB();                    // +3
             raw[i].dist_raw |= (uint16_t)uart1rxB() << 8;   // +4
+
+            if(raw[i].dist_raw == 0) // ignore zeros
+                i--;
        }
     }
 
@@ -410,6 +380,36 @@ int main(void)
         uart1_tx(ARRANDN(tx));
 
         setPWMA(0);
+    }
+
+    { // sort by angle, ascending
+        // BRUTE-FORCE BUBBLE SORT LOGIC (Sorting by angle_raw ascending)
+        for (size_t i = 0; i < rawlen  - 1; i++) {
+            for (size_t j = 0; j < rawlen - i - 1; j++) {
+
+                // Compare based on 'angle_raw' for ascending sort
+                if (raw[j].angle_raw > raw[j + 1].angle_raw) {
+                    // swap indecies
+                    uint16_t temp_dist = raw[j].dist_raw;
+                    uint16_t temp_angle = raw[j].angle_raw;
+
+                    raw[j].dist_raw = raw[j + 1].dist_raw;
+                    raw[j].angle_raw = raw[j + 1].angle_raw;
+
+                    raw[j + 1].dist_raw = temp_dist;
+                    raw[j + 1].angle_raw = temp_angle;
+                }
+            }
+        }
+    }
+
+    if(0){ // filter
+        for (size_t i = 0; i < rawlen  - 1; i++) {
+            static uint16_t filter;
+            uint8_t const R = 2;
+            filter = (filter * (R-1) / R) + (raw[i].dist_raw / R);
+            raw[i].dist_raw = filter;
+        }
     }
 
     // dump scan
@@ -429,14 +429,34 @@ int main(void)
     // calc area
     {
 
-        float volume = 0;
+        float area = 0;
 
-        for(uint16_t i = 0; i < rawlen; i++) {
-            float angleD = 0a
+        for(uint16_t i = 1; i < rawlen; i++) {
             float dist = raw[i].dist_raw / 4;
             float angle_deg = raw[i].angle_raw / 64;
+            float angle_rad = angle_deg * M_PI / 180.0;
 
+            static struct {
+                float angle_rad;
+                float dist;
+            } prev, now;
+
+            now.angle_rad = angle_rad;
+            now.dist = dist;
+
+            area += 0.5 * now.dist * prev.dist * sin(now.angle_rad - prev.angle_rad);
+
+            prev = now;
         }
+
+        putsUart0("area raw: ");
+        putD(area);
+        putsUart0(NEWLINE);
+
+        // Convert area from mm^2 to inches^2 using the known voluem of the room as a scaling factor;
+        area *= 40130.0 / 254417.0;
+        putsUart0("area(in^2): ");
+        putD(area);
     }
 
     while(1);
