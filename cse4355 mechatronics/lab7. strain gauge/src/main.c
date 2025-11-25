@@ -303,61 +303,45 @@ int main(void)
 
     /*********************************************************/
 
+    float zero;
+    float g250;
 
-    int32_t raw = hx_read();
-    int32_t zero;
-    int32_t g250;
-    uint8_t count = 0;
-    float scale_factor;
-    float weight_float = 0.0;
-    int32_t weight_grams = 0;
+    int state = 0;
 
+    float raw = 362000;
     while(1){
-        static int32_t smoothed = 0;
-        int32_t current = hx_read();
-        // 90% old, 10% new
-        smoothed = (smoothed * 9 + current) / 10;
+        const int R = 8;
+        raw = (raw * (R-1)) / R + hx_read() / R;
+        raw -= 200;
 
-        if (count == 0)
-        {
-            if(getPinValue(SW1) == 0)
-            {
-                zero = hx_read(); // get zero value
-                count++;
-                while(getPinValue(SW1) == 0){
-                    putsUart0("button pressed");
-                }
-            }
+        if(state == 0)
+        if(getPinValue(SW1) == 0){
+            state++;
+            zero = raw;
+
+            putsUart0(CLICLEAR "zeroed" NEWLINE);
+            waitMicrosecond(500e3);
+            continue;
         }
-        else if (count == 1)
-        {
-            if(getPinValue(SW1) == 0)
-            {
-                g250 = hx_read(); // get 250g weight value
-                scale_factor = (float)(g250 - zero) / 250.0;
-                if (scale_factor == 0)
-                {
-                    scale_factor = 1.0;
-                }
-                count++;
-                while(getPinValue(SW1) == 0){
-                    putsUart0("button pressed");
-                }
-            }
-        }
-        else if (count == 2)
-        {
-            weight_float = (float)(smoothed - current) / scale_factor;
-            weight_grams = (int32_t)weight_float;
+
+        if(state == 1)
+        if(getPinValue(SW1) == 0){
+            state++;
+            g250 = raw;
+
+            putsUart0(CLICLEAR "set 250g reference" NEWLINE);
+            waitMicrosecond(500e3);
+            continue;
         }
 
         putsUart0("raw: \t");
-        puti32d(smoothed);
-        putsUart0("weight (g): \t");
-        puti32d(weight_grams);
+        puti32d(raw);
+        putsUart0(" \t");
+        putsUart0(" weight (g): \t");
+        putD((g250 - zero) / 25000.0 * (raw - zero));
         putsUart0(NEWLINE);
 
-        waitMicrosecond(100e3);
+        waitMicrosecond(50e3);
     }
 
 }
