@@ -423,7 +423,6 @@ void systickIsr(void)
     }
 
     if(preemption) {
-        // TODO: ask TA why the next line throws a error
 //        SVIC_PendSV;
         NVIC_INT_CTRL_R |= NVIC_INT_CTRL_PEND_SV;  // trigger PendSV /160
     }
