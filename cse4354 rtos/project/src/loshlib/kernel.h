@@ -49,22 +49,18 @@ typedef void * PID;
 
 PID pid;                    // current processes ID
 
+// see kernel_asm.s for svc numbers. numbers must match!
 #define SVIC_PendSV_i           1
-#define SVIC_PendSV             __asm(" SVC #0x1");
 #define SVIC_Sleep_i            2
-#define SVIC_Sleep              __asm(" SVC #0x2");
 #define SVIC_Lock_i             3
-#define SVIC_Lock               __asm(" SVC #0x3");
 #define SVIC_UnLock_i           4
-#define SVIC_UnLock             __asm(" SVC #0x4");
 #define SVIC_Wait_i             5
-#define SVIC_Wait               __asm(" SVC #0x5");
 #define SVIC_Post_i             6
-#define SVIC_Post               __asm(" SVC #0x6"); // 6
 #define SVIC_Reboot_i           7
-#define SVIC_Reboot             __asm(" SVC #0x7"); // 7
-#define SVIC_Request_i          8   // NOTE: hardcoded in "kernel_asm.s", values must match!
-#define SVIC_Request            __asm(" SVC #0x8");
+#define SVIC_Request_i          8
+#define SVIC_RestartThread_i    9
+#define SVIC_setThreadPri_i     10
+
 //-----------------------------------------------------------------------------
 // Subroutines
 //-----------------------------------------------------------------------------
@@ -80,12 +76,12 @@ void killThread(_fn fn);
 void restartThread(_fn fn);
 void setThreadPriority(_fn fn, uint8_t priority);
 
-void yield(void);
-void sleep(uint32_t tick);
-void wait(int8_t semaphore);
-void post(int8_t semaphore);
-void lock(int8_t mutex);
-void unlock(int8_t mutex);
+void __attribute__((naked)) yield(void);
+void __attribute__((naked)) sleep(uint32_t tick);
+void __attribute__((naked)) wait(int8_t semaphore);
+void __attribute__((naked)) post(int8_t semaphore);
+void __attribute__((naked)) lock(int8_t mutex);
+void __attribute__((naked)) unlock(int8_t mutex);
 
 void systickIsr(void);
 void pendSvIsr(void);
@@ -121,6 +117,7 @@ typedef enum {
     REQ_RUN,            // (string, bool) . starts process - if not already -. return true if process found
     REQ_DUMP_TASKS,     // (null, null) . prints each tasks memory, access, state, etc
 } req_t;
-void request(req_t, void const * in, void * out);
+void __attribute__((naked)) request(req_t, void const * in, void * out);
+void __attribute__((naked)) reboot();
 
 #endif

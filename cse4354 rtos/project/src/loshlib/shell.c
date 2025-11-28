@@ -61,7 +61,7 @@ void shell(void)
            bool valid = false;
            if(isCommand(&data, "reboot", 0)){
                valid = true;
-               SVIC_Reboot;
+               reboot();
            }
            if(isCommand(&data, "ps", 0)){
                valid = true;

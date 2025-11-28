@@ -225,7 +225,7 @@ void __attribute__((naked)) startRtos(void)
     setASP();
     NVIC_ST_CTRL_R     |= NVIC_ST_CTRL_ENABLE; // enable SysTick
     setTMPL();
-    SVIC_PendSV;
+    yield();
 }
 
 
@@ -270,6 +270,7 @@ bool createThread(_fn fn, const char name[], uint8_t priority, uint32_t stackByt
 
         tcb[tcb_i].sp = mallocHeap(stackBytes);
         tcb[tcb_i].srd = accessMask.raw; // the new mask is stored in this global which is normally saved by pendSV
+        applySramAccessMask(tcb[taskCurrent].srd); // malloc changes the current access mask, revert it
 
         accessMask = ogam;
         pid = ogpid;
@@ -307,83 +308,87 @@ bool createThread(_fn fn, const char name[], uint8_t priority, uint32_t stackByt
 //           unlock any mutexes, mark state as killed
 void killThread(_fn fn)
 {
-    uint8_t task = findTaskByFn(fn);
-    if(task == MAX_TASKS)
-        return;
-
-    _killThread(task);
+    request(REQ_KILL, fn, 0);
 }
 
 // REQUIRED: modify this function to restart a thread, including creating a stack
-void restartThread(_fn fn)
-{
-    uint8_t task = findTaskByFn(fn);
-    if(task == MAX_TASKS)
-        return;
-
-    // recreate thread
-    // createThread is made in a way to allow rerunning of killed threads
-    if(createThread(fn, tcb[task].name, tcb[task].priority, tcb[task].stackB))
-        while(1) putsUart0("restartThread exploded! "NEWLINE);
-}
+// moved to assembly
+//void restartThread(_fn fn)
+//{
+//    uint8_t task = findTaskByFn(fn);
+//    if(task == MAX_TASKS)
+//        return;
+//
+//    // recreate thread
+//    // createThread is made in a way to allow rerunning of killed threads
+//    if(createThread(fn, tcb[task].name, tcb[task].priority, tcb[task].stackB))
+//        while(1) putsUart0("restartThread exploded! "NEWLINE);
+//}
 
 // REQUIRED: modify this function to set a thread priority
-void setThreadPriority(_fn fn, uint8_t priority)
-{
-    uint8_t task = findTaskByFn(fn);
-    if(task == MAX_TASKS)
-        return;
-
-    tcb[task].priority = priority;
-}
+// moved to assembly
+//void setThreadPriority(_fn fn, uint8_t priority)
+//{
+//    uint8_t task = findTaskByFn(fn);
+//    if(task == MAX_TASKS)
+//        return;
+//
+//    tcb[task].priority = priority;
+//}
 
 // REQUIRED: modify this function to yield execution back to scheduler using pendsv
-void __attribute__((naked)) yield(void)
-{
-    SVIC_PendSV;
-    __asm(" BX LR");
-}
+// moved to assembly
+//void __attribute__((naked)) yield(void)
+//{
+//    SVIC_PendSV;
+//    __asm(" BX LR");
+//}
 
 // REQUIRED: modify this function to support 1ms system timer
 // execution yielded back to scheduler until time elapses using pendsv
-void __attribute__((naked)) sleep(uint32_t tick)
-{
-    // R0: uint32_t: tick
-    SVIC_Sleep;
-    __asm(" BX LR"); // double check that its only these 2 asm lines in the funciton, no extra push/pops. declare the sleep func naked otherwise
-}
+// moved to assembly
+//void __attribute__((naked)) sleep(uint32_t tick)
+//{
+//    // R0: uint32_t: tick
+//    SVIC_Sleep;
+//    __asm(" BX LR"); // double check that its only these 2 asm lines in the funciton, no extra push/pops. declare the sleep func naked otherwise
+//}
 
 // REQUIRED: modify this function to wait a semaphore using pendsv
-void __attribute__((naked)) wait(int8_t semaphore)
-{
-    // R0: uint8_t: mutex #
-    SVIC_Wait;
-    __asm(" BX LR");
-}
+// moved to assembly
+//void __attribute__((naked)) wait(int8_t semaphore)
+//{
+//    // R0: uint8_t: mutex #
+//    SVIC_Wait;
+//    __asm(" BX LR");
+//}
 
 // REQUIRED: modify this function to signal a semaphore is available using pendsv
-void __attribute__((naked)) post(int8_t semaphore)
-{
-    // R0: uint8_t: mutex #
-    SVIC_Post;
-    __asm(" BX LR");
-}
+// moved to assembly
+//void __attribute__((naked)) post(int8_t semaphore)
+//{
+//    // R0: uint8_t: mutex #
+//    SVIC_Post;
+//    __asm(" BX LR");
+//}
 
 // REQUIRED: modify this function to lock a mutex using pendsv
-void __attribute__((naked)) lock(int8_t mutex)
-{
-    // R0: uint8_t: mutex #
-    SVIC_Lock;
-    __asm(" BX LR");
-}
+// moved to assembly
+//void __attribute__((naked)) lock(int8_t mutex)
+//{
+//    // R0: uint8_t: mutex #
+//    SVIC_Lock;
+//    __asm(" BX LR");
+//}
 
 // REQUIRED: modify this function to unlock a mutex using pendsv
-void __attribute__((naked)) unlock(int8_t mutex)
-{
-    // R0: uint8_t: mutex #
-    SVIC_UnLock;
-    __asm(" BX LR");
-}
+// moved to assembly
+//void __attribute__((naked)) unlock(int8_t mutex)
+//{
+//    // R0: uint8_t: mutex #
+//    SVIC_UnLock;
+//    __asm(" BX LR");
+//}
 
 // REQUIRED: modify this function to add support for the system timer
 // REQUIRED: in preemptive code, add code to request task switch
@@ -678,16 +683,16 @@ void svCallIsr(void)
                 if(semaphores[si].count > 0) {
                     semaphores[si].count--;
 
-//                    putsUart0(tcb[taskCurrent].name);
-//                    putsUart0(" -> wait none on semph #");
-//                    printu32d(si);
-//                    putsUart0(NEWLINE);
+                    putsUart0(tcb[taskCurrent].name);
+                    putsUart0(" -> wait none on semph #");
+                    printu32d(si);
+                    putsUart0(NEWLINE);
                     return;
                 } else {
-//                    putsUart0(tcb[taskCurrent].name);
-//                    putsUart0(" -> blocked on semph #");
-//                    printu32d(si);
-//                    putsUart0(NEWLINE);
+                    putsUart0(tcb[taskCurrent].name);
+                    putsUart0(" -> blocked on semph #");
+                    printu32d(si);
+                    putsUart0(NEWLINE);
 
                     tcb[taskCurrent].state = STATE_BLOCKED_SEMAPHORE;
                     tcb[taskCurrent].semaphore = si;
@@ -715,10 +720,10 @@ void svCallIsr(void)
                         // unblock next in queue
                         tcb[semaphores[si].processQueue[0]].state = STATE_READY;
 
-//                        putsUart0(tcb[taskCurrent].name);
-//                        putsUart0(" -> semph unblocked: ");
-//                        putsUart0(tcb[semaphores[si].processQueue[0]].name);
-//                        putsUart0(NEWLINE);
+                        putsUart0(tcb[taskCurrent].name);
+                        putsUart0(" -> semph unblocked: ");
+                        putsUart0(tcb[semaphores[si].processQueue[0]].name);
+                        putsUart0(NEWLINE);
 
                         // shift queue down
                         for(uint8_t i = 1; i < semaphores[si].queueSize; i++)
@@ -728,17 +733,17 @@ void svCallIsr(void)
                     }
                     else
                     {
-//                        putsUart0(tcb[taskCurrent].name);
-//                        putsUart0(" -> post to empty semph #");
-//                        printu32d(si);
-//                        putsUart0(NEWLINE);
+                        putsUart0(tcb[taskCurrent].name);
+                        putsUart0(" -> post to empty semph #");
+                        printu32d(si);
+                        putsUart0(NEWLINE);
                     }
                 }
                 else {
-//                    putsUart0(tcb[taskCurrent].name);
-//                    putsUart0(" -> post semph #");
-//                    printu32d(si);
-//                    putsUart0(NEWLINE);
+                    putsUart0(tcb[taskCurrent].name);
+                    putsUart0(" -> post semph #");
+                    printu32d(si);
+                    putsUart0(NEWLINE);
                 }
             }
             break;
@@ -804,14 +809,15 @@ void svCallIsr(void)
                             PID * arg1 = (PID*)(psp++)[0];   // arg1
                             bool * ret = (bool*)(psp++)[0];  // arg2
 
-                            uint8_t tcb_i = findTaskByPID(*arg1);
+                            uint8_t tcb_i = findTaskByPID(arg1);
                             if(tcb_i < MAX_TASKS){
                                 _killThread(tcb_i);
 
                                 SETPIF(ret, tcb[tcb_i].state == STATE_KILLED);
                             }
+                            else
+                                SETPIF(ret, false);
 
-                            ret = false;
                         } break;
                     case REQ_PKILL:{
                             putsUart0("PKILL" NEWLINE);
@@ -934,6 +940,37 @@ void svCallIsr(void)
                         } break;
                 }
             } break;
+
+        case SVIC_RestartThread_i: {
+                _fn fn = ((_fn*)(psp++))[0];
+                bool * ret = (bool*)(psp++)[0];
+
+                uint8_t task = findTaskByFn(fn);
+                if(task == MAX_TASKS)
+                    return;
+
+
+                // recreate thread
+                // createThread is made in a way to allow rerunning of killed threads
+                if(createThread(fn, tcb[task].name, tcb[task].priority, tcb[task].stackB)){
+                    SETPIF(ret, true);
+                } else {
+                    SETPIF(ret, false);
+                }
+
+            }break;
+
+        case SVIC_setThreadPri_i: {
+                //(_fn fn, uint8_t priority)
+                _fn fn = ((_fn*)psp++)[0];
+                uint8_t priority = ((uint8_t*)(psp++))[0];
+
+                uint8_t task = findTaskByFn(fn);
+                if(task == MAX_TASKS)
+                    return;
+
+                tcb[task].priority = priority;
+            }break;
 
         default:
             putsUart0("SVC_IRQ>unknown SVC arg: ");
@@ -1214,8 +1251,10 @@ bool inSRAMBounds(void const * start_addr, uint32_t len){
 void _killThread(uint8_t tcb_i){
     // assume valid tcb index
     tcb[tcb_i].state = STATE_KILLED;
+    taskCount--;
 
     // free all mem associated with the task
+    tcb[tcb_i].srd = createNoSramAccessMask();
     for(uint8_t i = 0; i < MPU_REGION_COUNT; i++){
         if(HOT[i].owner_pid == tcb[tcb_i].pid){
             // calc mem location, assume all regions equal size

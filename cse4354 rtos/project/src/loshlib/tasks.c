@@ -139,9 +139,11 @@ void oneshot(void)
     while(true)
     {
         wait(flashReq);
+        putsUart0("one shot loop start" NEWLINE);
         setPinValue(YELLOW_LED, 1);
         sleep(1000);
         setPinValue(YELLOW_LED, 0);
+        putsUart0("one shot loop end" NEWLINE);
     }
 }
 
@@ -181,6 +183,9 @@ void readKeys(void)
             yield();
         }
         post(keyPressed);
+        putsUart0("btn:");
+        printu32d(buttons);
+        putsUart0(NEWLINE);
         if ((buttons & 1) != 0)
         {
             setPinValue(YELLOW_LED, !getPinValue(YELLOW_LED));
@@ -216,7 +221,7 @@ void debounce(void)
         count = 10;
         while (count != 0)
         {
-            sleep(10);
+            sleep(15);
             if (readPbs() == 0)
                 count--;
             else
