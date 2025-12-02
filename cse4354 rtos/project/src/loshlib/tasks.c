@@ -187,9 +187,9 @@ void readKeys(void)
             yield();
         }
         post(keyPressed);
-        putsUart0("btn:");
-        printu32d(buttons);
-        putsUart0(NEWLINE);
+//        putsUart0("btn:");
+//        printu32d(buttons);
+//        putsUart0(NEWLINE);
         if ((buttons & 1) != 0)
         {
             setPinValue(YELLOW_LED, !getPinValue(YELLOW_LED));
