@@ -61,6 +61,8 @@ void initHw(void)
     selectPinDigitalInput(BTN_4_I);
     selectPinDigitalInput(BTN_5_I);
 
+    enablePinPullup(BTN_4_I);
+
     selectPinPushPullOutput(LED_RED);
     selectPinPushPullOutput(LED_GREEN);
     selectPinPushPullOutput(LED_BLUE);
@@ -78,8 +80,10 @@ void initHw(void)
 uint8_t readPbs(void)
 {
 
+    disablePinPullup(BTN_0_I);
     selectPinPushPullOutput(BTN_0_I);
     setPinValue(BTN_0_I, 1);
+
 //    waitMicrosecond(1);
 
     if(getPinValue(BTN_1_I))
@@ -93,6 +97,7 @@ uint8_t readPbs(void)
     if(getPinValue(BTN_5_I))
         return BV(5);
 
+    setPinValue(BTN_0_I, 0);
     selectPinDigitalInput(BTN_0_I);
     enablePinPullup(BTN_0_I);
 
