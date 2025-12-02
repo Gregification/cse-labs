@@ -477,6 +477,8 @@ __attribute__((naked)) void pendSvIsr(void)
 
     // restore stack values of new task
     if(tcb[taskCurrent].state == STATE_UNRUN) {
+
+
         tcb[taskCurrent].state = STATE_READY;
         tcb[taskCurrent].currentPriority = tcb[taskCurrent].priority;
         { // make fake former-stack for the new task to switch too /110
@@ -494,6 +496,7 @@ __attribute__((naked)) void pendSvIsr(void)
 
             tcb[taskCurrent].sp = psp;
         }
+
     }
     setPSP(tcb[taskCurrent].sp);
 
@@ -683,16 +686,16 @@ void svCallIsr(void)
                 if(semaphores[si].count > 0) {
                     semaphores[si].count--;
 
-                    putsUart0(tcb[taskCurrent].name);
-                    putsUart0(" -> wait none on semph #");
-                    printu32d(si);
-                    putsUart0(NEWLINE);
+//                    putsUart0(tcb[taskCurrent].name);
+//                    putsUart0(" -> wait none on semph #");
+//                    printu32d(si);
+//                    putsUart0(NEWLINE);
                     return;
                 } else {
-                    putsUart0(tcb[taskCurrent].name);
-                    putsUart0(" -> blocked on semph #");
-                    printu32d(si);
-                    putsUart0(NEWLINE);
+//                    putsUart0(tcb[taskCurrent].name);
+//                    putsUart0(" -> blocked on semph #");
+//                    printu32d(si);
+//                    putsUart0(NEWLINE);
 
                     tcb[taskCurrent].state = STATE_BLOCKED_SEMAPHORE;
                     tcb[taskCurrent].semaphore = si;
@@ -720,10 +723,10 @@ void svCallIsr(void)
                         // unblock next in queue
                         tcb[semaphores[si].processQueue[0]].state = STATE_READY;
 
-                        putsUart0(tcb[taskCurrent].name);
-                        putsUart0(" -> semph unblocked: ");
-                        putsUart0(tcb[semaphores[si].processQueue[0]].name);
-                        putsUart0(NEWLINE);
+//                        putsUart0(tcb[taskCurrent].name);
+//                        putsUart0(" -> semph unblocked: ");
+//                        putsUart0(tcb[semaphores[si].processQueue[0]].name);
+//                        putsUart0(NEWLINE);
 
                         // shift queue down
                         for(uint8_t i = 1; i < semaphores[si].queueSize; i++)
@@ -733,17 +736,17 @@ void svCallIsr(void)
                     }
                     else
                     {
-                        putsUart0(tcb[taskCurrent].name);
-                        putsUart0(" -> post to empty semph #");
-                        printu32d(si);
-                        putsUart0(NEWLINE);
+//                        putsUart0(tcb[taskCurrent].name);
+//                        putsUart0(" -> post to empty semph #");
+//                        printu32d(si);
+//                        putsUart0(NEWLINE);
                     }
                 }
                 else {
-                    putsUart0(tcb[taskCurrent].name);
-                    putsUart0(" -> post semph #");
-                    printu32d(si);
-                    putsUart0(NEWLINE);
+//                    putsUart0(tcb[taskCurrent].name);
+//                    putsUart0(" -> post semph #");
+//                    printu32d(si);
+//                    putsUart0(NEWLINE);
                 }
             }
             break;
@@ -758,14 +761,43 @@ void svCallIsr(void)
                 switch (req) {
                     case REQ_PRINT_PS:{
 //                            putsUart0("PRINT_PS" NEWLINE);
+                            putsUart0(" %");
+                            putsUart0(" \t");
+                            putsUart0(" name");
+                            putsUart0(" \t");
+                            putsUart0(" state");
+                            putsUart0(" \t");
+                            putsUart0(NEWLINE);
                             for(uint8_t i = 0; i < MAX_TASKS; i++) {
-                                if(!tcb[i].pid || tcb[i].state == STATE_KILLED)
+                                if(!tcb[i].pid)
                                     continue;
 
 //                                printu32d(tcb[i].cpu_time / (cpu_timeer_sum >> 7));
                                 printu32d(tcb[i].cpu_time * 10000 / cpu_timeer_sum);
                                 putsUart0(" \t");
                                 putsUart0(tcb[i].name);
+                                putsUart0(" \t");
+                                switch(tcb[i].state){
+                                    case STATE_BLOCKED_MUTEX: putsUart0("STATE_BLOCKED_MUTEX");
+                                            putsUart0(" \t mutex: ");
+                                            printu32d(tcb[i].mutex);
+                                        break;
+                                    case STATE_BLOCKED_SEMAPHORE: putsUart0("STATE_BLOCKED_SEMAPHORE");
+                                            putsUart0(" \t semp: ");
+                                            printu32d(tcb[i].semaphore);
+                                        break;
+                                    case STATE_DELAYED: putsUart0("STATE_DELAYED");
+                                            putsUart0(" \t ticks: ");
+                                            printu32d(tcb[i].ticks);
+                                        break;
+                                    case STATE_INVALID: putsUart0("STATE_INVALID");
+                                        break;
+                                    case STATE_KILLED: putsUart0("STATE_KILLED"); break;
+                                    case STATE_READY: putsUart0("STATE_READY"); break;
+                                    case STATE_UNRUN: putsUart0("STATE_UNRUN"); break;
+                                    default: putsUart0("UNKNOWN"); break;
+                                }
+
                                 putsUart0(NEWLINE);
                             }
                         } break;
@@ -781,6 +813,13 @@ void svCallIsr(void)
                                 printu32d(mutexes[i].queueSize);
                                 putsUart0("\t");
                                 putsUart0(tcb[mutexes[i].lockedBy].name); // locked?
+                                putsUart0("\t");
+
+                                for(uint8_t j = 0; j < MAX_MUTEX_QUEUE_SIZE && j < mutexes[i].queueSize ; j++){
+                                    putsUart0(" <- ");
+                                    putsUart0(tcb[mutexes[i].processQueue[j]].name);
+                                }
+
                                 putsUart0(NEWLINE CLIRESET);
                             }
 
@@ -796,6 +835,7 @@ void svCallIsr(void)
                                 putsUart0("\t");
                                 printu32d(semaphores[i].queueSize);
                                 putsUart0("\t\t");
+
                                 for(uint8_t j = 0; j < semaphores[i].queueSize && j < MAX_SEMAPHORE_QUEUE_SIZE; j++){
                                     putsUart0(" <- ");
                                     putsUart0(tcb[semaphores[i].processQueue[j]].name);
@@ -820,7 +860,7 @@ void svCallIsr(void)
 
                         } break;
                     case REQ_PKILL:{
-                            putsUart0("PKILL" NEWLINE);
+//                            putsUart0("PKILL" NEWLINE);
                             char const * arg1 = (char*)(psp++)[0];   // arg1
                             bool * ret = (bool*)(psp++)[0];  // arg2
 
@@ -834,7 +874,7 @@ void svCallIsr(void)
                             ret = false;
                         } break;
                     case REQ_VAL_PRIINHERT:{
-                            putsUart0("VAL_PRIINHERT" NEWLINE);
+//                            putsUart0("VAL_PRIINHERT" NEWLINE);
                             bool * new = (bool*)(psp++)[0];   // arg1
                             bool * old = (bool*)(psp++)[0];   // arg2
 
@@ -850,7 +890,7 @@ void svCallIsr(void)
                                 priorityInheritance = *new;
                         } break;
                     case REQ_VAL_PREEMPT:{
-                            putsUart0("VAL_PREEMPT" NEWLINE);
+//                            putsUart0("VAL_PREEMPT" NEWLINE);
                             bool * new = (bool*)(psp++)[0];   // arg1
                             bool * old = (bool*)(psp++)[0];   // arg2
 
@@ -924,8 +964,25 @@ void svCallIsr(void)
                                 if((tcb[i].pid) && (0 == strCmp(tcb[i].name,str) && (tcb[i].state != STATE_INVALID))){
                                     SETPIF(ret, true);
 
-                                    if(tcb[i].state == STATE_KILLED)
+                                    if(tcb[i].state == STATE_KILLED) {
                                         tcb[i].state = STATE_UNRUN;
+
+                                        // allocate memory
+                                        {
+                                            PID ogpid = pid;
+                                            pid = tcb[i].pid;
+                                            SRDBitMask ogam = accessMask;
+                                            accessMask.raw = createNoSramAccessMask();
+
+                                            tcb[i].sp = mallocHeap(tcb[i].stackB) + tcb[i].stackB;
+                                            tcb[i].srd = accessMask.raw; // the new mask is stored in this global which is normally saved by pendSV
+
+                                            applySramAccessMask(tcb[taskCurrent].srd); // malloc changes the current access mask, revert it
+                                            pid = ogpid;
+                                            accessMask = ogam;
+                                        }
+
+                                    }
 
                                     break;
                                 }
@@ -1171,7 +1228,11 @@ void _MPUFaultHandlerISR(){
 //        dumpFaultStatReg(fault_stats);
     }
 
-     while(1);
+    _killThread(taskCurrent);
+
+    NVIC_INT_CTRL_R |= NVIC_INT_CTRL_PEND_SV;  // trigger PendSV /160
+
+//    while(1);
 }
 
 void _BusFaultHandlerISR(){

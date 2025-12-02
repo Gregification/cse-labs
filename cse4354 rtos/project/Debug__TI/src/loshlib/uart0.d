@@ -14,6 +14,7 @@ src/loshlib/uart0.obj: C:/ti/ccs1281/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/in
 src/loshlib/uart0.obj: C:/ti/ccs1281/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include/stdbool.h
 src/loshlib/uart0.obj: D:/repos/cse-labs/cse4354\ rtos/project/src/tm4c123gh6pm.h
 src/loshlib/uart0.obj: ../src/loshlib/uart0.h
+src/loshlib/uart0.obj: ../src/loshlib/kernel.h
 
 ../src/loshlib/uart0.c:
 
@@ -42,4 +43,6 @@ C:/ti/ccs1281/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include/stdbool.h:
 D:/repos/cse-labs/cse4354\ rtos/project/src/tm4c123gh6pm.h:
 
 ../src/loshlib/uart0.h:
+
+../src/loshlib/kernel.h:
 

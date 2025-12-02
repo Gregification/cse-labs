@@ -95,7 +95,6 @@ uint8_t readPbs(void)
 
     selectPinDigitalInput(BTN_0_I);
     enablePinPullup(BTN_0_I);
-//    waitMicrosecond(1);
 
     if(getPinValue(BTN_0_I) == 0)
         return BV(0);
@@ -139,11 +138,11 @@ void oneshot(void)
     while(true)
     {
         wait(flashReq);
-        putsUart0("one shot loop start" NEWLINE);
+//        putsUart0("one shot loop start" NEWLINE);
         setPinValue(YELLOW_LED, 1);
         sleep(1000);
         setPinValue(YELLOW_LED, 0);
-        putsUart0("one shot loop end" NEWLINE);
+//        putsUart0("one shot loop end" NEWLINE);
     }
 }
 
