@@ -2,9 +2,9 @@
 #include "stm32f446xx.h"
 
 #define BV(X) (1<< (X))
-#define FCPU 16e6
+#define FCPU 16000000L
 
-volatile uint32_t tick;
+volatile int32_t tick = 0;
 
 void busyDelaymS(uint32_t ms){
 	volatile uint32_t i;
@@ -37,12 +37,13 @@ int main(){
 	{
 		// config timer
 		RCC->APB1ENR 	|= BV(0); // enable TIM2 clock
-		TIM2->CR1 &= ~BV(3);		// periodic timer
-		TIM2->CR1 &= ~(0b11 << 8);	// clock divider, x/1
+		TIM2->CR1 = 0;
 		TIM2->CNT = 0;					// current count value
-		TIM2->ARR = FCPU/1e6 - 1; // load value
-		TIM2->PSC	=	1 - 1; 	// prescaler
-
+		TIM2->ARR = 0xFFFFFFFF; // load value
+		TIM2->PSC	=	FCPU/1e6 - 1; 	// prescaler
+		TIM2->EGR = TIM_EGR_UG; // forces the PSC and ARR register to be set immideatly
+		DBGMCU->APB1FZ |= DBGMCU_APB1_FZ_DBG_TIM2_STOP; // dtop timer during debug stop
+		
 		// config irq
 		/*
 		TIM2->DIER |= BV(0); // irq for update event
@@ -55,33 +56,45 @@ int main(){
 	TIM2->CR1 |= TIM_CR1_CEN;	// enable TIM2
 	
 	while(1) {
-		static uint32_t nextTick;
+		static int32_t nextTick;
 		if(tick == nextTick){
 			GPIOA->ODR ^= BV(5);
 			nextTick = tick + 500;
 		}
 		
-		busyDelaymS(10);
+		//busyDelaymS(10);
 	}
 	
 	while(1);
 }
 
-int32_t diffMin = ~0, diffMax = 0;
+volatile int32_t diffMin = 0x0BEEEEEF, diffMax = 0;
 
 void SysTick_Handler(void) {
 	int32_t count = TIM2->CNT;
 	tick++;
 	
-	count -= 1e6;
+	int32_t systick_us = tick * 1000; 
+	count -= systick_us;
+	
 	if(count < 0)
-			count *= -1;
+			count = -count;
 	if(count < diffMin)
 		diffMin = count;
 	if(count > diffMax)
 		diffMax = count;
 	
-	TIM2->CNT = 0;
+	if(tick == 1){
+		__NOP();
+	}
+	if(tick == 10){
+		__NOP();
+	}
+	if(tick == 100){
+		__NOP();
+	}		
+	
+	//TIM2->CNT = 0;
 }
 
 void TIM2_IRQHandler(void) {
