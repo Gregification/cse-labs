@@ -21,20 +21,31 @@ int main(){
 	RCC->AHB1ENR |= BV(7); // PH
 	
 	// PA5 mode EB LED : DO
-	GPIO_Pin_t LED_EB;
-	LED_EB.port = GPIOA;
-	LED_EB.pinN	= 5;
-	LED_EB.port->MODER &= ~	(0b11 << (2 * LED_EB.pinN));
-	LED_EB.port->MODER |= 	(0b01 << (2 * LED_EB.pinN));
+	GPIO_Pin_t EB_LED;
+	EB_LED.port = GPIOA;
+	EB_LED.pinN	= 5;
+	EB_LED.port->MODER &= ~	(0b11 << (2 * EB_LED.pinN));
+	EB_LED.port->MODER |= 	(0b01 << (2 * EB_LED.pinN));
+	
+	// PC13 mode EB usr btn : DI
+	GPIO_Pin_t EB_USR_BTN;
+	EB_USR_BTN.port = GPIOA;
+	EB_USR_BTN.pinN	= 5;
+	EB_USR_BTN.port->MODER &= ~	(0b11 << (2 * EB_USR_BTN.pinN));
+	EB_USR_BTN.port->MODER |= 	(0b00 << (2 * EB_USR_BTN.pinN));
+	
+	initStepperA();
 	
 	while(1) {
-		GPIO_toggleOut(&LED_EB);
+		GPIO_toggleOut(&EB_LED);
+		
 		if(!stepperIsStepping(&stepperA)) {
-			GPIO_toggleOut(&stepperA.dir);
+			if(GPIO_getIn(&EB_USR_BTN) == 0)
+				GPIO_toggleOut(&stepperA.dir);
+			
 			stepperSetSteps(&stepperA, 100);
 			stepperStart(&stepperA);
 		}
-		delaymS(1e3);
 	}
 }
 
@@ -99,7 +110,7 @@ void initStepperA() {
 		// timer setup
 		stepperA.driveTimer = TIM1;
 		stepperA.driveTimer->PSC = FCPU/1e6 - 1; // 1M
-		stepperA.driveTimer->ARR = 1000 - 1; // 1mS period
+		stepperA.driveTimer->ARR = 5e3 - 1; // 1mS period
 		stepperA.driveTimer->CR1 &= ~TIM_CR1_DIR; // up coutning
 		stepperA.driveTimer->CR1 |= TIM_CR1_OPM;	// oneshot mode
 		stepperA.driveTimer->CCR1 = stepperA.driveTimer->ARR / 2; // %50 duty, CH1

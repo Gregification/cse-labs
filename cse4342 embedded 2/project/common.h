@@ -20,5 +20,6 @@ typedef struct {
 void GPIO_toggleOut(GPIO_Pin_t *);
 void GPIO_setOut(GPIO_Pin_t *, bool);
 bool GPIO_getOut(GPIO_Pin_t const *);
+bool GPIO_getIn(GPIO_Pin_t const *);
 
 #endif

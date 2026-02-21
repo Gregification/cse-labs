@@ -28,6 +28,7 @@ void stepperSetSteps(A4988_t * stepper, uint8_t steps) {
 
 void stepperStart(A4988_t * stepper) {
 	stepper->driveTimer->EGR |= TIM_EGR_UG; // reinitialize counter & update values
+	stepper->driveTimer->CCER &= ~TIM_CCER_CC1P;
 	stepper->driveTimer->CR1 |= TIM_CR1_CEN; // start
 }
 
