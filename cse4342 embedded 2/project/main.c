@@ -112,7 +112,7 @@ void initStepperA() {
 		// timer setup
 		stepperA.driveTimer = TIM1;
 		stepperA.driveTimer->PSC = FCPU/1e6 - 1; // 1M
-		stepperA.driveTimer->ARR = 5e3 - 1; // 1mS period
+		stepperA.driveTimer->ARR = 2e3 - 1; // 1mS period
 		stepperA.driveTimer->CR1 &= ~TIM_CR1_DIR; // up coutning
 		stepperA.driveTimer->CR1 |= TIM_CR1_OPM;	// oneshot mode
 		stepperA.driveTimer->CCR1 = stepperA.driveTimer->ARR / 2; // %50 duty, CH1
