@@ -29,8 +29,8 @@ int main(){
 	
 	// PC13 mode EB usr btn : DI
 	GPIO_Pin_t EB_USR_BTN;
-	EB_USR_BTN.port = GPIOA;
-	EB_USR_BTN.pinN	= 5;
+	EB_USR_BTN.port = GPIOC;
+	EB_USR_BTN.pinN	= 13;
 	EB_USR_BTN.port->MODER &= ~	(0b11 << (2 * EB_USR_BTN.pinN));
 	EB_USR_BTN.port->MODER |= 	(0b00 << (2 * EB_USR_BTN.pinN));
 	
@@ -40,8 +40,10 @@ int main(){
 		GPIO_toggleOut(&EB_LED);
 		
 		if(!stepperIsStepping(&stepperA)) {
-			if(GPIO_getIn(&EB_USR_BTN) == 0)
+			if(GPIO_getIn(&EB_USR_BTN) == 0){
 				GPIO_toggleOut(&stepperA.dir);
+				delaymS(250);
+			}
 			
 			stepperSetSteps(&stepperA, 100);
 			stepperStart(&stepperA);
