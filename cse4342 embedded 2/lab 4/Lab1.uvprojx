@@ -399,6 +399,16 @@
               <FileType>5</FileType>
               <FilePath>.\common.h</FilePath>
             </File>
+            <File>
+              <FileName>MCP23008.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\MCP23008.h</FilePath>
+            </File>
+            <File>
+              <FileName>MCP23008.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\MCP23008.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

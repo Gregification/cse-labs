@@ -40,7 +40,7 @@ bool GPIO_getIn(GPIO_Pin_t const * pin) {
 	return pin->port->IDR & BV(pin->pinN);
 }
 
-void SPI_transfer8(SPI_TypeDef * spi, void * tx, void * rx, uint8_t len, const GPIO_Pin_t * cs) {
+void SPI_transfer8(SPI_TypeDef * spi, void const * tx, void * rx, uint8_t len, const GPIO_Pin_t * cs) {
 	// enable CS
 	if(cs) GPIO_toggleOut(cs);
 	

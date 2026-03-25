@@ -25,6 +25,6 @@ void GPIO_setOut(GPIO_Pin_t const *, bool);
 bool GPIO_getOut(GPIO_Pin_t const *);
 bool GPIO_getIn(GPIO_Pin_t const *);
 
-void SPI_transfer8(SPI_TypeDef *, void * tx, void * rx, uint8_t len, const GPIO_Pin_t * cs);
+void SPI_transfer8(SPI_TypeDef *, void const * tx, void * rx, uint8_t len, const GPIO_Pin_t * cs);
 
 #endif
