@@ -5,9 +5,9 @@
 #include <stdint.h>
 
 typedef enum FsrCondition_e {
-	FSRC_EMPTY,
-	FSRC_EGGONLY,
-	FSRC_CHICKEN,
+	FSRC_EMPTY = 1,
+	FSRC_EGGONLY = 2,
+	FSRC_CHICKEN = 3,
 } FsrCondition_t;
 
 

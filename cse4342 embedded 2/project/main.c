@@ -92,13 +92,27 @@ int main(){
 	
 	GPIO_setOut(&EB_LED, 0);
 	delaymS(250);
-	
+	int FSR_Check = 0;
 	
 	/*** main loop ******************************************/
 	
 	while(1) {
 		GPIO_toggleOut(&EB_LED);
+		FSR_Check = FsrWeightCheck();
 		
+		switch(FSR_Check){
+			case FSRC_EMPTY:
+				Set_Color_RGB(0U,   0U,   255U);  // Yellow
+			break;
+			
+			case FSRC_EGGONLY:
+				Set_Color_RGB(255U, 0U, 255U);    // Green
+			break;
+			
+			case FSRC_CHICKEN:
+				Set_Color_RGB(0U, 255U, 255U);    // Red 
+			break;
+		}
 		/*
 		if(!stepperIsStepping(&stepperA)) {
 			if(GPIO_getIn(&EB_USR_BTN) == 0){
