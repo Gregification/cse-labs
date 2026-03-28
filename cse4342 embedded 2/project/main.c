@@ -1,8 +1,60 @@
 #include "common.h"
 #include "stepper.h"
+#include "fsr.h"
+#include "p9813.h"
 
-A4988_t stepperA;
+const A4988_t stepperA = {
+	.ms1 = {
+		.port	= GPIOB,
+		.pinN = 3,
+	},
+	.ms2 = {
+		.port = GPIOB,
+		.pinN	= 5,
+	},
+	.ms3 = {
+		.port = GPIOB,
+		.pinN	= 4,
+	},
+	.reset_n = {
+		.port = GPIOB,
+		.pinN	= 10,
+	},
+	.step = {
+		.port = GPIOA,
+		.pinN	= 8,
+	},
+	.dir = {
+		.port = GPIOA,
+		.pinN	= 10,
+	},
+	.sleep_n = {
+		.port = GPIOA,
+		.pinN	= 2,
+	},
+	.enable_n = {
+		.port = GPIOA,
+		.pinN	= 3,
+	},
+	.driveTimer = TIM1,
+};
+
 void initStepperA();
+
+const GPIO_Pin_t 
+		cvb_dir = { // TODO
+			.port = GPIOA,
+			.pinN = 9,
+		},
+		EB_LED = {
+			.port = GPIOA,
+			.pinN	= 5,
+		},
+		EB_USR_BTN = {
+			.port = GPIOC,
+			.pinN	= 13,
+		}
+		;
 
 int main(){
 	SysTick->LOAD = FCPU/1000 - 1;
@@ -20,25 +72,34 @@ int main(){
 	RCC->AHB1ENR |= BV(6); // PG
 	RCC->AHB1ENR |= BV(7); // PH
 	
+	/*** init ***********************************************/
+	
 	// PA5 mode EB LED : DO
-	GPIO_Pin_t EB_LED;
-	EB_LED.port = GPIOA;
-	EB_LED.pinN	= 5;
 	EB_LED.port->MODER &= ~	(0b11 << (2 * EB_LED.pinN));
 	EB_LED.port->MODER |= 	(0b01 << (2 * EB_LED.pinN));
 	
+	GPIO_setOut(&EB_LED, 1);
+	delaymS(250);
+	
 	// PC13 mode EB usr btn : DI
-	GPIO_Pin_t EB_USR_BTN;
-	EB_USR_BTN.port = GPIOC;
-	EB_USR_BTN.pinN	= 13;
 	EB_USR_BTN.port->MODER &= ~	(0b11 << (2 * EB_USR_BTN.pinN));
 	EB_USR_BTN.port->MODER |= 	(0b00 << (2 * EB_USR_BTN.pinN));
+	GPIO_setBiasPU(&EB_USR_BTN);
 	
 	initStepperA();
+	initFsrHW();
+	initLED_Driver();
+	
+	GPIO_setOut(&EB_LED, 0);
+	delaymS(250);
+	
+	
+	/*** main loop ******************************************/
 	
 	while(1) {
 		GPIO_toggleOut(&EB_LED);
 		
+		/*
 		if(!stepperIsStepping(&stepperA)) {
 			if(GPIO_getIn(&EB_USR_BTN) == 0){
 				GPIO_toggleOut(&stepperA.dir);
@@ -47,7 +108,7 @@ int main(){
 			
 			stepperSetSteps(&stepperA, 100);
 			stepperStart(&stepperA);
-		}
+		}*/
 	}
 }
 
@@ -55,52 +116,59 @@ void SysTick_Handler(void) {
 	tick++;
 }
 
+void initDCMotor() {
+	// TODO
+}
+
+void initLEDDriver() {
+	// TODO
+}
+
+void initStrainGuage() {
+	// TODO
+}
+
 void initStepperA() {
 	/*
-		ms1, 			D3	PB3			gpio
-		ms2,			D4	PB5			gpio
-		ms3,			D5	PB4			gpio
-		reset_n,	D6	PB10		gpio
-		step,			D7	PA8			TIM1_CH1
-		dir,			D2	PA10		gpio
-		sleep_n,	D1	PA2			gpio
-		enable;		D0	PA3			gpio
+		ms1, 			D3				gpio
+		ms2,			D4				gpio
+		ms3,			D5				gpio
+		reset_n,	D6				gpio
+		step,			D7	PA8		TIM1_CH1
+		dir,			D2				gpio
+		sleep_n,	D1				gpio
+		enable;		D0				gpio
 	*/
-	stepperA.ms1.port	= GPIOB;
-	stepperA.ms1.pinN	= 3;
+
 	stepperA.ms1.port->MODER &= ~	(0b11 << (2 * stepperA.ms1.pinN));
 	stepperA.ms1.port->MODER |= 	(0b01 << (2 * stepperA.ms1.pinN));
-	stepperA.ms2.port	= GPIOB;
-	stepperA.ms2.pinN	= 5;
+
 	stepperA.ms2.port->MODER &= ~	(0b11 << (2 * stepperA.ms2.pinN));
 	stepperA.ms2.port->MODER |= 	(0b01 << (2 * stepperA.ms2.pinN));
-	stepperA.ms3.port	= GPIOB;
-	stepperA.ms3.pinN	= 4;
+
 	stepperA.ms3.port->MODER &= ~	(0b11 << (2 * stepperA.ms3.pinN));
 	stepperA.ms3.port->MODER |= 	(0b01 << (2 * stepperA.ms3.pinN));
-	stepperA.reset_n.port	= GPIOB;
-	stepperA.reset_n.pinN	= 10;
+
 	stepperA.reset_n.port->MODER &= ~	(0b11 << (2 * stepperA.reset_n.pinN));
 	stepperA.reset_n.port->MODER |= 	(0b01 << (2 * stepperA.reset_n.pinN));
-	stepperA.dir.port	= GPIOA;
-	stepperA.dir.pinN	= 10;
+
 	stepperA.dir.port->MODER &= ~	(0b11 << (2 * stepperA.dir.pinN));
 	stepperA.dir.port->MODER |= 	(0b01 << (2 * stepperA.dir.pinN));
-	stepperA.sleep_n.port	= GPIOA;
-	stepperA.sleep_n.pinN	= 2;
+
 	stepperA.sleep_n.port->MODER &= ~	(0b11 << (2 * stepperA.sleep_n.pinN));
 	stepperA.sleep_n.port->MODER |= 	(0b01 << (2 * stepperA.sleep_n.pinN));
-	stepperA.enable_n.port	= GPIOA;
-	stepperA.enable_n.pinN	= 3;
+
 	stepperA.enable_n.port->MODER &= ~	(0b11 << (2 * stepperA.enable_n.pinN));
 	stepperA.enable_n.port->MODER |= 	(0b01 << (2 * stepperA.enable_n.pinN));
 	
 	GPIO_setOut(&stepperA.enable_n, 1); // disable outputs
 	GPIO_setOut(&stepperA.reset_n, 0); 	// enable reset
 	
-	stepperA.step.port 	= GPIOA;
-	stepperA.step.pinN	= 8; // hardcoded, see below
 	{ // setup A8 as TIM1 output
+		_Static_assert(stepperA.step.pinN == 8, "update timer configuration");
+		_Static_assert(stepperA.step.port == GPIOA, "update timer configuration");
+		_Static_assert(stepperA.driveTimer == TIM1, "update timer configuration");
+		
 		RCC->APB2ENR |= RCC_APB2ENR_TIM1EN; // pg148
 		
 		// alternative function 1 : TIM1_CH1
@@ -110,7 +178,7 @@ void initStepperA() {
 		stepperA.step.port->AFR[1] |= 1;
 		
 		// timer setup
-		stepperA.driveTimer = TIM1;
+		
 		stepperA.driveTimer->PSC = FCPU/1e6 - 1; // 1M
 		stepperA.driveTimer->ARR = 2e3 - 1; // 1mS period
 		stepperA.driveTimer->CR1 &= ~TIM_CR1_DIR; // up coutning

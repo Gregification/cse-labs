@@ -36,7 +36,8 @@ STEP_RES_t getSTEP(A4988_t const * stepper);
 void stepperSetSteps(A4988_t * stepper, uint8_t steps);
 void stepperStart(A4988_t * stepper);
 void stepperStop(A4988_t * stepper);
-uint16_t stepperGetSteps(A4988_t const * stepper);
+uint16_t stepperGetSteps(A4988_t 
+const * stepper);
 bool stepperIsStepping(A4988_t * stepper);
 
 #endif

@@ -409,6 +409,26 @@
               <FileType>5</FileType>
               <FilePath>.\stepper.h</FilePath>
             </File>
+            <File>
+              <FileName>fsr.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\fsr.h</FilePath>
+            </File>
+            <File>
+              <FileName>p9813.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\p9813.h</FilePath>
+            </File>
+            <File>
+              <FileName>forceSensorCall.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\forceSensorCall.c</FilePath>
+            </File>
+            <File>
+              <FileName>p9813Call.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\p9813Call.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
