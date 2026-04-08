@@ -18,6 +18,8 @@
 #define MCP_GPIO        0x09u
 #define MCP_OLAT        0x0Au
 
+#define MCP_SENSE_PIN		BV(0)
+
 // ----------- GPIOB init for I2C1 on PB8/PB9 -----------
 void gpio_i2c1_pb8_pb9_init(void);
 
@@ -35,15 +37,18 @@ int i2c1_write_reg1(uint8_t addr7, uint8_t reg, uint8_t data);
 	
 uint8_t i2c1_read_reg1(uint8_t addr7, uint8_t reg);
 
-/*
+
 const GPIO_Pin_t ledBoard = {
 	.port = GPIOA,
 	.pinN = 5
 };
-	*/
 const GPIO_Pin_t button = {
 	.port = GPIOC,
 	.pinN = 13
+};
+const GPIO_Pin_t MCP_RESET = {
+	.port = GPIOA,
+	.pinN = 9
 };
 
 // ----------- MCP23008 setup
@@ -61,13 +66,19 @@ int main(){
 	RCC->AHB1ENR |= BV(6); // PG
 	RCC->AHB1ENR |= BV(7); // PH
 	RCC->APB2ENR |= BV(14); // SYSCFG
-	/*
+	
 	{ // led do
+		_Static_assert(ledBoard.pinN == 5 && ledBoard.port == GPIOA, "bruh");
 		ledBoard.port->MODER &= ~	(0b11 << (2 * ledBoard.pinN));
 		ledBoard.port->MODER |= 	(0b01 << (2 * ledBoard.pinN)); // DO
 	}
 	GPIO_setOut(&ledBoard, 1);
-	*/
+	
+	{ 
+		MCP_RESET.port->MODER &= ~	(0b11 << (2 * MCP_RESET.pinN));
+		MCP_RESET.port->MODER |= 	(0b01 << (2 * MCP_RESET.pinN)); // DO
+	}
+	GPIO_setOut(&MCP_RESET, 1);
 	
 	{ // board btn
 		_Static_assert(button.pinN == 13 && button.port == GPIOC, "bruh");
@@ -84,7 +95,7 @@ int main(){
 	SysTick->CTRL |= BV(2) | BV(1); // BV(1) enable interrupt, BV(2)internal clock.  https://developer.arm.com/documentation/dui0552/a/cortex-m3-peripherals/system-timer--systick/systick-control-and-status-register
 	SysTick->CTRL |= BV(0); 	// enable SysTick
 	
-	delaymS(1e3);
+	delaymS(10);
 	
 	// 2) Initialize GPIOB pins PB8/PB9 for I2C1 AF4
 	gpio_i2c1_pb8_pb9_init();
@@ -95,16 +106,35 @@ int main(){
 	// 4) Initialize MCP23008
 	mcp23008_init();
 
+	
+	static uint8_t mask = 0;
+	static bool latch = false;
+	
 	while (1)
 	{
 		//ADD YOUR CODE HERE 
 		// TODO
+		{
+			if(i2c1_read_reg1(MCP23008_ADDR, MCP_GPIO) & MCP_SENSE_PIN) {
+				GPIO_setOut(&ledBoard, 1);
+				latch = false;
+				
+			} else {
+				if(latch) continue;
+				latch = true;
+				
+				if(mask == 0xF)
+					mask = 0;
+				else
+					mask = (mask << 1) + 1;
+				
+				i2c1_write_reg1(MCP23008_ADDR, MCP_GPIO, mask<<1);
+				
+				delaymS(20);
+			}
+		}
 	}
 	
-	while(1) {
-		
-		delaymS(500);
-	}
 }
 
 void gpio_i2c1_pb8_pb9_init(void)
@@ -209,24 +239,57 @@ int i2c1_write_reg1(uint8_t addr7, uint8_t reg, uint8_t data)
 uint8_t i2c1_read_reg1(uint8_t addr7, uint8_t reg)
 {
     //****************************ADD YOUR CODE HERE****************************************************************
-		i2c1_start_and_addr7(addr7, 0);  // read
+		uint8_t ret;
+	
+		// send write to register
+		{ 
+			i2c1_start_and_addr7(addr7, 1); 
 
-    // Send register address
-    while (!(I2C1->SR1 & I2C_SR1_TXE)) { }
-    I2C1->DR = reg;
+			// Send register address
+			while (!(I2C1->SR1 & I2C_SR1_TXE)) { }
+			I2C1->DR = reg;
+			
+			// Wait for byte transfer finished
+			while (!(I2C1->SR1 & I2C_SR1_BTF)) { }
+		}
 		
-		// Wait for byte transfer finished
-    while (!(I2C1->SR1 & I2C_SR1_BTF)) { }
+		// repeated start with reading
+		i2c1_start_and_addr7(addr7, 0);
 		
+		{
+			
+			I2C1->CR1 &= ~I2C_CR1_ACK; // disable acks
+			
+			i2c1_stop(); // stop after current byte transfre finished
+			
+			// wait for transfer to complete
+			while (!(I2C1->SR1 & I2C_SR1_RXNE)) { }
+			
+			ret = I2C1->DR;
+			
+			I2C1->CR1 |= I2C_CR1_ACK; // enable acks
+		}
 
-    // STOP
-    i2c1_stop();
-    return 0;
+    return ret;
 }
 
 // ----------- MCP23008 setup
 void mcp23008_init(void)
 {
-    //ADD YOUR CODE HERE
+	//ADD YOUR CODE HERE
+	
+	// reset device
+	GPIO_setOut(&MCP_RESET, 1);
+	delaymS(50);
+	GPIO_setOut(&MCP_RESET, 0);
+	delaymS(50);
+	GPIO_setOut(&MCP_RESET, 1);
+	delaymS(50);
+	
+	i2c1_write_reg1(MCP23008_ADDR, MCP_IODIR, MCP_SENSE_PIN); // dio input
+	i2c1_write_reg1(MCP23008_ADDR, MCP_GPPU, MCP_SENSE_PIN); // dio PU
 }
 
+void SysTick_Handler(void) {
+	tick++;
+}
