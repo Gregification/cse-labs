@@ -110,6 +110,13 @@ int main(){
 	static uint8_t mask = 0;
 	static bool latch = false;
 	
+	/*
+	while(1){
+		delaymS(100);
+		i2c1_write_reg1(MCP23008_ADDR, MCP_GPIO, BV(5));
+	}
+	*/
+	
 	while (1)
 	{
 		//ADD YOUR CODE HERE 
@@ -133,6 +140,8 @@ int main(){
 				delaymS(20);
 			}
 		}
+		
+		delaymS(200);
 	}
 	
 }
